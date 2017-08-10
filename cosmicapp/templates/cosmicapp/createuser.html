@@ -1,0 +1,25 @@
+{% extends "cosmicapp/base.html" %}
+
+{% block extratitle %} - Create a new user account {% endblock %}
+
+{% block mainbody %}
+<p><b>{{usercreationerror}}</b></p>
+
+<form method="post">
+{% csrf_token %}
+Username:<br>
+<input type="text" name="username"><br><br>
+
+Email:<br>
+<input type="text" name="email"><br><br>
+
+Password:<br>
+<input type="password" name="password"><br><br>
+
+Repeat Password:<br>
+<input type="password" name="repeatpassword"><br><br>
+
+<input type="submit">
+</form> 
+
+{% endblock %}
