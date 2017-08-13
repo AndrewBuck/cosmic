@@ -47,7 +47,12 @@ def upload(request):
 def userpage(request, username):
     context = {"user" : request.user}
 
-    foruser = User.objects.get(username = username)
+    try:
+        foruser = User.objects.get(username = username)
+    except User.DoesNotExist:
+        context['foruser'] = username
+        return render(request, "cosmicapp/usernotfound.html", context)
+
     foruserForm = ProfileForm(instance = foruser.profile)
 
     context['foruser'] = foruser
