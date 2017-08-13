@@ -3,6 +3,8 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
+#TODO:  Need to review the on_delete behaviour of all foreign keys to guarantee references remain intact as needed.
+
 """
 An Optical tube assembly that forms the core of the optical path of an instrument.
 """
@@ -96,4 +98,18 @@ class UploadedFileRecord(models.Model):
     fileSha256 = models.CharField(max_length=64)
     uploadDateTime = models.DateTimeField()
     uploadSize = models.IntegerField()
+
+class Image(models.Model):
+    fileRecord = models.ForeignKey(UploadedFileRecord, on_delete=models.PROTECT)
+    instrument = models.ForeignKey(Instrument, on_delete=models.PROTECT, null=True)
+    dimX = models.IntegerField(null=True)
+    dimY = models.IntegerField(null=True)
+    dimZ = models.IntegerField(null=True)
+    bitDepth = models.IntegerField(null=True)
+    frameType = models.CharField(max_length=32)
+    centerRA = models.FloatField(null=True)
+    centerDEC = models.FloatField(null=True)
+    centerROT = models.FloatField(null=True)
+    resolutionX = models.FloatField(null=True)
+    resolutionY = models.FloatField(null=True)
 

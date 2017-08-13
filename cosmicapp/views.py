@@ -1,4 +1,5 @@
 import hashlib
+import os
 
 from django.shortcuts import render
 from django.template import loader
@@ -8,7 +9,7 @@ from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponseRedirect
 from django.utils import timezone
 
-from .models import User, Profile, UploadedFileRecord
+from .models import User, Profile, UploadedFileRecord, Image
 from .forms import UserForm, ProfileForm
 
 def index(request):
@@ -60,6 +61,17 @@ def upload(request):
 
             record.save()
             records.append(record)
+
+            fileBase, fileExtension = os.path.splitext(record.onDiskFileName)
+
+            #TODO: Move this extension list into variables define in a configuration file somewhere.
+            if fileExtension in [".fit", ".fits", ".png", ".jpg"]:
+                imageRecord = Image(
+                    fileRecord = record
+                    )
+
+                imageRecord.save()
+
 
         context['upload_successful'] = True
         context['records'] = records
