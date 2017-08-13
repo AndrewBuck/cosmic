@@ -31,16 +31,16 @@ def createuser(request):
 
     return render(request, "cosmicapp/createuser.html", context)
 
+@login_required
 def upload(request):
     context = {"user" : request.user}
 
-    if request.method == 'POST' and request.FILES['myfile']:
-        myfile = request.FILES['myfile']
-        fs = FileSystemStorage()
-        filename = fs.save(myfile.name, myfile)
+    if request.method == 'POST' and 'myfiles' in request.FILES:
+        for myfile in request.FILES.getlist('myfiles'):
+            fs = FileSystemStorage()
+            filename = fs.save(myfile.name, myfile)
 
-        uploaded_file_url = fs.url(filename)
-        context['uploaded_file_url'] = uploaded_file_url
+        context['upload_successful'] = True
 
     return render(request, "cosmicapp/upload.html", context)
 
