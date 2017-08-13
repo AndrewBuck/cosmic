@@ -8,7 +8,15 @@
 </form>
 
 {% if upload_successful %}
-<p>File uploaded successfully.</p>
+<p>File upload successfull.</p>
+
+    <table border="2px">
+    <tr> <th>File name</th> <th>Size (bytes)</th> <th>sha256sum</th> </tr>
+    {% for record in records %}
+        <tr> <td>{{record.onDiskFileName}}</td> <td>{{record.uploadSize}}</td> <td>{{record.fileSha256}}</td> </tr>
+    {% endfor %}
+    </table>
+
 {% endif %}
 
 {% endblock %}

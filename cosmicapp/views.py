@@ -1,11 +1,14 @@
+import hashlib
+
 from django.shortcuts import render
 from django.template import loader
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponseRedirect
+from django.utils import timezone
 
-from .models import User, Profile
+from .models import User, Profile, UploadedFileRecord
 from .forms import UserForm, ProfileForm
 
 def index(request):
@@ -36,11 +39,30 @@ def upload(request):
     context = {"user" : request.user}
 
     if request.method == 'POST' and 'myfiles' in request.FILES:
+        records = []
         for myfile in request.FILES.getlist('myfiles'):
             fs = FileSystemStorage()
             filename = fs.save(myfile.name, myfile)
 
+            hashObject = hashlib.sha256()
+            for chunk in myfile.chunks():
+                hashObject.update(chunk)
+
+            record = UploadedFileRecord(
+                uploadingUser = User.objects.get(pk=request.user.pk),
+                unpackedFromFile = None,
+                originalFileName = myfile.name,
+                onDiskFileName = filename,
+                fileSha256 = hashObject.hexdigest(),
+                uploadDateTime = timezone.now(),
+                uploadSize = myfile.size
+                )
+
+            record.save()
+            records.append(record)
+
         context['upload_successful'] = True
+        context['records'] = records
 
     return render(request, "cosmicapp/upload.html", context)
 

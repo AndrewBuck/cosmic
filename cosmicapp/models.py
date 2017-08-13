@@ -85,3 +85,15 @@ def create_user_profile(sender, instance, created, **kwargs):
 def save_user_profile(sender, instance, **kwargs):
     instance.profile.save()
 
+
+
+
+class UploadedFileRecord(models.Model):
+    uploadingUser = models.ForeignKey(User, on_delete=models.CASCADE)
+    unpackedFromFile = models.ForeignKey('self', null=True)
+    originalFileName = models.CharField(max_length=256)
+    onDiskFileName = models.CharField(max_length=256)
+    fileSha256 = models.CharField(max_length=64)
+    uploadDateTime = models.DateTimeField()
+    uploadSize = models.IntegerField()
+
