@@ -1,0 +1,30 @@
+{% extends "cosmicapp/base.html" %}
+
+{% block extratitle %} - Details for user {{foruser.username}} {% endblock %}
+
+{% block mainbody %}
+<h2>User profile for {{foruser.username}}</h2>
+
+{% if user.username == foruser.username and edit == 'true' %}
+    <form action="/user/{{user.username}}/" method="POST">
+        {% csrf_token %}
+        {{foruserForm.as_p}}
+        <input type="submit" value="Save Profile">
+    </form>
+{% else %}
+    <ul>
+        <li>Home Lat: {{foruser.profile.homeLat}}</li>
+        <li>Home Lon: {{foruser.profile.homeLon}}</li>
+        <li>Birth Date: {{foruser.profile.birthDate}}</li>
+    </ul>
+
+    {% if user.username == foruser.username %}
+        <form action="/user/{{user.username}}/" method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="edit" value="true">
+            <input type="submit" value="Edit Profile">
+        </form>
+    {% endif %}
+{% endif %}
+
+{% endblock %}

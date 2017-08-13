@@ -3,7 +3,7 @@
 </head>
 
 {% if user.is_authenticated %}
-<p align="right"><a href="/users/{{user}}">{{user}}</a>&nbsp;|&nbsp;<a href="/logout">Logout</a></p>
+<p align="right"><a href="/user/{{user}}">{{user}}</a>&nbsp;|&nbsp;<a href="/logout">Logout</a></p>
 {% else %}
 <p align="right"><a href="/login">Log in / Create account</a></p>
 {% endif %}
