@@ -1,5 +1,7 @@
 {% extends "cosmicapp/base.html" %}
 
+{% block extratitle %} - Upload files {{foruser.username}} {% endblock %}
+
 {% block mainbody %}
 <form method="post" enctype="multipart/form-data">
 {% csrf_token %}
