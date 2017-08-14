@@ -73,6 +73,26 @@ def upload(request):
 
                 imageRecord.save()
 
+                pi = ProcessInput(
+                    process = "imagestats",
+                    requestor = User.objects.get(pk=request.user.pk),
+                    submittedDateTime = timezone.now(),
+                    priority = 10000,
+                    estCostCPU = record.uploadSize / 1e6,
+                    estCostBandwidth = 0,
+                    estCostStorage = 1000,
+                    estCostIO = record.uploadSize
+                    )
+
+                pi.save()
+
+                pa = ProcessArgument(
+                    processInput = pi,
+                    argIndex = 1,
+                    arg = record.onDiskFileName
+                    )
+
+                pa.save()
 
         context['upload_successful'] = True
         context['records'] = records
