@@ -27,6 +27,7 @@ urlpatterns = [
 
     url(r'^$', views.index),
     url(r'^members/', views.members),
+    url(r'^processqueue/', views.processQueue),
     url(r'^user/(?P<username>.+)/', views.userpage),
     url(r'^upload/$', views.upload)
 ]

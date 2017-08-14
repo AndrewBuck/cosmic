@@ -1,0 +1,44 @@
+{% extends "cosmicapp/base.html" %}
+
+{% block extratitle %} - Process queue {{foruser.username}} {% endblock %}
+
+{% block mainbody %}
+<h2>Process Queue</h2>
+<p>This page shows the jobs currently waiting to be executed by the site.  When an image is uploaded it needs to be
+processed by a series of programs which calculate statistics about the image, combine it with calibration frames,
+locate stars in the image, and many other things.  Each of these individual operations constitutes a single process
+which gets put into this queue until the server has time to execute it.</p>
+
+    <table border="2px">
+    <tr>
+        <th> Prerequisite </th>
+        <th> Process </th>
+        <th> Requestor </th>
+        <th> SubmittedDateTime </th>
+        <th> StartedDateTime </th>
+        <th> Priority </th>
+        <th> EstCostCPU </th>
+        <th> EstCostBandwidth </th>
+        <th> EstCostStorage </th>
+        <th> EstCostIO </th>
+        <th> Completed </th>
+    </tr>
+    {% for processInput in processInputs %}
+    <tr>
+        <td> {{processInput.prerequisite}} </td>
+        <td> {{processInput.process}} </td>
+        <td> {{processInput.requestor}} </td>
+        <td> {{processInput.submittedDateTime}} </td>
+        <td> {{processInput.startedDateTime}} </td>
+        <td> {{processInput.priority}} </td>
+        <td> {{processInput.estCostCPU}} </td>
+        <td> {{processInput.estCostBandwidth}} </td>
+        <td> {{processInput.estCostStorage}} </td>
+        <td> {{processInput.estCostIO}} </td>
+        <td> {{processInput.completed}} </td>
+    </tr>
+    {% endfor %}
+    </table>
+
+{% endblock %}
+

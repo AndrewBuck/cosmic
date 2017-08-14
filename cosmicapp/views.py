@@ -10,6 +10,7 @@ from django.http import HttpResponseRedirect
 from django.utils import timezone
 
 from .models import User, Profile, UploadedFileRecord, Image
+from .models import ProcessInput, ProcessOutput, ProcessArgument, ProcessOutputFile
 from .forms import UserForm, ProfileForm
 
 def index(request):
@@ -106,4 +107,12 @@ def userpage(request, username):
                 return HttpResponseRedirect('/user/' + foruser.username + '/')
 
     return render(request, "cosmicapp/userpage.html", context)
+
+def processQueue(request):
+    context = {"user" : request.user}
+
+    processInputs = ProcessInput.objects.all()[:50]
+    context['processInputs'] = processInputs
+
+    return render(request, "cosmicapp/processqueue.html", context)
 
