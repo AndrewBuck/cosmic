@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    'django_celery_results',
 ]
 
 MIDDLEWARE = [
@@ -130,3 +132,4 @@ LOGOUT_REDIRECT_URL = '/'
 
 MEDIA_ROOT = '/cosmicmedia/'
 
+CELERY_RESULT_BACKEND = 'django-db'
