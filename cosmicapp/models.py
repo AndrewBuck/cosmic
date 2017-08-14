@@ -113,3 +113,44 @@ class Image(models.Model):
     resolutionX = models.FloatField(null=True)
     resolutionY = models.FloatField(null=True)
 
+
+
+
+
+class ProcessInput(models.Model):
+    prerequisite = models.ManyToManyField('self', symmetrical=False)
+    process = models.CharField(max_length=32)
+    requestor = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
+    submittedDateTime = models.DateTimeField()
+    startedDateTime = models.DateTimeField(null=True)
+    priority = models.FloatField(null=True)
+    estCostCPU = models.FloatField(null=True)
+    estCostBandwidth = models.FloatField(null=True)
+    estCostStorage = models.FloatField(null=True)
+    estCostIO = models.FloatField(null=True)
+    completed = models.BooleanField(default=False)
+    #NOTE: We may want to add a field or an auto computed field for whether the process can be run now or not.  I.E.
+    # whether it has any unmet prerequisites.
+
+class ProcessOutput(models.Model):
+    processInput = models.ForeignKey(ProcessInput, on_delete=models.CASCADE)
+    finishedDateTime = models.DateTimeField(null=True)
+    actualCostCPU = models.FloatField(null=True)
+    actualCostBandwidth = models.FloatField(null=True)
+    actualCostStorage = models.FloatField(null=True)
+    actualCostIO = models.FloatField(null=True)
+    outputText = models.TextField(null=True)
+    outputErrorText = models.TextField(null=True)
+    outputDBLogText = models.TextField(null=True)
+
+class ProcessArgument(models.Model):
+    processInput = models.ForeignKey(ProcessInput, on_delete=models.CASCADE)
+    argIndex = models.IntegerField()
+    arg = models.CharField(max_length=256)
+
+class ProcessOutputFile(models.Model):
+    processInput = models.ForeignKey(ProcessInput, on_delete=models.CASCADE)
+    onDiskFileName = models.CharField(max_length=256)
+    fileSha256 = models.CharField(max_length=64)
+    size = models.IntegerField()
+
