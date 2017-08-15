@@ -7,7 +7,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "cosmic.settings")
 django.setup()
 
 
-from cosmicapp.models import ProcessInput, ProcessOutput, ProcessArgument, ProcessOutputFile
+from cosmicapp.models import *
 from cosmicapp.tasks import *
 
 quit = False
@@ -37,6 +37,12 @@ while not quit:
         arg = pi.processargument_set.all()[0].arg
         imagestats.delay(arg)
 
+    elif pi.process == 'generateThumbnails':
+        arg = pi.processargument_set.all()[0].arg
+        generateThumbnails.delay(arg)
+
+
+    #TODO: This gets done right away, need to wait to set this to True until the celery task is actually finished, not just dispatched
     pi.completed = True
     pi.save()
 

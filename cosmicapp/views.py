@@ -94,6 +94,27 @@ def upload(request):
 
                 pa.save()
 
+                piThumbnails = ProcessInput(
+                    process = "generateThumbnails",
+                    requestor = User.objects.get(pk=request.user.pk),
+                    submittedDateTime = timezone.now(),
+                    priority = 5000,
+                    estCostCPU = record.uploadSize / 1e6,
+                    estCostBandwidth = 0,
+                    estCostStorage = record.uploadSize / 10,
+                    estCostIO = record.uploadSize / 10
+                    )
+
+                piThumbnails.save()
+
+                paThumbnails = ProcessArgument(
+                    processInput = piThumbnails,
+                    argIndex = 1,
+                    arg = record.onDiskFileName
+                    )
+
+                paThumbnails.save()
+
         context['upload_successful'] = True
         context['records'] = records
 

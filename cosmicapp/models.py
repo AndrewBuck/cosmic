@@ -112,6 +112,8 @@ class Image(models.Model):
     centerROT = models.FloatField(null=True)
     resolutionX = models.FloatField(null=True)
     resolutionY = models.FloatField(null=True)
+    thumbnailFullName = models.CharField(max_length=256, null=True)
+    thumbnailSmallName = models.CharField(max_length=256, null=True)
 
 
 
