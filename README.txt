@@ -18,3 +18,12 @@ python3 manage.py makemigrations
 python3 manage.py migrate
 python3 manage.py runserver 8080
 
+
+
+
+
+Commands needed installed on the system and in the path:
+(Note these are mainly needed on the worker nodes running celery workers, not necessarily on the webserver itself)
+
+identify - part of imagemagick.
+
