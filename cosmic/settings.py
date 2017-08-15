@@ -25,7 +25,7 @@ SECRET_KEY = 'THIS_IS_NOT_SECRET____IN_GIT_REPO____MUST_CHANGE_FOR_PRODUCTION_SI
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
