@@ -11,21 +11,20 @@ which gets put into this queue until the server has time to execute it.</p>
 
     <table border="2px">
     <tr>
-        <th> Prerequisite </th>
-        <th> Process </th>
-        <th> Requestor </th>
-        <th> SubmittedDateTime </th>
-        <th> StartedDateTime </th>
-        <th> Priority </th>
-        <th> EstCostCPU </th>
-        <th> EstCostBandwidth </th>
-        <th> EstCostStorage </th>
-        <th> EstCostIO </th>
-        <th> Completed </th>
+        <th> Process <br> (name) </th>
+        <th> Requestor <br> (username) </th>
+        <th> SubmittedDateTime <br> (time) </th>
+        <th> StartedDateTime <br> (time) </th>
+        <th> Priority <br> (highest first) </th>
+        <th> Est CPU <br> (seconds) </th>
+        <th> Est Bandwidth <br> (bytes) </th>
+        <th> Est Storage <br> (bytes) </th>
+        <th> Est IO <br> (bytes) </th>
+        <th> Completed <br> (T/F) </th>
     </tr>
-    {% for processInput in processInputs %}
-    <tr>
-        <td> {{processInput.prerequisite}} </td>
+
+    {% for processInput in processInputsUncompleted %}
+    <tr bgcolor="red">
         <td> {{processInput.process}} </td>
         <td> {{processInput.requestor}} </td>
         <td> {{processInput.submittedDateTime}} </td>
@@ -38,6 +37,22 @@ which gets put into this queue until the server has time to execute it.</p>
         <td> {{processInput.completed}} </td>
     </tr>
     {% endfor %}
+
+    {% for processInput in processInputsCompleted %}
+    <tr bgcolor="green">
+        <td> {{processInput.process}} </td>
+        <td> {{processInput.requestor}} </td>
+        <td> {{processInput.submittedDateTime}} </td>
+        <td> {{processInput.startedDateTime}} </td>
+        <td> {{processInput.priority}} </td>
+        <td> {{processInput.estCostCPU}} </td>
+        <td> {{processInput.estCostBandwidth}} </td>
+        <td> {{processInput.estCostStorage}} </td>
+        <td> {{processInput.estCostIO}} </td>
+        <td> {{processInput.completed}} </td>
+    </tr>
+    {% endfor %}
+
     </table>
 
 {% endblock %}

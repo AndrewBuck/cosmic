@@ -152,8 +152,10 @@ def userpage(request, username):
 def processQueue(request):
     context = {"user" : request.user}
 
-    processInputs = ProcessInput.objects.all()[:50]
-    context['processInputs'] = processInputs
+    processInputsUncompleted = ProcessInput.objects.filter(completed=False)[:50]
+    processInputsCompleted = ProcessInput.objects.filter(completed=True)[:50]
+    context['processInputsUncompleted'] = processInputsUncompleted
+    context['processInputsCompleted'] = processInputsCompleted
 
     return render(request, "cosmicapp/processqueue.html", context)
 
