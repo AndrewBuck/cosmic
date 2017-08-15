@@ -5,6 +5,8 @@ from django.dispatch import receiver
 
 #TODO:  Need to review the on_delete behaviour of all foreign keys to guarantee references remain intact as needed.
 
+#TODO:  Set a reated_name for all foreign keys and use that in the code where appropriate to make the code more readable.
+
 """
 An Optical tube assembly that forms the core of the optical path of an instrument.
 """
@@ -133,6 +135,9 @@ class ProcessInput(models.Model):
     completed = models.BooleanField(default=False)
     #NOTE: We may want to add a field or an auto computed field for whether the process can be run now or not.  I.E.
     # whether it has any unmet prerequisites.
+
+    class Meta:
+        ordering = ['-priority', 'submittedDateTime']
 
 class ProcessOutput(models.Model):
     processInput = models.ForeignKey(ProcessInput, on_delete=models.CASCADE)

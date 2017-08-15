@@ -25,7 +25,7 @@ while not quit:
     time.sleep(sleepTime)
     print("Checking queue.")
     try:
-        pi = ProcessInput.objects.filter(completed=False).order_by('-priority', 'submittedDateTime')[:1][0]
+        pi = ProcessInput.objects.filter(completed=False)[:1][0]
     except IndexError:
         sleepTimeIndex += 1
         continue
