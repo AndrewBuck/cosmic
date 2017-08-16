@@ -66,7 +66,7 @@ def upload(request):
             fileBase, fileExtension = os.path.splitext(record.onDiskFileName)
 
             #TODO: Move this extension list into variables define in a configuration file somewhere.
-            if fileExtension in [".fit", ".fits", ".png", ".jpg"]:
+            if fileExtension.lower() in [".fit", ".fits", ".png", ".jpg"]:
                 imageRecord = Image(
                     fileRecord = record
                     )
@@ -102,7 +102,7 @@ def upload(request):
                     estCostCPU = record.uploadSize / 1e6,
                     estCostBandwidth = 0,
                     estCostStorage = record.uploadSize / 10,
-                    estCostIO = record.uploadSize / 10
+                    estCostIO = 1.5 * record.uploadSize
                     )
 
                 piThumbnails.save()
