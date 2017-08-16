@@ -161,3 +161,16 @@ class ProcessOutputFile(models.Model):
     fileSha256 = models.CharField(max_length=64)
     size = models.IntegerField()
 
+
+
+
+
+class SextractorResult(models.Model):
+    image = models.ForeignKey(Image, on_delete=models.CASCADE)
+    pixelX = models.FloatField(null=True)
+    pixelY = models.FloatField(null=True)
+    pixelZ = models.FloatField(null=True)
+    fluxAuto = models.FloatField(null=True)
+    fluxAutoErr = models.FloatField(null=True)
+    flags = models.IntegerField(null=True)
+

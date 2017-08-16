@@ -41,10 +41,15 @@ while not quit:
         arg = pi.processargument_set.all()[0].arg
         generateThumbnails.delay(arg)
 
+    elif pi.process == 'sextractor':
+        arg = pi.processargument_set.all()[0].arg
+        sextractor.delay(arg)
+
 
     #TODO: This gets done right away, need to wait to set this to True until the celery task is actually finished, not just dispatched
     pi.completed = True
     pi.save()
 
     sleepTimeIndex = 0
+    print("Task dispatched.")
 
