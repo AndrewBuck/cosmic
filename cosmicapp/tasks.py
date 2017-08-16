@@ -79,6 +79,7 @@ def sextractor(filename):
         for line in catfile:
             # Split the line into fields (space separated) and throw out empty fields caused by multiple spaces in a
             # row.  I.E. do a "combine consecutive delimeters" operation.
+            #TODO: Calling this as split() (with no delimeter) should combine whitespace and make the for loop below unnecessary.
             tempFields = line.split(' ')
             fields = []
             for field in tempFields:
