@@ -159,3 +159,16 @@ def processQueue(request):
 
     return render(request, "cosmicapp/processqueue.html", context)
 
+def image(request, id):
+    context = {"user" : request.user}
+    context['id'] = id
+
+    try:
+        image = Image.objects.get(pk=id)
+    except Image.DoesNotExist:
+        return render(request, "cosmicapp/imagenotfound.html", context)
+
+    context['image'] = image
+
+    return render(request, "cosmicapp/image.html", context)
+

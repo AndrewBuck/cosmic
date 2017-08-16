@@ -1,0 +1,52 @@
+{% extends "cosmicapp/base.html" %}
+{% load static %}
+
+{% block extratitle %} - Image {{id}} {% endblock %}
+
+{% block mainbody %}
+<h2>Image {{id}}</h2>
+
+<img src="/static/cosmicapp/images/{{image.thumbnailFullName}}">
+
+<br><br><br>
+
+    <table border="2px">
+        <tr>
+        <th> Uploaded By <br> (username) </th>
+        <th> Instrument <br> (telescope) </th>
+        <th> X Dim <br> (pixels) </th>
+        <th> Y Dim <br> (pixels) </th>
+        <th> Z Dim <br> (pixels) </th>
+        <th> Bit Depth <br> (bits / px) </th>
+        <th> Frame Type <br> (light/flat/etc) </th>
+        <th> Center RA <br> (deg) </th>
+        <th> Center DEC <br> (deg) </th>
+        <th> Center Rot <br> (deg) </th>
+        <th> Resolution X <br> (arcsec / px) </th>
+        <th> Resolution Y <br> (arcsec / px) </th>
+        </tr>
+
+        <tr>
+        <td> <a href="/user/{{image.fileRecord.uploadingUser}}">{{image.fileRecord.uploadingUser}}</a> </td>
+        <td> {{image.instrument}} </td>
+        <td> {{image.dimX}} </td>
+        <td> {{image.dimY}} </td>
+        <td> {{image.dimZ}} </td>
+        <td> {{image.bitDepth}} </td>
+        <td> {{image.frameType}} </td>
+        <td> {{image.centerRA}} </td>
+        <td> {{image.centerDEC}} </td>
+        <td> {{image.centerROT}} </td>
+        <td> {{image.resolutionX}} </td>
+        <td> {{image.resolutionY}} </td>
+        </tr>
+    </table>
+
+<p>Original uploaded filename: <b>{{image.fileRecord.originalFileName}}</b></p>
+<p>SHA 256 hash of original file: <b>{{image.fileRecord.fileSha256}}</b></p>
+<h3>Image thumbnail</h3>
+
+<img src="/static/cosmicapp/images/{{image.thumbnailSmallName}}">
+
+{% endblock %}
+
