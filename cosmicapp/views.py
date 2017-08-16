@@ -147,6 +147,13 @@ def userpage(request, username):
 
                 return HttpResponseRedirect('/user/' + foruser.username + '/')
 
+    try:
+        foruserImages = Image.objects.filter(fileRecord__uploadingUser = foruser.id)
+        context['foruserImages'] = foruserImages
+    except :
+        pass
+
+
     return render(request, "cosmicapp/userpage.html", context)
 
 def processQueue(request):
