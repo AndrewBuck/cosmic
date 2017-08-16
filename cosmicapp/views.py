@@ -115,6 +115,27 @@ def upload(request):
 
                 paThumbnails.save()
 
+                piSextractor = ProcessInput(
+                    process = "sextractor",
+                    requestor = User.objects.get(pk=request.user.pk),
+                    submittedDateTime = timezone.now(),
+                    priority = 3000,
+                    estCostCPU = 2.0 * record.uploadSize / 1e6,
+                    estCostBandwidth = 0,
+                    estCostStorage = 3000,
+                    estCostIO = record.uploadSize
+                    )
+
+                piSextractor.save()
+
+                paSextractor = ProcessArgument(
+                    processInput = piSextractor,
+                    argIndex = 1,
+                    arg = record.onDiskFileName
+                    )
+
+                paSextractor.save()
+
         context['upload_successful'] = True
         context['records'] = records
 
