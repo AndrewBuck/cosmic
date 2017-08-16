@@ -47,4 +47,5 @@ while not quit:
     pi.save()
 
     sleepTimeIndex = 0
+    print("Task dispatched.")
 
