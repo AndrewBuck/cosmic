@@ -16,7 +16,7 @@
         <th> Instrument <br> (telescope) </th>
         <th> X Dim <br> (pixels) </th>
         <th> Y Dim <br> (pixels) </th>
-        <th> Z Dim <br> (pixels) </th>
+        <th> Z Dim <br> (layers) </th>
         <th> Bit Depth <br> (bits / px) </th>
         <th> Frame Type <br> (light/flat/etc) </th>
         <th> Center RA <br> (deg) </th>
@@ -41,6 +41,12 @@
         <td> {{image.resolutionY}} </td>
         </tr>
     </table>
+
+<br><br>
+
+{% for channel in image.imagechannelinfo_set.all %}
+Image channel {{channel.index}}: {{channel.channelType}}<br>
+{% endfor %}
 
 <p>Original uploaded filename: <b>{{image.fileRecord.originalFileName}}</b></p>
 <p>SHA 256 hash of original file: <b>{{image.fileRecord.fileSha256}}</b></p>
