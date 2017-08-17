@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 from celery import shared_task
+from django.db import transaction
 
 import subprocess
 import json
@@ -45,33 +46,34 @@ def imagestats(filename):
     print("imagestats:tags: " + filename + "   " + output + "   " + error)
     sys.stdout.flush()
 
-    i = 0
-    for line in output.splitlines():
-        split = line.split('=', 1)
-        key = None
-        value = None
+    with transaction.atomic():
+        i = 0
+        for line in output.splitlines():
+            split = line.split('=', 1)
+            key = None
+            value = None
 
-        if len(split) == 1:
-            key = split[0].strip()
-        elif len(split) == 2:
-            key = split[0].strip()
-            value = split[1].strip()
-        else:
-            continue
+            if len(split) == 1:
+                key = split[0].strip()
+            elif len(split) == 2:
+                key = split[0].strip()
+                value = split[1].strip()
+            else:
+                continue
 
-        if (key == None and value == None) or (key == "" and value == "") or (key == "" and value == None):
-            continue
+            if (key == None and value == None) or (key == "" and value == "") or (key == "" and value == None):
+                continue
 
-        headerField = ImageHeaderField(
-            image = image,
-            index = i,
-            key = key,
-            value = value
-            )
+            headerField = ImageHeaderField(
+                image = image,
+                index = i,
+                key = key,
+                value = value
+                )
 
-        headerField.save()
+            headerField.save()
 
-        i += 1
+            i += 1
 
 @shared_task
 def generateThumbnails(filename):
@@ -116,40 +118,41 @@ def sextractor(filename):
 
     with open(storageDirectory + filename + ".cat", 'r') as catfile:
         fieldDict = {}
-        for line in catfile:
-            # Split the line into fields (space separated) and throw out empty fields caused by multiple spaces in a
-            # row.  I.E. do a "combine consecutive delimeters" operation.
-            #TODO: Calling this as split() (with no delimeter) should combine whitespace and make the for loop below unnecessary.
-            tempFields = line.split(' ')
-            fields = []
-            for field in tempFields:
-                if len(field) > 0:
-                    fields.append(field)
+        with transaction.atomic():
+            for line in catfile:
+                # Split the line into fields (space separated) and throw out empty fields caused by multiple spaces in a
+                # row.  I.E. do a "combine consecutive delimeters" operation.
+                #TODO: Calling this as split() (with no delimeter) should combine whitespace and make the for loop below unnecessary.
+                tempFields = line.split(' ')
+                fields = []
+                for field in tempFields:
+                    if len(field) > 0:
+                        fields.append(field)
 
-            # Read the comment lines at the top of the file to record what fields are present and in what order.
-            if line.startswith("#"):
-                fieldDict[fields[2]] = int(fields[1]) - 1
+                # Read the comment lines at the top of the file to record what fields are present and in what order.
+                if line.startswith("#"):
+                    fieldDict[fields[2]] = int(fields[1]) - 1
 
-            #For lines that are not comments, use the fieldDict to determine what fields to read and store in the database.
-            else:
-                xPos = fields[fieldDict['X_IMAGE']]
-                yPos = fields[fieldDict['Y_IMAGE']]
-                zPos = None   #TODO: Add image layer number if this is a data cube, just leaving null for now.
-                fluxAuto = fields[fieldDict['FLUX_AUTO']]
-                fluxAutoErr = fields[fieldDict['FLUXERR_AUTO']]
-                flags = fields[fieldDict['FLAGS']]
+                #For lines that are not comments, use the fieldDict to determine what fields to read and store in the database.
+                else:
+                    xPos = fields[fieldDict['X_IMAGE']]
+                    yPos = fields[fieldDict['Y_IMAGE']]
+                    zPos = None   #TODO: Add image layer number if this is a data cube, just leaving null for now.
+                    fluxAuto = fields[fieldDict['FLUX_AUTO']]
+                    fluxAutoErr = fields[fieldDict['FLUXERR_AUTO']]
+                    flags = fields[fieldDict['FLAGS']]
 
-                record = SextractorResult(
-                    image = image,
-                    pixelX = xPos,
-                    pixelY = yPos,
-                    pixelZ = zPos,
-                    fluxAuto = fluxAuto,
-                    fluxAutoErr = fluxAutoErr,
-                    flags = flags
-                    )
+                    record = SextractorResult(
+                        image = image,
+                        pixelX = xPos,
+                        pixelY = yPos,
+                        pixelZ = zPos,
+                        fluxAuto = fluxAuto,
+                        fluxAutoErr = fluxAutoErr,
+                        flags = flags
+                        )
 
-                record.save()
+                    record.save()
 
     #TODO: Clean up filename.cat which is written to disk but not needed anymore.
 

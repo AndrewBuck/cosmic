@@ -15,7 +15,7 @@ quit = False
 # The time to wait between successive checks to the DB for tasks in the queue.  The first value is the time to wait
 # between tasks when there is more than one in the queue, subsequent values are used for a "backoff timer".
 #TODO: The 10 second sleep between task submissions is a hack to workaround the sqlite db limitation.  Set to a small value for production use.
-sleepTimes = [10, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
+sleepTimes = [1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 60]
 sleepTimeIndex = 0
 
