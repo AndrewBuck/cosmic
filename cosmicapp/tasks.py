@@ -56,8 +56,10 @@ def imagestats(filename):
         elif len(split) == 2:
             key = split[0].strip()
             value = split[1].strip()
+        else:
+            continue
 
-        if key == None and value == None:
+        if (key == None and value == None) or (key == "" and value == "") or (key == "" and value == None):
             continue
 
         headerField = ImageHeaderField(
@@ -77,7 +79,7 @@ def generateThumbnails(filename):
     filenameSmall = os.path.splitext(filename)[0] + "_thumb_small.png"
 
     for tempFilename, sizeArg in [(filenameFull, "100%"), (filenameSmall, "100x100")]:
-        proc = subprocess.Popen(['convert', "-normalize", "-strip", "-filter", "spline", "-unsharp", "0x1", "-resize",
+        proc = subprocess.Popen(['convert', "-contrast-stretch", "2%x1%", "-strip", "-filter", "spline", "-unsharp", "0x1", "-resize",
                 sizeArg, storageDirectory + filename, staticDirectory + "images/" + tempFilename],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE)
