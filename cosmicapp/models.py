@@ -117,6 +117,12 @@ class Image(models.Model):
     thumbnailFullName = models.CharField(max_length=256, null=True)
     thumbnailSmallName = models.CharField(max_length=256, null=True)
 
+class ImageHeaderField(models.Model):
+    image = models.ForeignKey(Image, on_delete=models.CASCADE)
+    index = models.IntegerField(null=True)
+    key = models.TextField(null=True)
+    value = models.TextField(null=True)
+
 
 
 

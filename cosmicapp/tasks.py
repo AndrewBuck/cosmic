@@ -22,7 +22,7 @@ def imagestats(filename):
     output = output.decode('utf-8')
     error = error.decode('utf-8')
 
-    print("imagestats: " + output)
+    print("imagestats: " + filename + "   " + output + "   " + error)
     sys.stdout.flush()
 
     jsonObject = json.loads(output)
@@ -32,6 +32,44 @@ def imagestats(filename):
     image.dimY = jsonObject['height']
     image.bitDepth = jsonObject['depth']
     image.save()
+
+    formatString = '%[*]'
+    proc = subprocess.Popen(['identify', '-format', formatString, storageDirectory + filename],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
+
+    output, error = proc.communicate()
+    output = output.decode('utf-8')
+    error = error.decode('utf-8')
+
+    print("imagestats:tags: " + filename + "   " + output + "   " + error)
+    sys.stdout.flush()
+
+    i = 0
+    for line in output.splitlines():
+        split = line.split('=', 1)
+        key = None
+        value = None
+
+        if len(split) == 1:
+            key = split[0].strip()
+        elif len(split) == 2:
+            key = split[0].strip()
+            value = split[1].strip()
+
+        if key == None and value == None:
+            continue
+
+        headerField = ImageHeaderField(
+            image = image,
+            index = i,
+            key = key,
+            value = value
+            )
+
+        headerField.save()
+
+        i += 1
 
 @shared_task
 def generateThumbnails(filename):
