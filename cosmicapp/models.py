@@ -123,6 +123,10 @@ class ImageHeaderField(models.Model):
     key = models.TextField(null=True)
     value = models.TextField(null=True)
 
+class ImageChannelInfo(models.Model):
+    image = models.ForeignKey(Image, on_delete=models.CASCADE)
+    index = models.IntegerField()
+    channelType = models.CharField(max_length=16)
 
 
 

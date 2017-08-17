@@ -14,7 +14,7 @@ staticDirectory = os.path.dirname(os.path.realpath(__file__)) + "/static/cosmica
 
 @shared_task
 def imagestats(filename):
-    formatString = '{"width" : %w, "height" : %h, "depth" : %z}'
+    formatString = '{"width" : %w, "height" : %h, "depth" : %z, "channels" : "%[channels]"},'
     proc = subprocess.Popen(['identify', '-format', formatString, storageDirectory + filename],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
@@ -23,16 +23,58 @@ def imagestats(filename):
     output = output.decode('utf-8')
     error = error.decode('utf-8')
 
+    output = output.rstrip().rstrip(',')
+    output = '[' + output + ']'
+
     print("imagestats: " + filename + "   " + output + "   " + error)
     sys.stdout.flush()
 
     jsonObject = json.loads(output)
 
+    numChannels = 0
+    channelColors = []
+    for frame in jsonObject:
+        if frame['channels'].lower() in ['red', 'green', 'blue', 'alpha', 'gray', 'cyan', 'magenta', 'yellow', 'black', 'opacity', 'index']:
+            colors = [ frame['channels'].lower() ]
+        elif frame['channels'].lower() in ['rgb', 'srgb']:
+            colors = ['red', 'green', 'blue']
+        elif frame['channels'].lower() == 'rgba':
+            colors = ['red', 'green', 'blue', 'alpha']
+        elif frame['channels'].lower() == 'cmyk':
+            colors = ['cyan', 'magenta', 'yellow', 'black']
+        elif frame['channels'].lower() == 'cmyka':
+            colors = ['cyan', 'magenta', 'yellow', 'black', 'alpha']
+        else:
+            error += "\n\nUnknown colorspace for image frame: " + frame.channels + "\n\n"
+            numChannels = -1
+            break
+
+        for color in colors:
+            channelColors.append( (numChannels, color) )
+            numChannels += 1
+
+    #NOTE: These assume that all channels have the same width, height, and depth.  This may not always be true.
     image = Image.objects.get(fileRecord__onDiskFileName=filename)
-    image.dimX = jsonObject['width']
-    image.dimY = jsonObject['height']
-    image.bitDepth = jsonObject['depth']
-    image.save()
+    image.dimX = jsonObject[0]['width']
+    image.dimY = jsonObject[0]['height']
+    image.bitDepth = jsonObject[0]['depth']
+
+    with transaction.atomic():
+        if numChannels > 0:
+            image.dimZ = numChannels
+            image.save()
+
+            for channelEntry in channelColors:
+                channelInfo = ImageChannelInfo(
+                    image = image,
+                    index = channelEntry[0],
+                    channelType = channelEntry[1]
+                    )
+
+                channelInfo.save()
+
+        else:
+            image.save()
 
     formatString = '%[*]'
     proc = subprocess.Popen(['identify', '-format', formatString, storageDirectory + filename],
@@ -100,6 +142,8 @@ def generateThumbnails(filename):
 
 @shared_task
 def sextractor(filename):
+    #TODO: sextractor cannot handle spaces in filenames (broken in the regular shell too, not just calling from python).
+    #TODO: sextractor can only handle .fit files.  Should autoconvert the file to .fit if necessary before running.
     proc = subprocess.Popen(['sextractor', '-CATALOG_NAME', storageDirectory + filename + ".cat", storageDirectory + filename],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
