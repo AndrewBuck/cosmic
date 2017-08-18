@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.contrib.staticfiles.storage import staticfiles_storage
+from django.contrib.staticfiles import finders
 
 #TODO:  Need to review the on_delete behaviour of all foreign keys to guarantee references remain intact as needed.
 
@@ -116,6 +118,28 @@ class Image(models.Model):
     resolutionY = models.FloatField(null=True)
     thumbnailFullName = models.CharField(max_length=256, null=True)
     thumbnailSmallName = models.CharField(max_length=256, null=True)
+
+    def getThumbnail(self, sizeString):
+        if sizeString == 'full':
+            thumbBaseName = self.thumbnailFullName
+        elif sizeString == 'small':
+            thumbBaseName = self.thumbnailSmallName
+
+        if finders.find("cosmicapp/images/" + thumbBaseName):
+            url = staticfiles_storage.url("cosmicapp/images/" + thumbBaseName)
+            return '<a href=/image/' + str(self.pk) + '><img src="' + url + '"></a>'
+        else:
+            filename = thumbBaseName[:-len(".png")]
+            filename += "-0.png"
+            url = staticfiles_storage.url("cosmicapp/images/" + filename)
+            #TODO: Add javascript here to flip between different thumbnails.
+            return '<a href=/image/' + str(self.pk) + '><img src="' + url + '"></a>'
+
+    def getThumbnailFull(self):
+        return self.getThumbnail("full")
+
+    def getThumbnailSmall(self):
+        return self.getThumbnail("small")
 
 class ImageHeaderField(models.Model):
     image = models.ForeignKey(Image, on_delete=models.CASCADE)

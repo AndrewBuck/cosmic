@@ -6,7 +6,7 @@
 {% block mainbody %}
 <h2>Image {{id}}</h2>
 
-<img src="/static/cosmicapp/images/{{image.thumbnailFullName}}">
+{{image.getThumbnailFull|safe}}
 
 <br><br><br>
 
@@ -52,7 +52,7 @@ Image channel {{channel.index}}: {{channel.channelType}}<br>
 <p>SHA 256 hash of original file: <b>{{image.fileRecord.fileSha256}}</b></p>
 <h3>Image thumbnail</h3>
 
-<img src="/static/cosmicapp/images/{{image.thumbnailSmallName}}">
+{{image.getThumbnailSmall|safe}}
 
 {% endblock %}
 

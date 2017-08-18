@@ -30,17 +30,9 @@
 <table>
 <tr>
 {% for image in foruserImages %}
-    <td><img src="/static/cosmicapp/images/{{image.thumbnailSmallName}}"></td>
+    <td>{{image.getThumbnailSmall|safe}}</td>
 {% endfor %}
 </tr>
 </table>
 
-<table>
-<tr>
-{% for image in foruserImages %}
-    <td><img src="/static/cosmicapp/images/{{image.thumbnailFullName}}"></td>
-{% endfor %}
-</tr>
-
-</table>
 {% endblock %}
