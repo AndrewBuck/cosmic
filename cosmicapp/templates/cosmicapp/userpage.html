@@ -30,6 +30,9 @@
 <table>
 <tr>
 {% for image in foruserImages %}
+    {% if forloop.counter0|divisibleby:5 %}
+    </tr><tr>
+    {% endif %}
     <td>{{image.getThumbnailSmall|safe}}</td>
 {% endfor %}
 </tr>
