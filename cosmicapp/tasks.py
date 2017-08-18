@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 from celery import shared_task
 from django.db import transaction
+from django.conf import settings
 
 import subprocess
 import json
@@ -9,13 +10,12 @@ import os
 
 from .models import *
 
-storageDirectory = '/cosmicmedia/'
 staticDirectory = os.path.dirname(os.path.realpath(__file__)) + "/static/cosmicapp/"
 
 @shared_task
 def imagestats(filename):
     formatString = '{"width" : %w, "height" : %h, "depth" : %z, "channels" : "%[channels]"},'
-    proc = subprocess.Popen(['identify', '-format', formatString, storageDirectory + filename],
+    proc = subprocess.Popen(['identify', '-format', formatString, settings.MEDIA_ROOT + filename],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
 
@@ -77,7 +77,7 @@ def imagestats(filename):
             image.save()
 
     formatString = '%[*]'
-    proc = subprocess.Popen(['identify', '-format', formatString, storageDirectory + filename],
+    proc = subprocess.Popen(['identify', '-format', formatString, settings.MEDIA_ROOT + filename],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
 
@@ -124,7 +124,7 @@ def generateThumbnails(filename):
 
     for tempFilename, sizeArg in [(filenameFull, "100%"), (filenameSmall, "100x100")]:
         proc = subprocess.Popen(['convert', "-contrast-stretch", "2%x1%", "-strip", "-filter", "spline", "-unsharp", "0x1", "-resize",
-                sizeArg, storageDirectory + filename, staticDirectory + "images/" + tempFilename],
+                sizeArg, settings.MEDIA_ROOT + filename, staticDirectory + "images/" + tempFilename],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE)
 
@@ -144,10 +144,10 @@ def generateThumbnails(filename):
 def sextractor(filename):
     #TODO: sextractor cannot handle spaces in filenames (broken in the regular shell too, not just calling from python).
     #TODO: sextractor can only handle .fit files.  Should autoconvert the file to .fit if necessary before running.
-    proc = subprocess.Popen(['sextractor', '-CATALOG_NAME', storageDirectory + filename + ".cat", storageDirectory + filename],
+    proc = subprocess.Popen(['sextractor', '-CATALOG_NAME', settings.MEDIA_ROOT + filename + ".cat", settings.MEDIA_ROOT + filename],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        cwd=storageDirectory
+        cwd=settings.MEDIA_ROOT
         )
 
     output, error = proc.communicate()
@@ -160,7 +160,7 @@ def sextractor(filename):
     # Get the image record
     image = Image.objects.get(fileRecord__onDiskFileName=filename)
 
-    with open(storageDirectory + filename + ".cat", 'r') as catfile:
+    with open(settings.MEDIA_ROOT + filename + ".cat", 'r') as catfile:
         fieldDict = {}
         with transaction.atomic():
             for line in catfile:
