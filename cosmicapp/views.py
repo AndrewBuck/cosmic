@@ -8,6 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponseRedirect
 from django.utils import timezone
+from django.conf import settings
 
 from .models import User, Profile, UploadedFileRecord, Image
 from .models import ProcessInput, ProcessOutput, ProcessArgument, ProcessOutputFile
@@ -45,6 +46,10 @@ def upload(request):
         for myfile in request.FILES.getlist('myfiles'):
             fs = FileSystemStorage()
             filename = fs.save(myfile.name, myfile)
+
+            filenameNoSpaces = filename.replace(' ', '_')
+            os.rename(settings.MEDIA_ROOT + filename, settings.MEDIA_ROOT + filenameNoSpaces)
+            filename = filenameNoSpaces
 
             hashObject = hashlib.sha256()
             for chunk in myfile.chunks():
