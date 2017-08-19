@@ -208,3 +208,27 @@ class SextractorResult(models.Model):
     fluxAutoErr = models.FloatField(null=True)
     flags = models.IntegerField(null=True)
 
+
+
+class Catalog(models.Model):
+    name = models.CharField(max_length=64, null=True)
+    fullName = models.CharField(max_length=64, null=True)
+    objectTypes = models.TextField(null=True)
+    numObjects = models.TextField(null=True)
+    limMagnitude = models.FloatField(null=True)
+    attributionShort = models.TextField(null=True)
+    attributionLong = models.TextField(null=True)
+    vizierID = models.TextField(null=True)
+    vizierUrl = models.TextField(null=True)
+
+class UCAC4Record(models.Model):
+    identifier = models.CharField(max_length=10, null=True)
+    ra = models.FloatField(null=True)
+    dec = models.FloatField(null=True)
+    pmra = models.FloatField(null=True)
+    pmdec = models.FloatField(null=True)
+    magFit = models.FloatField(null=True)
+    magAperture = models.FloatField(null=True)
+    magError = models.FloatField(null=True)
+    id2mass = models.CharField(max_length=32, null=True)
+

@@ -1,0 +1,25 @@
+<h2>Catalogs</h2>
+
+<p>This page lists the various astronomical catalogs in use on the Cosmic website.  These catalogs are used to generate
+recommended objects for observing lists, to assist in plate solving of submitted images, and to provide additional
+information on objects detected in solved plates.  The purpose of this page is to provide attribution to the groups who
+produced these catalogs, as well as to answer any questions our users might have about what data is available directly
+in our database and what sources it is gathered from.</p>
+
+<h2>Imported Catalogs</h2>
+
+{% for catalog in catalogs %}
+    <h3>{{catalog.name}}</h3>
+
+    <p><i>{{catalog.fullName}}</i></p>
+
+    <p>Contains {{catalog.numObjects}} objects of type: {{catalog.objectTypes}} - down to a limiting magnitude of {{catalog.limMagnitude}}</p>
+
+    <p>Link to catalog entry on VizieR: <a href="{{catalog.vizierUrl}}">{{catalog.vizierID}}</a></p>
+
+    <p>Attribution: "{{catalog.attributionShort}}"</p>
+
+    {% if catalog.attributionLong %}<p>{{catalog.attributionLong}}</p>{% endif %}
+
+{% endfor %}
+

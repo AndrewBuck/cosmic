@@ -10,9 +10,8 @@ from django.http import HttpResponseRedirect
 from django.utils import timezone
 from django.conf import settings
 
-from .models import User, Profile, UploadedFileRecord, Image
-from .models import ProcessInput, ProcessOutput, ProcessArgument, ProcessOutputFile
-from .forms import UserForm, ProfileForm
+from .models import *
+from .forms import *
 
 def index(request):
     context = {"user" : request.user}
@@ -191,6 +190,12 @@ def processQueue(request):
     context['processInputsCompleted'] = processInputsCompleted
 
     return render(request, "cosmicapp/processqueue.html", context)
+
+def catalogs(request):
+    context = {"user" : request.user}
+    context['catalogs'] = Catalog.objects.all()
+
+    return render(request, "cosmicapp/catalogs.html", context)
 
 def image(request, id):
     context = {"user" : request.user}
