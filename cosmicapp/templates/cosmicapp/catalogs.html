@@ -21,5 +21,7 @@ in our database and what sources it is gathered from.</p>
 
     {% if catalog.attributionLong %}<p>{{catalog.attributionLong}}</p>{% endif %}
 
+    {% if catalog.cosmicNotes %}<p>Notes specific to the Cosmic website: <i>{{catalog.cosmicNotes}}</i></p>{% endif %}
+
 {% endfor %}
 

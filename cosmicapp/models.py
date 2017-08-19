@@ -220,6 +220,7 @@ class Catalog(models.Model):
     attributionLong = models.TextField(null=True)
     vizierID = models.TextField(null=True)
     vizierUrl = models.TextField(null=True)
+    cosmicNotes = models.TextField(null=True)
 
 class UCAC4Record(models.Model):
     identifier = models.CharField(max_length=10, null=True)
@@ -231,4 +232,26 @@ class UCAC4Record(models.Model):
     magAperture = models.FloatField(null=True)
     magError = models.FloatField(null=True)
     id2mass = models.CharField(max_length=32, null=True)
+
+class GCVSRecord(models.Model):
+    constellationNumber = models.CharField(max_length=2, null=True)
+    starNumber = models.CharField(max_length=5, null=True)
+    identifier = models.CharField(max_length=10, null=True)
+    ra = models.FloatField(null=True)
+    dec = models.FloatField(null=True)
+    pmRa = models.FloatField(null=True)
+    pmDec = models.FloatField(null=True)
+    variableType = models.CharField(max_length=10, null=True)
+    variableType2 = models.CharField(max_length=10, null=True)
+    magMax = models.FloatField(null=True)
+    magMaxFlag = models.CharField(max_length=1, null=True)
+    magMin = models.FloatField(null=True)
+    magMinFlag = models.CharField(max_length=1, null=True)
+    magMin2 = models.FloatField(null=True)
+    magMin2Flag = models.CharField(max_length=1, null=True)
+    epochMaxMag = models.FloatField(null=True)  #NOTE: This can be a max or a min depending on the variable type.
+    outburstYear = models.FloatField(null=True)
+    period = models.FloatField(null=True)
+    periodRisingPercentage = models.FloatField(null=True)
+    spectralType = models.CharField(max_length=17, null=True)
 
