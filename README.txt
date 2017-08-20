@@ -47,6 +47,90 @@ sextractor - Source Extractor: Finds stars and galaxies in an image.  Also must
 
 
 
+Catalogs
+
+The Cosmic website uses imported astronomical catalogs to aid in plate solving,
+provide details on sources extracted from uploaded images, and to suggest
+targets for people to observe.  These catalogs are freely available online, however
+some are very large, both to download and in terms of the disk space they require.
+
+Below is a listing of the catalogs that Cosmic has importers for.  Without
+certain catalogs being imported, some site functionality may not work
+correctly, and may break the site entirely, as runnning without the catalog is
+not necessarily a supported option.
+
+TODO:  Create files which are sample extracts of each catalog to allow a subset
+of the full data to be distributed with Cosmic.  This way developers who want
+to test the site or people who want to run local copies themselves can safely
+use the site with reduced functionality, but without db queries failing due to
+lack of data.
+
+
+
+UCAC4 - U.S. Naval Observatory CCD Astrograph Catalog
+
+	A catalog containing 114 million stars.  Coverage over the whole sky
+	for all stars down to a limiting magnitude of 16.
+
+	Attribution: "The fourth U.S. Naval Observatory CCD Astrograph Catalog
+		(UCAC4) by Zacharias N., Finch C.T., Girard T.M., Henden A.,
+		Bartlet J.L., Monet D.G., Zacharias M.I."
+
+	Binary files are 8.6 gb, downloadable over ftp at:
+		ftp://cdsarc.u-strasbg.fr/cats/I/322A/UCAC4/
+
+	Also download the u4dump.f and u4sub.f from the 'access' folder.
+	Compile them with:
+		gfortran u4dump.f u4sub.f -o u4dump
+
+	Then unpack the binary files into ascii files with u4dump
+	The ascii files will take 26 gb on disk.
+
+	Next run the import script in the cosmic directory to import the
+	contents of the zXXX.asc files into the django database for the site.
+	TODO: Determine DB size after import.
+		python3 import_cat_ucac4_dump.py /path/to/ascii/files/*.asc
+
+	After the import is complete and verified the ascii files can be
+	deleted, freeing the 26 gb of disk space they used.  If you want to
+	delete the binary files you can, but at 8.6 gb it is worth keeping them
+	around in case a future import is needed.  They are not needed for the
+	site to function correctly.
+
+
+GCVS - General Catalogue of Variable Stars
+
+	A catalog containing about 50,000 variable stars along with their
+	minimum and maximum magnitudes, period, variability type, and spectral
+	class.  No specific minimum magnitude and coverage is for the whole sky.
+
+	Attribution: "Samus N.N., Kazarovets E.V., Durlevich O.V., Kireeva
+		N.N., Pastukhova E.N., General Catalogue of Variable Stars:
+		Version GCVS 5.1, Astronomy Reports, 2017, vol. 61, No. 1,
+		pp.  80-88 {2017ARep...61...80S}"
+
+	The catalog is distributed as an ascii text file downloadable from:
+		http://www.sai.msu.su/gcvs/gcvs/
+
+	The download is about 12 mb and consists of a single file: gcvs5.txt
+	Once downloaded the import script can be run:
+		python3 import_cat_gcvs.py /path/to/gcvs5.txt
+
+	The import script expects version 5 of the catalog and will refuse to
+	run unless the file is named gcvs5.txt.  Future versions of the catalog
+	may work if they have the same format but at this time it is impossible
+	to say if that will be true.  You can override this check by renaming
+	your newer catalog to the expected name, or by commenting out the check
+	in the python import script.
+
+	After the script has finished importing the gcvs5.txt file could be
+	deleted but it is not a big file anyway so you will probably want to
+	keep it.  It is not necessary for the site to function correctly.
+
+
+
+
+
 NOTES:
 
 The imwcs command line program does plate solving similar to atrometry.net

@@ -106,7 +106,7 @@ catalogDescription = Catalog(
     objectTypes = "stars (variable)",
     numObjects = GCVSRecord.objects.count(),
     limMagnitude = None,
-    attributionShort = "Samus N.N., Kazarovets E.V., Durlevich O.V., Kireeva N.N., Pastukhova E.N., General Catalogue of Variable Stars: Version GCVS 5.1, Astronomy Reports, 2017, vol. 61, No. 1, pp. 80-88 {2017ARep...61...80S} ",
+    attributionShort = "Samus N.N., Kazarovets E.V., Durlevich O.V., Kireeva N.N., Pastukhova E.N., General Catalogue of Variable Stars: Version GCVS 5.1, Astronomy Reports, 2017, vol. 61, No. 1, pp. 80-88 {2017ARep...61...80S}",
     vizierID = "B/GCVS",
     vizierUrl = "http://vizier.u-strasbg.fr/viz-bin/VizieR-3?-source=B/gcvs/gcvs_cat",
     cosmicNotes = "Current import code ignores several 'flag' fields indicating uncertainty about various measurements in the catalog."
