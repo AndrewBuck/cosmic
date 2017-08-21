@@ -159,18 +159,14 @@ def sextractor(filename):
     # Get the image record
     image = Image.objects.get(fileRecord__onDiskFileName=filename)
 
-    with open(settings.MEDIA_ROOT + filename + ".cat", 'r') as catfile:
+    catfileName = settings.MEDIA_ROOT + filename + ".cat"
+    with open(catfileName, 'r') as catfile:
         fieldDict = {}
         with transaction.atomic():
             for line in catfile:
                 # Split the line into fields (space separated) and throw out empty fields caused by multiple spaces in a
                 # row.  I.E. do a "combine consecutive delimeters" operation.
-                #TODO: Calling this as split() (with no delimeter) should combine whitespace and make the for loop below unnecessary.
-                tempFields = line.split(' ')
-                fields = []
-                for field in tempFields:
-                    if len(field) > 0:
-                        fields.append(field)
+                fields = line.split()
 
                 # Read the comment lines at the top of the file to record what fields are present and in what order.
                 if line.startswith("#"):
@@ -197,5 +193,8 @@ def sextractor(filename):
 
                     record.save()
 
-    #TODO: Clean up filename.cat which is written to disk but not needed anymore.
+    try:
+        os.remove(catfileName)
+    except OSError:
+        pass
 
