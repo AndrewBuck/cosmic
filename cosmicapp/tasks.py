@@ -142,7 +142,6 @@ def generateThumbnails(filename):
 
 @shared_task
 def sextractor(filename):
-    #TODO: sextractor cannot handle spaces in filenames (broken in the regular shell too, not just calling from python).
     #TODO: sextractor can only handle .fit files.  Should autoconvert the file to .fit if necessary before running.
     proc = subprocess.Popen(['sextractor', '-CATALOG_NAME', settings.MEDIA_ROOT + filename + ".cat", settings.MEDIA_ROOT + filename],
         stdout=subprocess.PIPE,

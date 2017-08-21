@@ -42,7 +42,7 @@
         </tr>
     </table>
 
-<br><br>
+<p>Source extractor detected {{numSources}} sources in the image.  <a href="/image/{{id}}/sources/">View sources</a></p>
 
 {% for channel in image.imagechannelinfo_set.all %}
 Image channel {{channel.index}}: {{channel.channelType}}<br>

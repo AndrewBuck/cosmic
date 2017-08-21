@@ -208,5 +208,24 @@ def image(request, id):
 
     context['image'] = image
 
+    numSources = SextractorResult.objects.filter(image_id=image.pk).count()
+    context['numSources'] = numSources
+
     return render(request, "cosmicapp/image.html", context)
+
+def imageSources(request, id):
+    context = {"user" : request.user}
+    context['id'] = id
+
+    try:
+        image = Image.objects.get(pk=id)
+    except Image.DoesNotExist:
+        return render(request, "cosmicapp/imagenotfound.html", context)
+
+    context['image'] = image
+
+    sources = SextractorResult.objects.filter(image_id=image.pk)
+    context['sources'] = sources
+
+    return render(request, "cosmicapp/imageSources.html", context)
 

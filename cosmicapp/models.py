@@ -127,7 +127,7 @@ class Image(models.Model):
 
         if finders.find("cosmicapp/images/" + thumbBaseName):
             url = staticfiles_storage.url("cosmicapp/images/" + thumbBaseName)
-            return '<a href=/image/' + str(self.pk) + '><img src="' + url + '"></a>'
+            return '<a href=/image/' + str(self.pk) + '><img src="' + url + '" id="thumbnail_' + str(self.pk) + sizeString + '"></a>'
         else:
             filename = thumbBaseName[:-len(".png")]
             filename += "-0.png"

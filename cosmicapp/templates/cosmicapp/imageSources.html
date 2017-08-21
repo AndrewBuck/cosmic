@@ -1,0 +1,45 @@
+{% extends "cosmicapp/base.html" %}
+{% load static %}
+
+{% block extratitle %} - Image {{id}} sources viewer {% endblock %}
+
+{% block mainbody %}
+
+<canvas id="sourcesCanvas" width="{{image.dimX}}" height="{{image.dimY}}" style="border:4px solid #00A030">
+Your browser does not support the HTML5 canvas tag.
+</canvas>
+
+<script>
+var sextractorResults =
+[
+    {% for source in sources %}
+    {pk: {{source.pk}}, x: {{source.pixelX}}, y: {{source.pixelY}}, flux: {{source.fluxAuto}} },
+    {% endfor %}
+]
+
+function drawSources(ctx)
+{
+    ctx.strokeStyle = "#E02010"
+
+    for(i = 0; i < sextractorResults.length; i++)
+    {
+        ctx.beginPath();
+        ctx.arc(sextractorResults[i].x, {{image.dimY}} - sextractorResults[i].y,
+            .2*Math.pow(Math.log(sextractorResults[i].flux), 1.75), 0, 2*Math.PI)
+        ctx.stroke();
+    }
+};
+
+window.onload = function()
+{
+    var canvas = document.getElementById("sourcesCanvas");
+    var ctx = canvas.getContext("2d");
+    var img = new Image();
+    img.src = '/static/cosmicapp/images/{{image.thumbnailFullName}}';
+    ctx.drawImage(img, 0, 0);
+
+    drawSources(ctx);
+};
+</script>
+{% endblock %}
+
