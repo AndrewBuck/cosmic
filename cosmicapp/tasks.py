@@ -143,7 +143,8 @@ def generateThumbnails(filename):
 @shared_task
 def sextractor(filename):
     #TODO: sextractor can only handle .fit files.  Should autoconvert the file to .fit if necessary before running.
-    proc = subprocess.Popen(['sextractor', '-CATALOG_NAME', settings.MEDIA_ROOT + filename + ".cat", settings.MEDIA_ROOT + filename],
+    catfileName = settings.MEDIA_ROOT + filename + ".cat"
+    proc = subprocess.Popen(['sextractor', '-CATALOG_NAME', catfileName, settings.MEDIA_ROOT + filename],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         cwd=settings.MEDIA_ROOT
@@ -159,7 +160,6 @@ def sextractor(filename):
     # Get the image record
     image = Image.objects.get(fileRecord__onDiskFileName=filename)
 
-    catfileName = settings.MEDIA_ROOT + filename + ".cat"
     with open(catfileName, 'r') as catfile:
         fieldDict = {}
         with transaction.atomic():
