@@ -133,3 +133,6 @@ LOGOUT_REDIRECT_URL = '/'
 MEDIA_ROOT = '/cosmicmedia/'
 
 CELERY_RESULT_BACKEND = 'django-db'
+
+SUPPORTED_IMAGE_TYPES = [".fit", ".fits", ".png", ".jpg"]
+

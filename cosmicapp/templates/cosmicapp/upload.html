@@ -3,6 +3,27 @@
 {% block extratitle %} - Upload files {{foruser.username}} {% endblock %}
 
 {% block mainbody %}
+<h2>Upload</h2>
+
+<p>This page is for uploading images and observing notes to be shared on Cosmic.  Please only upload images of the sky
+and calibration images.  For uploading pictures of yourself or your equipment you can do that on your <a
+href="/user/{{user}}">user
+page</a>.</p>
+
+<p>Please keep in mind that Cosmic is NOT a website for sharing arbitrary files, ONLY ASTRONOMICAL IMAGES,
+CALIBRATION IMAGES, AND OBSERVER NOTES WILL BE KEPT OTHER FILES WILL BE DELETED.</p>
+
+<p>The following image file types are supported:
+
+<b>
+{% for filetype in supportedImageTypes %}
+    &nbsp;&nbsp;&nbsp;{{filetype}}
+{% endfor %}
+</b></p>
+
+<p>Once your images have been successfully uploaded they will be added to the processing queue where they will be plate
+solved, source extracted, and so forth.</p>
+
 <form method="post" enctype="multipart/form-data">
 {% csrf_token %}
 <input type="file" name="myfiles" multiple=""><br><br>

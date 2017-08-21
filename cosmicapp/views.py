@@ -39,6 +39,7 @@ def createuser(request):
 @login_required
 def upload(request):
     context = {"user" : request.user}
+    context['supportedImageTypes'] = settings.SUPPORTED_IMAGE_TYPES
 
     if request.method == 'POST' and 'myfiles' in request.FILES:
         records = []
@@ -69,8 +70,7 @@ def upload(request):
 
             fileBase, fileExtension = os.path.splitext(record.onDiskFileName)
 
-            #TODO: Move this extension list into variables define in a configuration file somewhere.
-            if fileExtension.lower() in [".fit", ".fits", ".png", ".jpg"]:
+            if fileExtension.lower() in settings.SUPPORTED_IMAGE_TYPES:
                 imageRecord = Image(
                     fileRecord = record
                     )
