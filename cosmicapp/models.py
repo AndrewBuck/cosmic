@@ -125,6 +125,9 @@ class Image(models.Model):
         elif sizeString == 'small':
             thumbBaseName = self.thumbnailSmallName
 
+        if thumbBaseName == None:
+            return ""
+
         if finders.find("cosmicapp/images/" + thumbBaseName):
             url = staticfiles_storage.url("cosmicapp/images/" + thumbBaseName)
             return '<a href=/image/' + str(self.pk) + '><img src="' + url + '" id="thumbnail_' + str(self.pk) + sizeString + '"></a>'
