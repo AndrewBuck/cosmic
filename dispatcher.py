@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import django
 import celery
@@ -23,10 +24,14 @@ while not quit:
     if sleepTimeIndex > len(sleepTimes) - 1:
         sleepTimeIndex = len(sleepTimes) - 1
 
+    #TODO: Need to recursively fetch the prerequisites until all are satisfied.
     sleepTime = sleepTimes[sleepTimeIndex]
     print("Sleeping for " + str(sleepTime) + " seconds.")
+    sys.stdout.flush()
     time.sleep(sleepTime)
     print("Checking queue.")
+    sys.stdout.flush()
+
     try:
         pi = ProcessInput.objects.filter(completed=False)[:1][0]
     except IndexError:
@@ -38,24 +43,42 @@ while not quit:
 
     if pi.process == 'imagestats':
         arg = pi.processargument_set.all()[0].arg
-        imagestats.delay(arg)
+        celeryResult = imagestats.delay(arg)
 
     elif pi.process == 'generateThumbnails':
         arg = pi.processargument_set.all()[0].arg
-        generateThumbnails.delay(arg)
+        celeryResult = generateThumbnails.delay(arg)
 
     elif pi.process == 'sextractor':
         arg = pi.processargument_set.all()[0].arg
-        sextractor.delay(arg)
+        celeryResult = sextractor.delay(arg)
 
-    if pi.process == 'parseheaders':
+    elif pi.process == 'parseheaders':
         arg = pi.processargument_set.all()[0].arg
-        parseHeaders.delay(arg)
+        celeryResult = parseHeaders.delay(arg)
 
-    #TODO: This gets done right away, need to wait to set this to True until the celery task is actually finished, not just dispatched
+    else:
+        print("Skipping unknown task type: " + pi.process)
+        sys.stdout.flush()
+
+    print("Task dispatched.")
+    sys.stdout.flush()
+
+    #TODO: This forces the task to complete before the next task is submitted to celery.  In the future when we have
+    # multiple celery workers this should be expanded to pass out several jobs at a time and replace any completed
+    # ones in order to keep the various celery nodes busy.
+    waitTime = 0.0
+    while not celeryResult.ready():
+        print("   Task running, waiting " + str(waitTime) + " seconds.")
+        sys.stdout.flush()
+        time.sleep(waitTime)
+        waitTime += 0.1
+
     pi.completed = True
     pi.save()
 
+    print("Task completed.")
+    sys.stdout.flush()
+
     sleepTimeIndex = 0
-    print("Task dispatched.")
 
