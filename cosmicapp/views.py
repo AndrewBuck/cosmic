@@ -140,6 +140,28 @@ def upload(request):
 
                 paSextractor.save()
 
+                piHeaders = ProcessInput(
+                    process = "parseheaders",
+                    requestor = User.objects.get(pk=request.user.pk),
+                    submittedDateTime = timezone.now(),
+                    priority = 1000,
+                    estCostCPU = .1,
+                    estCostBandwidth = 0,
+                    estCostStorage = 1000,
+                    estCostIO = 2000,
+                    )
+
+                piHeaders.save()
+                piHeaders.prerequisite.add(pi)
+
+                paHeaders = ProcessArgument(
+                    processInput = piHeaders,
+                    argIndex = 1,
+                    arg = imageRecord.pk
+                    )
+
+                paHeaders.save()
+
         context['upload_successful'] = True
         context['records'] = records
 

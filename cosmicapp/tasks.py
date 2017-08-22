@@ -198,3 +198,92 @@ def sextractor(filename):
     except OSError:
         pass
 
+@shared_task
+def parseHeaders(imageId):
+    image = Image.objects.get(pk=imageId)
+    headers = ImageHeaderField.objects.filter(image=imageId)
+
+    with transaction.atomic():
+        for header in headers:
+            if header.key == 'fits:bitpix':
+                key = 'bitDepth'
+                value = str(abs(int(header.value.split()[0])))
+
+            elif header.key in ['fits:date_obs', 'fits:date-obs']:
+                key = 'dateObs'
+                value = header.value.split('/')[0].strip().strip("'")
+
+            elif header.key in ['fits:exptime', 'fits:exposure']:
+                key = 'exposureTime'
+                value = header.value.split()[0]
+
+            elif header.key == 'fits:instrume':
+                key = 'instrument'
+                value = header.value.split('/')[0].strip().strip("'")
+
+            elif header.key in ['fits:swcreate', 'fits:creator']:
+                key = 'createdBySoftware'
+                value = header.value.split('/')[0].strip().strip("'")
+
+            elif header.key == 'fits:naxis':
+                key = 'numAxis'
+                value = header.value.split()[0]
+
+            elif header.key == 'fits:naxis1':
+                key = 'width'
+                value = header.value.split()[0]
+
+            elif header.key == 'fits:naxis2':
+                key = 'height'
+                value = header.value.split()[0]
+
+            elif header.key == 'fits:naxis3':
+                key = 'numChannels'
+                value = header.value.split()[0]
+
+            elif header.key == 'fits:xbinning':
+                key = 'binningX'
+                value = header.value.split()[0]
+
+            elif header.key == 'fits:ybinning':
+                key = 'binningY'
+                value = header.value.split()[0]
+
+            #TODO: Pixel size is supposed to be after binning however this does not appear to be correct in binned frames.
+            elif header.key == 'fits:xpixsz':
+                key = 'pixelSizeX'
+                value = header.value.split()[0]
+
+            #TODO: Pixel size is supposed to be after binning however this does not appear to be correct in binned frames.
+            elif header.key == 'fits:ypixsz':
+                key = 'pixelSizeY'
+                value = header.value.split()[0]
+
+            elif header.key == 'fits:ccd-temp':
+                key = 'ccdTemp'
+                value = header.value.split()[0]
+
+            elif header.key == 'fits:set-temp':
+                key = 'ccdSetTemp'
+                value = header.value.split()[0]
+
+            elif header.key == 'fits:imagtyp':
+                key = 'imageType'
+                value = header.value.split('/')[0].strip().strip("'").lower()
+
+            else:
+                continue
+
+            # Many of these are stripped already, but strip them once more just to be sure no extra whitespace got included.
+            key = key.strip()
+            value = value.strip()
+
+            prop = ImageProperty(
+                image = image,
+                header = header,
+                key = key,
+                value = value
+                )
+
+            prop.save()
+

@@ -152,6 +152,12 @@ class ImageChannelInfo(models.Model):
     index = models.IntegerField()
     channelType = models.CharField(max_length=16)
 
+class ImageProperty(models.Model):
+    image = models.ForeignKey(Image, on_delete=models.CASCADE)
+    header = models.ForeignKey(ImageHeaderField, on_delete=models.CASCADE, null=True)
+    key = models.TextField()
+    value = models.TextField()
+
 
 
 
