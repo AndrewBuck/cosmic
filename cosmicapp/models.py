@@ -172,7 +172,7 @@ class ProcessInput(models.Model):
     estCostBandwidth = models.FloatField(null=True)
     estCostStorage = models.FloatField(null=True)
     estCostIO = models.FloatField(null=True)
-    completed = models.BooleanField(default=False)
+    completed = models.TextField(null=True, default=None)
     #NOTE: We may want to add a field or an auto computed field for whether the process can be run now or not.  I.E.
     # whether it has any unmet prerequisites.
 

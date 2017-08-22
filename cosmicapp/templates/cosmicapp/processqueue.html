@@ -20,11 +20,11 @@ which gets put into this queue until the server has time to execute it.</p>
         <th> Est Bandwidth <br> (bytes) </th>
         <th> Est Storage <br> (bytes) </th>
         <th> Est IO <br> (bytes) </th>
-        <th> Completed <br> (T/F) </th>
+        <th> Completed <br> (T/F/Err) </th>
     </tr>
 
     {% for processInput in processInputsUncompleted %}
-    <tr bgcolor="red">
+    <tr bgcolor="yellow">
         <td> {{processInput.process}} </td>
         <td> {{processInput.requestor}} </td>
         <td> {{processInput.submittedDateTime}} </td>
@@ -39,7 +39,11 @@ which gets put into this queue until the server has time to execute it.</p>
     {% endfor %}
 
     {% for processInput in processInputsCompleted %}
-    <tr bgcolor="green">
+    {% if processInput.completed == "success" %}
+        <tr bgcolor="green">
+    {% else %}
+        <tr bgcolor="red">
+    {% endif %}
         <td> {{processInput.process}} </td>
         <td> {{processInput.requestor}} </td>
         <td> {{processInput.submittedDateTime}} </td>

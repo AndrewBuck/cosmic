@@ -9,6 +9,7 @@ from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponseRedirect
 from django.utils import timezone
 from django.conf import settings
+from django.db.models import Q
 
 from .models import *
 from .forms import *
@@ -206,8 +207,8 @@ def userpage(request, username):
 def processQueue(request):
     context = {"user" : request.user}
 
-    processInputsUncompleted = ProcessInput.objects.filter(completed=False)[:50]
-    processInputsCompleted = ProcessInput.objects.filter(completed=True)[:50]
+    processInputsUncompleted = ProcessInput.objects.filter(completed=None)[:50]
+    processInputsCompleted = ProcessInput.objects.filter(~Q(completed=None)).order_by('-startedDateTime')[:50]
     context['processInputsUncompleted'] = processInputsUncompleted
     context['processInputsCompleted'] = processInputsCompleted
 

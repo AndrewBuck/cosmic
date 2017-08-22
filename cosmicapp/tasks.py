@@ -45,6 +45,7 @@ def imagestats(filename):
         elif frame['channels'].lower() == 'cmyka':
             colors = ['cyan', 'magenta', 'yellow', 'black', 'alpha']
         else:
+            #TODO: This should maybe cause the task to fail, not sure.
             error += "\n\nUnknown colorspace for image frame: " + frame.channels + "\n\n"
             numChannels = -1
             break
@@ -117,6 +118,8 @@ def imagestats(filename):
 
             i += 1
 
+    return True
+
 @shared_task
 def generateThumbnails(filename):
     filenameFull = os.path.splitext(filename)[0] + "_thumb_full.png"
@@ -139,6 +142,8 @@ def generateThumbnails(filename):
     image.thumbnailFullName = filenameFull
     image.thumbnailSmallName = filenameSmall
     image.save()
+
+    return True
 
 @shared_task
 def sextractor(filename):
@@ -197,6 +202,8 @@ def sextractor(filename):
         os.remove(catfileName)
     except OSError:
         pass
+
+    return True
 
 @shared_task
 def parseHeaders(imageId):
@@ -286,4 +293,6 @@ def parseHeaders(imageId):
                 )
 
             prop.save()
+
+    return True
 

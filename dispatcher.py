@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import django
+from django.utils import timezone
 import celery
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "cosmic.settings")
@@ -33,7 +34,7 @@ while not quit:
     sys.stdout.flush()
 
     try:
-        pi = ProcessInput.objects.filter(completed=False)[:1][0]
+        pi = ProcessInput.objects.filter(completed=None)[:1][0]
     except IndexError:
         sleepTimeIndex += 1
         continue
@@ -60,7 +61,9 @@ while not quit:
     else:
         print("Skipping unknown task type: " + pi.process)
         sys.stdout.flush()
+        continue
 
+    pi.startedDateTime = timezone.now()
     print("Task dispatched.")
     sys.stdout.flush()
 
@@ -74,10 +77,17 @@ while not quit:
         time.sleep(waitTime)
         waitTime += 0.1
 
-    pi.completed = True
+    # Write the result of the returned value back to the database, either success, failure, or error (early exit).
+    if celeryResult.info == True:
+        pi.completed = 'success'
+    elif celeryResult.info == False:
+        pi.completed = 'failure'
+    else:
+        pi.completed = str(celeryResult.info)
+
     pi.save()
 
-    print("Task completed.")
+    print("Task completed with result:  " + pi.completed)
     sys.stdout.flush()
 
     sleepTimeIndex = 0
