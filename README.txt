@@ -12,6 +12,19 @@ sudo apt-get install rabbitmq-server
 
 
 
+Make a directory to store uploaded files:
+
+sudo mkdir /cosmicmedia
+sudo chown username: /cosmicmedia
+
+	(where username is the user running the webserver)
+
+cp /usr/share/sextractor/default* /cosmicmedia/
+
+	(this is temporary, will not be needed later on)
+
+
+
 Run the manage.py script to setup the database and run the django server:
 
 python3 manage.py makemigrations
