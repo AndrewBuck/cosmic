@@ -48,6 +48,8 @@ def upload(request):
             fs = FileSystemStorage()
             filename = fs.save(myfile.name, myfile)
 
+            #TODO: Instead of replacing spaces we should rename the file to a hash name or something with no chance of
+            # special characters that would break other processes.
             filenameNoSpaces = filename.replace(' ', '_')
             os.rename(settings.MEDIA_ROOT + filename, settings.MEDIA_ROOT + filenameNoSpaces)
             filename = filenameNoSpaces

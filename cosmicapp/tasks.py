@@ -7,6 +7,7 @@ import subprocess
 import json
 import sys
 import os
+import re
 
 from .models import *
 
@@ -125,9 +126,11 @@ def generateThumbnails(filename):
     filenameFull = os.path.splitext(filename)[0] + "_thumb_full.png"
     filenameSmall = os.path.splitext(filename)[0] + "_thumb_small.png"
 
-    for tempFilename, sizeArg in [(filenameFull, "100%"), (filenameSmall, "100x100")]:
+    image = Image.objects.get(fileRecord__onDiskFileName=filename)
+
+    for tempFilename, sizeArg, sizeString in [(filenameFull, "100%", "full"), (filenameSmall, "100x100", "small")]:
         proc = subprocess.Popen(['convert', "-contrast-stretch", "2%x1%", "-strip", "-filter", "spline", "-unsharp", "0x1", "-resize",
-                sizeArg, settings.MEDIA_ROOT + filename, staticDirectory + "images/" + tempFilename],
+                sizeArg, "-verbose", settings.MEDIA_ROOT + filename, staticDirectory + "images/" + tempFilename],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE)
 
@@ -135,13 +138,33 @@ def generateThumbnails(filename):
         output = output.decode('utf-8')
         error = error.decode('utf-8')
 
-        print("generateThumnails: " + tempFilename + "   " + output + "   " + error)
+        print("generateThumbnails: " + tempFilename)
         sys.stdout.flush()
 
-    image = Image.objects.get(fileRecord__onDiskFileName=filename)
-    image.thumbnailFullName = filenameFull
-    image.thumbnailSmallName = filenameSmall
-    image.save()
+        with transaction.atomic():
+            for line in error.splitlines():
+                if '=>' in line:
+                    fields = line.split()
+                    outputFilename = fields[0].split('=>')[1]
+                    channelIndicator = re.findall(r'\[\d+\]$', outputFilename)
+                    print('channelIndicator "', channelIndicator, '"')
+
+                    if len(channelIndicator) == 0:
+                        channel = 0
+                    else:
+                        channel = int(channelIndicator[0].strip('[]'))
+                        outputFilename = outputFilename.split('[')[0]
+
+                    outputFilename = os.path.basename(outputFilename)
+
+                    record = ImageThumbnail(
+                        image = image,
+                        size = sizeString,
+                        channel = channel,
+                        filename = outputFilename
+                        )
+
+                    record.save()
 
     return True
 

@@ -116,33 +116,28 @@ class Image(models.Model):
     centerROT = models.FloatField(null=True)
     resolutionX = models.FloatField(null=True)
     resolutionY = models.FloatField(null=True)
-    thumbnailFullName = models.CharField(max_length=256, null=True)
-    thumbnailSmallName = models.CharField(max_length=256, null=True)
 
     def getThumbnail(self, sizeString):
-        if sizeString == 'full':
-            thumbBaseName = self.thumbnailFullName
-        elif sizeString == 'small':
-            thumbBaseName = self.thumbnailSmallName
-
-        if thumbBaseName == None:
+        try:
+            records = ImageThumbnail.objects.filter(image__pk=self.pk, size=sizeString)
+        except:
+            #TODO: Specify an image with something like "thumbnail not found" to display in place of this thumbnail.
             return ""
 
-        if finders.find("cosmicapp/images/" + thumbBaseName):
-            url = staticfiles_storage.url("cosmicapp/images/" + thumbBaseName)
-            return '<a href=/image/' + str(self.pk) + '><img src="' + url + '" id="thumbnail_' + str(self.pk) + sizeString + '"></a>'
-        else:
-            filename = thumbBaseName[:-len(".png")]
-            filename += "-0.png"
-            url = staticfiles_storage.url("cosmicapp/images/" + filename)
-            #TODO: Add javascript here to flip between different thumbnails.
-            return '<a href=/image/' + str(self.pk) + '><img src="' + url + '"></a>'
+        url = '/static/cosmicapp/images/' + records[0].filename
+        return '<a href=/image/' + str(self.pk) + '><img src="' + url + '"></a>'
 
     def getThumbnailFull(self):
         return self.getThumbnail("full")
 
     def getThumbnailSmall(self):
         return self.getThumbnail("small")
+
+class ImageThumbnail(models.Model):
+    image = models.ForeignKey(Image, on_delete=models.CASCADE)
+    size = models.CharField(max_length=10)
+    channel = models.IntegerField()
+    filename = models.CharField(max_length=256)
 
 class ImageHeaderField(models.Model):
     image = models.ForeignKey(Image, on_delete=models.CASCADE)
