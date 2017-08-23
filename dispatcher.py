@@ -21,11 +21,28 @@ sleepTimes = [1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 15, 15, 15, 15, 15, 15, 15,
 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 60]
 sleepTimeIndex = 0
 
+def getFirstPrerequisite(pi):
+    prerequisites = pi.prerequisites.all()
+    unmet = []
+    for prerequisite in prerequisites:
+        if prerequisite.completed == None:
+            unmet.append(getFirstPrerequisite(prerequisite))
+        elif prerequisite.completed == 'failure':
+            return None
+        elif prerequisite.completed == 'success':
+            continue
+
+    if None in unmet:
+        return none
+    elif len(unmet) > 0:
+        return unmet[0]
+    else:
+        return pi
+
 while not quit:
     if sleepTimeIndex > len(sleepTimes) - 1:
         sleepTimeIndex = len(sleepTimes) - 1
 
-    #TODO: Need to recursively fetch the prerequisites until all are satisfied.
     sleepTime = sleepTimes[sleepTimeIndex]
     print("Sleeping for " + str(sleepTime) + " seconds.")
     sys.stdout.flush()
@@ -41,6 +58,14 @@ while not quit:
     except:
         print("Unexpected error:", sys.exc_info()[0])
         raise
+
+    print("checking prerequisistes for:  ", pi.process)
+    pi = getFirstPrerequisite(pi)
+    print("prerequisiste is:  ", pi.process)
+    if pi == None:
+        pi.completed = 'failed_prerequisite'
+        pi.save()
+        continue
 
     if pi.process == 'imagestats':
         arg = pi.processargument_set.all()[0].arg

@@ -145,7 +145,7 @@ def upload(request):
                     process = "parseheaders",
                     requestor = User.objects.get(pk=request.user.pk),
                     submittedDateTime = timezone.now(),
-                    priority = 1000,
+                    priority = 10000,
                     estCostCPU = .1,
                     estCostBandwidth = 0,
                     estCostStorage = 1000,
@@ -153,7 +153,7 @@ def upload(request):
                     )
 
                 piHeaders.save()
-                piHeaders.prerequisite.add(pi)
+                piHeaders.prerequisites.add(pi)
 
                 paHeaders = ProcessArgument(
                     processInput = piHeaders,

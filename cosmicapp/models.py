@@ -165,7 +165,7 @@ class ImageProperty(models.Model):
 
 
 class ProcessInput(models.Model):
-    prerequisite = models.ManyToManyField('self', symmetrical=False)
+    prerequisites = models.ManyToManyField('self', symmetrical=False)
     process = models.CharField(max_length=32)
     requestor = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
     submittedDateTime = models.DateTimeField()
