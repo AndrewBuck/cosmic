@@ -125,10 +125,13 @@ def imagestats(filename):
 def generateThumbnails(filename):
     filenameFull = os.path.splitext(filename)[0] + "_thumb_full.png"
     filenameSmall = os.path.splitext(filename)[0] + "_thumb_small.png"
+    filenameMedium = os.path.splitext(filename)[0] + "_thumb_medium.png"
+    filenameLarge = os.path.splitext(filename)[0] + "_thumb_large.png"
 
     image = Image.objects.get(fileRecord__onDiskFileName=filename)
 
-    for tempFilename, sizeArg, sizeString in [(filenameFull, "100%", "full"), (filenameSmall, "100x100", "small")]:
+    for tempFilename, sizeArg, sizeString in [(filenameFull, "100%", "full"), (filenameSmall, "100x100", "small"),
+                                              (filenameMedium, "300x300", "medium"), (filenameLarge, "900x900", "large")]:
         proc = subprocess.Popen(['convert', "-contrast-stretch", "2%x1%", "-strip", "-filter", "spline", "-unsharp", "0x1", "-resize",
                 sizeArg, "-verbose", settings.MEDIA_ROOT + filename, staticDirectory + "images/" + tempFilename],
             stdout=subprocess.PIPE,

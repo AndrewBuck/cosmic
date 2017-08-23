@@ -35,7 +35,7 @@ window.onload = function()
     var canvas = document.getElementById("sourcesCanvas");
     var ctx = canvas.getContext("2d");
     var img = new Image();
-    img.src = '/static/cosmicapp/images/{{image.thumbnailFullName}}';
+    img.src = '{{image.getThumbnailUrlFull|safe}}';
     ctx.drawImage(img, 0, 0);
 
     drawSources(ctx);

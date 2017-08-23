@@ -6,10 +6,6 @@
 {% block mainbody %}
 <h2>Image {{id}}</h2>
 
-{{image.getThumbnailFull|safe}}
-
-<br><br><br>
-
     <table border="2px">
         <tr>
         <th> Uploaded By <br> (username) </th>
@@ -50,9 +46,18 @@ Image channel {{channel.index}}: {{channel.channelType}}<br>
 
 <p>Original uploaded filename: <b>{{image.fileRecord.originalFileName}}</b></p>
 <p>SHA 256 hash of original file: <b>{{image.fileRecord.fileSha256}}</b></p>
+
 <h3>Image thumbnail</h3>
 
+<p>
 {{image.getThumbnailSmall|safe}}
+{{image.getThumbnailMedium|safe}}
+{{image.getThumbnailLarge|safe}}
+</p>
+
+<p>
+{{image.getThumbnailFull|safe}}
+</p>
 
 {% endblock %}
 

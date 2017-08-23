@@ -117,21 +117,45 @@ class Image(models.Model):
     resolutionX = models.FloatField(null=True)
     resolutionY = models.FloatField(null=True)
 
-    def getThumbnail(self, sizeString):
+    def getThumbnailUrl(self, sizeString):
         try:
             records = ImageThumbnail.objects.filter(image__pk=self.pk, size=sizeString)
         except:
             #TODO: Specify an image with something like "thumbnail not found" to display in place of this thumbnail.
             return ""
 
-        url = '/static/cosmicapp/images/' + records[0].filename
+        if len(records) == 0:
+            return ""
+
+        return '/static/cosmicapp/images/' + records[0].filename
+
+    def getThumbnail(self, sizeString):
+        url = self.getThumbnailUrl(sizeString)
         return '<a href=/image/' + str(self.pk) + '><img src="' + url + '"></a>'
+
+    def getThumbnailUrlFull(self):
+        return self.getThumbnailUrl("full")
+
+    def getThumbnailUrlSmall(self):
+        return self.getThumbnailUrl("small")
+
+    def getThumbnailUrlMedium(self):
+        return self.getThumbnailUrl("medium")
+
+    def getThumbnailUrlLarge(self):
+        return self.getThumbnailUrl("large")
 
     def getThumbnailFull(self):
         return self.getThumbnail("full")
 
     def getThumbnailSmall(self):
         return self.getThumbnail("small")
+
+    def getThumbnailMedium(self):
+        return self.getThumbnail("medium")
+
+    def getThumbnailLarge(self):
+        return self.getThumbnail("large")
 
 class ImageThumbnail(models.Model):
     image = models.ForeignKey(Image, on_delete=models.CASCADE)
