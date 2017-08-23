@@ -67,7 +67,6 @@ for filename in sys.argv[1:]:
                     sys.stdout.write("-")
                     sys.stdout.flush()
 
-                #IMPORTANT: COMMENT THIS OUT TO READ ALL RECORDS, SKIP MOST FOR TESTING
                 skipcounter += 1
                 if skip == True and skipcounter % skipFactor != 0:
                     continue

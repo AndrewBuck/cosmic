@@ -283,3 +283,13 @@ class GCVSRecord(models.Model):
     periodRisingPercentage = models.FloatField(null=True)
     spectralType = models.CharField(max_length=17, null=True)
 
+class TwoMassXSCRecord(models.Model):
+    identifier = models.CharField(max_length=24)
+    ra = models.FloatField()
+    dec = models.FloatField()
+    isophotalKSemiMajor = models.FloatField(null=True)
+    isophotalKMinorMajor = models.FloatField(null=True)
+    isophotalKAngle = models.FloatField(null=True)
+    isophotalKMag = models.FloatField(null=True)
+    isophotalKMagErr = models.FloatField(null=True)
+

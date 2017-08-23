@@ -111,6 +111,7 @@ UCAC4 - U.S. Naval Observatory CCD Astrograph Catalog
 	site to function correctly.
 
 
+
 GCVS - General Catalogue of Variable Stars
 
 	A catalog containing about 50,000 variable stars along with their
@@ -140,6 +141,36 @@ GCVS - General Catalogue of Variable Stars
 	deleted but it is not a big file anyway so you will probably want to
 	keep it.  It is not necessary for the site to function correctly.
 
+
+
+2MASS Extended Sources - Two Micron All Sky Survey (Only Extended Sources)
+
+	The 2MASS survey covered the whole sky and created a huge catalog of
+	stars as well as other sources.  As of right now the full 2MASS catalog
+	is far to big for our purposes, so for the time being we only import the
+	"extended sources" portion of the catalog.  Extended sources are
+	galaxies, nebulae, etc; so we ignore the regular star portion of the
+	catalog and only pull in "everything else".  The extended sources
+	portion of 2MASS consists of about 1.6 million objects.
+
+	Attribution:  "This publication makes use of data products from the Two
+		Micron All Sky Survey, which is a joint project of the
+		University of Massachusetts and the Infrared Processing and
+		Analysis Center/California Institute of Technology, funded by
+		the National Aeronautics and Space Administration and the
+		National Science Foundation."
+
+	The catalog is distributed as 2 ascii files (xsc_aaa.gz and xsc_baa.gz)
+	downloadable from the following url:
+		http://irsa.ipac.caltech.edu/2MASS/download/allsky/
+
+	The download will be about 700 mb and after unziping the files require
+	2.7 gb of disk space.  After unzipping the import script can be run:
+		python3 import_cat_2mass_xsc.py /path/to/files/xsc_*
+
+	After the script has finished importing the catalog the ascii files can
+	be deleted to free up disk space or re-compressed.  The ascii files are
+	not needed for Cosmic to work correctly after the import.
 
 
 
