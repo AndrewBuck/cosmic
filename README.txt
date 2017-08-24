@@ -43,6 +43,8 @@ necessarily on the webserver itself)
 identify - part of imagemagick.  Calculates image statistics for an image.
 	(width, height, bit depth, etc)
 
+convert - the main tool from imagemagick.  Used to make thumbnails.
+
 sextractor - Source Extractor: Finds stars and galaxies in an image.  Also must
 	copy /usr/share/sextractor/default.* into the directory where it is being run
 	or it will complain about missing configuration files.  This is a very
