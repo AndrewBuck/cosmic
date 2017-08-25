@@ -1,0 +1,119 @@
+/*
+ red darkred firebrick maroon black
+Designed around a four-color palette:
+text, alt, highlight, field
+daylight colors:
+	text=#6699ff field
+*/
+
+:root {
+	--color-txt: #f0e0c0; /* whiteish */
+	--color-alt: #f0c030; /* yellowish */
+	--color-hi: #f06010; /* redish */
+	--color-bg: #507090; /* blueish */
+}
+
+html * {
+	font-family: verdana;
+	color: var(--color-txt);
+}
+
+body {
+	margin:0;
+}
+
+div {
+	outline: 1px dashed var(--color-hi);
+}
+
+/* Need to work on this somehow so it fits better. Right now it is making the manu bar look funny.  Make it an svg or something? */
+.logo {
+	font-size: 150%;
+	font-weight: bold;
+}
+
+.navbar {
+	overflow: hidden;
+	background-color: --color-bg;
+}
+
+.navbar a {
+	float: left;
+/*	display: block; */
+	color: var(--color-alt);
+	background-color: var(--color-hi);
+    padding: 14px 25px;
+    text-align: center;
+    text-decoration: none;
+/*    display: inline-block; */
+}
+
+.dropdown {
+	float: left;
+	overflow: hidden;
+}
+
+/*  I don't yet know why this doesn't inherit style from navbar.  I'm sure it's fixable */
+.dropdown .dropdownbutton {
+	color: var(--color-alt);
+	background-color: var(--color-hi);
+    padding: 14px 25px;
+	border: none;
+	outline: none;
+}
+
+.navbar a:hover, .dropdown:hover .dropdownbutton {
+	color: var(--color-hi);
+    background-color: var(--color-alt);
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    box-shadow: 8px 8px 16px 16px rgba(0,0,0,0.2);
+    padding: none;
+	width: 100%;
+    z-index: 1;
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+p { 
+   text-align: justify;
+}
+
+body {
+    background-color: var(--color-bg);
+}
+
+h1 {
+	color: var(--color-hi);
+}
+
+h2 {
+    color: var(--color-alt);
+}
+
+a:link {}
+
+.button a {
+    background-color: black;
+    color: red;
+    padding: 14px 25px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    border: 2px solid firebrick;
+    border-radius: 15px;
+}
+
+a.button:visited {
+    color: red;
+}
+
+a.button:hover, a.button:active {
+    background-color: maroon;
+}
+

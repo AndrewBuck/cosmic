@@ -1,12 +1,31 @@
+{% load static %}
+
 <head>
     <title>Cosmic.science {% block extratitle %}{% endblock %}</title>
+	<link rel="stylesheet" type="text/css" href="/static/cosmicapp/style.css">
 </head>
 
+
+<!-- I have added links we'll want to move later to fill out the bar -->
+<div class="navbar" id="topnavbar">
+	<a class="logo" href="/">Cosmic</a>
+	<a href="/processqueue">Queue</a>
+	<a href="/upload">Upload</a>
+	<a href="/members">Members</a>
 {% if user.is_authenticated %}
-<p align="right"><a href="/user/{{user}}">{{user}}</a>&nbsp;|&nbsp;<a href="/logout">Logout</a></p>
+	<a href="/user/{{user}}">{{user}}</a>
+	<a href="/logout">Logout</a>
+	<div class="dropdown" id="userdropdown">
+		<button class="dropdownbutton">{{user}}</button>
+		<div class="dropdown-content">
+			<a href="/user/{{user}}">Profile</a>
+			<a href="/logout">Logout</a>
+		</div>
+	</div>
 {% else %}
-<p align="right"><a href="/login">Log in / Create account</a></p>
+	<a href="/login">Log in / Create account</a>
 {% endif %}
+</div>
 
 {% block mainbody %}{% endblock %}
 
