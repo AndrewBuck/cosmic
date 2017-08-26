@@ -9,6 +9,9 @@ import sys
 import os
 import re
 
+from astropy import wcs
+from astropy.io import fits
+
 from .models import *
 
 staticDirectory = os.path.dirname(os.path.realpath(__file__)) + "/static/cosmicapp/"
@@ -118,6 +121,29 @@ def imagestats(filename):
             headerField.save()
 
             i += 1
+
+    print("imagestats:wcs: " + filename)
+    if os.path.splitext(filename)[-1].lower() in ['.fit', '.fits']:
+        w = wcs.WCS(settings.MEDIA_ROOT + filename)
+
+        if w.has_celestial:
+            print("WCS found in header")
+
+            #TODO: should check w.lattyp and w.lontyp to make sure we are storing these world coordinates correctly.
+            raCen, decCen = w.all_pix2world(image.dimX/2, image.dimY/2, 1)
+            raScale, decScale = wcs.utils.proj_plane_pixel_scales(w)
+            raScale *= 3600.0
+            decScale *= 3600.0
+
+            image.centerRA = raCen
+            image.centerDEC = decCen
+            image.resolutionX = raScale
+            image.resolutionY = decScale
+            #TODO: Store image.centerROT
+            #TODO: Should also store the four corners of the image position on the sky.
+            image.save()
+        else:
+            print("WCS not found in header")
 
     return True
 
