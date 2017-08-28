@@ -1,0 +1,77 @@
+<script>
+var numRows = {{numRows}}, numCols = {{numCols}};
+var includeLinks = {{includeLinks}};
+var thumbnailSize = "{{thumbnailSize}}"
+
+var resultsPage = 0;
+var loadingInProgress = false;
+
+function loadImageTableResults()
+{
+    if(!loadingInProgress)
+    {
+        loadingInProgress = true;
+        table = document.getElementById("imageTableElement");
+        currentHTML = table.innerHTML;
+        loadingHTML = currentHTML + "<p>Loading...</p>";
+        table.innerHTML = loadingHTML;
+
+        request = new XMLHttpRequest();
+
+        request.onreadystatechange = function()
+        {
+            if(this.readyState == 4 && this.status == 200)
+            {
+                xml = this.responseXML;
+                html = ""
+
+                results = xml.getElementsByTagName('Image')
+                for(i = 0; i < results.length; i++)
+                {
+                    attr = results[i].attributes;
+
+                    if(i % numCols == 0)
+                        rowBreakStart = '<tr>', rowBreakEnd = '';
+                    else if(i % numCols == numCols - 1)
+                        rowBreakStart = '', rowBreakEnd = '</tr>';
+                    else
+                        rowBreakStart = '', rowBreakEnd = '';
+
+                    if(includeLinks)
+                        linkStart = '<a href="/image/' + attr.getNamedItem('id').nodeValue + '/">', linkEnd = '</a>';
+                    else
+                        linkStart = '', linkEnd = '';
+
+                    html += rowBreakStart;
+                    html += '<td>'
+                    html += linkStart;
+                    html += '<img src="' + attr.getNamedItem('thumbUrl'+thumbnailSize).nodeValue + '">';
+                    html += linkEnd;
+                    html += '</td>'
+                    html += rowBreakEnd;
+                }
+
+                table.innerHTML = currentHTML + html;
+                loadingInProgress = false;
+            }
+        };
+
+        requestURL = "/query/?queryfor=image&{{queryKey}}={{queryValue}}&order=time_desc&limit=" + numRows*numCols + "&offset=" + numRows*numCols*resultsPage;
+        request.open("GET", requestURL, true);
+        request.send()
+
+        resultsPage++;
+    }
+};
+
+window.onload = loadImageTableResults;
+
+</script>
+
+<div id=imageTableDiv class=imageTable>
+    <table id=imageTableElement class=imageTable>
+    </table>
+
+    <p><input type=button id=imageTableLoadMoreButton class=button value="Load more" onclick="loadImageTableResults()"></p>
+</div>
+

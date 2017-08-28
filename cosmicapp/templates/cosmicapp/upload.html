@@ -27,7 +27,7 @@ solved, source extracted, and so forth.</p>
 <form method="post" enctype="multipart/form-data">
 {% csrf_token %}
 <input type="file" name="myfiles" multiple=""><br><br>
-<button type="submit">Upload</button>
+<button type="submit" class=button>Upload</button>
 </form>
 
 {% if upload_successful %}

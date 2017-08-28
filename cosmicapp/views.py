@@ -1,6 +1,7 @@
 import hashlib
 import os
 
+from django.http import HttpResponse
 from django.shortcuts import render
 from django.template import loader
 from django.contrib.auth.models import User
@@ -10,6 +11,8 @@ from django.http import HttpResponseRedirect
 from django.utils import timezone
 from django.conf import settings
 from django.db.models import Q
+
+from lxml import etree
 
 from .models import *
 from .forms import *
@@ -272,4 +275,69 @@ def imageProperties(request, id):
     context['properties'] = properties
 
     return render(request, "cosmicapp/imageProperties.html", context)
+
+def query(request):
+    root = etree.Element("queryresult")
+
+    if not ('queryfor' in request.GET):
+        #TODO: Convert this to xml.
+        return HttpResponse("bad request: missing 'queryfor'")
+
+    if 'limit' in request.GET:
+        #TODO Catch parse error.
+        limit = int(request.GET['limit'])
+    else:
+        limit = 10
+
+    if 'offset' in request.GET:
+        #TODO Catch parse error.
+        offset = int(request.GET['offset'])
+    else:
+        offset = 0
+
+    if request.GET['queryfor'] == 'image':
+        if 'order' in request.GET:
+            orderField, ascDesc = request.GET['order'].split('_')
+            if orderField == 'time':
+                orderField = 'fileRecord__uploadDateTime'
+            else:
+                orderField = 'fileRecord__uploadDateTime'
+
+            #TODO: The asc/desc code is probably the same for all query types, try to refactor this out if this inner 'if' statement.
+            if ascDesc == 'desc':
+                ascDesc = '-'
+            else:
+                ascDesc = ''
+        else:
+            orderField = 'fileRecord__uploadDateTime'
+            ascDesc = '-'
+
+        results = Image.objects
+
+        if 'user' in request.GET:
+            results = results.filter(fileRecord__uploadingUser__username=request.GET['user'])
+
+        results = results.order_by(ascDesc + orderField)[offset:offset+limit]
+
+        for result in results:
+            imageDict = {}
+            #TODO: These lines could probably all (or mostly) be collapsed into a for loop.
+            imageDict['id'] = str(result.pk)
+            imageDict['dimX'] = str(result.dimX)
+            imageDict['dimY'] = str(result.dimY)
+            imageDict['dimZ'] = str(result.dimZ)
+            imageDict['bitDepth'] = str(result.bitDepth)
+            imageDict['frameType'] = result.frameType
+            imageDict['centerRA'] = str(result.centerRA)
+            imageDict['centerDEC'] = str(result.centerDEC)
+            imageDict['centerROT'] = str(result.centerROT)
+            imageDict['resolutionX'] = str(result.resolutionX)
+            imageDict['resolutionY'] = str(result.resolutionY)
+            imageDict['thumbUrlSmall'] = result.getThumbnailUrlSmall()
+            imageDict['thumbUrlMedium'] = result.getThumbnailUrlMedium()
+            imageDict['thumbUrlLarge'] = result.getThumbnailUrlLarge()
+            imageDict['thumbUrlFull'] = result.getThumbnailUrlFull()
+            etree.SubElement(root, "Image", imageDict)
+
+    return HttpResponse(etree.tostring(root, pretty_print=False), content_type='application/xml')
 
