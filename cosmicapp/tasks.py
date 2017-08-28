@@ -90,7 +90,7 @@ def imagestats(filename):
     output = output.decode('utf-8')
     error = error.decode('utf-8')
 
-    print("imagestats:tags: " + filename + "   " + output + "   " + error)
+    print("imagestats:tags: " + filename)
     sys.stdout.flush()
 
     with transaction.atomic():
@@ -280,7 +280,7 @@ def parseHeaders(imageId):
                 key = 'instrument'
                 value = header.value.split('/')[0].strip().strip("'")
 
-            elif header.key in ['fits:swcreate', 'fits:creator']:
+            elif header.key in ['fits:swcreate', 'fits:creator', 'fits:origin']:
                 key = 'createdBySoftware'
                 value = header.value.split('/')[0].strip().strip("'")
 
@@ -288,11 +288,11 @@ def parseHeaders(imageId):
                 key = 'numAxis'
                 value = header.value.split()[0]
 
-            elif header.key == 'fits:naxis1':
+            elif header.key in ['fits:naxis1', 'fits:imagew']:
                 key = 'width'
                 value = header.value.split()[0]
 
-            elif header.key == 'fits:naxis2':
+            elif header.key == ['fits:naxis2', 'fits:imageh']:
                 key = 'height'
                 value = header.value.split()[0]
 
@@ -329,6 +329,30 @@ def parseHeaders(imageId):
             elif header.key == 'fits:imagtyp':
                 key = 'imageType'
                 value = header.value.split('/')[0].strip().strip("'").lower()
+
+                if 'light' in value:
+                    value = 'light'
+                elif 'dark' in value:
+                    value = 'dark'
+                elif 'bias' in value:
+                    value = 'bias'
+                elif 'flat' in value:
+                    value = 'flat'
+
+                image.frameType = value
+                image.save()
+
+            elif header.key == 'fits:aperture':
+                key = 'aperture'
+                value = header.value.split()[0].strip().strip("'").lower()
+
+            elif header.key == 'fits:filter':
+                key = 'filter'
+                value = header.value.split()[0].strip().strip("'").lower()
+
+            elif header.key == 'fits:iso':
+                key = 'iso'
+                value = str(abs(int(header.value.split()[0].strip())))
 
             else:
                 continue
