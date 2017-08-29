@@ -12,6 +12,13 @@ sudo apt-get install rabbitmq-server
 
 
 
+Astropy is used for various calculations and data reductions on the server and
+on the celery worker nodes:
+
+sudo pip3 install astropy
+
+
+
 Make a directory to store uploaded files:
 
 sudo mkdir /cosmicmedia
@@ -36,7 +43,7 @@ python3 dispatcher.py
 
 
 
-Commands needed installed on the system and in the path:
+Commands that need to be installed on the system and in the path:
 (Note these are mainly needed on the worker nodes running celery workers, not
 necessarily on the webserver itself)
 
@@ -72,7 +79,7 @@ some are very large, both to download and in terms of the disk space they requir
 Below is a listing of the catalogs that Cosmic has importers for.  Without
 certain catalogs being imported, some site functionality may not work
 correctly, and may break the site entirely, as runnning without the catalog is
-not necessarily a supported option.
+not necessarily a supported, or even tested, option.
 
 TODO:  Create files which are sample extracts of each catalog to allow a subset
 of the full data to be distributed with Cosmic.  This way developers who want
@@ -180,4 +187,11 @@ GCVS - General Catalogue of Variable Stars
 NOTES:
 
 The imwcs command line program does plate solving similar to atrometry.net
+
+
+
+
+When the database is more complete it would be good to allow API access using:
+
+http://www.ivoa.net/index.html
 

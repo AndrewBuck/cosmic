@@ -9,6 +9,9 @@ import sys
 import os
 import re
 
+from astropy import wcs
+from astropy.io import fits
+
 from .models import *
 
 staticDirectory = os.path.dirname(os.path.realpath(__file__)) + "/static/cosmicapp/"
@@ -87,7 +90,7 @@ def imagestats(filename):
     output = output.decode('utf-8')
     error = error.decode('utf-8')
 
-    print("imagestats:tags: " + filename + "   " + output + "   " + error)
+    print("imagestats:tags: " + filename)
     sys.stdout.flush()
 
     with transaction.atomic():
@@ -118,6 +121,29 @@ def imagestats(filename):
             headerField.save()
 
             i += 1
+
+    print("imagestats:wcs: " + filename)
+    if os.path.splitext(filename)[-1].lower() in ['.fit', '.fits']:
+        w = wcs.WCS(settings.MEDIA_ROOT + filename)
+
+        if w.has_celestial:
+            print("WCS found in header")
+
+            #TODO: should check w.lattyp and w.lontyp to make sure we are storing these world coordinates correctly.
+            raCen, decCen = w.all_pix2world(image.dimX/2, image.dimY/2, 1)
+            raScale, decScale = wcs.utils.proj_plane_pixel_scales(w)
+            raScale *= 3600.0
+            decScale *= 3600.0
+
+            image.centerRA = raCen
+            image.centerDEC = decCen
+            image.resolutionX = raScale
+            image.resolutionY = decScale
+            #TODO: Store image.centerROT
+            #TODO: Should also store the four corners of the image position on the sky.
+            image.save()
+        else:
+            print("WCS not found in header")
 
     return True
 
@@ -254,7 +280,7 @@ def parseHeaders(imageId):
                 key = 'instrument'
                 value = header.value.split('/')[0].strip().strip("'")
 
-            elif header.key in ['fits:swcreate', 'fits:creator']:
+            elif header.key in ['fits:swcreate', 'fits:creator', 'fits:origin']:
                 key = 'createdBySoftware'
                 value = header.value.split('/')[0].strip().strip("'")
 
@@ -262,11 +288,11 @@ def parseHeaders(imageId):
                 key = 'numAxis'
                 value = header.value.split()[0]
 
-            elif header.key == 'fits:naxis1':
+            elif header.key in ['fits:naxis1', 'fits:imagew']:
                 key = 'width'
                 value = header.value.split()[0]
 
-            elif header.key == 'fits:naxis2':
+            elif header.key == ['fits:naxis2', 'fits:imageh']:
                 key = 'height'
                 value = header.value.split()[0]
 
@@ -303,6 +329,30 @@ def parseHeaders(imageId):
             elif header.key == 'fits:imagtyp':
                 key = 'imageType'
                 value = header.value.split('/')[0].strip().strip("'").lower()
+
+                if 'light' in value:
+                    value = 'light'
+                elif 'dark' in value:
+                    value = 'dark'
+                elif 'bias' in value:
+                    value = 'bias'
+                elif 'flat' in value:
+                    value = 'flat'
+
+                image.frameType = value
+                image.save()
+
+            elif header.key == 'fits:aperture':
+                key = 'aperture'
+                value = header.value.split()[0].strip().strip("'").lower()
+
+            elif header.key == 'fits:filter':
+                key = 'filter'
+                value = header.value.split()[0].strip().strip("'").lower()
+
+            elif header.key == 'fits:iso':
+                key = 'iso'
+                value = str(abs(int(header.value.split()[0].strip())))
 
             else:
                 continue

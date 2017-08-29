@@ -81,3 +81,18 @@ li.dropdown {
     display: block;
 }
 
+.button {
+    color: black
+}
+
+div.imageTable {
+    margin: auto;
+    max-width: 90%;
+    border: 2px solid grey;
+}
+
+#imageTableLoadMoreButton {
+    display: block;
+    margin: auto;
+}
+
