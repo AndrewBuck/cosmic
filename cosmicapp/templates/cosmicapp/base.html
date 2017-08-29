@@ -5,27 +5,26 @@
 	<link rel="stylesheet" type="text/css" href="/static/cosmicapp/style.css">
 </head>
 
-
-<!-- I have added links we'll want to move later to fill out the bar -->
-<div class="navbar" id="topnavbar">
-	<a class="logo" href="/">Cosmic</a>
-	<a href="/processqueue">Queue</a>
-	<a href="/upload">Upload</a>
-	<a href="/members">Members</a>
-{% if user.is_authenticated %}
-	<a href="/user/{{user}}">{{user}}</a>
-	<a href="/logout">Logout</a>
-	<div class="dropdown" id="userdropdown">
-		<button class="dropdownbutton">{{user}}</button>
-		<div class="dropdown-content">
-			<a href="/user/{{user}}">Profile</a>
-			<a href="/logout">Logout</a>
-		</div>
+<ul>
+	<li class="dropdown">
+	<a href="/" class="dropbtn">Cosmic</a>
+	<div class="dropdown-content">
+		<a href="/processqueue">Queue</a>
+		<a href="/members">Members</a>
 	</div>
+	</li>
+	<li style="float:center"><a href="/upload">Upload</a></li>
+{% if user.is_authenticated %}
+  <li class="dropdown" style="float:right;">
+    <a href="/user/{{user}}" class="dropbtn">{{user}}</a>
+    <div class="dropdown-content" style="right:0;">
+      <a href="/logout">Logout</a>
+    </div>
+  </li>
 {% else %}
-	<a href="/login">Log in / Create account</a>
+	<li style="float:right;"><a href="/login">Log in / Create account</a></li>
 {% endif %}
-</div>
+</ul>
 
 {% block mainbody %}{% endblock %}
 

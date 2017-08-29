@@ -1,83 +1,17 @@
-/*
- red darkred firebrick maroon black
-Designed around a four-color palette:
-text, alt, highlight, field
-daylight colors:
-	text=#6699ff field
-*/
-
 :root {
-	--color-txt: #f0e0c0; /* whiteish */
-	--color-alt: #f0c030; /* yellowish */
-	--color-hi: #f06010; /* redish */
-	--color-bg: #507090; /* blueish */
+	--color-bg: #ffffff; 
+	--color-bg-alt: #e5f1ec;
+	--color-bg-button: #65dcbc;
+	--color-bg-menu: #43917c;
+	--color-bg-menu-alt: #000000;
+	--color-txt: #000000;
+	--color-txt-alt: #000000;
+	--color-txt-button: #ffffff;
+	--color-txt-menu: #ffffff;
 }
 
 html * {
 	font-family: verdana;
-	color: var(--color-txt);
-}
-
-body {
-	margin:0;
-}
-
-div {
-	outline: 1px dashed var(--color-hi);
-}
-
-/* Need to work on this somehow so it fits better. Right now it is making the manu bar look funny.  Make it an svg or something? */
-.logo {
-	font-size: 150%;
-	font-weight: bold;
-}
-
-.navbar {
-	overflow: hidden;
-	background-color: --color-bg;
-}
-
-.navbar a {
-	float: left;
-/*	display: block; */
-	color: var(--color-alt);
-	background-color: var(--color-hi);
-    padding: 14px 25px;
-    text-align: center;
-    text-decoration: none;
-/*    display: inline-block; */
-}
-
-.dropdown {
-	float: left;
-	overflow: hidden;
-}
-
-/*  I don't yet know why this doesn't inherit style from navbar.  I'm sure it's fixable */
-.dropdown .dropdownbutton {
-	color: var(--color-alt);
-	background-color: var(--color-hi);
-    padding: 14px 25px;
-	border: none;
-	outline: none;
-}
-
-.navbar a:hover, .dropdown:hover .dropdownbutton {
-	color: var(--color-hi);
-    background-color: var(--color-alt);
-}
-
-.dropdown-content {
-    display: none;
-    position: absolute;
-    box-shadow: 8px 8px 16px 16px rgba(0,0,0,0.2);
-    padding: none;
-	width: 100%;
-    z-index: 1;
-}
-
-.dropdown:hover .dropdown-content {
-    display: block;
 }
 
 p { 
@@ -85,35 +19,65 @@ p {
 }
 
 body {
-    background-color: var(--color-bg);
+	margin: 0;
+	padding: 0;
 }
 
 h1 {
-	color: var(--color-hi);
 }
 
 h2 {
-    color: var(--color-alt);
 }
 
-a:link {}
 
-.button a {
-    background-color: black;
-    color: red;
-    padding: 14px 25px;
-    text-align: center;
-    text-decoration: none;
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: var(--color-bg-menu);
+}
+
+li {
+    float: left;
+}
+
+li a, .dropbtn {
     display: inline-block;
-    border: 2px solid firebrick;
-    border-radius: 15px;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+    color: var(--color-txt-menu);
 }
 
-a.button:visited {
-    color: red;
+li a:hover, .dropdown:hover .dropbtn {
+    background-color: var(--color-bg-menu-alt);
 }
 
-a.button:hover, a.button:active {
-    background-color: maroon;
+li.dropdown {
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+    background-color: var(--color-bg-menu);
+}
+
+.dropdown-content a {
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    text-align: left;
+}
+
+.dropdown-content a:hover {
+	background-color: var(--color-bg-menu-alt)
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
 }
 
