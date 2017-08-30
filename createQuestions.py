@@ -1,6 +1,7 @@
 import os
 import django
 from graphviz import Digraph
+from textwrap import wrap
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "cosmic.settings")
 django.setup()
@@ -193,7 +194,18 @@ for question in questions:
     label = question.titleText.replace(' ', '_')
     text = '< <table>'
     text += '<tr><td>' + question.titleText + '</td></tr>'
-    text += '<tr><td><font point-size="8">' + question.text + '</font></td></tr>'
+    text += '<tr><td>'
+    text += '<font point-size="10">' + '<br/>'.join(wrap(question.text, 40)) + '</font>'
+
+    text += '<font point-size="8"><br/><br/>'
+    responses = QuestionResponse.objects.filter(question=question.pk).order_by('index')
+    responseStrings = []
+    for response in responses:
+        responseStrings.append(response.text)
+    text += '<br/>'.join(wrap(', '.join(responseStrings), 50))
+    text += '</font>'
+
+    text +='</td></tr>'
     text += '</table> >'
     graph.node(label, text, shape='none', margin='0')
 
@@ -203,13 +215,15 @@ for pc in preconditions:
     label2 = pc.secondQuestion.titleText.replace(' ', '_')
 
     conditions = AnswerPreconditionCondition.objects.filter(answerPrecondition=pc.pk)
+    text = '< <font point-size="10">'
+    text += '<br/>'.join(wrap(pc.descriptionText, 30)) + '</font><font point-size="8"><br/><br/>'
     for condition in conditions:
-        text = ''
         if condition.invert:
             text += "not "
 
-        text += condition.key + '=' + condition.value + '\n'
+        text += condition.key + '=' + condition.value + '<br/>'
 
+    text += '</font> >'
     graph.edge(label1, label2, label=text, constraint='true')
 
 graph.render('QuestionGraph', directory='./cosmicapp/static/cosmicapp/', view=False, cleanup=True)
