@@ -363,6 +363,8 @@ def questionImage(request, id):
         #TODO: If the user clicks 'submit' without entering an answer a blank answer gets entered and the site thinks
         # the question has been answered.  This needs to be addressed by checking that there is something other than the
         # csrf token and questionID in the post results.
+        #TODO: Need to check to see that this user has not already answered this question before.  If so, decide how to
+        # handle it.  (this will be common if a user hits 'reload' on the page and resends the post data)
         with transaction.atomic():
             answer = Answer(
                 question = question,
@@ -400,7 +402,13 @@ def getQuestionImage(request, id):
 
     questions = Question.objects.all().order_by('-priority')
 
+    questionFound = False
     for question in questions:
+        # Check to see what type of object this question pertains to.
+        # Right now we only handle images in this function.
+        if question.aboutType != 'Image':
+            continue
+
         # Check to see if this user has already answered this question for this image, if they have then skip it.
         imageContentType = ContentType.objects.get_for_model(Image)
         if Answer.objects.filter(question=question.pk, user=request.user.pk,
@@ -451,6 +459,8 @@ def getQuestionImage(request, id):
         if not allPreconditionsMet:
             continue
 
+        questionFound = True
+
         responses = QuestionResponse.objects.filter(question=question.pk).order_by('index')
         responsesHTML = ''
         responsesHTML += "<input type='hidden' name='csrfmiddlewaretoken' value='" + csrf.get_token(request) + "' />\n"
@@ -472,6 +482,13 @@ def getQuestionImage(request, id):
 
         etree.SubElement(root, "Question", questionDict)
         break
+
+    if not questionFound:
+        #TODO: Make this query a bit better to only find images needing questions answered and also don't just stop at the highest number.
+        nextImage = Image.objects.filter(pk__gt=id, fileRecord__uploadingUser=request.user.pk)[0:1]
+        if len(nextImage) > 0:
+            nextImageDict = {'id': str(nextImage[0].pk)}
+            etree.SubElement(root, "NextImage", nextImageDict)
 
     return HttpResponse(etree.tostring(root, pretty_print=False), content_type='application/xml')
 

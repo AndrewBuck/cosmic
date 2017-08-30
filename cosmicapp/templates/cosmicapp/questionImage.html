@@ -30,7 +30,19 @@ function getNextQuestion()
             }
             else
             {
-                table.innerHTML = "<tr><td>No more questions for this image.</td></tr>";
+                nextImage = xml.getElementsByTagName('NextImage');
+                if(nextImage.length > 0)
+                {
+                    attr = nextImage[0].attributes;
+                    html = '<tr><td>No more questions for this image.  ';
+                    html += '<a href="/question/image/' + attr.getNamedItem('id').nodeValue + '">Next of your images</a></td></tr>';
+                    table.innerHTML = html
+                }
+                else
+                {
+                    table.innerHTML = '<tr><td>No more questions for this image.</td></tr>';
+                }
+
                 return
             }
 

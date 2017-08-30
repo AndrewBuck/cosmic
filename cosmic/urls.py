@@ -38,6 +38,7 @@ urlpatterns = [
 
     url(r'^query/$', views.query),
 
+    #TODO: Should consider moving 'question' to the end like 'sources' and 'properties'.
     url(r'^question/image/(?P<id>[0-9]+)/$', views.questionImage),
     url(r'^getquestion/image/(?P<id>[0-9]+)/$', views.getQuestionImage),
 
