@@ -1,13 +1,14 @@
 :root {
 	--color-bg: #ffffff; 
 	--color-bg-alt: #e5f1ec;
-	--color-bg-button: #65dcbc;
-	--color-bg-menu: #43917c;
+	--color-bg-button: #4b9682;
+	--color-bg-menu: #4b9682;
 	--color-bg-menu-alt: #000000;
 	--color-txt: #000000;
 	--color-txt-alt: #000000;
 	--color-txt-button: #ffffff;
 	--color-txt-menu: #ffffff;
+	--color-border-button: #4b9682;
 }
 
 html * {
@@ -45,7 +46,7 @@ li {
 li a, .dropbtn {
     display: inline-block;
     text-align: center;
-    padding: 14px 16px;
+    padding: 0.75em 0.875em;
     text-decoration: none;
     color: var(--color-txt-menu);
 }
@@ -61,20 +62,19 @@ li.dropdown {
 .dropdown-content {
     display: none;
     position: absolute;
-    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    box-shadow: 0em 0em 1em 0.5em rgba(0,0,0,0.2);
     z-index: 1;
     background-color: var(--color-bg-menu);
 }
 
 .dropdown-content a {
-    padding: 12px 16px;
     text-decoration: none;
     display: block;
     text-align: left;
 }
 
 .dropdown-content a:hover {
-	background-color: var(--color-bg-menu-alt)
+	background-color: var(--color-bg-menu-alt);
 }
 
 .dropdown:hover .dropdown-content {
@@ -82,18 +82,69 @@ li.dropdown {
 }
 
 .button {
-    color: black
+    display: inline-block;
+    text-align: center;
+    padding: 0.75em 0.875em;
+    text-decoration: none;
+	cursor: pointer;
+    border: 0.175em solid var(--color-border-button);
+	border-radius: 0.75em;
+	color: var(--color-txt-button);
+	background-color: var(--color-bg-button);
 }
 
-div.imageTable {
-    margin: auto;
-    max-width: 90%;
-    border: 2px solid grey;
+div.gallery {
+    box-shadow: 0em 0em 0.5em 0em rgba(0,0,0,0.2);
 }
 
-#imageTableLoadMoreButton {
-    display: block;
-    margin: auto;
+div.gallery:hover {
+}
+
+div.gallery img {
+    width: 100%;
+    height: auto;
+}
+
+div.desc {
+    padding: 1em;
+    text-align: center;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+.responsive {
+    float: left;
+    width: 24.99999%;
+	padding: 1em;
+}
+
+@media only screen and (max-width: 1000px){
+    .responsive {
+        width: 33.33333%;
+		padding: 0.50em;
+    }
+}
+
+@media only screen and (max-width: 700px){
+    .responsive {
+        width: 49.99999%;
+		padding: 0.25em;
+    }
+}
+
+@media only screen and (max-width: 400px){
+    .responsive {
+        width: 100%;
+		padding: 0em;
+    }
+}
+
+.clearfix:after {
+    content: "";
+    display: table;
+    clear: both;
 }
 
 div.imageQuestionDisplay {

@@ -6,15 +6,15 @@ var thumbnailSize = "{{thumbnailSize}}"
 var resultsPage = 0;
 var loadingInProgress = false;
 
-function loadImageTableResults()
+function loadImageGalleryResults()
 {
     if(!loadingInProgress)
     {
         loadingInProgress = true;
-        table = document.getElementById("imageTableElement");
-        currentHTML = table.innerHTML;
+        gallery = document.getElementById("imageGalleryDiv");
+        currentHTML = gallery.innerHTML;
         loadingHTML = currentHTML + "<p>Loading...</p>";
-        table.innerHTML = loadingHTML;
+        gallery.innerHTML = loadingHTML;
 
         request = new XMLHttpRequest();
 
@@ -30,28 +30,19 @@ function loadImageTableResults()
                 {
                     attr = results[i].attributes;
 
-                    if(i % numCols == 0)
-                        rowBreakStart = '<tr>', rowBreakEnd = '';
-                    else if(i % numCols == numCols - 1)
-                        rowBreakStart = '', rowBreakEnd = '</tr>';
-                    else
-                        rowBreakStart = '', rowBreakEnd = '';
-
+					html += '<div class="responsive">'
+					html += '<div class="gallery">'
                     if(includeLinks)
-                        linkStart = '<a href="/image/' + attr.getNamedItem('id').nodeValue + '/">', linkEnd = '</a>';
-                    else
-                        linkStart = '', linkEnd = '';
-
-                    html += rowBreakStart;
-                    html += '<td>'
-                    html += linkStart;
-                    html += '<img src="' + attr.getNamedItem('thumbUrl'+thumbnailSize).nodeValue + '">';
-                    html += linkEnd;
-                    html += '</td>'
-                    html += rowBreakEnd;
+                        html += '<a href="/image/' + attr.getNamedItem('id').nodeValue + '/">'
+                    html += '<img src="' + attr.getNamedItem('thumbUrl'+thumbnailSize).nodeValue + '" width="300">';
+					if(includeLinks)
+						html += '</a>';
+					html += '<div class="desc">' + attr.getNamedItem('id').nodeValue + '</div>'
+					html += '</div>'
+					html += '</div>'
                 }
 
-                table.innerHTML = currentHTML + html;
+                gallery.innerHTML = currentHTML + html;
                 loadingInProgress = false;
             }
         };
@@ -64,14 +55,17 @@ function loadImageTableResults()
     }
 };
 
-window.onload = loadImageTableResults;
+window.onload = loadImageGalleryResults;
 
 </script>
 
-<div id=imageTableDiv class=imageTable>
-    <table id=imageTableElement class=imageTable>
-    </table>
+<div id=imageGalleryDiv></div>
 
-    <p><input type=button id=imageTableLoadMoreButton class=button value="Load more" onclick="loadImageTableResults()"></p>
+<div class="responsive">
+	<div style="text-align:center;">
+		<input type=button class=button value="Load more" onclick="loadImageGalleryResults()">
+	</div>
 </div>
+
+<div class="clearfix"></div>
 
