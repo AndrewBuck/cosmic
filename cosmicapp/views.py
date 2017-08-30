@@ -401,13 +401,55 @@ def getQuestionImage(request, id):
     questions = Question.objects.all().order_by('-priority')
 
     for question in questions:
-        # Check to see if this user has already answered this question for this image.
+        # Check to see if this user has already answered this question for this image, if they have then skip it.
         imageContentType = ContentType.objects.get_for_model(Image)
         if Answer.objects.filter(question=question.pk, user=request.user.pk,
                                 content_type__pk=imageContentType.pk, object_id=image.id).count() > 0:
             continue
 
-        #TODO: Check for prerequisites to this question to see if it is still appropriate.
+        # Check for prerequisites to this question to see if it is appropriate to ask based on previously answered questions.
+        #NOTE: There is a possible optimisation where we exit these loops early if allPreconditionsMet ever becomes
+        # false, but I don't think it is worth the extra code clutter since the loops should all be short anyway.
+        allPreconditionsMet = True
+        preconditions = AnswerPrecondition.objects.filter(secondQuestion=question.pk)
+        for precondition in preconditions:
+            # For each precondition, get any answers to the first question that the user has already provided.
+            previousAnswers = Answer.objects.filter(question=precondition.firstQuestion, user=request.user.pk,
+                                    content_type__pk=imageContentType.pk, object_id=image.id)
+
+            # If the user has not answered the previous question at all, then the precondition is definitely not met.
+            if len(previousAnswers) == 0:
+                allPreconditionsMet = False
+                break
+
+            # The user has answered the previous question, so now loop over any additional conditions and check each one
+            # to make sure that the answer to the previous question was an appropriate answer to make this question relevant.
+            pccs = AnswerPreconditionCondition.objects.filter(answerPrecondition=precondition.pk)
+            for pcc in pccs:
+
+                # For each previous answer check that that answer meets all the conditions.
+                for answer in previousAnswers:
+
+                    # Loop over all the key-value pairs for the given answer and check that each one is consistent with
+                    # the current pcc we are checking.
+                    kvs = AnswerKV.objects.filter(answer=answer.pk)
+                    for kv in kvs:
+
+                        # If the keys are different then just skip to the next one as the pcc has nothing to say about
+                        # this particular key.
+                        if kv.key != pcc.key:
+                            continue
+
+                        # If the keys do match then check to see if the values match as well.
+                        valuesMatch = (kv.value == pcc.value)
+
+                        # Finally check whether we want the values to match or to NOT match, depending on the invert flag.
+                        if valuesMatch == pcc.invert:
+                            print(kv.key, kv.value, pcc.key, pcc.value)
+                            allPreconditionsMet = False
+
+        if not allPreconditionsMet:
+            continue
 
         responses = QuestionResponse.objects.filter(question=question.pk).order_by('index')
         responsesHTML = ''
@@ -416,6 +458,9 @@ def getQuestionImage(request, id):
         for response in responses:
             if response.inputType == 'radioButton':
                 responsesHTML += '<input type="radio" name="' + response.keyToSet +'" value="' + response.valueToSet + '">'
+                responsesHTML += response.text + ' - <i>' + response.descriptionText + '</i><br>\n\n'
+            elif response.inputType == 'checkbox':
+                responsesHTML += '<input type="checkbox" name="' + response.keyToSet +'" value="' + response.valueToSet + '">'
                 responsesHTML += response.text + ' - <i>' + response.descriptionText + '</i><br>\n\n'
 
         questionDict = {}

@@ -15,12 +15,12 @@ image artefacts (meteor, cosmic ray, satellite, etc)
 
 noise characteristics (smooth, patchy, high/low noise, snr)
 
-what is in the image (stars, nebula, galaxy, etc)
-
 questions about observing notes
 """
 
-q, created = Question.objects.get_or_create(  
+#--------------------------------------------------------------------------------
+
+qFrameType, created = Question.objects.get_or_create(
     text = 'What kind of image is this?',
     descriptionText = 'We need to know what category of image this is to know how to properly process it and combine it with other images.',
     titleText = 'Image type',
@@ -30,7 +30,7 @@ q, created = Question.objects.get_or_create(
     )
 
 r, created = QuestionResponse.objects.get_or_create(
-    question = q,
+    question = qFrameType,
     index = 0,
     inputType = 'radioButton',
     text = 'Science Frame',
@@ -40,7 +40,7 @@ r, created = QuestionResponse.objects.get_or_create(
     )
 
 r, created = QuestionResponse.objects.get_or_create(
-    question = q,
+    question = qFrameType,
     index = 1,
     inputType = 'radioButton',
     text = 'Flat Frame',
@@ -50,7 +50,7 @@ r, created = QuestionResponse.objects.get_or_create(
     )
 
 r, created = QuestionResponse.objects.get_or_create(
-    question = q,
+    question = qFrameType,
     index = 2,
     inputType = 'radioButton',
     text = 'Dark Frame',
@@ -60,7 +60,7 @@ r, created = QuestionResponse.objects.get_or_create(
     )
 
 r, created = QuestionResponse.objects.get_or_create(
-    question = q,
+    question = qFrameType,
     index = 3,
     inputType = 'radioButton',
     text = 'Bias Frame',
@@ -70,7 +70,7 @@ r, created = QuestionResponse.objects.get_or_create(
     )
 
 r, created = QuestionResponse.objects.get_or_create(
-    question = q,
+    question = qFrameType,
     index = 4,
     inputType = 'radioButton',
     text = 'Spectra',
@@ -80,17 +80,17 @@ r, created = QuestionResponse.objects.get_or_create(
     )
 
 r, created = QuestionResponse.objects.get_or_create(
-    question = q,
+    question = qFrameType,
     index = 5,
     inputType = 'radioButton',
     text = 'Non-astronomical',
-    descriptionText = 'Any kind of picture that is not astronomical in nature, pictures of people, buildings, etc.',
+    descriptionText = 'Any kind of picture that is not astronomical in nature (pictures of people, buildings, etc.)',
     keyToSet = 'imageType',
     valueToSet = 'non-astronomical'
     )
 
 r, created = QuestionResponse.objects.get_or_create(
-    question = q,
+    question = qFrameType,
     index = 6,
     inputType = 'radioButton',
     text = 'Corrupt/Nothing',
@@ -99,7 +99,69 @@ r, created = QuestionResponse.objects.get_or_create(
     valueToSet = 'corrupt'
     )
 
+#--------------------------------------------------------------------------------
 
+qObjectsPresent, created = Question.objects.get_or_create(
+    text = 'What kinds of objects appear to be present in the image?',
+    descriptionText = 'Having images tagged with what is visible in them helps determine the limiting magnitude of the instrument used to take the image, as well as in locating images who could not be automatically plate solved.',
+    titleText = 'Objects Present',
+    aboutType = 'Image',
+    priority = 1000,
+    previousVersion = None
+    )
+
+r, created = QuestionResponse.objects.get_or_create(
+    question = qObjectsPresent,
+    index = 0,
+    inputType = 'checkbox',
+    text = 'Stars',
+    descriptionText = '',
+    keyToSet = 'containsStars',
+    valueToSet = 'yes'
+    )
+
+r, created = QuestionResponse.objects.get_or_create(
+    question = qObjectsPresent,
+    index = 1,
+    inputType = 'checkbox',
+    text = 'Galaxies',
+    descriptionText = '',
+    keyToSet = 'containsGalaxies',
+    valueToSet = 'yes'
+    )
+
+r, created = QuestionResponse.objects.get_or_create(
+    question = qObjectsPresent,
+    index = 2,
+    inputType = 'checkbox',
+    text = 'Nebulae',
+    descriptionText = '',
+    keyToSet = 'containsNebulae',
+    valueToSet = 'yes'
+    )
+
+r, created = QuestionResponse.objects.get_or_create(
+    question = qObjectsPresent,
+    index = 3,
+    inputType = 'checkbox',
+    text = 'Other',
+    descriptionText = 'Any other celestial object that is not noise/corruption of the image. (comets, planets, the moon, etc)',
+    keyToSet = 'containsOtherCelestial',
+    valueToSet = 'yes'
+    )
+
+pcObjectsInFrameType, created = AnswerPrecondition.objects.get_or_create(
+    descriptionText = 'Only ask about objects in image for light frames.',
+    firstQuestion = qFrameType,
+    secondQuestion = qObjectsPresent
+    )
+
+pccObjectsInFrameTypeLight, created = AnswerPreconditionCondition.objects.get_or_create(
+    answerPrecondition = pcObjectsInFrameType,
+    invert = False,
+    key = 'imageType',
+    value = 'light'
+    )
 
 '''
 q, created = Question.objects.get_or_create(  
@@ -112,7 +174,7 @@ q, created = Question.objects.get_or_create(
     )
 
 r, created = QuestionResponse.objects.get_or_create(
-    question = q,
+    question = ,
     index = ,
     inputType = '',
     text = '',
@@ -121,4 +183,6 @@ r, created = QuestionResponse.objects.get_or_create(
     valueToSet = ''
     )
 '''
+
+#TODO: Make a 'dot' graph showing all the questions, their possible responses, and the precondition links among them.
 
