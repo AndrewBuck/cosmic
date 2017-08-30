@@ -54,6 +54,14 @@ sudo apt-get install graphviz
 
 python3 createQuestions.py
 
+There is also a script to clear all stored questions and answers from the
+database.  Under normal circumstances you shouldn't need this, but it is useful
+for developers working with a local copy of the database on their own system.
+
+WARNING: ONLY FOR DEVELOPERS, DO NOT RUN ON A PRODUCTION SITE UNLESS YOU REALLY MEAN TO!
+
+python3 clearQuestionsAndAnswers.py
+
 
 
 Finally, populate the database tables containing the catalog data.  See below
