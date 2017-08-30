@@ -1,6 +1,7 @@
 import hashlib
 import os
 
+from django.middleware import csrf
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.template import loader
@@ -11,6 +12,7 @@ from django.http import HttpResponseRedirect
 from django.utils import timezone
 from django.conf import settings
 from django.db.models import Q
+from django.db import transaction
 
 from lxml import etree
 
@@ -276,6 +278,7 @@ def imageProperties(request, id):
 
     return render(request, "cosmicapp/imageProperties.html", context)
 
+@login_required
 def query(request):
     root = etree.Element("queryresult")
 
@@ -321,7 +324,6 @@ def query(request):
 
         for result in results:
             imageDict = {}
-            #TODO: These lines could probably all (or mostly) be collapsed into a for loop.
             imageDict['id'] = str(result.pk)
             imageDict['dimX'] = str(result.dimX)
             imageDict['dimY'] = str(result.dimY)
@@ -337,7 +339,94 @@ def query(request):
             imageDict['thumbUrlMedium'] = result.getThumbnailUrlMedium()
             imageDict['thumbUrlLarge'] = result.getThumbnailUrlLarge()
             imageDict['thumbUrlFull'] = result.getThumbnailUrlFull()
+
             etree.SubElement(root, "Image", imageDict)
+
+    return HttpResponse(etree.tostring(root, pretty_print=False), content_type='application/xml')
+
+@login_required
+def questionImage(request, id):
+    context = {"user" : request.user}
+    context['id'] = id
+
+    try:
+        image = Image.objects.get(pk=id)
+    except Image.DoesNotExist:
+        return render(request, "cosmicapp/imagenotfound.html", context)
+
+    context['image'] = image
+
+    if request.method == 'POST':
+        question = Question.objects.get(pk=int(request.POST['questionID']))
+        user = User.objects.get(pk=request.user.id)
+
+        #TODO: If the user clicks 'submit' without entering an answer a blank answer gets entered and the site thinks
+        # the question has been answered.  This needs to be addressed by checking that there is something other than the
+        # csrf token and questionID in the post results.
+        with transaction.atomic():
+            answer = Answer(
+                question = question,
+                user = user,
+                dateTime = timezone.now(),
+                content_object = image
+                )
+
+            answer.save()
+
+            p = request.POST
+            for entry in request.POST:
+                if entry in ['csrfmiddlewaretoken', 'questionID']:
+                    continue
+
+                kv = AnswerKV(
+                    answer = answer,
+                    key = entry,
+                    value = request.POST[entry]
+                    )
+
+                kv.save()
+
+    return render(request, "cosmicapp/questionImage.html", context)
+
+@login_required
+def getQuestionImage(request, id):
+    root = etree.Element("queryresult")
+
+    try:
+        image = Image.objects.get(pk=id)
+    except Image.DoesNotExist:
+        #TODO: Convert this to xml.
+        return HttpResponse("bad request: image not found")
+
+    questions = Question.objects.all().order_by('-priority')
+
+    for question in questions:
+        # Check to see if this user has already answered this question for this image.
+        imageContentType = ContentType.objects.get_for_model(Image)
+        if Answer.objects.filter(question=question.pk, user=request.user.pk,
+                                content_type__pk=imageContentType.pk, object_id=image.id).count() > 0:
+            continue
+
+        #TODO: Check for prerequisites to this question to see if it is still appropriate.
+
+        responses = QuestionResponse.objects.filter(question=question.pk).order_by('index')
+        responsesHTML = ''
+        responsesHTML += "<input type='hidden' name='csrfmiddlewaretoken' value='" + csrf.get_token(request) + "' />\n"
+        responsesHTML += "<input type='hidden' name='questionID' value='" + str(question.pk) + "' />\n"
+        for response in responses:
+            if response.inputType == 'radioButton':
+                responsesHTML += '<input type="radio" name="' + response.keyToSet +'" value="' + response.valueToSet + '">'
+                responsesHTML += response.text + ' - <i>' + response.descriptionText + '</i><br>\n\n'
+
+        questionDict = {}
+        questionDict['id'] = str(question.pk)
+        questionDict['text'] = question.text
+        questionDict['descriptionText'] = question.descriptionText
+        questionDict['titleText'] = question.titleText
+        questionDict['responsesHTML'] = responsesHTML
+
+        etree.SubElement(root, "Question", questionDict)
+        break
 
     return HttpResponse(etree.tostring(root, pretty_print=False), content_type='application/xml')
 

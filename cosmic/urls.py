@@ -38,5 +38,8 @@ urlpatterns = [
 
     url(r'^query/$', views.query),
 
+    url(r'^question/image/(?P<id>[0-9]+)/$', views.questionImage),
+    url(r'^getquestion/image/(?P<id>[0-9]+)/$', views.getQuestionImage),
+
     url(r'^upload/$', views.upload)
 ]
