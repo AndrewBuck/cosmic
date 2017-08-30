@@ -41,7 +41,16 @@ python3 manage.py migrate
 
 Next, create the table of questions to ask the users in the database.  This
 only needs to be run once, when the database is first created, or whenever new
-questions are added to the system:
+questions are added to the system.  Running the script will also output a
+picture showing a graph of the questions and what order they will be asked in,
+this uses the python graphviz interface and the system program 'dot' which is
+part of graphviz to actually render the image.  The image is saved to the static
+directory so it is accesible on the website (note: make sure you run this
+directly from the 'cosmic' root directory where the script is located so that
+the rendered image is put in the correct place in the static directory):
+
+sudo pip3 install graphviz
+sudo apt-get install graphviz
 
 python3 createQuestions.py
 

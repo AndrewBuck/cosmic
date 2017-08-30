@@ -1,0 +1,20 @@
+{% extends "cosmicapp/base.html" %}
+{% load static %}
+
+{% block extratitle %} - Questions {% endblock %}
+
+{% block mainbody %}
+<h2>Questions</h2>
+
+<p>Below is a graph showing a "flow chart" of the questions that cosmic has in its database that will be asked to users
+about images and observing notes.</p>
+
+{% comment %}
+TODO: Add the results of some DB queries here to show how many times each question has been answered,
+users who have answered the most questions, etc.
+{% endcomment %}
+
+<p><a href="/static/cosmicapp/QuestionGraph.svg"><img src="/static/cosmicapp/QuestionGraph.svg" width=640></a></p>
+
+{% endblock %}
+

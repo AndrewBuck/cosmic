@@ -1,5 +1,6 @@
 import os
 import django
+from graphviz import Digraph
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "cosmic.settings")
 django.setup()
@@ -184,5 +185,32 @@ r, created = QuestionResponse.objects.get_or_create(
     )
 '''
 
-#TODO: Make a 'dot' graph showing all the questions, their possible responses, and the precondition links among them.
+# Make a 'dot' graph showing all the questions, their possible responses, and the precondition links among them.
+graph = Digraph("Question Flow Chart", format='svg')
+
+questions = Question.objects.all()
+for question in questions:
+    label = question.titleText.replace(' ', '_')
+    text = '< <table>'
+    text += '<tr><td>' + question.titleText + '</td></tr>'
+    text += '<tr><td><font point-size="8">' + question.text + '</font></td></tr>'
+    text += '</table> >'
+    graph.node(label, text, shape='none', margin='0')
+
+preconditions = AnswerPrecondition.objects.all()
+for pc in preconditions:
+    label1 = pc.firstQuestion.titleText.replace(' ', '_')
+    label2 = pc.secondQuestion.titleText.replace(' ', '_')
+
+    conditions = AnswerPreconditionCondition.objects.filter(answerPrecondition=pc.pk)
+    for condition in conditions:
+        text = ''
+        if condition.invert:
+            text += "not "
+
+        text += condition.key + '=' + condition.value + '\n'
+
+    graph.edge(label1, label2, label=text, constraint='true')
+
+graph.render('QuestionGraph', directory='./cosmicapp/static/cosmicapp/', view=False, cleanup=True)
 

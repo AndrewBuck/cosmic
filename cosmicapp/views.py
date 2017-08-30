@@ -344,6 +344,11 @@ def query(request):
 
     return HttpResponse(etree.tostring(root, pretty_print=False), content_type='application/xml')
 
+def questions(request):
+    context = {"user" : request.user}
+
+    return render(request, "cosmicapp/questions.html", context)
+
 @login_required
 def questionImage(request, id):
     context = {"user" : request.user}
