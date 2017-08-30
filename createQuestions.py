@@ -25,7 +25,7 @@ questions about observing notes
 qFrameType, created = Question.objects.get_or_create(
     text = 'What kind of image is this?',
     descriptionText = 'We need to know what category of image this is to know how to properly process it and combine it with other images.',
-    titleText = 'Image type',
+    titleText = 'Image Type',
     aboutType = 'Image',
     priority = 10000,
     previousVersion = None
@@ -153,7 +153,7 @@ r, created = QuestionResponse.objects.get_or_create(
     )
 
 pcObjectsInFrameType, created = AnswerPrecondition.objects.get_or_create(
-    descriptionText = 'Only ask about objects in image for light frames.',
+    descriptionText = 'Only for light frames.',
     firstQuestion = qFrameType,
     secondQuestion = qObjectsPresent
     )
@@ -165,8 +165,62 @@ pccObjectsInFrameTypeLight, created = AnswerPreconditionCondition.objects.get_or
     value = 'light'
     )
 
+#--------------------------------------------------------------------------------
+
+qMotionBlur, created = Question.objects.get_or_create(
+    text = 'Do the stars in the image exhibit "motion blur"?',
+    descriptionText = 'If the telescope is bumped during the image exposure, or if the mount is not tracking perfectly, the stars in the image will be stretched and not round.',
+    titleText = 'Motion Blur',
+    aboutType = 'Image',
+    priority = 8000,
+    previousVersion = None
+    )
+
+r, created = QuestionResponse.objects.get_or_create(
+    question = qMotionBlur,
+    index = 0,
+    inputType = 'radioButton',
+    text = 'None',
+    descriptionText = 'The stars are perfectly round.',
+    keyToSet = 'motionBlur',
+    valueToSet = '0'
+    )
+
+r, created = QuestionResponse.objects.get_or_create(
+    question = qMotionBlur,
+    index = 1,
+    inputType = 'radioButton',
+    text = 'Moderate',
+    descriptionText = 'The stars slightly out of round, but the image is still useable for most analysis.',
+    keyToSet = 'motionBlur',
+    valueToSet = '1'
+    )
+
+r, created = QuestionResponse.objects.get_or_create(
+    question = qMotionBlur,
+    index = 2,
+    inputType = 'radioButton',
+    text = 'Severe',
+    descriptionText = 'The stars are streaked severely and the image is unusable for scientific analysis.',
+    keyToSet = 'motionBlur',
+    valueToSet = '2'
+    )
+
+pcStarsInFrame, created = AnswerPrecondition.objects.get_or_create(
+    descriptionText = 'If stars are present.',
+    firstQuestion = qObjectsPresent,
+    secondQuestion = qMotionBlur
+    )
+
+pccStarsInFrameYes, created = AnswerPreconditionCondition.objects.get_or_create(
+    answerPrecondition = pcStarsInFrame,
+    invert = False,
+    key = 'containsStars',
+    value = 'yes'
+    )
+
 '''
-q, created = Question.objects.get_or_create(  
+q, created = Question.objects.get_or_create(
     text = '',
     descriptionText = '',
     titleText = '',
