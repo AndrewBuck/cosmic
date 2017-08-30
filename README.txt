@@ -32,14 +32,42 @@ cp /usr/share/sextractor/default* /cosmicmedia/
 
 
 
-Run the manage.py script to setup the database and run the django server:
+Run the manage.py script to setup the database:
 
 python3 manage.py makemigrations
 python3 manage.py migrate
+
+
+
+Next, create the table of questions to ask the users in the database.  This
+only needs to be run once, when the database is first created, or whenever new
+questions are added to the system.  Running the script will also output a
+picture showing a graph of the questions and what order they will be asked in,
+this uses the python graphviz interface and the system program 'dot' which is
+part of graphviz to actually render the image.  The image is saved to the static
+directory so it is accesible on the website (note: make sure you run this
+directly from the 'cosmic' root directory where the script is located so that
+the rendered image is put in the correct place in the static directory):
+
+sudo pip3 install graphviz
+sudo apt-get install graphviz
+
+python3 createQuestions.py
+
+
+
+Finally, populate the database tables containing the catalog data.  See below
+for instructions on how to do that and then return here before launching the
+server.
+
+
+
+Now that the database is set up and loaded with the necessary data, the server
+can be launched with:
+
 python3 manage.py runserver 8080
 celery -A cosmic worker -l info
 python3 dispatcher.py
-
 
 
 
@@ -63,10 +91,6 @@ sextractor - Source Extractor: Finds stars and galaxies in an image.  Also must
 	See the "unofficial" documentation in "Sextractor for Dummies":
 
 	http://mensa.ast.uct.ac.za/~holwerda/SE/Manual.html
-
-
-
-
 
 
 Catalogs

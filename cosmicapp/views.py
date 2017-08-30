@@ -1,6 +1,7 @@
 import hashlib
 import os
 
+from django.middleware import csrf
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.template import loader
@@ -11,6 +12,7 @@ from django.http import HttpResponseRedirect
 from django.utils import timezone
 from django.conf import settings
 from django.db.models import Q
+from django.db import transaction
 
 from lxml import etree
 
@@ -276,6 +278,7 @@ def imageProperties(request, id):
 
     return render(request, "cosmicapp/imageProperties.html", context)
 
+@login_required
 def query(request):
     root = etree.Element("queryresult")
 
@@ -321,7 +324,6 @@ def query(request):
 
         for result in results:
             imageDict = {}
-            #TODO: These lines could probably all (or mostly) be collapsed into a for loop.
             imageDict['id'] = str(result.pk)
             imageDict['dimX'] = str(result.dimX)
             imageDict['dimY'] = str(result.dimY)
@@ -337,7 +339,161 @@ def query(request):
             imageDict['thumbUrlMedium'] = result.getThumbnailUrlMedium()
             imageDict['thumbUrlLarge'] = result.getThumbnailUrlLarge()
             imageDict['thumbUrlFull'] = result.getThumbnailUrlFull()
+
             etree.SubElement(root, "Image", imageDict)
+
+    return HttpResponse(etree.tostring(root, pretty_print=False), content_type='application/xml')
+
+def questions(request):
+    context = {"user" : request.user}
+
+    return render(request, "cosmicapp/questions.html", context)
+
+@login_required
+def questionImage(request, id):
+    context = {"user" : request.user}
+    context['id'] = id
+
+    try:
+        image = Image.objects.get(pk=id)
+    except Image.DoesNotExist:
+        return render(request, "cosmicapp/imagenotfound.html", context)
+
+    context['image'] = image
+
+    if request.method == 'POST':
+        question = Question.objects.get(pk=int(request.POST['questionID']))
+        user = User.objects.get(pk=request.user.id)
+
+        #TODO: If the user clicks 'submit' without entering an answer a blank answer gets entered and the site thinks
+        # the question has been answered.  This needs to be addressed by checking that there is something other than the
+        # csrf token and questionID in the post results.
+        #TODO: Need to check to see that this user has not already answered this question before.  If so, decide how to
+        # handle it.  (this will be common if a user hits 'reload' on the page and resends the post data)
+        with transaction.atomic():
+            answer = Answer(
+                question = question,
+                user = user,
+                dateTime = timezone.now(),
+                content_object = image
+                )
+
+            answer.save()
+
+            p = request.POST
+            for entry in request.POST:
+                if entry in ['csrfmiddlewaretoken', 'questionID']:
+                    continue
+
+                kv = AnswerKV(
+                    answer = answer,
+                    key = entry,
+                    value = request.POST[entry]
+                    )
+
+                kv.save()
+
+    return render(request, "cosmicapp/questionImage.html", context)
+
+@login_required
+def getQuestionImage(request, id):
+    root = etree.Element("queryresult")
+
+    try:
+        image = Image.objects.get(pk=id)
+    except Image.DoesNotExist:
+        #TODO: Convert this to xml.
+        return HttpResponse("bad request: image not found")
+
+    questions = Question.objects.all().order_by('-priority')
+
+    questionFound = False
+    for question in questions:
+        # Check to see what type of object this question pertains to.
+        # Right now we only handle images in this function.
+        if question.aboutType != 'Image':
+            continue
+
+        # Check to see if this user has already answered this question for this image, if they have then skip it.
+        imageContentType = ContentType.objects.get_for_model(Image)
+        if Answer.objects.filter(question=question.pk, user=request.user.pk,
+                                content_type__pk=imageContentType.pk, object_id=image.id).count() > 0:
+            continue
+
+        # Check for prerequisites to this question to see if it is appropriate to ask based on previously answered questions.
+        #NOTE: There is a possible optimisation where we exit these loops early if allPreconditionsMet ever becomes
+        # false, but I don't think it is worth the extra code clutter since the loops should all be short anyway.
+        allPreconditionsMet = True
+        preconditions = AnswerPrecondition.objects.filter(secondQuestion=question.pk)
+        for precondition in preconditions:
+            # For each precondition, get any answers to the first question that the user has already provided.
+            previousAnswers = Answer.objects.filter(question=precondition.firstQuestion, user=request.user.pk,
+                                    content_type__pk=imageContentType.pk, object_id=image.id)
+
+            # If the user has not answered the previous question at all, then the precondition is definitely not met.
+            if len(previousAnswers) == 0:
+                allPreconditionsMet = False
+                break
+
+            # The user has answered the previous question, so now loop over any additional conditions and check each one
+            # to make sure that the answer to the previous question was an appropriate answer to make this question relevant.
+            pccs = AnswerPreconditionCondition.objects.filter(answerPrecondition=precondition.pk)
+            for pcc in pccs:
+
+                # For each previous answer check that that answer meets all the conditions.
+                for answer in previousAnswers:
+
+                    # Loop over all the key-value pairs for the given answer and check that each one is consistent with
+                    # the current pcc we are checking.
+                    kvs = AnswerKV.objects.filter(answer=answer.pk)
+                    for kv in kvs:
+
+                        # If the keys are different then just skip to the next one as the pcc has nothing to say about
+                        # this particular key.
+                        if kv.key != pcc.key:
+                            continue
+
+                        # If the keys do match then check to see if the values match as well.
+                        valuesMatch = (kv.value == pcc.value)
+
+                        # Finally check whether we want the values to match or to NOT match, depending on the invert flag.
+                        if valuesMatch == pcc.invert:
+                            print(kv.key, kv.value, pcc.key, pcc.value)
+                            allPreconditionsMet = False
+
+        if not allPreconditionsMet:
+            continue
+
+        questionFound = True
+
+        responses = QuestionResponse.objects.filter(question=question.pk).order_by('index')
+        responsesHTML = ''
+        responsesHTML += "<input type='hidden' name='csrfmiddlewaretoken' value='" + csrf.get_token(request) + "' />\n"
+        responsesHTML += "<input type='hidden' name='questionID' value='" + str(question.pk) + "' />\n"
+        for response in responses:
+            if response.inputType == 'radioButton':
+                responsesHTML += '<input type="radio" name="' + response.keyToSet +'" value="' + response.valueToSet + '">'
+                responsesHTML += response.text + ' - <i>' + response.descriptionText + '</i><br>\n\n'
+            elif response.inputType == 'checkbox':
+                responsesHTML += '<input type="checkbox" name="' + response.keyToSet +'" value="' + response.valueToSet + '">'
+                responsesHTML += response.text + ' - <i>' + response.descriptionText + '</i><br>\n\n'
+
+        questionDict = {}
+        questionDict['id'] = str(question.pk)
+        questionDict['text'] = question.text
+        questionDict['descriptionText'] = question.descriptionText
+        questionDict['titleText'] = question.titleText
+        questionDict['responsesHTML'] = responsesHTML
+
+        etree.SubElement(root, "Question", questionDict)
+        break
+
+    if not questionFound:
+        #TODO: Make this query a bit better to only find images needing questions answered and also don't just stop at the highest number.
+        nextImage = Image.objects.filter(pk__gt=id, fileRecord__uploadingUser=request.user.pk)[0:1]
+        if len(nextImage) > 0:
+            nextImageDict = {'id': str(nextImage[0].pk)}
+            etree.SubElement(root, "NextImage", nextImageDict)
 
     return HttpResponse(etree.tostring(root, pretty_print=False), content_type='application/xml')
 

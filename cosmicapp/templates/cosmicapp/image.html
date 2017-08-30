@@ -42,6 +42,8 @@
 
 <p>This image has {{numProperties}} property tags assosciatied with it.  <a href="/image/{{id}}/properties/">View properties</a></p>
 
+<p>Answer questions about this image.  <a href="/question/image/{{id}}/">Answer questions</a></p>
+
 {% for channel in image.imagechannelinfo_set.all %}
 Image channel {{channel.index}}: {{channel.channelType}}<br>
 {% endfor %}

@@ -4,6 +4,9 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.staticfiles.storage import staticfiles_storage
 from django.contrib.staticfiles import finders
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.fields import GenericRelation
+from django.contrib.contenttypes.models import ContentType
 
 #TODO:  Need to review the on_delete behaviour of all foreign keys to guarantee references remain intact as needed.
 
@@ -292,4 +295,55 @@ class TwoMassXSCRecord(models.Model):
     isophotalKAngle = models.FloatField(null=True)
     isophotalKMag = models.FloatField(null=True)
     isophotalKMagErr = models.FloatField(null=True)
+
+
+
+
+class Question(models.Model):
+    #TODO: Should maybe include a FK to an image property or an image header entry to display to the user.  For example
+    # 'frame type' could be displayed to check if it makes sense given the image.  I.E. does it look like a flat field, etc.
+    text = models.TextField(null=True)
+    descriptionText = models.TextField(null=True)
+    titleText = models.TextField(null=True)
+    aboutType = models.CharField(max_length=24)
+    priority = models.IntegerField()
+    previousVersion = models.ForeignKey('self', null=True, on_delete=models.CASCADE, related_name='laterVersion')
+    prerequisites = models.ManyToManyField('self', symmetrical=False, through='AnswerPrecondition',
+        through_fields=('firstQuestion', 'secondQuestion'))
+
+class QuestionResponse(models.Model):
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    index = models.IntegerField()
+    inputType = models.TextField(null=True)
+    text = models.TextField(null=True)
+    descriptionText = models.TextField(null=True)
+    keyToSet = models.TextField(null=True)
+    valueToSet = models.TextField(null=True)
+
+class Answer(models.Model):
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    dateTime = models.DateTimeField()
+
+    #Generic FK to image or whatever the question is about.
+    #TODO: Add a reverse generic relation to the relevant classes this will link to (image, observer notes, etc).
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+
+class AnswerKV(models.Model):
+    answer = models.ForeignKey(Answer, on_delete=models.CASCADE)
+    key = models.TextField(null=True)
+    value = models.TextField(null=True)
+
+class AnswerPrecondition(models.Model):
+    descriptionText = models.TextField(null=True)
+    firstQuestion = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='dependantQuestions')
+    secondQuestion = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='dependsOnQuestions')
+
+class AnswerPreconditionCondition(models.Model):
+    answerPrecondition = models.ForeignKey(AnswerPrecondition, on_delete=models.CASCADE)
+    invert = models.BooleanField()
+    key = models.TextField()
+    value = models.TextField()
 

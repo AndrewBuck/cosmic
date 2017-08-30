@@ -147,4 +147,18 @@ div.desc {
     clear: both;
 }
 
+div.imageQuestionDisplay {
+    margin: 10px;
+    display: inline;
+    float: left;
+}
 
+div.imageQuestionQuestions {
+    margin: 10px;
+    min-width: 250px;
+    border: 2px solid green;
+}
+
+#imageQuestionTable td {
+    padding-bottom: 10px;
+}
