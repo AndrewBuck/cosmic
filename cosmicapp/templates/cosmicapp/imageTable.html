@@ -1,3 +1,6 @@
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js">
+</script>
+
 <script>
 var numRows = {{numRows}}, numCols = {{numCols}};
 var includeLinks = {{includeLinks}};
@@ -11,51 +14,46 @@ function loadImageGalleryResults()
     if(!loadingInProgress)
     {
         loadingInProgress = true;
+
         gallery = document.getElementById("imageGalleryDiv");
         currentHTML = gallery.innerHTML;
-        loadingHTML = currentHTML + "<p>Loading...</p>";
-        gallery.innerHTML = loadingHTML;
+        $('#imageGalleryDiv').append('<div id="imageGalleryLoadingMessage"><p>Loading...</p><div>');
 
-        request = new XMLHttpRequest();
+        $.get("/query/?queryfor=image&{{queryKey}}={{queryValue}}&order=time_desc&limit=" + numRows*numCols +
+                    "&offset=" + numRows*numCols*resultsPage, function(xml, statusCode) {
 
-        request.onreadystatechange = function()
-        {
-            if(this.readyState == 4 && this.status == 200)
+            html = ""
+
+            results = xml.getElementsByTagName('Image')
+            for(i = 0; i < results.length; i++)
             {
-                xml = this.responseXML;
-                html = ""
+                attr = results[i].attributes;
 
-                results = xml.getElementsByTagName('Image')
-                for(i = 0; i < results.length; i++)
-                {
-                    attr = results[i].attributes;
-
-					html += '<div class="responsive">'
-					html += '<div class="gallery">'
-                    if(includeLinks)
-                        html += '<a href="/image/' + attr.getNamedItem('id').nodeValue + '/">'
-                    html += '<img src="' + attr.getNamedItem('thumbUrl'+thumbnailSize).nodeValue + '" width="300">';
-					if(includeLinks)
-						html += '</a>';
-					html += '<div class="desc">' + attr.getNamedItem('id').nodeValue + '</div>'
-					html += '</div>'
-					html += '</div>'
-                }
-
-                gallery.innerHTML = currentHTML + html;
-                loadingInProgress = false;
+                html += '<div class="responsive">'
+                html += '<div class="gallery">'
+                if(includeLinks)
+                    html += '<a href="/image/' + attr.getNamedItem('id').nodeValue + '/">'
+                html += '<img src="' + attr.getNamedItem('thumbUrl'+thumbnailSize).nodeValue + '" width="300">';
+                if(includeLinks)
+                    html += '</a>';
+                html += '<div class="desc">' + attr.getNamedItem('id').nodeValue + '</div>'
+                html += '</div>'
+                html += '</div>'
             }
-        };
 
-        requestURL = "/query/?queryfor=image&{{queryKey}}={{queryValue}}&order=time_desc&limit=" + numRows*numCols + "&offset=" + numRows*numCols*resultsPage;
-        request.open("GET", requestURL, true);
-        request.send()
+            $('#imageGalleryLoadingMessage').remove();
+            $('#imageGalleryDiv').append(html);
+
+            loadingInProgress = false;
+
+            return "blah";
+        });
 
         resultsPage++;
     }
 };
 
-window.onload = loadImageGalleryResults;
+$(document).ready(loadImageGalleryResults);
 
 </script>
 
