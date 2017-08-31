@@ -20,6 +20,7 @@ questions about observing notes
 
 #--------------------------------------------------------------------------------
 
+#TODO: Maybe we want to combine all of dark/flat/bias into 'calibration' frame since you can't tell them apart by looking?
 qFrameType, created = Question.objects.get_or_create(
     text = 'What kind of image is this?',
     descriptionText = 'We need to know what category of image this is to know how to properly process it and combine it with other images.',
@@ -165,7 +166,7 @@ r, created = QuestionResponse.objects.get_or_create(
     index = 5,
     inputType = 'checkbox',
     text = 'Asteroids',
-    descriptionText = '',
+    descriptionText = 'If you know any are present.',
     keyToSet = 'containsAsteroids',
     valueToSet = 'yes'
     )
@@ -175,7 +176,7 @@ r, created = QuestionResponse.objects.get_or_create(
     index = 6,
     inputType = 'checkbox',
     text = 'The Moon',
-    descriptionText = '',
+    descriptionText = 'Our moon.',
     keyToSet = 'containsTheMoon',
     valueToSet = 'yes'
     )
@@ -183,6 +184,16 @@ r, created = QuestionResponse.objects.get_or_create(
 r, created = QuestionResponse.objects.get_or_create(
     question = qObjectsPresent,
     index = 7,
+    inputType = 'checkbox',
+    text = 'The Sun',
+    descriptionText = 'Our sun.',
+    keyToSet = 'containsOtherCelestial',
+    valueToSet = 'yes'
+    )
+
+r, created = QuestionResponse.objects.get_or_create(
+    question = qObjectsPresent,
+    index = 8,
     inputType = 'checkbox',
     text = 'Other',
     descriptionText = 'Any other celestial object that is not noise/corruption of the image.',
@@ -255,6 +266,50 @@ pccStarsInFrameYes, created = AnswerPreconditionCondition.objects.get_or_create(
     invert = False,
     key = 'containsStars|containsPlanets|containsAsteroids|containsTheMoon',
     value = 'yes|yes|yes|yes'
+    )
+
+#--------------------------------------------------------------------------------
+
+qGalaxyStructure, created = Question.objects.get_or_create(
+    text = 'Can you see structure in any of the galaxies in the image?',
+    descriptionText = 'Galaxy structure means spiral arms, a central bar, or a prominent central bulge.',
+    titleText = 'Galaxy Structure',
+    aboutType = 'Image',
+    priority = 15000,
+    previousVersion = None
+    )
+
+r, created = QuestionResponse.objects.get_or_create(
+    question = qGalaxyStructure,
+    index = 0,
+    inputType = 'radioButton',
+    text = 'Yes',
+    descriptionText = 'One or more galaxies has visible structure.',
+    keyToSet = 'galaxyStructure',
+    valueToSet = 'yes'
+    )
+
+r, created = QuestionResponse.objects.get_or_create(
+    question = qGalaxyStructure,
+    index = 1,
+    inputType = 'radioButton',
+    text = 'No',
+    descriptionText = 'None of the galaxies have visible structure.',
+    keyToSet = 'galaxyStructure',
+    valueToSet = 'no'
+    )
+
+pcGalaxiesInFrame, created = AnswerPrecondition.objects.get_or_create(
+    descriptionText = 'If galaxies are present.',
+    firstQuestion = qObjectsPresent,
+    secondQuestion = qGalaxyStructure
+    )
+
+pccStarsInFrameYes, created = AnswerPreconditionCondition.objects.get_or_create(
+    answerPrecondition = pcGalaxiesInFrame,
+    invert = False,
+    key = 'containsGalaxies',
+    value = 'yes'
     )
 
 '''
