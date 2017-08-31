@@ -414,6 +414,8 @@ def getQuestionImage(request, id):
         if question.aboutType != 'Image':
             continue
 
+        #TODO: Check if this question is an earlier version of another question and if so, skip it.
+
         # Check to see if this user has already answered this question for this image, if they have then skip it.
         imageContentType = ContentType.objects.get_for_model(Image)
         if Answer.objects.filter(question=question.pk, user=request.user.pk,
@@ -443,23 +445,37 @@ def getQuestionImage(request, id):
                 # For each previous answer check that that answer meets all the conditions.
                 for answer in previousAnswers:
 
-                    # Loop over all the key-value pairs for the given answer and check that each one is consistent with
-                    # the current pcc we are checking.
-                    kvs = AnswerKV.objects.filter(answer=answer.pk)
-                    for kv in kvs:
+                    # Split the key/value into the 'or' components and loop over them checking to see that at least
+                    # one is true.
+                    oneOrIsTrue = False
+                    orKeys = pcc.key.split('|')
+                    orValues = pcc.value.split('|')
+                    for orKey, orValue in zip(orKeys, orValues):
 
-                        # If the keys are different then just skip to the next one as the pcc has nothing to say about
-                        # this particular key.
-                        if kv.key != pcc.key:
-                            continue
+                        # Loop over all the key-value pairs for the given answer and check that each one is consistent with
+                        # the current pcc we are checking.
+                        kvs = AnswerKV.objects.filter(answer=answer.pk)
+                        for kv in kvs:
 
-                        # If the keys do match then check to see if the values match as well.
-                        valuesMatch = (kv.value == pcc.value)
+                            # If the keys are different then just skip to the next one as the pcc has nothing to say about
+                            # this particular key.
+                            if orKey != kv.key:
+                                continue
 
-                        # Finally check whether we want the values to match or to NOT match, depending on the invert flag.
-                        if valuesMatch == pcc.invert:
-                            print(kv.key, kv.value, pcc.key, pcc.value)
-                            allPreconditionsMet = False
+                            # If the keys do match then check to see if the values match as well.
+                            valuesMatch = (orValue == kv.value)
+
+                            # Finally check whether we want the values to match or to NOT match, depending on the invert flag.
+                            #NOTE: If invert is true and there are multiple entries on an 'or' clause it will behave
+                            #funny.  This probably doesn't need to be fixed but it is technically a bug.
+                            if valuesMatch == pcc.invert:
+                                allPreconditionsMet = False
+                            else:
+                                oneOrIsTrue = True
+
+                    # If at least one of the 'or' conditons was met we pass, otherwise if none were met we fail.
+                    if not oneOrIsTrue:
+                        allPreconditionsMet = False
 
         if not allPreconditionsMet:
             continue

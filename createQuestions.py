@@ -11,8 +11,6 @@ from cosmicapp.models import *
 """
 image focus quality
 
-image motion blur
-
 image artefacts (meteor, cosmic ray, satellite, etc)
 
 noise characteristics (smooth, patchy, high/low noise, snr)
@@ -146,8 +144,48 @@ r, created = QuestionResponse.objects.get_or_create(
     question = qObjectsPresent,
     index = 3,
     inputType = 'checkbox',
+    text = 'Planets',
+    descriptionText = '',
+    keyToSet = 'containsPlanets',
+    valueToSet = 'yes'
+    )
+
+r, created = QuestionResponse.objects.get_or_create(
+    question = qObjectsPresent,
+    index = 4,
+    inputType = 'checkbox',
+    text = 'Comets',
+    descriptionText = '',
+    keyToSet = 'containsComets',
+    valueToSet = 'yes'
+    )
+
+r, created = QuestionResponse.objects.get_or_create(
+    question = qObjectsPresent,
+    index = 5,
+    inputType = 'checkbox',
+    text = 'Asteroids',
+    descriptionText = '',
+    keyToSet = 'containsAsteroids',
+    valueToSet = 'yes'
+    )
+
+r, created = QuestionResponse.objects.get_or_create(
+    question = qObjectsPresent,
+    index = 6,
+    inputType = 'checkbox',
+    text = 'The Moon',
+    descriptionText = '',
+    keyToSet = 'containsTheMoon',
+    valueToSet = 'yes'
+    )
+
+r, created = QuestionResponse.objects.get_or_create(
+    question = qObjectsPresent,
+    index = 7,
+    inputType = 'checkbox',
     text = 'Other',
-    descriptionText = 'Any other celestial object that is not noise/corruption of the image. (comets, planets, the moon, etc)',
+    descriptionText = 'Any other celestial object that is not noise/corruption of the image.',
     keyToSet = 'containsOtherCelestial',
     valueToSet = 'yes'
     )
@@ -207,7 +245,7 @@ r, created = QuestionResponse.objects.get_or_create(
     )
 
 pcStarsInFrame, created = AnswerPrecondition.objects.get_or_create(
-    descriptionText = 'If stars are present.',
+    descriptionText = 'If stars or other pointlike objects are present.',
     firstQuestion = qObjectsPresent,
     secondQuestion = qMotionBlur
     )
@@ -215,8 +253,8 @@ pcStarsInFrame, created = AnswerPrecondition.objects.get_or_create(
 pccStarsInFrameYes, created = AnswerPreconditionCondition.objects.get_or_create(
     answerPrecondition = pcStarsInFrame,
     invert = False,
-    key = 'containsStars',
-    value = 'yes'
+    key = 'containsStars|containsPlanets|containsAsteroids|containsTheMoon',
+    value = 'yes|yes|yes|yes'
     )
 
 '''
@@ -275,7 +313,14 @@ for pc in preconditions:
         if condition.invert:
             text += "not "
 
-        text += condition.key + '=' + condition.value + '<br/>'
+        orKeys = condition.key.split('|')
+        orValues = condition.value.split('|')
+
+        if len(orKeys) > 1:
+            text += "<i>any one of</i><br/>"
+
+        for orKey, orValue in zip(orKeys, orValues):
+            text += orKey + '=' + orValue + '<br/>'
 
     text += '</font> >'
     graph.edge(label1, label2, label=text, constraint='true')
