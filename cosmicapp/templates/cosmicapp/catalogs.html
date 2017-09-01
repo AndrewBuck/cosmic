@@ -1,3 +1,10 @@
+{% extends "cosmicapp/base.html" %}
+{% load static %}
+
+{% block extratitle %} - Catalogs {% endblock %}
+
+{% block mainbody %}
+
 <h2>Catalogs</h2>
 
 <p>This page lists the various astronomical catalogs in use on the Cosmic website.  These catalogs are used to generate
@@ -25,3 +32,4 @@ in our database and what sources it is gathered from.</p>
 
 {% endfor %}
 
+{% endblock %}
