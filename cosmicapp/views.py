@@ -278,6 +278,7 @@ def imageProperties(request, id):
 
     return render(request, "cosmicapp/imageProperties.html", context)
 
+#TODO: Allow this function to accept a size like 300px and have it return a suitable thumbnail.
 def imageThumbnailUrl(request, id, size):
     context = {"user" : request.user}
 
@@ -288,7 +289,6 @@ def imageThumbnailUrl(request, id, size):
 
     return HttpResponse(image.getThumbnailUrl(size))
 
-@login_required
 def query(request):
     root = etree.Element("queryresult")
 
