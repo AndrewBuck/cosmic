@@ -12,9 +12,10 @@
 	<a href="/" class="dropbtn">Cosmic</a>
 	<div class="dropdown-content">
 		<a href="/processqueue">Queue</a>
+		<a href="/questions">Questions</a>
+		<a href="/catalogs">Catalogs</a>
 	</div>
 	</li>
-	<li style="float:center"><a href="/upload">Upload</a></li>
 {% if user.is_authenticated %}
   <li class="dropdown" style="float:right;">
     <a href="/user/{{user}}" class="dropbtn">{{user}}</a>
@@ -25,6 +26,8 @@
 {% else %}
 	<li style="float:right;"><a href="/login">Log in / Create account</a></li>
 {% endif %}
+	<li style="float:right"><a href="/upload">Upload</a></li>
+	<li style="float:right"><a href="/donate">Donate</a></li>
 </ul>
 
 {% block mainbody %}{% endblock %}
