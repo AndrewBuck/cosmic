@@ -4,6 +4,8 @@
 
 {% block mainbody %}
 
+<input id="thumbnailSizeInput" type=text value=full>
+
 <div class="mosaicDesktop" id="desktopDiv">
     <canvas class="mosaicCanvas" id="desktop">
         Your browser does not support the HTML 5 Canvas element.  Please update to a version that does.
@@ -13,7 +15,165 @@
 {% include "./jquery.html" %}
 
 <script>
-var selectedImageIds = [];
+var selectedImages = [];
+var zoom = 1;     //temporary
+var offsetX = 0, offsetY = 0;
+var lmbPressed = false, mmbPressed = false, rmbPressed = false;
+var lmbOffsetXStart, lmbOffsetYStart, lmbPageXStart, lmbPageYStart;
+var rmbOffsetXStart, rmbOffsetYStart, rmbPageXStart, rmbPageYStart;
+
+function addImageToDesktop(id)
+{
+    selectedImages[selectedImages.length] = new Object({
+        id: id,
+        image: new Image()
+        });
+
+    i = selectedImages.length-1;
+    selectedImages[i].posX = 500+ 50*i;
+    selectedImages[i].posY = 500 + 10*i;
+    selectedImages[i].rotation = .25*i;
+
+    $.ajax({
+        url : "/query/?queryfor=image&id=" + id,
+        type : "get",
+        async: false,
+        success : function(xml)
+        {
+            results = xml.getElementsByTagName('Image')
+            attr = results[0].attributes;
+            selectedImages[i].width = attr.getNamedItem('dimX').nodeValue;
+            selectedImages[i].height = attr.getNamedItem('dimY').nodeValue;
+        }
+    });
+
+    sizeString = document.getElementById("thumbnailSizeInput").value
+
+    thumbUrl = $.ajax(
+        {url: '/image/' + id + '/thumbnail/' + sizeString + '/',
+        async: false}
+        ).responseText;
+
+    selectedImages[i].image.src = thumbUrl;
+    selectedImages[i].rotationX = selectedImages[i].width/2;
+    selectedImages[i].rotationY = selectedImages[i].width/2;
+    selectedImages[i].image.onload = drawCanvas;
+};
+
+function removeImageFromDesktop(id)
+{
+    arrayIndex = getImageObjectArrayIndexById(id);
+
+    if(arrayIndex == -1)
+        return;
+
+    selectedImages.splice(arrayIndex, 1);
+
+    drawCanvas();
+};
+
+function drawCanvas()
+{
+    canvas = document.getElementById('desktop');
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    context = canvas.getContext('2d');
+    context.clearRect(0, 0, canvas.width, canvas.height);
+
+    for(i = 0; i < selectedImages.length; i++)
+    {
+        context.setTransform(
+            zoom,
+            0,
+            0,
+            zoom,
+            zoom*(offsetX + selectedImages[i].posX),
+            zoom*(offsetY + selectedImages[i].posY)
+            );
+
+        context.rotate(selectedImages[i].rotation);
+
+        context.drawImage(
+            selectedImages[i].image,
+            -selectedImages[i].rotationX,
+            -selectedImages[i].rotationY,
+            selectedImages[i].width,
+            selectedImages[i].height
+            );
+    }
+};
+
+function handleMouseButtonDown(event)
+{
+    if(event.which == 1)
+    {
+        lmbPressed = true;
+    }
+    else if(event.which == 2)
+    {
+        mmbPressed = true;
+    }
+    else if(event.which == 3)
+    {
+        rmbPressed = true;
+        rmbOffsetXStart = offsetX;
+        rmbOffsetYStart = offsetY;
+        rmbPageXStart = event.pageX;
+        rmbPageYStart = event.pageY;
+    }
+
+    return false;
+};
+
+function handleMouseMove(event)
+{
+    if(rmbPressed)
+    {console.log(zoom);
+        offsetX = rmbOffsetXStart + (event.pageX - rmbPageXStart)/zoom;
+        offsetY = rmbOffsetYStart + (event.pageY - rmbPageYStart)/zoom;
+        drawCanvas();
+    }
+
+    return false;
+};
+
+function handleMouseButtonUp(event)
+{
+    if(event.which == 1)
+        lmbPressed = false;
+    else if(event.which == 2)
+        mmbPressed = false;
+    else if(event.which == 3)
+        rmbPressed = false;
+
+    return false;
+};
+
+function handleMouseWheel(event)
+{
+    if(event.originalEvent.wheelDelta > 0 || event.originalEvent.detail < 0)
+        zoom *= 1.1;
+    else
+        zoom /= 1.1;
+
+    drawCanvas();
+    return false;
+};
+
+function getImageObjectArrayIndexById(id)
+{
+   arrayIndex = -1;
+    for(i = 0; i < selectedImages.length; i++)
+    {
+        if(selectedImages[i].id == id)
+        {
+            arrayIndex = i;
+            break;
+        }
+    }
+
+    return arrayIndex;
+};
 
 function onImageTableLoad()
 {
@@ -26,16 +186,16 @@ function onImageTableLoad()
         clickedId = $(this).parent().parent().attr('id');
         hideButtonId = '#hideButton' + clickedId
 
-        arrayIndex = selectedImageIds.indexOf(clickedId);
+        arrayIndex = getImageObjectArrayIndexById(clickedId);
         if(arrayIndex == -1)
         {
-            selectedImageIds[selectedImageIds.length] = clickedId;
+            addImageToDesktop(clickedId);
             $(this).parent().parent().css('background', '#1040a0');
             $(hideButtonId).hide();
         }
         else
         {
-            selectedImageIds.splice(arrayIndex, 1);
+            removeImageFromDesktop(clickedId);
             $(this).parent().parent().css('background', 'none');
             $(hideButtonId).show();
         }
@@ -44,6 +204,13 @@ function onImageTableLoad()
 
 $(document).ready(function()
 {
+    $('body').on('contextmenu', 'canvas', function(e){ return false; });
+    $('#desktop').mousedown(handleMouseButtonDown);
+    /* NOTE: 'move' and 'up' are bound to window instead of #desktop to handle drags out of the canvas boundary. */
+    $(window).mousemove(handleMouseMove);
+    $(window).mouseup(handleMouseButtonUp);
+    $('#desktop').bind('mousewheel DOMMouseScroll', handleMouseWheel);
+
     $(document).on('imageTableLoadEvent', onImageTableLoad)
 });
 
