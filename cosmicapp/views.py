@@ -23,11 +23,6 @@ def index(request):
     context = {"user" : request.user}
     return render(request, "cosmicapp/index.html", context)
 
-@login_required
-def members(request):
-    context = {"user" : request.user}
-    return render(request, "cosmicapp/members.html", context)
-
 def createuser(request):
     context = {"user" : request.user}
 

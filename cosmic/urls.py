@@ -26,7 +26,6 @@ urlpatterns = [
     url(r'^createuser/', views.createuser),
 
     url(r'^$', views.index),
-    url(r'^members/', views.members),
     url(r'^processqueue/', views.processQueue),
     url(r'^catalogs/', views.catalogs),
 
