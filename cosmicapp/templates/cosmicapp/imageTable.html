@@ -1,5 +1,4 @@
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js">
-</script>
+{% include "./jquery.html" %}
 
 <script>
 var numRows = {{numRows}}, numCols = {{numCols}};
@@ -47,24 +46,25 @@ function loadImageGalleryResults()
             for(i = 0; i < results.length; i++)
             {
                 attr = results[i].attributes;
+                imageId = attr.getNamedItem('id').nodeValue;
 
-                html += '<div class="responsive">'
+                html += '<div class="responsive" id="' + imageId + '">'
                 html += '<div class="gallery">'
 
                 if(includeLinks)
-                    html += '<a href="/image/' + attr.getNamedItem('id').nodeValue + '/">'
+                    html += '<a href="/image/' + imageId + '/">'
 
                 html += '<img src="' + attr.getNamedItem('thumbUrl'+thumbnailSize).nodeValue + '">';
 
                 if(includeLinks)
                     html += '</a>';
 
-                questionLink = '/image/' + attr.getNamedItem('id').nodeValue + '/question/';
+                questionLink = '/image/' + imageId + '/question/';
                 html += '<div class="desc">'
                 //TODO: Make these <a> links an image icon instead of the placeholder text link that is here now.
-                html += '<a style="cursor: pointer" class="hideLink">Hide</a>&nbsp;'
-                html += '<a href="' + questionLink + '">Ques</a>&nbsp;'
-                html += '<a style="cursor: pointer" onclick="zoomImage(' + attr.getNamedItem('id').nodeValue + ')">Zoom</a>'
+                html += '<a style="cursor: pointer" class="hideLink" id="hideButton' + imageId + '">Hide</a>&nbsp;'
+                html += '<a href="' + questionLink + '" class="questionLink">Ques</a>&nbsp;'
+                html += '<a style="cursor: pointer" onclick="zoomImage(' + imageId + ')">Zoom</a>'
                 html += '</div>';
                 html += '</div>';
                 html += '</div>';
@@ -73,12 +73,14 @@ function loadImageGalleryResults()
             $('#imageGalleryLoadingMessage').remove();
             $('#imageGalleryDiv').append(html);
 
-            loadingInProgress = false;
-
             $(".hideLink").click(function()
             {
                 $(this).parent().parent().parent().remove();
             });
+
+            $(document).trigger('imageTableLoadEvent');
+
+            loadingInProgress = false;
         });
 
         resultsPage++;

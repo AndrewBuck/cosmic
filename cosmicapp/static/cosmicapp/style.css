@@ -184,3 +184,19 @@ div.imageQuestionQuestions {
     max-width: 95%;
     max-height: 95%
 }
+
+.mosaicDesktop {
+    position: relative;
+    width: 95%;
+    height: 80vh;
+    margin: auto;
+    padding: 10px 0px;
+}
+
+.mosaicCanvas {
+    position: relative;
+    background: #eeeeee;
+    width: 100%;
+    height: 100%;
+}
+

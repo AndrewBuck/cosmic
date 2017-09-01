@@ -1,0 +1,54 @@
+{% extends "cosmicapp/base.html" %}
+
+{% block extratitle %} - Image mosaicing tool {% endblock %}
+
+{% block mainbody %}
+
+<div class="mosaicDesktop" id="desktopDiv">
+    <canvas class="mosaicCanvas" id="desktop">
+        Your browser does not support the HTML 5 Canvas element.  Please update to a version that does.
+    </canvas>
+</div>
+
+{% include "./jquery.html" %}
+
+<script>
+var selectedImageIds = [];
+
+function onImageTableLoad()
+{
+    // Remove the question links from all the newly loaded elements to prevent the user from accidentally clicking one
+    // and leaving the page.
+    $('.questionLink').remove();
+
+    $('img').click(function()
+    {
+        clickedId = $(this).parent().parent().attr('id');
+        hideButtonId = '#hideButton' + clickedId
+
+        arrayIndex = selectedImageIds.indexOf(clickedId);
+        if(arrayIndex == -1)
+        {
+            selectedImageIds[selectedImageIds.length] = clickedId;
+            $(this).parent().parent().css('background', '#1040a0');
+            $(hideButtonId).hide();
+        }
+        else
+        {
+            selectedImageIds.splice(arrayIndex, 1);
+            $(this).parent().parent().css('background', 'none');
+            $(hideButtonId).show();
+        }
+    });
+};
+
+$(document).ready(function()
+{
+    $(document).on('imageTableLoadEvent', onImageTableLoad)
+});
+
+</script>
+
+{% include "./imageTable.html" with queryKey="user" queryValue=user numRows=2 numCols=3 includeLinks="false" thumbnailSize="Medium" %}
+
+{% endblock %}

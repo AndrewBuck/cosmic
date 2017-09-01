@@ -402,6 +402,8 @@ def questionImage(request, id):
 
 @login_required
 def getQuestionImage(request, id):
+    context = {"user" : request.user}
+
     root = etree.Element("queryresult")
 
     try:
@@ -517,4 +519,9 @@ def getQuestionImage(request, id):
             etree.SubElement(root, "NextImage", nextImageDict)
 
     return HttpResponse(etree.tostring(root, pretty_print=False), content_type='application/xml')
+
+def mosaic(request):
+    context = {"user" : request.user}
+
+    return render(request, "cosmicapp/mosaic.html", context)
 
