@@ -1,14 +1,14 @@
 :root {
-	--color-bg: #ffffff; 
-	--color-bg-alt: #e5f1ec;
-	--color-bg-button: #4b9682;
-	--color-bg-menu: #4b9682;
-	--color-bg-menu-alt: #000000;
-	--color-txt: #000000;
-	--color-txt-alt: #000000;
-	--color-txt-button: #ffffff;
-	--color-txt-menu: #ffffff;
-	--color-border-button: #4b9682;
+	--color-bg: #ffffff;                /* Main background color of the page itself. */
+	--color-bg-alt: #e5f1ec;            /* Not currently used. */
+	--color-bg-button: #4b9682;         /* Background color of normal buttons. */
+	--color-bg-menu: #4b9682;           /* Background color of the top menu on every page. */
+	--color-bg-menu-alt: #000000;       /* Background color of the buttons in the top menu when hovered over. */
+	--color-txt: #000000;               /* The default color of text on the site. */
+	--color-txt-alt: #000000;           /* Not currently used. */
+	--color-txt-button: #ffffff;        /* Text color on normal buttons. */
+	--color-txt-menu: #ffffff;          /* Text color of the buttons in the top menu. */
+	--color-border-button: #4b9682;     /* Color of the outer border on normal buttons. */
 }
 
 html * {
@@ -20,6 +20,8 @@ p {
 }
 
 body {
+    background: var(--color-bg);
+    color: var(--color-txt);
 	margin: 0;
 	padding: 0;
 }
@@ -87,7 +89,8 @@ li.dropdown {
     padding: 0.75em 0.875em;
     text-decoration: none;
 	cursor: pointer;
-    border: 0.175em solid var(--color-border-button);
+    border: 0.175em solid var(--color-border-button); /* TODO: This is the same color as bg on day view, should kill
+                                                         border entirely unless on night view. */
 	border-radius: 0.75em;
 	color: var(--color-txt-button);
 	background-color: var(--color-bg-button);
