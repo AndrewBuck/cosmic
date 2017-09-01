@@ -181,7 +181,7 @@ function onImageTableLoad()
     // and leaving the page.
     $('.questionLink').remove();
 
-    $('img').click(function()
+    $('img').off('click').on('click', function()
     {
         clickedId = $(this).parent().parent().attr('id');
         hideButtonId = '#hideButton' + clickedId
