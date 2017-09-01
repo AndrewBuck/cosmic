@@ -38,8 +38,8 @@ function loadImageGalleryResults()
         $('#imageGalleryDiv').append('<div id="imageGalleryLoadingMessage"><p>Loading...</p><div>');
 
         $.get("/query/?queryfor=image&{{queryKey}}={{queryValue}}&order=time_desc&limit=" + numRows*numCols +
-                    "&offset=" + numRows*numCols*resultsPage, function(xml, statusCode) {
-
+                    "&offset=" + numRows*numCols*resultsPage, function(xml, statusCode)
+        {
             html = ""
 
             results = xml.getElementsByTagName('Image')
