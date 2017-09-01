@@ -9,6 +9,25 @@ var thumbnailSize = "{{thumbnailSize}}"
 var resultsPage = 0;
 var loadingInProgress = false;
 
+function zoomImage(id)
+{
+    thumbUrl = $.ajax(
+        {url: '/image/' + id + '/thumbnail/full/',
+        async: false}
+        ).responseText;
+
+    html  = '<div class="imageGalleryZoomWindow">';
+    html += '<img src="' + thumbUrl + '">';
+    html += '</div>';
+
+    $(document.body).append(html);
+
+    $('.imageGalleryZoomWindow').click(function()
+    {
+        $(this).remove();
+    });
+};
+
 function loadImageGalleryResults()
 {
     if(!loadingInProgress)
@@ -31,14 +50,24 @@ function loadImageGalleryResults()
 
                 html += '<div class="responsive">'
                 html += '<div class="gallery">'
+
                 if(includeLinks)
                     html += '<a href="/image/' + attr.getNamedItem('id').nodeValue + '/">'
-                html += '<img src="' + attr.getNamedItem('thumbUrl'+thumbnailSize).nodeValue + '" width="300">';
+
+                html += '<img src="' + attr.getNamedItem('thumbUrl'+thumbnailSize).nodeValue + '">';
+
                 if(includeLinks)
                     html += '</a>';
-                html += '<div class="desc">' + attr.getNamedItem('id').nodeValue + '</div>'
-                html += '</div>'
-                html += '</div>'
+
+                questionLink = '/question/image/' + attr.getNamedItem('id').nodeValue;
+                html += '<div class="desc">'
+                //TODO: Make these <a> links an image icon instead of the placeholder text link that is here now.
+                html += '<a style="cursor: pointer" class="hideLink">Hide</a>&nbsp;'
+                html += '<a href="' + questionLink + '">Ques</a>&nbsp;'
+                html += '<a style="cursor: pointer" onclick="zoomImage(' + attr.getNamedItem('id').nodeValue + ')">Zoom</a>'
+                html += '</div>';
+                html += '</div>';
+                html += '</div>';
             }
 
             $('#imageGalleryLoadingMessage').remove();
@@ -46,7 +75,10 @@ function loadImageGalleryResults()
 
             loadingInProgress = false;
 
-            return "blah";
+            $(".hideLink").click(function()
+            {
+                $(this).parent().parent().parent().remove();
+            });
         });
 
         resultsPage++;
