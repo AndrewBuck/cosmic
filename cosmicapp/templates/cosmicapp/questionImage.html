@@ -35,7 +35,7 @@ function getNextQuestion()
                 {
                     attr = nextImage[0].attributes;
                     html = '<tr><td>No more questions for this image.  ';
-                    html += '<a href="/question/image/' + attr.getNamedItem('id').nodeValue + '">Next of your images</a></td></tr>';
+                    html += '<a href="/image/' + attr.getNamedItem('id').nodeValue + '/question/">Next of your images</a></td></tr>';
                     table.innerHTML = html
                 }
                 else
@@ -52,7 +52,7 @@ function getNextQuestion()
             html += '<tr><td><b>' + attr.getNamedItem('text').nodeValue + '</b></td></tr>\n';
             html += '<tr><td>' + attr.getNamedItem('descriptionText').nodeValue + '</td></tr>\n';
             // TODO This form should really onsubmit through a javascript function but I can't get it to work with the CSRF protection.
-            html += '<tr><td><form method=post id=answerForm onsubmit="/question/image/' + imageID + '">';
+            html += '<tr><td><form method=post id=answerForm onsubmit="/image/' + imageID + '/question/">';
             html += attr.getNamedItem('responsesHTML').nodeValue;
             html += '<br><br><input type=submit class=button value=Submit>\n';
             html += '</form></td></tr>\n';
@@ -61,7 +61,7 @@ function getNextQuestion()
         }
     }
 
-    request.open("GET", "/getquestion/image/" + imageID + "/", true);
+    request.open("GET", "/image/" + imageID + "/getquestion/", true);
     request.send()
 };
 

@@ -59,7 +59,7 @@ function loadImageGalleryResults()
                 if(includeLinks)
                     html += '</a>';
 
-                questionLink = '/question/image/' + attr.getNamedItem('id').nodeValue;
+                questionLink = '/image/' + attr.getNamedItem('id').nodeValue + '/question/';
                 html += '<div class="desc">'
                 //TODO: Make these <a> links an image icon instead of the placeholder text link that is here now.
                 html += '<a style="cursor: pointer" class="hideLink">Hide</a>&nbsp;'
