@@ -325,6 +325,9 @@ def query(request):
         if 'user' in request.GET:
             results = results.filter(fileRecord__uploadingUser__username=request.GET['user'])
 
+        if 'id' in request.GET:
+            results = results.filter(pk=request.GET['id'])
+
         results = results.order_by(ascDesc + orderField)[offset:offset+limit]
 
         for result in results:
