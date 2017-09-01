@@ -33,6 +33,7 @@ urlpatterns = [
     url(r'^user/(?P<username>.+)/', views.userpage),
 
     url(r'^image/(?P<id>[0-9]+)/$', views.image),
+    url(r'^image/(?P<id>[0-9]+)/thumbnail/(?P<size>[a-zA-Z]+)/$', views.imageThumbnailUrl),
     url(r'^image/(?P<id>[0-9]+)/sources/$', views.imageSources),
     url(r'^image/(?P<id>[0-9]+)/properties/$', views.imageProperties),
 

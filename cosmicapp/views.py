@@ -278,6 +278,16 @@ def imageProperties(request, id):
 
     return render(request, "cosmicapp/imageProperties.html", context)
 
+def imageThumbnailUrl(request, id, size):
+    context = {"user" : request.user}
+
+    try:
+        image = Image.objects.get(pk=id)
+    except Image.DoesNotExist:
+        return render(request, "cosmicapp/imagenotfound.html", context)
+
+    return HttpResponse(image.getThumbnailUrl(size))
+
 @login_required
 def query(request):
     root = etree.Element("queryresult")
