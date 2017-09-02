@@ -15,12 +15,16 @@
 {% include "./jquery.html" %}
 
 <script>
+var canvas = document.getElementById('desktop');
+var context = canvas.getContext('2d');
+
 var selectedImages = [];
-var zoom = 1;     //temporary
-var offsetX = 0, offsetY = 0;
+var zoom = .25;     //temporary
+var offsetX = 1000, offsetY = 1000;
 var lmbPressed = false, mmbPressed = false, rmbPressed = false;
 var lmbOffsetXStart, lmbOffsetYStart, lmbPageXStart, lmbPageYStart;
 var rmbOffsetXStart, rmbOffsetYStart, rmbPageXStart, rmbPageYStart;
+var mouseX = 0, mouseY = 0;
 
 function addImageToDesktop(id)
 {
@@ -30,9 +34,9 @@ function addImageToDesktop(id)
         });
 
     i = selectedImages.length-1;
-    selectedImages[i].posX = 500+ 50*i;
-    selectedImages[i].posY = 500 + 10*i;
-    selectedImages[i].rotation = .25*i;
+    selectedImages[i].posX = 1000 * (i % 4);
+    selectedImages[i].posY = 1000 * Math.floor(i / 4);
+    selectedImages[i].rotation = .2*i;
 
     $.ajax({
         url : "/query/?queryfor=image&id=" + id,
@@ -74,10 +78,8 @@ function removeImageFromDesktop(id)
 
 function drawCanvas()
 {
-    canvas = document.getElementById('desktop');
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
-    context = canvas.getContext('2d');
     context.clearRect(0, 0, canvas.width, canvas.height);
 
     for(i = 0; i < selectedImages.length; i++)
@@ -101,6 +103,11 @@ function drawCanvas()
             selectedImages[i].height
             );
     }
+
+    context.font = '24px sans-serif';
+    context.fillStyle = 'red';
+    context.setTransform(1, 0, 0, 1, 0, 0);
+    context.fillText(Math.round(mouseX) + ", " + Math.round(mouseY), 10, 34);
 };
 
 function handleMouseButtonDown(event)
@@ -127,14 +134,33 @@ function handleMouseButtonDown(event)
 
 function handleMouseMove(event)
 {
+    // Flag to prevent calling the draw function multiple times.
+    drawAlreadyDone = false;
+
     if(rmbPressed)
     {console.log(zoom);
         offsetX = rmbOffsetXStart + (event.pageX - rmbPageXStart)/zoom;
         offsetY = rmbOffsetYStart + (event.pageY - rmbPageYStart)/zoom;
         drawCanvas();
+        drawAlreadyDone = True;
     }
 
-    return false;
+    rect = canvas.getBoundingClientRect();
+    console.log(rect.left, rect.right, rect.top, rect.bottom, event.clientX, event.clientY);
+    if(event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom)
+    {
+        mouseX = (event.clientX - rect.left)/zoom - offsetX;
+        mouseY = (event.clientY - rect.top)/zoom - offsetY;
+
+        if(!drawAlreadyDone)
+            drawCanvas();
+
+        return false;
+    }
+    else
+    {
+        return true;
+    }
 };
 
 function handleMouseButtonUp(event)
@@ -215,6 +241,12 @@ $(document).ready(function()
 });
 
 </script>
+
+<p style="text-align: center">
+<a href="#">Desktop</a>
+&nbsp;&nbsp;
+<a href="#imageGalleryDiv">Images</a>
+<p>
 
 {% include "./imageTable.html" with queryKey="user" queryValue=user numRows=2 numCols=3 includeLinks="false" thumbnailSize="Medium" %}
 
