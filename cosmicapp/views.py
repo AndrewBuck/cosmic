@@ -294,6 +294,8 @@ def query(request):
     if 'limit' in request.GET:
         #TODO Catch parse error.
         limit = int(request.GET['limit'])
+        if(limit > 100)
+            limit = 100
     else:
         limit = 10
 
@@ -323,10 +325,10 @@ def query(request):
         results = Image.objects
 
         if 'user' in request.GET:
-            results = results.filter(fileRecord__uploadingUser__username=request.GET['user'])
+            results = results.filter(fileRecord__uploadingUser__username__in=request.GET.getlist('user'))
 
         if 'id' in request.GET:
-            results = results.filter(pk=request.GET['id'])
+            results = results.filter(pk__in=request.GET.getlist('id'))
 
         results = results.order_by(ascDesc + orderField)[offset:offset+limit]
 
