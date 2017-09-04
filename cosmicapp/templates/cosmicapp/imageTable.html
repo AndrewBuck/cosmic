@@ -6,7 +6,110 @@ var includeLinks = {{includeLinks}};
 var thumbnailSize = "{{thumbnailSize}}"
 
 var resultsPage = 0;
+var firstLoadOfGallery = true;
 var loadingInProgress = false;
+
+var paramIdCounter = 0;
+function initImageGallery()
+{
+    addQueryParameter('{{queryParams}}');
+    loadImageGalleryResults();
+};
+
+function addQueryParameter(paramString)
+{
+    if(paramString === undefined || paramString == '')
+        paramString = 'user={{user}}';
+
+    params = paramString.split('&');
+    for(i = 0; i < params.length; i++)
+    {
+        html = ''
+
+        paramIdCounter++;
+
+        html += '<div>'
+        if(paramIdCounter > 1)
+            html += '<i>AND</i>&nbsp;';
+
+        html += '<select class="paramSelect" id="paramSelect' + paramIdCounter + '">'
+        html += '<option value="user">User</option>'
+        html += '<option value="id">Image ID</option>'
+        html += '<option value="imageParam">Image Parameter</option>'
+        html += '</select>&nbsp;'
+
+        kv = params[i].split('=');
+        key = kv[0];
+        //NOTE: The slice and join here handles when the value portion contains an '=' sign in the original input.
+        value = kv.slice(1, kv.length).join('=');
+
+        html += '<input class="paramTextbox" type=text id="paramTextbox' + paramIdCounter + '" value="' + value + '">';
+
+        if(paramIdCounter > 1)
+            html += '&nbsp;<input type=button class=button style="margin: 3px" value="Remove" id="removeButton' + paramIdCounter + '"><br>'
+
+        html += '</div>'
+
+        $('#imageGalleryQueriesDiv').append(html);
+
+        $('#paramSelect' + paramIdCounter).val(key);
+        $('#removeButton' + paramIdCounter).click(function()
+        {
+            $(this).parent().remove();
+        });
+    }
+};
+
+function queryHelp()
+{
+    html  = '<div class="imageGalleryZoomWindow">';
+    html += '<div style="padding: 2em; background: white; width: 70%; overflow-y: auto;">'
+    html += '<h2>Query Help</h2>'
+    html += `
+            <p>The image gallery is used on many pages and allows you to select and view a list of images which are
+            pulled from the server using a database query.  Changing the query parameters allows you to limit the
+            displayed images to a specific subset of the images in the database.</p>
+
+            <h3>Default Query Filter</h3>
+            <p>On most pages, when the gallery loads the default query will be to show your own images, starting from
+            your most recently uploaded images and going back from there.  On these pages you will see a single filter
+            listed, showing 'User' as the filter type and your username in the text box beside it.  Changing the
+            username in the field will show images created by that user for future loading operations, but will not
+            clear the already loaded images unless you press the 'Clear Results' button first.</p>
+
+            <h3>Additional Filters</h3>
+            <p>Clicking the 'Add Query Filter' button will add a second filter to further limit the returned results.
+            You can choose from several types of filters using the dropdown box on the left and then enter the text for
+            the filter into the text box on the right.</p>
+
+            <h3>Logical Operators: <i>AND</i> and <i>OR</i></h3>
+            <p>If multiple filters are selected the returned results must meet <i>all</i> of the conditions specified
+            in the filters.  In technical terms this means the filters are combined using the logical <i>AND</i>
+            operator.  You can also specify that you want to return all images that meet any one of several different
+            conditions by separating the conditions using a pipe character (which looks like | and is found near the
+            'Enter' key on most keyboards).  The pipe character represents the logical <i>OR</i> operator.</p>
+
+            <p>Note that when using the | character, any spaces before or after the character will be stripped away so
+            'user1|user2' is equivalent to 'user1 | user2'.  Use whichever is more convenient for you.</p>
+
+            <h3>Examples</h3>
+            <p>Show all your calibration frames:</p>
+            <table border=2px>
+                <tr><th> Filter </th><th> Value </th></tr>
+                <tr><td> User </td><td> yourUserName </td></tr>
+                <tr><td> <i>AND</i> Image Parameter </td><td> imageType=dark | imageType=bias | imageType=light </td></tr>
+            </table>
+             `
+    html += '</div>'
+    html += '</div>';
+
+    $(document.body).append(html);
+
+    $('.imageGalleryZoomWindow').click(function()
+    {
+        $(this).remove();
+    });
+};
 
 function zoomImage(id)
 {
@@ -43,6 +146,17 @@ function loadImageGalleryResults()
             html = ""
 
             results = xml.getElementsByTagName('Image')
+
+            $('#newResultsDivider').remove();
+            if(!firstLoadOfGallery)
+            {
+                html += '<div id=newResultsDivider class=responsive style="text-align: center; width: 95%; border: 1em solid blue">'
+                if(results.length > 0)
+                    html += 'New Results:</div>'
+                else
+                    html += 'No more results to display.</div>'
+            }
+
             for(i = 0; i < results.length; i++)
             {
                 attr = results[i].attributes;
@@ -72,6 +186,8 @@ function loadImageGalleryResults()
 
             $('#imageGalleryLoadingMessage').remove();
             $('#imageGalleryDiv').append(html);
+            if(!firstLoadOfGallery)
+                $('#loadMoreButton')[0].scrollIntoView({block: 'start', inline: 'end'});
 
             $(".hideLink").click(function()
             {
@@ -81,23 +197,41 @@ function loadImageGalleryResults()
             $(document).trigger('imageTableLoadEvent');
 
             loadingInProgress = false;
+            firstLoadOfGallery = false;
         });
 
         resultsPage++;
     }
 };
 
-$(document).ready(loadImageGalleryResults);
+function clearImageGalleryResults()
+{
+    resultsPage = 0;
+    $('.responsive').remove();
+};
+
+$(document).ready(initImageGallery);
 
 </script>
 
-<div id=imageGalleryDiv></div>
+<div id=imageGalleryQueryDiv>
+    <p>Query Parameters</p>
 
-<div class="responsive">
-	<div style="text-align:center;">
-		<input type=button class=button value="Load more" onclick="loadImageGalleryResults()">
-	</div>
+    <div id=imageGalleryQueriesDiv></div>
+
+    <!-- TODO: Add functionality to set the limit and order of the returned results. (and maybe offset?) -->
+    <br>
+    <input type=button class=button value="Query Help" onclick="queryHelp()">
+    <input type=button class=button value="Add Query Filter" onclick="addQueryParameter()">
+    <input type=button class=button value="Load More" onclick="loadImageGalleryResults()">
+    <input type=button class=button value="Clear Results" onclick="clearImageGalleryResults()">
 </div>
 
+<div id=imageGalleryDiv></div>
+
 <div class="clearfix"></div>
+
+<div style="text-align:center;">
+    <input id=loadMoreButton type=button class=button value="Load more" onclick="loadImageGalleryResults()">
+</div>
 

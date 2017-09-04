@@ -1,4 +1,5 @@
 {% extends "cosmicapp/base.html" %}
+{% load cosmicapp_extras %}
 
 {% block extratitle %} - Details for user {{foruser.username}} {% endblock %}
 
@@ -27,7 +28,10 @@
     {% endif %}
 {% endif %}
 
+<!-- TODO: when code is updated queryKey and queryValue will not be needed, only queryParams.  Make the same change in mosaic.html. -->
+{% with "user="|concat:foruser as queryParams %}
 {% include "./imageTable.html" with queryKey="user" queryValue=foruser numRows=2 numCols=3 includeLinks="true" thumbnailSize="Medium" %}
+{% endwith %}
 
 {% endblock %}
 
