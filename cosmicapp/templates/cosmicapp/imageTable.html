@@ -28,7 +28,7 @@ function addQueryParameter(paramString)
 
         paramIdCounter++;
 
-        html += '<div>'
+        html += '<div id="paramDiv_' + paramIdCounter + '" class=imageGalleryParameter>';
         if(paramIdCounter > 1)
             html += '<i>AND</i>&nbsp;';
 
@@ -52,7 +52,7 @@ function addQueryParameter(paramString)
 
         $('#imageGalleryQueriesDiv').append(html);
 
-        $('#paramSelect' + paramIdCounter).val(key);
+        $('#paramSelect' + paramIdCounter).attr('value', key);
         $('#removeButton' + paramIdCounter).click(function()
         {
             $(this).parent().remove();
@@ -140,8 +140,19 @@ function loadImageGalleryResults()
         currentHTML = gallery.innerHTML;
         $('#imageGalleryDiv').append('<div id="imageGalleryLoadingMessage"><p>Loading...</p><div>');
 
-        $.get("/query/?queryfor=image&{{queryKey}}={{queryValue}}&order=time_desc&limit=" + numRows*numCols +
-                    "&offset=" + numRows*numCols*resultsPage, function(xml, statusCode)
+        params = document.getElementsByClassName('imageGalleryParameter');
+        paramArray = [];
+        for(i = 0; i < params.length; i++)
+        {
+            paramId = params[i].getAttribute('id').split('_')[1];
+            key = document.getElementById('paramSelect' + paramId).value;
+            value = document.getElementById('paramTextbox' + paramId).value;
+            paramArray[paramArray.length] = key + "=" + value
+        }
+
+        paramString = paramArray.join('&');
+        $.get('/query/?queryfor=image&' + paramString + '&order=time_desc&limit=' + numRows*numCols +
+                    '&offset=' + numRows*numCols*resultsPage, function(xml, statusCode)
         {
             html = ""
 
