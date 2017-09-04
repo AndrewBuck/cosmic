@@ -347,6 +347,44 @@ def query(request):
                 if len(values) > 0:
                     results = results.filter(fileRecord__uploadingUser__username__in=values)
 
+        if 'imageProperty' in request.GET:
+            for valueString in request.GET.getlist('imageProperty'):
+                values = valueString.split('|')
+                values = map(str.strip, values)
+                values = list(filter(len, values))
+                queryQ = Q()
+                for value in values:
+                    split = value.split('=', 1)
+                    paramKey = split[0].strip()
+                    paramValue = split[1].strip()
+
+                    if paramKey == '' or paramValue == '':
+                        continue
+
+                    subQuery = Q(properties__key=paramKey) & Q(properties__value=paramValue)
+                    queryQ = queryQ | subQuery
+
+                results = results.filter(queryQ)
+
+        if 'questionAnswer' in request.GET:
+            for valueString in request.GET.getlist('questionAnswer'):
+                values = valueString.split('|')
+                values = map(str.strip, values)
+                values = list(filter(len, values))
+                queryQ = Q()
+                for value in values:
+                    split = value.split('=', 1)
+                    paramKey = split[0].strip()
+                    paramValue = split[1].strip()
+
+                    if paramKey == '' or paramValue == '':
+                        continue
+
+                    subQuery = Q(answers__kvs__key=paramKey) & Q(answers__kvs__value=paramValue)
+                    queryQ = queryQ | subQuery
+
+                results = results.filter(queryQ)
+
         if 'id' in request.GET:
             for valueString in request.GET.getlist('id'):
                 values = valueString.split('|')

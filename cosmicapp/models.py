@@ -119,6 +119,7 @@ class Image(models.Model):
     centerROT = models.FloatField(null=True)
     resolutionX = models.FloatField(null=True)
     resolutionY = models.FloatField(null=True)
+    answers = GenericRelation('Answer')
 
     def getThumbnailUrl(self, sizeString):
         try:
@@ -178,7 +179,7 @@ class ImageChannelInfo(models.Model):
     channelType = models.CharField(max_length=16)
 
 class ImageProperty(models.Model):
-    image = models.ForeignKey(Image, on_delete=models.CASCADE)
+    image = models.ForeignKey(Image, on_delete=models.CASCADE, related_name='properties')
     header = models.ForeignKey(ImageHeaderField, on_delete=models.CASCADE, null=True)
     key = models.TextField()
     value = models.TextField()
@@ -332,7 +333,7 @@ class Answer(models.Model):
     content_object = GenericForeignKey('content_type', 'object_id')
 
 class AnswerKV(models.Model):
-    answer = models.ForeignKey(Answer, on_delete=models.CASCADE)
+    answer = models.ForeignKey(Answer, on_delete=models.CASCADE, related_name='kvs')
     key = models.TextField(null=True)
     value = models.TextField(null=True)
 

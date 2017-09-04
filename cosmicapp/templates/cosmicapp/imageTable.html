@@ -19,7 +19,7 @@ function initImageGallery()
 function addQueryParameter(paramString)
 {
     if(paramString === undefined || paramString == '')
-        paramString = 'imageParam=';
+        paramString = 'imageProperty=';
 
     params = paramString.split('&');
     for(i = 0; i < params.length; i++)
@@ -35,7 +35,8 @@ function addQueryParameter(paramString)
         html += '<select class="paramSelect" id="paramSelect' + paramIdCounter + '">'
         html += '<option value="user">User</option>'
         html += '<option value="id">Image ID</option>'
-        html += '<option value="imageParam">Image Parameter</option>'
+        html += '<option value="imageProperty">Image Property</option>'
+        html += '<option value="questionAnswer">Question Answer</option>'
         html += '</select>&nbsp;'
 
         kv = params[i].split('=');
@@ -97,7 +98,7 @@ function queryHelp()
             <table border=2px>
                 <tr><th> Filter </th><th> Value </th></tr>
                 <tr><td> User </td><td> yourUserName </td></tr>
-                <tr><td> <i>AND</i> Image Parameter </td><td> imageType=dark | imageType=bias | imageType=light </td></tr>
+                <tr><td> <i>AND</i> Image Property </td><td> imageType=dark | imageType=bias | imageType=light </td></tr>
             </table>
              `
     html += '</div>'
