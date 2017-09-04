@@ -355,6 +355,9 @@ def query(request):
                 queryQ = Q()
                 for value in values:
                     split = value.split('=', 1)
+                    if(len(split) < 2):
+                        continue
+
                     paramKey = split[0].strip()
                     paramValue = split[1].strip()
 
@@ -374,6 +377,9 @@ def query(request):
                 queryQ = Q()
                 for value in values:
                     split = value.split('=', 1)
+                    if(len(split) < 2):
+                        continue
+
                     paramKey = split[0].strip()
                     paramValue = split[1].strip()
 
