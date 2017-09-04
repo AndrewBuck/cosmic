@@ -296,7 +296,7 @@ def query(request):
         elif len(items) == 1:
             request.GET[key] = items[0]
         elif len(items) > 1:
-            request.GET[key] = items
+            request.GET.setlist(key, items)
     request.GET._mutable = False
 
     if not ('queryfor' in request.GET):
@@ -341,12 +341,14 @@ def query(request):
             for valueString in request.GET.getlist('user'):
                 values = valueString.split('|')
                 values = map(str.strip, values)
+                values = filter(len, values)
                 results = results.filter(fileRecord__uploadingUser__username__in=values)
 
         if 'id' in request.GET:
             for valueString in request.GET.getlist('id'):
                 values = valueString.split('|')
                 values = map(str.strip, values)
+                values = filter(len, values)
                 results = results.filter(pk__in=values)
 
         results = results.order_by(ascDesc + orderField)[offset:offset+limit]
