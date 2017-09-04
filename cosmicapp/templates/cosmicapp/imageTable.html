@@ -5,11 +5,14 @@ var numRows = {{numRows}}, numCols = {{numCols}};
 var includeLinks = {{includeLinks}};
 var thumbnailSize = "{{thumbnailSize}}"
 
-var resultsPage = 0;
 var firstLoadOfGallery = true;
 var loadingInProgress = false;
 
 var paramIdCounter = 0;
+
+var lastParamString = '';
+var offset = 0;
+
 function initImageGallery()
 {
     addQueryParameter('{{queryParams}}');
@@ -152,8 +155,15 @@ function loadImageGalleryResults()
         }
 
         paramString = paramArray.join('&');
+        if(paramString != lastParamString)
+            offset = 0;
+        else
+            offset += numRows*numCols
+
+        lastParamString = paramString;
+
         $.get('/query/?queryfor=image&' + paramString + '&order=time_desc&limit=' + numRows*numCols +
-                    '&offset=' + numRows*numCols*resultsPage, function(xml, statusCode)
+                    '&offset=' + offset, function(xml, statusCode)
         {
             html = ""
 
@@ -211,14 +221,13 @@ function loadImageGalleryResults()
             loadingInProgress = false;
             firstLoadOfGallery = false;
         });
-
-        resultsPage++;
     }
 };
 
 function clearImageGalleryResults()
 {
-    resultsPage = 0;
+    offset = 0;
+    lastParamString = '';
     $('.responsive').remove();
 };
 
