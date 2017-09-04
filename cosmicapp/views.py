@@ -525,6 +525,7 @@ def getQuestionImage(request, id):
 
     return HttpResponse(etree.tostring(root, pretty_print=False), content_type='application/xml')
 
+@login_required
 def mosaic(request):
     context = {"user" : request.user}
 
