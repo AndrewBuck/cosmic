@@ -287,14 +287,17 @@ def imageThumbnailUrl(request, id, size):
 def query(request):
     root = etree.Element("queryresult")
 
+    #TODO: Handle "blank" query parameters such as 'id='.  Probably best to just remove them all here.
+
     if not ('queryfor' in request.GET):
         #TODO: Convert this to xml.
         return HttpResponse("bad request: missing 'queryfor'")
 
+    limit = 10    # Set a default limit in cast the query did not specify one at all.
     if 'limit' in request.GET:
         #TODO Catch parse error.
         limit = int(request.GET['limit'])
-        if(limit > 100)
+        if(limit > 100):
             limit = 100
     else:
         limit = 10
@@ -325,10 +328,16 @@ def query(request):
         results = Image.objects
 
         if 'user' in request.GET:
-            results = results.filter(fileRecord__uploadingUser__username__in=request.GET.getlist('user'))
+            for valueString in request.GET.getlist('user'):
+                values = valueString.split('|')
+                values = map(str.strip, values)
+                results = results.filter(fileRecord__uploadingUser__username__in=values)
 
         if 'id' in request.GET:
-            results = results.filter(pk__in=request.GET.getlist('id'))
+            for valueString in request.GET.getlist('id'):
+                values = valueString.split('|')
+                values = map(str.strip, values)
+                results = results.filter(pk__in=values)
 
         results = results.order_by(ascDesc + orderField)[offset:offset+limit]
 
@@ -352,6 +361,7 @@ def query(request):
 
             etree.SubElement(root, "Image", imageDict)
 
+    #TODO: Also write the values used in the query into the result, so the client can check if the limit they set was reduced, etc.
     return HttpResponse(etree.tostring(root, pretty_print=False), content_type='application/xml')
 
 def questions(request):
