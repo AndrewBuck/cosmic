@@ -287,7 +287,17 @@ def imageThumbnailUrl(request, id, size):
 def query(request):
     root = etree.Element("queryresult")
 
-    #TODO: Handle "blank" query parameters such as 'id='.  Probably best to just remove them all here.
+    # Strip out "blank" query parameters such as 'id='.
+    request.GET._mutable = True
+    for key in list(request.GET):
+        items = list(filter(len, request.GET.getlist(key)))
+        if len(items) == 0:
+            request.GET.pop(key)
+        elif len(items) == 1:
+            request.GET[key] = items[0]
+        elif len(items) > 1:
+            request.GET[key] = items
+    request.GET._mutable = False
 
     if not ('queryfor' in request.GET):
         #TODO: Convert this to xml.
