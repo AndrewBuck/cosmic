@@ -305,18 +305,20 @@ def query(request):
 
     limit = 10    # Set a default limit in cast the query did not specify one at all.
     if 'limit' in request.GET:
-        #TODO Catch parse error.
-        limit = int(request.GET['limit'])
+        try:
+            limit = int(request.GET['limit'])
+        except:
+            pass
+
         if(limit > 100):
             limit = 100
-    else:
-        limit = 10
 
+    offset = 0
     if 'offset' in request.GET:
-        #TODO Catch parse error.
-        offset = int(request.GET['offset'])
-    else:
-        offset = 0
+        try:
+            offset = int(request.GET['offset'])
+        except:
+            pass
 
     if request.GET['queryfor'] == 'image':
         if 'order' in request.GET:
@@ -341,15 +343,25 @@ def query(request):
             for valueString in request.GET.getlist('user'):
                 values = valueString.split('|')
                 values = map(str.strip, values)
-                values = filter(len, values)
-                results = results.filter(fileRecord__uploadingUser__username__in=values)
+                values = list(filter(len, values))
+                if len(values) > 0:
+                    results = results.filter(fileRecord__uploadingUser__username__in=values)
 
         if 'id' in request.GET:
             for valueString in request.GET.getlist('id'):
                 values = valueString.split('|')
                 values = map(str.strip, values)
-                values = filter(len, values)
-                results = results.filter(pk__in=values)
+                values = list(filter(len, values))
+                intValues = []
+                for value in values:
+                    try:
+                        i = int(value)
+                        intValues.append(i)
+                    except:
+                        pass
+
+                if len(intValues) > 0:
+                    results = results.filter(pk__in=intValues)
 
         results = results.order_by(ascDesc + orderField)[offset:offset+limit]
 
