@@ -20,12 +20,32 @@ var canvas = document.getElementById('desktop');
 var context = canvas.getContext('2d');
 
 var selectedImages = [];
-var zoom = .25;     //temporary
-var offsetX = 1000, offsetY = 1000;
+var zoom = 1.00;     //temporary
+var offsetX = 0, offsetY = 0;
 var lmbPressed = false, mmbPressed = false, rmbPressed = false;
 var lmbOffsetXStart, lmbOffsetYStart, lmbPageXStart, lmbPageYStart;
 var rmbOffsetXStart, rmbOffsetYStart, rmbPageXStart, rmbPageYStart;
 var mouseX = 0, mouseY = 0;
+var mouseCanvasX = 0, mouseCanvasY = 0;
+var mousePageX = 0, mousePageY = 0;
+
+function AffineTransform(scaleX, skewX, skewY, scaleY, transX, transY)
+{
+    this.a = scaleX;
+    this.b = skewX;
+    this.c = skewY;
+    this.d = scaleY;
+    this.e = transX;
+    this.f = transY;
+
+    this.setScale = function(scale) {this.a = scale; this.d = scale;};
+    this.setScaleXY = function(scaleX, scaleY) {this.a = scaleX; this.d = scaleY;};
+    this.scaleByFactor = function(factor) {this.a *= factor; this.d *= factor;};
+    this.setOffset = function(x, y) {this.e = x; this.f = y;};
+    this.setSkew = function(x, y) {this.b = x; this.c = y;};
+};
+
+var viewParams = new AffineTransform(0.25, 0, 0, 0.25, 1000, 1000);
 
 function addImageToDesktop(id)
 {
@@ -60,8 +80,8 @@ function addImageToDesktop(id)
         ).responseText;
 
     selectedImages[i].image.src = thumbUrl;
-    selectedImages[i].rotationX = selectedImages[i].width/2;
-    selectedImages[i].rotationY = selectedImages[i].width/2;
+    selectedImages[i].rotationX = 0;//selectedImages[i].width/2;
+    selectedImages[i].rotationY = 0;//selectedImages[i].width/2;
     selectedImages[i].image.onload = drawCanvas;
 };
 
@@ -81,7 +101,7 @@ function drawCanvas()
 {
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
-    context.clearRect(0, 0, canvas.width, canvas.height);
+//    context.clearRect(0, 0, canvas.width, canvas.height);
 
     for(i = 0; i < selectedImages.length; i++)
     {
@@ -105,10 +125,63 @@ function drawCanvas()
             );
     }
 
+    for(i = 0; i < selectedImages.length; i++)
+    {
+        context.setTransform(
+            zoom * Math.cos(selectedImages[i].rotation),
+            zoom * Math.sin(selectedImages[i].rotation),
+            zoom * -Math.sin(selectedImages[i].rotation),
+            zoom * Math.cos(selectedImages[i].rotation),
+            zoom*(offsetX + selectedImages[i].posX),
+            zoom*(offsetY + selectedImages[i].posY)
+            );
+
+		context.fillStyle = 'hsla(' + (61 * i) % 360 + ', 100%, 70%, 0.7)'; 
+		context.fillRect(0, 0, selectedImages[i].width, selectedImages[i].height);
+    }
+
+
     context.font = '24px sans-serif';
+    context.fillStyle = 'blue';
+	context.setTransform(1, 0, 0, 1, 0, 0);
+	context.fillText(
+		Math.round(mouseX) + ", " +
+		Math.round(mouseY) + ", " +
+		Math.round(offsetX) + ", " +
+		Math.round(offsetY) + ", " +
+		Math.round(100*zoom)/100
+	, 10, 34);
+    context.fillStyle = 'green';
+    context.setTransform(1, 0, 0, 1, 0, 24);
+    context.fillText(
+		Math.round(lmbOffsetXStart) + ", " +
+		Math.round(lmbOffsetYStart) + ", " +
+		Math.round(lmbPageXStart) + ", " +
+		Math.round(lmbPageYStart)
+	, 10, 34);
     context.fillStyle = 'red';
-    context.setTransform(1, 0, 0, 1, 0, 0);
-    context.fillText(Math.round(mouseX) + ", " + Math.round(mouseY), 10, 34);
+    context.setTransform(1, 0, 0, 1, 0, 48);
+    context.fillText(
+		Math.round(rmbOffsetXStart) + ", " +
+		Math.round(rmbOffsetYStart) + ", " +
+		Math.round(rmbPageXStart) + ", " +
+		Math.round(rmbPageYStart)
+	, 10, 34);
+
+    context.fillStyle = 'teal';
+
+    for(i = 0; i < selectedImages.length; i++)
+    {
+		context.setTransform(1, 0, 0, 1, 0, (i+3)*24);
+		context.fillText(
+			Math.round(selectedImages[i].posX) + ", " +
+			Math.round(selectedImages[i].posY) + ", " +
+			Math.round(selectedImages[i].rotationX) + ", " +
+			Math.round(selectedImages[i].rotationY) + ", " +
+			Math.round(180*selectedImages[i].rotation/Math.PI)
+		, 10, 34);
+	}
+
 };
 
 function handleMouseButtonDown(event)
@@ -116,6 +189,10 @@ function handleMouseButtonDown(event)
     if(event.which == 1)
     {
         lmbPressed = true;
+        lmbOffsetXStart = offsetX;
+        lmbOffsetYStart = offsetY;
+        lmbPageXStart = event.pageX;
+        lmbPageYStart = event.pageY;
     }
     else if(event.which == 2)
     {
@@ -137,6 +214,14 @@ function handleMouseMove(event)
 {
     // Flag to prevent calling the draw function multiple times.
     drawAlreadyDone = false;
+
+    if(lmbPressed)
+    {console.log(zoom);
+        offsetX = lmbOffsetXStart + (event.pageX - lmbPageXStart)/zoom;
+        offsetY = lmbOffsetYStart + (event.pageY - lmbPageYStart)/zoom;
+        drawCanvas();
+        drawAlreadyDone = True;
+    }
 
     if(rmbPressed)
     {console.log(zoom);
