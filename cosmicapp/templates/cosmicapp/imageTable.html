@@ -1,17 +1,23 @@
 {% include "./jquery.html" %}
 
 <script>
-var numRows = {{numRows}}, numCols = {{numCols}};
+var numRows, numCols;
 var includeLinks = {{includeLinks}};
 var thumbnailSize = "{{thumbnailSize}}"
 
-var resultsPage = 0;
 var firstLoadOfGallery = true;
 var loadingInProgress = false;
 
 var paramIdCounter = 0;
+
+var lastParamString = '';
+var offset = 0;
+
 function initImageGallery()
 {
+    $(window).on('resize', handleWindowResize)
+    handleWindowResize();
+
     addQueryParameter('{{queryParams}}');
     loadImageGalleryResults();
 };
@@ -152,8 +158,15 @@ function loadImageGalleryResults()
         }
 
         paramString = paramArray.join('&');
+        if(paramString != lastParamString)
+            offset = 0;
+        else
+            offset += numRows*numCols
+
+        lastParamString = paramString;
+
         $.get('/query/?queryfor=image&' + paramString + '&order=time_desc&limit=' + numRows*numCols +
-                    '&offset=' + numRows*numCols*resultsPage, function(xml, statusCode)
+                    '&offset=' + offset, function(xml, statusCode)
         {
             html = ""
 
@@ -199,7 +212,7 @@ function loadImageGalleryResults()
             $('#imageGalleryLoadingMessage').remove();
             $('#imageGalleryDiv').append(html);
             if(!firstLoadOfGallery)
-                $('#loadMoreButton')[0].scrollIntoView({block: 'start', inline: 'end'});
+                $('#newResultsDivider')[0].scrollIntoView({block: 'start', inline: 'start'});
 
             $(".hideLink").click(function()
             {
@@ -211,15 +224,24 @@ function loadImageGalleryResults()
             loadingInProgress = false;
             firstLoadOfGallery = false;
         });
-
-        resultsPage++;
     }
 };
 
 function clearImageGalleryResults()
 {
-    resultsPage = 0;
+    offset = 0;
+    lastParamString = '';
     $('.responsive').remove();
+};
+
+function handleWindowResize()
+{
+    //NOTE: These width values should match the ones in style.css  If that changes need to change these too.
+    width = $(window).width();
+    if(width > 1000) { numCols = 4; numRows = 2; }
+    else if(width > 700) { numCols = 3; numRows = 3; }
+    else if(width > 400) { numCols = 2; numRows = 4; }
+    else { numCols = 1; numRows = 8; }
 };
 
 $(document).ready(initImageGallery);

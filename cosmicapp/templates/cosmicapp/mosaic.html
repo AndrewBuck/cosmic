@@ -336,7 +336,7 @@ $(document).ready(function()
 <p>
 
 {% with "user="|concat:user as queryParams %}
-{% include "./imageTable.html" with queryKey="user" queryValue=user numRows=2 numCols=3 includeLinks="false" thumbnailSize="Medium" %}
+{% include "./imageTable.html" with includeLinks="false" thumbnailSize="Medium" %}
 {% endwith %}
 
 {% endblock %}

@@ -310,8 +310,12 @@ def query(request):
         except:
             pass
 
-        if(limit > 100):
-            limit = 100
+        if request.GET['queryfor'] == 'image':
+            if limit > 100:
+                limit = 100
+        elif request.GET['queryfor'] == 'sextractorResult':
+            if limit > 10000:
+                limit = 10000
 
     offset = 0
     if 'offset' in request.GET:
@@ -355,6 +359,9 @@ def query(request):
                 queryQ = Q()
                 for value in values:
                     split = value.split('=', 1)
+                    if(len(split) < 2):
+                        continue
+
                     paramKey = split[0].strip()
                     paramValue = split[1].strip()
 
@@ -374,6 +381,9 @@ def query(request):
                 queryQ = Q()
                 for value in values:
                     split = value.split('=', 1)
+                    if(len(split) < 2):
+                        continue
+
                     paramKey = split[0].strip()
                     paramValue = split[1].strip()
 
@@ -422,6 +432,55 @@ def query(request):
             imageDict['thumbUrlFull'] = result.getThumbnailUrlFull()
 
             etree.SubElement(root, "Image", imageDict)
+
+    elif request.GET['queryfor'] == 'sextractorResult':
+        if 'order' in request.GET:
+            orderField, ascDesc = request.GET['order'].split('_')
+            if orderField == 'fluxAuto':
+                orderField = 'fluxAuto'
+            else:
+                orderField = 'fluxAuto'
+
+            #TODO: The asc/desc code is probably the same for all query types, try to refactor this out if this inner 'if' statement.
+            if ascDesc == 'desc':
+                ascDesc = '-'
+            else:
+                ascDesc = ''
+        else:
+            orderField = 'fluxAuto'
+            ascDesc = '-'
+
+        results = SextractorResult.objects
+
+        if 'imageId' in request.GET:
+            for valueString in request.GET.getlist('imageId'):
+                values = valueString.split('|')
+                values = map(str.strip, values)
+                values = list(filter(len, values))
+                intValues = []
+                for value in values:
+                    try:
+                        i = int(value)
+                        intValues.append(i)
+                    except:
+                        pass
+
+                if len(intValues) > 0:
+                    results = results.filter(image__pk__in=intValues)
+
+        results = results.order_by(ascDesc + orderField)[offset:offset+limit]
+
+        for result in results:
+            sextractorDict = {}
+            sextractorDict['imageId'] = str(result.image.pk)
+            sextractorDict['pixelX'] = str(result.pixelX)
+            sextractorDict['pixelY'] = str(result.pixelY)
+            sextractorDict['pixelZ'] = str(result.pixelZ)
+            sextractorDict['fluxAuto'] = str(result.fluxAuto)
+            sextractorDict['fluxAutoErr'] = str(result.fluxAutoErr)
+            sextractorDict['flags'] = str(result.flags)
+
+            etree.SubElement(root, "SextractorResult", sextractorDict)
 
     #TODO: Also write the values used in the query into the result, so the client can check if the limit they set was reduced, etc.
     return HttpResponse(etree.tostring(root, pretty_print=False), content_type='application/xml')
