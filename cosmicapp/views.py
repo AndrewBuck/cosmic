@@ -482,6 +482,21 @@ def query(request):
 
             etree.SubElement(root, "SextractorResult", sextractorDict)
 
+    elif request.GET['queryfor'] == 'ota':
+        results = OTA.objects
+        results = results.order_by('make', 'model', 'aperture', 'design', 'focalLength')
+
+        for result in results:
+            otaDict = {}
+            otaDict['id'] = str(result.pk)
+            otaDict['make'] = str(result.make)
+            otaDict['model'] = str(result.model)
+            otaDict['focalLength'] = str(result.focalLength)
+            otaDict['aperture'] = str(result.aperture)
+            otaDict['design'] = str(result.design)
+
+            etree.SubElement(root, "OTA", otaDict)
+
     #TODO: Also write the values used in the query into the result, so the client can check if the limit they set was reduced, etc.
     return HttpResponse(etree.tostring(root, pretty_print=False), content_type='application/xml')
 
@@ -489,6 +504,38 @@ def questions(request):
     context = {"user" : request.user}
 
     return render(request, "cosmicapp/questions.html", context)
+
+def equipment(request):
+    context = {"user" : request.user}
+
+    if request.method == 'POST':
+        if request.POST['equipmentType'] == 'ota':
+            missingFields = []
+            for field in ('make', 'model', 'aperture', 'focalLength', 'design'):
+                if not field in request.POST:
+                    missingFields.append(field)
+                    continue
+
+                if request.POST[field].strip() == '':
+                    missingFields.append(field)
+
+            if len(missingFields) > 0:
+                context['otaMessage'] = 'ERROR: Missing fields: ' + ', '.join(missingFields)
+            else:
+                newOTA, created = OTA.objects.get_or_create(
+                    make = request.POST['make'].strip(),
+                    model = request.POST['model'].strip(),
+                    focalLength = request.POST['focalLength'].strip(),
+                    aperture = request.POST['aperture'].strip(),
+                    design = request.POST['design'].strip()
+                    )
+
+                if created:
+                    context['otaMessage'] = 'New OTA Created'
+                else:
+                    context['otaMessage'] = 'OTA was identical to an existing OTA, no duplicate created.'
+
+    return render(request, "cosmicapp/equipment.html", context)
 
 @login_required
 def questionImage(request, id):

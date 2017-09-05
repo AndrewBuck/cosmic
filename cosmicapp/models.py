@@ -19,7 +19,7 @@ class OTA(models.Model):
     make = models.CharField(max_length=64, null=True, blank=True)
     model = models.CharField(max_length=64, null=True, blank=True)
     focalLength = models.FloatField(null=True, blank=True)
-    aperature = models.FloatField(null=True, blank=True)
+    aperture = models.FloatField(null=True, blank=True)
     design = models.CharField(max_length=64, null=True, blank=True)
 
 """
