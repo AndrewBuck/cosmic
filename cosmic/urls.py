@@ -42,6 +42,8 @@ urlpatterns = [
     url(r'^image/(?P<id>[0-9]+)/getquestion/$', views.getQuestionImage),
     url(r'^questions/$', views.questions),
 
+    url(r'^equipment/$', views.equipment),
+
     url(r'^mosaic/$', views.mosaic),
 
     url(r'^upload/$', views.upload)

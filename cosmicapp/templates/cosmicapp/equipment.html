@@ -1,0 +1,92 @@
+{% extends "cosmicapp/base.html" %}
+{% load cosmicapp_extras %}
+
+{% block extratitle %} - Equipment Editor {% endblock %}
+
+{% block mainbody %}
+{% include "./jquery.html" %}
+<script>
+function refreshOTA()
+{
+    $.ajax({
+        url : "/query/?queryfor=ota",
+        type : "get",
+        async: true,
+        success : function(xml)
+        {
+            html = ''
+            html += '<tr> <th>Make</th> <th>Model</th> <th>Aperture<br>(mm)</th> <th>Design</th> <th>Focal Length<br>(mm)</th> </tr>'
+
+            results = xml.getElementsByTagName('OTA')
+            for(i = 0; i < results.length; i++)
+            {
+                html += '<tr>'
+                html += '<td>' + results[i].attributes.getNamedItem('make').nodeValue + '</td>'
+                html += '<td>' + results[i].attributes.getNamedItem('model').nodeValue + '</td>'
+                html += '<td>' + results[i].attributes.getNamedItem('aperture').nodeValue + '</td>'
+                html += '<td>' + results[i].attributes.getNamedItem('design').nodeValue + '</td>'
+                html += '<td>' + results[i].attributes.getNamedItem('focalLength').nodeValue + '</td>'
+                html += '</tr>'
+            };
+
+            $('#otaTable').html(html);
+        }
+    });
+};
+
+function init()
+{
+    refreshOTA();
+};
+
+function showNewOTA() { $('#newOTADiv').show(); };
+
+$(document).ready(init);
+</script>
+
+<h2>Equipment Editor</h2>
+
+<p>This page lists different kinds of equipment used to make astronomical observations.  You should make sure that the
+equipment you use is listed in the tables below.  If it is not, then please add an entry for each missing piece.  The
+last section lists complete instruments.  An "instrument" represents a complete setup: specifying a mount, the telescope optical
+path, the camera or eyepiece used, and so forth.  Once all the basic components of your equipment have been entered
+into the various tables, you can build a new instrument by assembling the components from the earlier tables.  When you
+tag your images, it is these complete instruments that you will associate with each image.</p>
+
+<h3>Optical Tube Assemblies</h3>
+<div>
+    <table id=otaTable border=2px>
+    </table>
+
+    <p>{{otaMessage}}</p>
+
+    <div id=newOTADiv hidden>
+        <br>
+        <form method=post action='/equipment/'>
+            {% csrf_token %}
+            <input type=hidden name=equipmentType value=ota>
+            <table>
+            <tr><td>Make (company name)</td><td><input type=text name=make></td><td>(required)</td></tr>
+            <tr><td>Model (name)</td><td><input type=text name=model></td><td>(required)</td></tr>
+            <tr><td>Aperture (in units of mm)</td><td><input type=text name=aperture></td><td>(required)</td></tr>
+            <tr><td>Focal Length (in units of mm)</td><td><input type=text name=focalLength></td><td>(required)</td></tr>
+            <tr><td>Design (optical design)</td><td><input type=text name=design></td><td>(required)</td></tr>
+            </table>
+            <input type=submit value=Submit><br>
+        </form>
+    </div>
+    <br>
+    <input type=button class=button value="New OTA" onclick="showNewOTA()">
+
+</div>
+
+<h3>Eyepieces</h3>
+
+<h3>Cameras</h3>
+
+<h3>Mounts</h3>
+
+<h3>Complete Instruments</h3>
+
+{% endblock %}
+
