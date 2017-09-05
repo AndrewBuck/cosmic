@@ -1,7 +1,7 @@
 {% include "./jquery.html" %}
 
 <script>
-var numRows = {{numRows}}, numCols = {{numCols}};
+var numRows, numCols;
 var includeLinks = {{includeLinks}};
 var thumbnailSize = "{{thumbnailSize}}"
 
@@ -15,6 +15,9 @@ var offset = 0;
 
 function initImageGallery()
 {
+    $(window).on('resize', handleWindowResize)
+    handleWindowResize();
+
     addQueryParameter('{{queryParams}}');
     loadImageGalleryResults();
 };
@@ -209,7 +212,7 @@ function loadImageGalleryResults()
             $('#imageGalleryLoadingMessage').remove();
             $('#imageGalleryDiv').append(html);
             if(!firstLoadOfGallery)
-                $('#loadMoreButton')[0].scrollIntoView({block: 'start', inline: 'end'});
+                $('#newResultsDivider')[0].scrollIntoView({block: 'start', inline: 'start'});
 
             $(".hideLink").click(function()
             {
@@ -229,6 +232,16 @@ function clearImageGalleryResults()
     offset = 0;
     lastParamString = '';
     $('.responsive').remove();
+};
+
+function handleWindowResize()
+{
+    //NOTE: These width values should match the ones in style.css  If that changes need to change these too.
+    width = $(window).width();
+    if(width > 1000) { numCols = 4; numRows = 2; }
+    else if(width > 700) { numCols = 3; numRows = 3; }
+    else if(width > 400) { numCols = 2; numRows = 4; }
+    else { numCols = 1; numRows = 8; }
 };
 
 $(document).ready(initImageGallery);

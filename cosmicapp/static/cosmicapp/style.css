@@ -117,6 +117,8 @@ div.desc {
     box-sizing: border-box;
 }
 
+/* NOTE: If the .responsive width changes here or in the @media entries below, need to change the handleWindowResize()
+ * function in imageTable.html to account for the new values. */
 .responsive {
     float: left;
     width: 24.99999%;
