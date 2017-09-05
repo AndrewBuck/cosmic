@@ -5,6 +5,10 @@
 
 {% block mainbody %}
 
+<head>
+  <script src="/static/cosmicapp/math.min.js" type="text/javascript"></script>
+</head>
+
 <input id="thumbnailSizeInput" type=text value=full>
 
 <div class="mosaicDesktop" id="desktopDiv">
@@ -29,23 +33,19 @@ var mouseX = 0, mouseY = 0;
 var mouseCanvasX = 0, mouseCanvasY = 0;
 var mousePageX = 0, mousePageY = 0;
 
-function AffineTransform(scaleX, skewX, skewY, scaleY, transX, transY)
+function setMatrixTransform(m)
 {
-    this.a = scaleX;
-    this.b = skewX;
-    this.c = skewY;
-    this.d = scaleY;
-    this.e = transX;
-    this.f = transY;
+	this.setTransform(
+		m.subset(math.index(0, 0)),
+		m.subset(math.index(0, 1)),
+		m.subset(math.index(0, 2)),
+		m.subset(math.index(1, 0)),
+		m.subset(math.index(1, 1)),
+		m.subset(math.index(1, 2))
+		)
+}
 
-    this.setScale = function(scale) {this.a = scale; this.d = scale;};
-    this.setScaleXY = function(scaleX, scaleY) {this.a = scaleX; this.d = scaleY;};
-    this.scaleByFactor = function(factor) {this.a *= factor; this.d *= factor;};
-    this.setOffset = function(x, y) {this.e = x; this.f = y;};
-    this.setSkew = function(x, y) {this.b = x; this.c = y;};
-};
-
-var viewParams = new AffineTransform(0.25, 0, 0, 0.25, 1000, 1000);
+context.setMatrixTransform = setMatrixTransform;
 
 function addImageToDesktop(id)
 {
@@ -55,6 +55,18 @@ function addImageToDesktop(id)
         });
 
     i = selectedImages.length-1;
+
+	selectedImages[i].transformMatrix = math.eye(3);
+
+    context.setTransform(
+        zoom * Math.cos(selectedImages[i].rotation),
+        zoom * Math.sin(selectedImages[i].rotation),
+        zoom * -Math.sin(selectedImages[i].rotation),
+        zoom * Math.cos(selectedImages[i].rotation),
+        zoom*(offsetX + selectedImages[i].posX),
+        zoom*(offsetY + selectedImages[i].posY)
+    );
+
     selectedImages[i].posX = 1000 * (i % 4);
     selectedImages[i].posY = 1000 * Math.floor(i / 4);
     selectedImages[i].rotation = .2*i;
@@ -127,6 +139,16 @@ function drawCanvas()
 
     for(i = 0; i < selectedImages.length; i++)
     {
+		context.setMatrixTransform(selectedImages[i].transformMatrix);
+
+        context.drawImage(
+            selectedImages[i].image, 0, 0,
+            selectedImages[i].width, selectedImages[i].height
+            );
+    }
+
+    for(i = 0; i < selectedImages.length; i++)
+    {
         context.setTransform(
             zoom * Math.cos(selectedImages[i].rotation),
             zoom * Math.sin(selectedImages[i].rotation),
@@ -178,7 +200,8 @@ function drawCanvas()
 			Math.round(selectedImages[i].posY) + ", " +
 			Math.round(selectedImages[i].rotationX) + ", " +
 			Math.round(selectedImages[i].rotationY) + ", " +
-			Math.round(180*selectedImages[i].rotation/Math.PI)
+			Math.round(180*selectedImages[i].rotation/Math.PI) +
+			selectedImages[i].transformMatrix
 		, 10, 34);
 	}
 
