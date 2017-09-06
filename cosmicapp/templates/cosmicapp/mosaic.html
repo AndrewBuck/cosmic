@@ -24,8 +24,13 @@ var canvas = document.getElementById('desktop');
 var context = canvas.getContext('2d');
 
 var selectedImages = [];
-var zoom = 1.00;     //temporary
-var offsetX = 0, offsetY = 0;
+var zoomMatrix = math.matrix([
+	[ 1.1,   0 ,   0 ],
+	[   0, 1.1 ,   0 ],
+	[   0,   0 ,   1 ]
+]);
+var canvasMatrix = math.eye(3);
+
 var lmbPressed = false, mmbPressed = false, rmbPressed = false;
 var lmbOffsetXStart, lmbOffsetYStart, lmbPageXStart, lmbPageYStart;
 var rmbOffsetXStart, rmbOffsetYStart, rmbPageXStart, rmbPageYStart;
@@ -38,11 +43,11 @@ function setMatrixTransform(m)
 	this.setTransform(
 		m.subset(math.index(0, 0)),
 		m.subset(math.index(0, 1)),
-		m.subset(math.index(0, 2)),
 		m.subset(math.index(1, 0)),
 		m.subset(math.index(1, 1)),
+		m.subset(math.index(0, 2)),
 		m.subset(math.index(1, 2))
-		)
+		);
 }
 
 context.setMatrixTransform = setMatrixTransform;
@@ -54,22 +59,7 @@ function addImageToDesktop(id)
         image: new Image()
         });
 
-    i = selectedImages.length-1;
-
-	selectedImages[i].transformMatrix = math.eye(3);
-
-    context.setTransform(
-        zoom * Math.cos(selectedImages[i].rotation),
-        zoom * Math.sin(selectedImages[i].rotation),
-        zoom * -Math.sin(selectedImages[i].rotation),
-        zoom * Math.cos(selectedImages[i].rotation),
-        zoom*(offsetX + selectedImages[i].posX),
-        zoom*(offsetY + selectedImages[i].posY)
-    );
-
-    selectedImages[i].posX = 1000 * (i % 4);
-    selectedImages[i].posY = 1000 * Math.floor(i / 4);
-    selectedImages[i].rotation = .2*i;
+    i = selectedImages.length - 1;
 
     $.ajax({
         url : "/query/?queryfor=image&id=" + id,
@@ -79,10 +69,35 @@ function addImageToDesktop(id)
         {
             results = xml.getElementsByTagName('Image')
             attr = results[0].attributes;
-            selectedImages[i].width = attr.getNamedItem('dimX').nodeValue;
-            selectedImages[i].height = attr.getNamedItem('dimY').nodeValue;
+            selectedImages[i].width = Number(attr.getNamedItem('dimX').nodeValue);
+            selectedImages[i].height = Number(attr.getNamedItem('dimY').nodeValue);
         }
     });
+
+	selectedImages[i].transformMatrix = math.eye(3);
+
+	if (i == 1)
+	{
+		// second image is offset at rotated by 15 deg
+		selectedImages[i].transformMatrix = math.matrix([
+			[	(Math.sqrt(3) + 1)/(2*Math.sqrt(2)) ,
+				(Math.sqrt(3) - 1)/(2*Math.sqrt(2)) ,
+				Math.floor(selectedImages[i].width/16) ] ,
+			[	(1 - Math.sqrt(3))/(2*Math.sqrt(2)) ,
+				(Math.sqrt(3) + 1)/(2*Math.sqrt(2)) ,
+				Math.floor(selectedImages[i].height/16) ] ,
+			[ 0, 0, 1 ]]);
+	} else if (i > 1) {
+		// if two or more images are on the screen, assume they are aligned, and
+		// position the next image to follow the alignment 
+		selectedImages[i].transformMatrix = math.multiply(
+				selectedImages[i-1].transformMatrix,
+				math.multiply(
+					selectedImages[i-1].transformMatrix,
+					math.inv(selectedImages[i-2].transformMatrix)
+				)
+			);
+	}
 
     sizeString = document.getElementById("thumbnailSizeInput").value
 
@@ -92,8 +107,6 @@ function addImageToDesktop(id)
         ).responseText;
 
     selectedImages[i].image.src = thumbUrl;
-    selectedImages[i].rotationX = 0;//selectedImages[i].width/2;
-    selectedImages[i].rotationY = 0;//selectedImages[i].width/2;
     selectedImages[i].image.onload = drawCanvas;
 };
 
@@ -115,7 +128,7 @@ function drawCanvas()
     canvas.height = canvas.offsetHeight;
 //    context.clearRect(0, 0, canvas.width, canvas.height);
 
-    for(i = 0; i < selectedImages.length; i++)
+ /*   for(i = 0; i < selectedImages.length; i++)
     {
         context.setTransform(
             zoom,
@@ -135,27 +148,20 @@ function drawCanvas()
             selectedImages[i].width,
             selectedImages[i].height
             );
-    }
+    }*/
 
     for(i = 0; i < selectedImages.length; i++)
     {
-		context.setMatrixTransform(selectedImages[i].transformMatrix);
+		context.setMatrixTransform(
+			math.multiply(
+				canvasMatrix, 
+				selectedImages[i].transformMatrix
+			)
+		);
 
         context.drawImage(
             selectedImages[i].image, 0, 0,
             selectedImages[i].width, selectedImages[i].height
-            );
-    }
-
-    for(i = 0; i < selectedImages.length; i++)
-    {
-        context.setTransform(
-            zoom * Math.cos(selectedImages[i].rotation),
-            zoom * Math.sin(selectedImages[i].rotation),
-            zoom * -Math.sin(selectedImages[i].rotation),
-            zoom * Math.cos(selectedImages[i].rotation),
-            zoom*(offsetX + selectedImages[i].posX),
-            zoom*(offsetY + selectedImages[i].posY)
             );
 
 		context.fillStyle = 'hsla(' + (61 * i) % 360 + ', 100%, 70%, 0.7)'; 
@@ -169,9 +175,7 @@ function drawCanvas()
 	context.fillText(
 		Math.round(mouseX) + ", " +
 		Math.round(mouseY) + ", " +
-		Math.round(offsetX) + ", " +
-		Math.round(offsetY) + ", " +
-		Math.round(100*zoom)/100
+		canvasMatrix.format(3)
 	, 10, 34);
     context.fillStyle = 'green';
     context.setTransform(1, 0, 0, 1, 0, 24);
@@ -195,14 +199,7 @@ function drawCanvas()
     for(i = 0; i < selectedImages.length; i++)
     {
 		context.setTransform(1, 0, 0, 1, 0, (i+3)*24);
-		context.fillText(
-			Math.round(selectedImages[i].posX) + ", " +
-			Math.round(selectedImages[i].posY) + ", " +
-			Math.round(selectedImages[i].rotationX) + ", " +
-			Math.round(selectedImages[i].rotationY) + ", " +
-			Math.round(180*selectedImages[i].rotation/Math.PI) +
-			selectedImages[i].transformMatrix
-		, 10, 34);
+		context.fillText(selectedImages[i].transformMatrix.format(3), 10, 34);
 	}
 
 };
@@ -239,27 +236,27 @@ function handleMouseMove(event)
     drawAlreadyDone = false;
 
     if(lmbPressed)
-    {console.log(zoom);
-        offsetX = lmbOffsetXStart + (event.pageX - lmbPageXStart)/zoom;
-        offsetY = lmbOffsetYStart + (event.pageY - lmbPageYStart)/zoom;
+    {
+        offsetX = lmbOffsetXStart + (event.pageX - lmbPageXStart);
+        offsetY = lmbOffsetYStart + (event.pageY - lmbPageYStart);
         drawCanvas();
         drawAlreadyDone = True;
     }
 
     if(rmbPressed)
-    {console.log(zoom);
-        offsetX = rmbOffsetXStart + (event.pageX - rmbPageXStart)/zoom;
-        offsetY = rmbOffsetYStart + (event.pageY - rmbPageYStart)/zoom;
+    {
+        offsetX = rmbOffsetXStart + (event.pageX - rmbPageXStart);
+        offsetY = rmbOffsetYStart + (event.pageY - rmbPageYStart);
         drawCanvas();
         drawAlreadyDone = True;
     }
 
     rect = canvas.getBoundingClientRect();
-    console.log(rect.left, rect.right, rect.top, rect.bottom, event.clientX, event.clientY);
+    
     if(event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom)
     {
-        mouseX = (event.clientX - rect.left)/zoom - offsetX;
-        mouseY = (event.clientY - rect.top)/zoom - offsetY;
+        mouseX = (event.clientX - rect.left) - offsetX;
+        mouseY = (event.clientY - rect.top) - offsetY;
 
         if(!drawAlreadyDone)
             drawCanvas();
@@ -287,9 +284,9 @@ function handleMouseButtonUp(event)
 function handleMouseWheel(event)
 {
     if(event.originalEvent.wheelDelta > 0 || event.originalEvent.detail < 0)
-        zoom *= 1.1;
+		canvasMatrix = math.multiply(canvasMatrix, zoomMatrix);
     else
-        zoom /= 1.1;
+		canvasMatrix = math.multiply(canvasMatrix, math.inv(zoomMatrix));
 
     drawCanvas();
     return false;
