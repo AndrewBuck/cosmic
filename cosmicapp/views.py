@@ -284,6 +284,25 @@ def imageThumbnailUrl(request, id, size):
 
     return HttpResponse(image.getThumbnailUrl(size))
 
+def cleanupQueryValues(valueString, parseAs):
+    if parseAs in ('string', 'int'):
+        values = valueString.split('|')
+        values = map(str.strip, values)
+        values = list(filter(len, values))
+
+    if parseAs == 'int':
+        intValues = []
+        for value in values:
+            try:
+                i = int(value)
+                intValues.append(i)
+            except:
+                pass
+
+        values = intValues
+
+    return values
+
 def query(request):
     root = etree.Element("queryresult")
 
@@ -345,17 +364,13 @@ def query(request):
 
         if 'user' in request.GET:
             for valueString in request.GET.getlist('user'):
-                values = valueString.split('|')
-                values = map(str.strip, values)
-                values = list(filter(len, values))
+                values = cleanupQueryValues(valueString, 'string')
                 if len(values) > 0:
                     results = results.filter(fileRecord__uploadingUser__username__in=values)
 
         if 'imageProperty' in request.GET:
             for valueString in request.GET.getlist('imageProperty'):
-                values = valueString.split('|')
-                values = map(str.strip, values)
-                values = list(filter(len, values))
+                values = cleanupQueryValues(valueString, 'string')
                 queryQ = Q()
                 for value in values:
                     split = value.split('=', 1)
@@ -375,9 +390,7 @@ def query(request):
 
         if 'questionAnswer' in request.GET:
             for valueString in request.GET.getlist('questionAnswer'):
-                values = valueString.split('|')
-                values = map(str.strip, values)
-                values = list(filter(len, values))
+                values = cleanupQueryValues(valueString, 'string')
                 queryQ = Q()
                 for value in values:
                     split = value.split('=', 1)
@@ -397,19 +410,9 @@ def query(request):
 
         if 'id' in request.GET:
             for valueString in request.GET.getlist('id'):
-                values = valueString.split('|')
-                values = map(str.strip, values)
-                values = list(filter(len, values))
-                intValues = []
-                for value in values:
-                    try:
-                        i = int(value)
-                        intValues.append(i)
-                    except:
-                        pass
-
-                if len(intValues) > 0:
-                    results = results.filter(pk__in=intValues)
+                values = cleanupQueryValues(valueString, 'int')
+                if len(values) > 0:
+                    results = results.filter(pk__in=values)
 
         results = results.order_by(ascDesc + orderField)[offset:offset+limit]
 
@@ -454,19 +457,9 @@ def query(request):
 
         if 'imageId' in request.GET:
             for valueString in request.GET.getlist('imageId'):
-                values = valueString.split('|')
-                values = map(str.strip, values)
-                values = list(filter(len, values))
-                intValues = []
-                for value in values:
-                    try:
-                        i = int(value)
-                        intValues.append(i)
-                    except:
-                        pass
-
-                if len(intValues) > 0:
-                    results = results.filter(image__pk__in=intValues)
+                values = cleanupQueryValues(valueString, 'int')
+                if len(values) > 0:
+                    results = results.filter(image__pk__in=values)
 
         results = results.order_by(ascDesc + orderField)[offset:offset+limit]
 
