@@ -285,7 +285,7 @@ def imageThumbnailUrl(request, id, size):
     return HttpResponse(image.getThumbnailUrl(size))
 
 def cleanupQueryValues(valueString, parseAs):
-    if parseAs in ('string', 'int'):
+    if parseAs in ('string', 'int', 'kvPairs'):
         values = valueString.split('|')
         values = map(str.strip, values)
         values = list(filter(len, values))
@@ -301,12 +301,31 @@ def cleanupQueryValues(valueString, parseAs):
 
         values = intValues
 
+    if parseAs == 'kvPairs':
+        kvPairs = list()
+        for value in values:
+            split = value.split('=', 1)
+            if(len(split) < 2):
+                continue
+
+            paramKey = split[0].strip()
+            paramValue = split[1].strip()
+
+            if paramKey == '' or paramValue == '':
+                continue
+
+            kvPairs.append( (paramKey, paramValue) )
+
+        values = kvPairs
+
     return values
 
 def query(request):
     root = etree.Element("queryresult")
 
     # Strip out "blank" query parameters such as 'id='.
+    #NOTE: Modifying the request.GET datastructure is not standard, need to make sure this is safe.  Maybe better to
+    # make a copy and query on that.
     request.GET._mutable = True
     for key in list(request.GET):
         items = list(filter(len, request.GET.getlist(key)))
@@ -370,19 +389,9 @@ def query(request):
 
         if 'imageProperty' in request.GET:
             for valueString in request.GET.getlist('imageProperty'):
-                values = cleanupQueryValues(valueString, 'string')
+                values = cleanupQueryValues(valueString, 'kvPairs')
                 queryQ = Q()
-                for value in values:
-                    split = value.split('=', 1)
-                    if(len(split) < 2):
-                        continue
-
-                    paramKey = split[0].strip()
-                    paramValue = split[1].strip()
-
-                    if paramKey == '' or paramValue == '':
-                        continue
-
+                for paramKey, paramValue in values:
                     subQuery = Q(properties__key=paramKey) & Q(properties__value=paramValue)
                     queryQ = queryQ | subQuery
 
@@ -390,19 +399,9 @@ def query(request):
 
         if 'questionAnswer' in request.GET:
             for valueString in request.GET.getlist('questionAnswer'):
-                values = cleanupQueryValues(valueString, 'string')
+                values = cleanupQueryValues(valueString, 'kvPairs')
                 queryQ = Q()
-                for value in values:
-                    split = value.split('=', 1)
-                    if(len(split) < 2):
-                        continue
-
-                    paramKey = split[0].strip()
-                    paramValue = split[1].strip()
-
-                    if paramKey == '' or paramValue == '':
-                        continue
-
+                for paramKey, paramValue in values:
                     subQuery = Q(answers__kvs__key=paramKey) & Q(answers__kvs__value=paramValue)
                     queryQ = queryQ | subQuery
 
