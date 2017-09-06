@@ -284,6 +284,32 @@ def imageThumbnailUrl(request, id, size):
 
     return HttpResponse(image.getThumbnailUrl(size))
 
+def parseQueryOrderBy(request, mappingDict, fallbackEntry, fallbackAscDesc):
+    if 'order' in request.GET:
+        orderSplit = request.GET['order'].split('_', 1)
+        orderField = orderSplit[0]
+        if orderField in mappingDict:
+            orderField = mappingDict[orderField]
+        else:
+            orderField = mappingDict[fallbackEntry]
+
+        if len(orderSplit) > 1:
+            ascDesc = orderSplit[1]
+        else:
+            ascDesc = ''
+
+        if ascDesc == 'desc':
+            ascDesc = '-'
+        elif ascDesc == 'asc':
+            ascDesc = ''
+        else:
+            ascDesc = fallbackAscDesc
+    else:
+        orderField = mappingDict[fallbackEntry]
+        ascDesc = fallbackAscDesc
+
+    return orderField, ascDesc
+
 def cleanupQueryValues(valueString, parseAs):
     if parseAs in ('string', 'int', 'kvPairs'):
         values = valueString.split('|')
@@ -363,22 +389,7 @@ def query(request):
             pass
 
     if request.GET['queryfor'] == 'image':
-        if 'order' in request.GET:
-            orderField, ascDesc = request.GET['order'].split('_')
-            if orderField == 'time':
-                orderField = 'fileRecord__uploadDateTime'
-            else:
-                orderField = 'fileRecord__uploadDateTime'
-
-            #TODO: The asc/desc code is probably the same for all query types, try to refactor this out if this inner 'if' statement.
-            if ascDesc == 'desc':
-                ascDesc = '-'
-            else:
-                ascDesc = ''
-        else:
-            orderField = 'fileRecord__uploadDateTime'
-            ascDesc = '-'
-
+        orderField, ascDesc = parseQueryOrderBy(request, {'time': 'fileRecord__uploadDateTime'}, 'time', '-')
         results = Image.objects
 
         if 'user' in request.GET:
@@ -436,22 +447,7 @@ def query(request):
             etree.SubElement(root, "Image", imageDict)
 
     elif request.GET['queryfor'] == 'sextractorResult':
-        if 'order' in request.GET:
-            orderField, ascDesc = request.GET['order'].split('_')
-            if orderField == 'fluxAuto':
-                orderField = 'fluxAuto'
-            else:
-                orderField = 'fluxAuto'
-
-            #TODO: The asc/desc code is probably the same for all query types, try to refactor this out if this inner 'if' statement.
-            if ascDesc == 'desc':
-                ascDesc = '-'
-            else:
-                ascDesc = ''
-        else:
-            orderField = 'fluxAuto'
-            ascDesc = '-'
-
+        orderField, ascDesc = parseQueryOrderBy(request, {'fluxAuto': 'fluxAuto'}, 'fluxAuto', '-')
         results = SextractorResult.objects
 
         if 'imageId' in request.GET:
