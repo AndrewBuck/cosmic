@@ -31,12 +31,26 @@ var zoomMatrix = math.matrix([
 ]);
 var canvasMatrix = math.eye(3);
 
+var tempMatrix = math.eye(3);
+
 var lmbPressed = false, mmbPressed = false, rmbPressed = false;
 var lmbOffsetXStart, lmbOffsetYStart, lmbPageXStart, lmbPageYStart;
 var rmbOffsetXStart, rmbOffsetYStart, rmbPageXStart, rmbPageYStart;
-var mouseX = 0, mouseY = 0;
+
+// Coordinate systems:
+// Image - relative to each image origin
+// Workspace - independent of image
+// Canvas - the view window on the page
+// Page - the mouse coords on the page 
+// screen
+/*
+var mouseCanvasVector = math.matrix([[0,0,1]]);
+var mouseWorkspaceVector = math.matrix([[0,0,1]]);
+*/
+var mouseCanvasVector = math.matrix([[0],[0],[1]]);
+var mouseWorkspaceVector = math.matrix([[0],[0],[1]]);
 var mouseCanvasX = 0, mouseCanvasY = 0;
-var mousePageX = 0, mousePageY = 0;
+var mouseWorkspaceX = 0, mouseWorkspaceY = 0;
 
 function setMatrixTransform(m)
 {
@@ -126,29 +140,6 @@ function drawCanvas()
 {
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
-//    context.clearRect(0, 0, canvas.width, canvas.height);
-
- /*   for(i = 0; i < selectedImages.length; i++)
-    {
-        context.setTransform(
-            zoom,
-            0,
-            0,
-            zoom,
-            zoom*(offsetX + selectedImages[i].posX),
-            zoom*(offsetY + selectedImages[i].posY)
-            );
-
-        context.rotate(selectedImages[i].rotation);
-
-        context.drawImage(
-            selectedImages[i].image,
-            -selectedImages[i].rotationX,
-            -selectedImages[i].rotationY,
-            selectedImages[i].width,
-            selectedImages[i].height
-            );
-    }*/
 
     for(i = 0; i < selectedImages.length; i++)
     {
@@ -164,41 +155,52 @@ function drawCanvas()
             selectedImages[i].width, selectedImages[i].height
             );
 
-		context.fillStyle = 'hsla(' + (61 * i) % 360 + ', 100%, 70%, 0.7)'; 
+		context.fillStyle = 'hsla(' + (77 * i) % 360 + ', 100%, 70%, 0.7)'; 
 		context.fillRect(0, 0, selectedImages[i].width, selectedImages[i].height);
     }
 
-
     context.font = '24px sans-serif';
+
+	var offset = -24;
+
     context.fillStyle = 'blue';
-	context.setTransform(1, 0, 0, 1, 0, 0);
+	context.setTransform(1, 0, 0, 1, 0, offset += 24);
 	context.fillText(
-		Math.round(mouseX) + ", " +
-		Math.round(mouseY) + ", " +
-		canvasMatrix.format(3)
-	, 10, 34);
+		mouseCanvasVector.format(3)
+		 + " , " + 
+		mouseWorkspaceVector.format(3)
+		 + " , " + 
+		tempMatrix.format(3)
+		, 10, 34);
+
     context.fillStyle = 'green';
-    context.setTransform(1, 0, 0, 1, 0, 24);
-    context.fillText(
-		Math.round(lmbOffsetXStart) + ", " +
-		Math.round(lmbOffsetYStart) + ", " +
-		Math.round(lmbPageXStart) + ", " +
-		Math.round(lmbPageYStart)
-	, 10, 34);
+    context.setTransform(1, 0, 0, 1, 0, offset += 24);
+	testMatrix = math.matrix([
+		[ "a", "b", "c" ],
+		[ "d", "e", "f" ],
+		[ "g", "h", "i" ]
+	]);
+	testVector = math.matrix([1,2,3]);
+	testReplacement = math.subset(testMatrix,math.index([0,1,2],2),testVector);
+	testVector = math.multiply(
+				math.subtract(
+					math.eye(3) ,
+					zoomMatrix
+				) ,
+				mouseCanvasVector);
+	context.fillText(
+		testVector.subset(math.index([0,1]))
+		, 10, 34);
+
     context.fillStyle = 'red';
-    context.setTransform(1, 0, 0, 1, 0, 48);
-    context.fillText(
-		Math.round(rmbOffsetXStart) + ", " +
-		Math.round(rmbOffsetYStart) + ", " +
-		Math.round(rmbPageXStart) + ", " +
-		Math.round(rmbPageYStart)
-	, 10, 34);
+    context.setTransform(1, 0, 0, 1, 0, offset += 24);
+	context.fillText(canvasMatrix.format(3), 10, 34);
 
     context.fillStyle = 'teal';
 
     for(i = 0; i < selectedImages.length; i++)
     {
-		context.setTransform(1, 0, 0, 1, 0, (i+3)*24);
+		context.setTransform(1, 0, 0, 1, 0, offset += 24);
 		context.fillText(selectedImages[i].transformMatrix.format(3), 10, 34);
 	}
 
@@ -230,8 +232,35 @@ function handleMouseButtonDown(event)
     return false;
 };
 
+function getMouseCoordinates(event)
+{
+    rect = canvas.getBoundingClientRect();
+
+	mouseCanvasVector = math.matrix([
+		[event.clientX - rect.left] ,
+		[event.clientY - rect.top] ,
+		[1]
+	]);
+
+	mouseCanvasVector = math.matrix([
+		event.clientX - rect.left ,
+		event.clientY - rect.top ,
+		1
+	]);
+
+	mouseWorkspaceVector = math.multiply(
+		math.inv(canvasMatrix), 
+		mouseCanvasVector
+	);
+}
+
 function handleMouseMove(event)
 {
+
+    rect = canvas.getBoundingClientRect();
+
+	getMouseCoordinates(event);
+
     // Flag to prevent calling the draw function multiple times.
     drawAlreadyDone = false;
 
@@ -240,26 +269,24 @@ function handleMouseMove(event)
         offsetX = lmbOffsetXStart + (event.pageX - lmbPageXStart);
         offsetY = lmbOffsetYStart + (event.pageY - lmbPageYStart);
         drawCanvas();
-        drawAlreadyDone = True;
+        drawAlreadyDone = true;
     }
 
     if(rmbPressed)
     {
+		
         offsetX = rmbOffsetXStart + (event.pageX - rmbPageXStart);
         offsetY = rmbOffsetYStart + (event.pageY - rmbPageYStart);
         drawCanvas();
-        drawAlreadyDone = True;
+        drawAlreadyDone = true;
     }
 
-    rect = canvas.getBoundingClientRect();
     
     if(event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom)
     {
-        mouseX = (event.clientX - rect.left) - offsetX;
-        mouseY = (event.clientY - rect.top) - offsetY;
 
-        if(!drawAlreadyDone)
-            drawCanvas();
+//        if(!drawAlreadyDone)
+//            drawCanvas();
 
         return false;
     }
@@ -283,10 +310,40 @@ function handleMouseButtonUp(event)
 
 function handleMouseWheel(event)
 {
+	getMouseCoordinates(event);
     if(event.originalEvent.wheelDelta > 0 || event.originalEvent.detail < 0)
-		canvasMatrix = math.multiply(canvasMatrix, zoomMatrix);
+	{
+
+		tempMatrix = math.subset(
+			zoomMatrix ,
+			math.index([0,1],2) ,
+			math.subtract(
+				math.multiply(
+					math.inv(zoomMatrix) ,
+					mouseWorkspaceVector
+				).subset(math.index([0,1])) ,
+				mouseCanvasVector.subset(math.index([0,1]))
+			)
+		);
+
+		canvasMatrix = math.multiply(tempMatrix, canvasMatrix);
+	}
     else
-		canvasMatrix = math.multiply(canvasMatrix, math.inv(zoomMatrix));
+	{
+		tempMatrix = math.subset(
+			math.inv(zoomMatrix) ,
+			math.index([0,1],2) ,
+			math.subtract(
+				math.multiply(
+					zoomMatrix ,
+					mouseWorkspaceVector
+				).subset(math.index([0,1])) ,
+				mouseCanvasVector.subset(math.index([0,1]))
+			)
+		);
+
+		canvasMatrix = math.multiply(tempMatrix, canvasMatrix);
+	}
 
     drawCanvas();
     return false;
