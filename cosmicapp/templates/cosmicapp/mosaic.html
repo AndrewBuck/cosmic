@@ -317,29 +317,24 @@ function handleMouseWheel(event)
 		tempMatrix = math.subset(
 			zoomMatrix ,
 			math.index([0,1],2) ,
-			math.subtract(
-				math.multiply(
-					math.inv(zoomMatrix) ,
-					mouseWorkspaceVector
-				).subset(math.index([0,1])) ,
-				mouseCanvasVector.subset(math.index([0,1]))
-			)
+			math.multiply(
+				math.subtract( math.eye(3) , zoomMatrix ) ,
+				mouseCanvasVector
+			).subset(math.index([0,1])) ,
 		);
 
 		canvasMatrix = math.multiply(tempMatrix, canvasMatrix);
 	}
     else
 	{
+
 		tempMatrix = math.subset(
 			math.inv(zoomMatrix) ,
 			math.index([0,1],2) ,
-			math.subtract(
-				math.multiply(
-					zoomMatrix ,
-					mouseWorkspaceVector
-				).subset(math.index([0,1])) ,
-				mouseCanvasVector.subset(math.index([0,1]))
-			)
+			math.multiply(
+				math.subtract( math.eye(3) , math.inv(zoomMatrix) ) ,
+				mouseCanvasVector
+			).subset(math.index([0,1])) ,
 		);
 
 		canvasMatrix = math.multiply(tempMatrix, canvasMatrix);
