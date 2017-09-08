@@ -33,10 +33,11 @@ var canvasMatrix = math.eye(3);
 
 var tempMatrix = math.eye(3);
 
-var lmbPressed = false, mmbPressed = false, rmbPressed = false;
+var mode = '';
 var lmbPageX, lmbPageY;
 var rmbPageX, rmbPageY;
 var imageToTranslate, translationStartingMatrix;
+var ctrlKeyPressed = false;
 
 // Coordinate systems:
 // Image - relative to each image origin
@@ -151,7 +152,7 @@ function drawCanvas()
 			)
 		);
 
-        if(lmbPressed)
+        if(mode == 'translate')
         {
             if(i == imageIndexToTranslate)
             {
@@ -252,9 +253,9 @@ function getMouseCoordinates(event)
 
 function handleMouseButtonDown(event)
 {
-    if(event.which == 1)
+    if(mode == '' && event.which == 1 && !ctrlKeyPressed)
     {
-        lmbPressed = true;
+        mode = 'translate';
         lmbPageX = event.pageX;
         lmbPageY = event.pageY;
 
@@ -267,10 +268,8 @@ function handleMouseButtonDown(event)
             drawCanvas();
         }
     }
-    else if(event.which == 2)
+    else if(mode == '' && event.which == 2 && !ctrlKeyPressed)
     {
-        mmbPressed = true;
-
         i = getSelectedImagesIndexByMousePosition();
         if(i != -1)
         {
@@ -280,9 +279,9 @@ function handleMouseButtonDown(event)
             drawCanvas();
         }
     }
-    else if(event.which == 3)
+    else if(mode == '' && event.which == 3 && !ctrlKeyPressed)
     {
-        rmbPressed = true;
+        mode = 'pan';
         rmbPageX  = event.pageX;
         rmbPageY  = event.pageY;
     }
@@ -300,7 +299,7 @@ function handleMouseMove(event)
     // Flag to prevent calling the draw function multiple times.
     drawAlreadyDone = false;
 
-    if(lmbPressed)
+    if(mode == 'translate')
     {
         translationMatrix = math.matrix([
             [1, 0, (event.pageX - lmbPageX)/canvasMatrix.subset(math.index(0, 0))],
@@ -317,7 +316,7 @@ function handleMouseMove(event)
         drawAlreadyDone = true;
     }
 
-    if(rmbPressed)
+    if(mode == 'pan')
     {
         translationMatrix = math.matrix([
             [1, 0, (event.pageX - rmbPageX)/canvasMatrix.subset(math.index(0, 0))],
@@ -350,13 +349,12 @@ function handleMouseMove(event)
 
 function handleMouseButtonUp(event)
 {
-    if(event.which == 1)
+    if(mode == 'translate' && event.which == 1)
         //TODO: Add undo event
-        lmbPressed = false;
-    else if(event.which == 2)
-        mmbPressed = false;
-    else if(event.which == 3)
-        rmbPressed = false;
+        mode = '';
+
+    if(mode == 'pan' && event.which == 3)
+        mode = '';
 
     drawCanvas();
     return false;
@@ -383,6 +381,18 @@ function handleMouseWheel(event)
 
     drawCanvas();
     return false;
+};
+
+function handleKeyDown(event)
+{
+    if(event.which == 17)
+        ctrlKeyPressed = true;
+};
+
+function handleKeyUp(event)
+{
+    if(event.which == 17)
+        ctrlKeyPressed = false;
 };
 
 function getSelectedImagesIndexById(id)
@@ -463,6 +473,8 @@ $(document).ready(function()
     $(window).mousemove(handleMouseMove);
     $(window).mouseup(handleMouseButtonUp);
     $('#desktop').bind('mousewheel DOMMouseScroll', handleMouseWheel);
+    $(document).keydown(handleKeyDown);
+    $(document).keyup(handleKeyUp);
 
     $(document).on('imageTableLoadEvent', onImageTableLoad)
     $(window).on('resize', drawCanvas)
