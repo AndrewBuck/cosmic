@@ -74,6 +74,8 @@ function addImageToDesktop(id)
         image: new Image()
         });
 
+    selectedImages[i].highlightColor = (77 * i) % 360;
+
     $.ajax({
         url : "/query/?queryfor=image&id=" + id,
         type : "get",
@@ -125,7 +127,7 @@ function addImageToDesktop(id)
 
 function removeImageFromDesktop(id)
 {
-    arrayIndex = getImageObjectArrayIndexById(id);
+    arrayIndex = getSelectedImagesIndexById(id);
     if(arrayIndex == -1)
         return;
 
@@ -137,6 +139,8 @@ function drawCanvas()
 {
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
+
+    mousedOverImageIndex = getSelectedImagesIndexByMousePosition();
 
     for(i = 0; i < selectedImages.length; i++)
     {
@@ -150,23 +154,16 @@ function drawCanvas()
         context.drawImage(
             selectedImages[i].image, 0, 0,
             selectedImages[i].width, selectedImages[i].height
-            );
-
-        mouseImageVector = math.multiply(
-            math.multiply(
-                math.inv(selectedImages[i].transformMatrix),
-                math.inv(canvasMatrix)
-            ),
-            mouseCanvasVector
         );
 
-        context.fillStyle = 'yellow';
-        context.font = '24px sans-serif';
-        context.fillText(mouseImageVector.format({notation: 'fixed'}), selectedImages[i].width/2, selectedImages[i].height/2);
+        if(i == mousedOverImageIndex)
+            alpha = 1.0;
+        else
+            alpha = 0.3;
 
         context.beginPath();
-        context.lineWidth = 3;
-		context.strokeStyle = 'hsla(' + (77 * i) % 360 + ', 100%, 70%, 0.7)';
+        context.lineWidth = 4;
+		context.strokeStyle = 'hsla(' + selectedImages[i].highlightColor + ', 100%, 50%, ' + alpha + ')';
 		context.rect(-2, -2, selectedImages[i].width+4, selectedImages[i].height+4);
         context.stroke();
     }
@@ -242,17 +239,25 @@ function handleMouseButtonDown(event)
         lmbPageX = event.pageX;
         lmbPageY = event.pageY;
 
-        if(selectedImages.length > 0)
+        i = getSelectedImagesIndexByMousePosition();
+        if(i != -1)
         {
-            //TODO: Get the correct image to translate, right now we just always translate the first image.
-            imageToTranslate = selectedImages[0];
+            imageToTranslate = selectedImages[i];
             translationStartingMatrix = imageToTranslate.transformMatrix;
         }
-
     }
     else if(event.which == 2)
     {
         mmbPressed = true;
+
+        i = getSelectedImagesIndexByMousePosition();
+        if(i != -1)
+        {
+            tempImage = selectedImages[i];
+            selectedImages.splice(i, 1);
+            selectedImages.splice(0, 0, tempImage);
+            drawCanvas();
+        }
     }
     else if(event.which == 3)
     {
@@ -358,12 +363,40 @@ function handleMouseWheel(event)
     return false;
 };
 
-function getImageObjectArrayIndexById(id)
+function getSelectedImagesIndexById(id)
 {
     arrayIndex = -1;
     for(i = 0; i < selectedImages.length; i++)
     {
         if(selectedImages[i].id == id)
+        {
+            arrayIndex = i;
+            break;
+        }
+    }
+
+    return arrayIndex;
+};
+
+function getSelectedImagesIndexByMousePosition()
+{
+    arrayIndex = -1;
+    for(i = selectedImages.length-1; i >= 0; i--)
+    {
+        mouseImageVector = math.multiply(
+            math.inv(
+                math.multiply(
+                    canvasMatrix,
+                    selectedImages[i].transformMatrix
+                ),
+            ),
+            mouseCanvasVector
+        );
+
+        x = mouseImageVector.subset(math.index(0));
+        y = mouseImageVector.subset(math.index(1));
+        im = selectedImages[i];
+        if(x >= 0 && y >= 0 && x <= im.width && y <= im.height)
         {
             arrayIndex = i;
             break;
@@ -384,7 +417,7 @@ function onImageTableLoad()
         clickedId = $(this).parent().parent().attr('id');
         hideButtonId = '#hideButton' + clickedId
 
-        arrayIndex = getImageObjectArrayIndexById(clickedId);
+        arrayIndex = getSelectedImagesIndexById(clickedId);
         if(arrayIndex == -1)
         {
             addImageToDesktop(clickedId);
