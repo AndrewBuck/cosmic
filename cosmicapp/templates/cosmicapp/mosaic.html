@@ -25,9 +25,9 @@ var context = canvas.getContext('2d');
 
 var selectedImages = [];
 var zoomMatrix = math.matrix([
-	[ 1.1,   0 ,   0 ],
-	[   0, 1.1 ,   0 ],
-	[   0,   0 ,   1 ]
+	[ Math.sqrt(2),       0 ,         0 ],
+	[   0,           Math.sqrt(2) ,   0 ],
+	[   0,                0 ,         1 ]
 ]);
 var canvasMatrix = math.eye(3);
 
@@ -221,10 +221,8 @@ function handleMouseButtonDown(event)
     if(event.which == 1)
     {
         lmbPressed = true;
-        lmbOffsetXStart = offsetX;
-        lmbOffsetYStart = offsetY;
-        lmbPageXStart = event.pageX;
-        lmbPageYStart = event.pageY;
+        lmbPageX = event.pageX;
+        lmbPageY = event.pageY;
     }
     else if(event.which == 2)
     {
@@ -233,10 +231,8 @@ function handleMouseButtonDown(event)
     else if(event.which == 3)
     {
         rmbPressed = true;
-        rmbOffsetXStart = offsetX;
-        rmbOffsetYStart = offsetY;
-        rmbPageXStart = event.pageX;
-        rmbPageYStart = event.pageY;
+        rmbPageX  = event.pageX;
+        rmbPageY  = event.pageY;
     }
 
     return false;
@@ -270,16 +266,23 @@ function handleMouseMove(event)
 
     if(lmbPressed)
     {
-        offsetX = lmbOffsetXStart + (event.pageX - lmbPageXStart);
-        offsetY = lmbOffsetYStart + (event.pageY - lmbPageYStart);
         drawCanvas();
         drawAlreadyDone = true;
     }
 
     if(rmbPressed)
     {
-        offsetX = rmbOffsetXStart + (event.pageX - rmbPageXStart);
-        offsetY = rmbOffsetYStart + (event.pageY - rmbPageYStart);
+        translationMatrix = math.matrix([
+            [1, 0, (event.pageX - rmbPageX)/canvasMatrix.subset(math.index(0, 0))],
+            [0, 1, (event.pageY - rmbPageY)/canvasMatrix.subset(math.index(1, 1))],
+            [0, 0, 1]
+        ]);
+
+        canvasMatrix = math.multiply(canvasMatrix, translationMatrix);
+
+        rmbPageX  = event.pageX;
+        rmbPageY  = event.pageY;
+
         drawCanvas();
         drawAlreadyDone = true;
     }
