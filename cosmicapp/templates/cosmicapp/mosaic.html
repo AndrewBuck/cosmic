@@ -216,6 +216,22 @@ function drawCanvas()
 
 };
 
+function getMouseCoordinates(event)
+{
+    rect = canvas.getBoundingClientRect();
+
+	mouseCanvasVector = math.matrix([
+		event.clientX - rect.left ,
+		event.clientY - rect.top ,
+		1
+	]);
+
+	mouseWorkspaceVector = math.multiply(
+		math.inv(canvasMatrix),
+		mouseCanvasVector
+	);
+}
+
 function handleMouseButtonDown(event)
 {
     if(event.which == 1)
@@ -237,22 +253,6 @@ function handleMouseButtonDown(event)
 
     return false;
 };
-
-function getMouseCoordinates(event)
-{
-    rect = canvas.getBoundingClientRect();
-
-	mouseCanvasVector = math.matrix([
-		event.clientX - rect.left ,
-		event.clientY - rect.top ,
-		1
-	]);
-
-	mouseWorkspaceVector = math.multiply(
-		math.inv(canvasMatrix), 
-		mouseCanvasVector
-	);
-}
 
 function handleMouseMove(event)
 {
