@@ -52,7 +52,7 @@ var mouseWorkspaceVector = math.matrix([[0],[0],[1]]);
 var mouseCanvasX = 0, mouseCanvasY = 0;
 var mouseWorkspaceX = 0, mouseWorkspaceY = 0;
 
-function setMatrixTransform(m)
+context.setMatrixTransform = function(m)
 {
 	this.setTransform(
 		m.subset(math.index(0, 0)),
@@ -64,16 +64,14 @@ function setMatrixTransform(m)
 		);
 }
 
-context.setMatrixTransform = setMatrixTransform;
-
 function addImageToDesktop(id)
 {
-    selectedImages[selectedImages.length] = new Object({
+    i = selectedImages.length;
+
+    selectedImages[i] = new Object({
         id: id,
         image: new Image()
         });
-
-    i = selectedImages.length - 1;
 
     $.ajax({
         url : "/query/?queryfor=image&id=" + id,
@@ -127,12 +125,10 @@ function addImageToDesktop(id)
 function removeImageFromDesktop(id)
 {
     arrayIndex = getImageObjectArrayIndexById(id);
-
     if(arrayIndex == -1)
         return;
 
     selectedImages.splice(arrayIndex, 1);
-
     drawCanvas();
 };
 
@@ -237,12 +233,6 @@ function getMouseCoordinates(event)
     rect = canvas.getBoundingClientRect();
 
 	mouseCanvasVector = math.matrix([
-		[event.clientX - rect.left] ,
-		[event.clientY - rect.top] ,
-		[1]
-	]);
-
-	mouseCanvasVector = math.matrix([
 		event.clientX - rect.left ,
 		event.clientY - rect.top ,
 		1
@@ -274,19 +264,17 @@ function handleMouseMove(event)
 
     if(rmbPressed)
     {
-		
         offsetX = rmbOffsetXStart + (event.pageX - rmbPageXStart);
         offsetY = rmbOffsetYStart + (event.pageY - rmbPageYStart);
         drawCanvas();
         drawAlreadyDone = true;
     }
 
-    
     if(event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom)
     {
-
-//        if(!drawAlreadyDone)
-//            drawCanvas();
+        // Update the canvas to redraw new mouse coords and handle any highlighting of moused over images, etc.
+        if(!drawAlreadyDone)
+            drawCanvas();
 
         return false;
     }
@@ -312,33 +300,20 @@ function handleMouseWheel(event)
 {
 	getMouseCoordinates(event);
     if(event.originalEvent.wheelDelta > 0 || event.originalEvent.detail < 0)
-	{
-
-		tempMatrix = math.subset(
-			zoomMatrix ,
-			math.index([0,1],2) ,
-			math.multiply(
-				math.subtract( math.eye(3) , zoomMatrix ) ,
-				mouseCanvasVector
-			).subset(math.index([0,1])) ,
-		);
-
-		canvasMatrix = math.multiply(tempMatrix, canvasMatrix);
-	}
+        zoomScalingMatrix = zoomMatrix;
     else
-	{
+        zoomScalingMatrix = math.inv(zoomMatrix);
 
-		tempMatrix = math.subset(
-			math.inv(zoomMatrix) ,
-			math.index([0,1],2) ,
-			math.multiply(
-				math.subtract( math.eye(3) , math.inv(zoomMatrix) ) ,
-				mouseCanvasVector
-			).subset(math.index([0,1])) ,
-		);
+    tempMatrix = math.subset(
+        zoomScalingMatrix,
+        math.index([0,1],2),
+        math.multiply(
+            math.subtract(math.eye(3), zoomScalingMatrix ) ,
+            mouseCanvasVector
+        ).subset(math.index([0,1])),
+    );
 
-		canvasMatrix = math.multiply(tempMatrix, canvasMatrix);
-	}
+    canvasMatrix = math.multiply(tempMatrix, canvasMatrix);
 
     drawCanvas();
     return false;
@@ -346,7 +321,7 @@ function handleMouseWheel(event)
 
 function getImageObjectArrayIndexById(id)
 {
-   arrayIndex = -1;
+    arrayIndex = -1;
     for(i = 0; i < selectedImages.length; i++)
     {
         if(selectedImages[i].id == id)
