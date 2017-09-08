@@ -151,19 +151,38 @@ function drawCanvas()
 			)
 		);
 
+        if(lmbPressed)
+        {
+            if(i == imageIndexToTranslate)
+            {
+                context.globalAlpha = 0.3;
+                borderAlpha = 1.0;
+            }
+            else
+            {
+                context.globalAlpha = 0.5;
+                borderAlpha = 0.3;
+            }
+        }
+        else
+        {
+            context.globalAlpha = 0.5;
+            if(i == mousedOverImageIndex)
+                borderAlpha = 1.0;
+            else
+                borderAlpha = 0.3;
+        }
+
         context.drawImage(
             selectedImages[i].image, 0, 0,
             selectedImages[i].width, selectedImages[i].height
         );
 
-        if(i == mousedOverImageIndex)
-            alpha = 1.0;
-        else
-            alpha = 0.3;
+        context.globalAlpha = 1.0;
 
         context.beginPath();
         context.lineWidth = 4;
-		context.strokeStyle = 'hsla(' + selectedImages[i].highlightColor + ', 100%, 50%, ' + alpha + ')';
+		context.strokeStyle = 'hsla(' + selectedImages[i].highlightColor + ', 100%, 50%, ' + borderAlpha + ')';
 		context.rect(-2, -2, selectedImages[i].width+4, selectedImages[i].height+4);
         context.stroke();
     }
@@ -242,8 +261,10 @@ function handleMouseButtonDown(event)
         i = getSelectedImagesIndexByMousePosition();
         if(i != -1)
         {
+            imageIndexToTranslate = i;
             imageToTranslate = selectedImages[i];
             translationStartingMatrix = imageToTranslate.transformMatrix;
+            drawCanvas();
         }
     }
     else if(event.which == 2)
@@ -337,6 +358,7 @@ function handleMouseButtonUp(event)
     else if(event.which == 3)
         rmbPressed = false;
 
+    drawCanvas();
     return false;
 };
 
