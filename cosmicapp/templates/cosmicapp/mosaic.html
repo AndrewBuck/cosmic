@@ -155,7 +155,7 @@ function drawCanvas()
 			)
 		);
 
-        if(mode == 'translate')
+        if(mode == 'translate' || mode == 'rotate')
         {
             if(i == imageIndexToTranslate)
             {
@@ -191,7 +191,7 @@ function drawCanvas()
 		context.rect(-(2+selectedImages[i].originX), -(2+selectedImages[i].originY), selectedImages[i].width+4, selectedImages[i].height+4);
         context.stroke();
 
-        if(ctrlKeyPressed)
+        if(ctrlKeyPressed || mode == 'rotate')
         {
             context.beginPath();
             context.moveTo(-20, 0);
@@ -302,6 +302,22 @@ function handleMouseButtonDown(event)
         rmbPageX  = event.pageX;
         rmbPageY  = event.pageY;
     }
+    else if(mode == '' && event.which == 1 && ctrlKeyPressed)
+    {
+        i = getSelectedImagesIndexByMousePosition();
+        if(i != -1)
+        {
+            mode = 'rotate';
+            lmbPageX = event.offsetX;
+            lmbPageY = event.offsetY;
+
+            //TODO: Consider renaming these from 'translate' to 'rotate' or remove this comment.
+            imageIndexToTranslate = i;
+            imageToTranslate = selectedImages[i];
+            translationStartingMatrix = imageToTranslate.transformMatrix;
+            drawCanvas();
+        }
+    }
 
     return false;
 };
@@ -350,6 +366,46 @@ function handleMouseMove(event)
         drawAlreadyDone = true;
     }
 
+    if(mode == 'rotate')
+    {
+        originVector = math.multiply(
+            math.multiply(
+                canvasMatrix,
+                imageToTranslate.transformMatrix
+            ),
+            math.matrix([0, 0, 1])
+        );
+
+        oldMouseVector = math.matrix([lmbPageX, lmbPageY, 1]);
+        newMouseVector = math.matrix([event.offsetX, event.offsetY, 1]);
+
+        oldVector = math.subtract(oldMouseVector, originVector);
+        newVector = math.subtract(newMouseVector, originVector);
+
+        oldDx = oldVector.subset(math.index(0));
+        oldDy = oldVector.subset(math.index(1));
+        newDx = newVector.subset(math.index(0));
+        newDy = newVector.subset(math.index(1));
+
+        oldTheta = math.atan2(oldDy, oldDx);
+        newTheta = math.atan2(newDy, newDx);
+        theta = newTheta - oldTheta;
+
+        rotationMatrix = math.matrix([
+            [math.cos(theta), -math.sin(theta), 0],
+            [math.sin(theta),  math.cos(theta), 0],
+            [0, 0, 1]
+        ]);
+
+        imageToTranslate.transformMatrix = math.multiply(imageToTranslate.transformMatrix, rotationMatrix);
+
+        lmbPageX  = event.offsetX;
+        lmbPageY  = event.offsetY;
+
+        drawCanvas();
+        drawAlreadyDone = true;
+    }
+
     if(event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom)
     {
         // Update the canvas to redraw new mouse coords and handle any highlighting of moused over images, etc.
@@ -371,6 +427,10 @@ function handleMouseButtonUp(event)
         mode = '';
 
     if(mode == 'pan' && event.which == 3)
+        mode = '';
+
+    if(mode == 'rotate' && event.which == 1)
+        //TODO: Add undo event
         mode = '';
 
     drawCanvas();
