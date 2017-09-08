@@ -34,8 +34,9 @@ var canvasMatrix = math.eye(3);
 var tempMatrix = math.eye(3);
 
 var lmbPressed = false, mmbPressed = false, rmbPressed = false;
-var lmbOffsetXStart, lmbOffsetYStart, lmbPageXStart, lmbPageYStart;
-var rmbOffsetXStart, rmbOffsetYStart, rmbPageXStart, rmbPageYStart;
+var lmbPageX, lmbPageY;
+var rmbPageX, rmbPageY;
+var imageToTranslate, translationStartingMatrix;
 
 // Coordinate systems:
 // Image - relative to each image origin
@@ -159,6 +160,7 @@ function drawCanvas()
             mouseCanvasVector
         );
 
+        context.fillStyle = 'yellow';
         context.font = '24px sans-serif';
         context.fillText(mouseImageVector.format({notation: 'fixed'}), selectedImages[i].width/2, selectedImages[i].height/2);
 
@@ -239,6 +241,14 @@ function handleMouseButtonDown(event)
         lmbPressed = true;
         lmbPageX = event.pageX;
         lmbPageY = event.pageY;
+
+        if(selectedImages.length > 0)
+        {
+            //TODO: Get the correct image to translate, right now we just always translate the first image.
+            imageToTranslate = selectedImages[0];
+            translationStartingMatrix = imageToTranslate.transformMatrix;
+        }
+
     }
     else if(event.which == 2)
     {
@@ -266,6 +276,17 @@ function handleMouseMove(event)
 
     if(lmbPressed)
     {
+        translationMatrix = math.matrix([
+            [1, 0, (event.pageX - lmbPageX)/canvasMatrix.subset(math.index(0, 0))],
+            [0, 1, (event.pageY - lmbPageY)/canvasMatrix.subset(math.index(1, 1))],
+            [0, 0, 1]
+        ]);
+
+        imageToTranslate.transformMatrix = math.multiply(imageToTranslate.transformMatrix, translationMatrix);
+
+        lmbPageX  = event.pageX;
+        lmbPageY  = event.pageY;
+
         drawCanvas();
         drawAlreadyDone = true;
     }
@@ -304,6 +325,7 @@ function handleMouseMove(event)
 function handleMouseButtonUp(event)
 {
     if(event.which == 1)
+        //TODO: Add undo event
         lmbPressed = false;
     else if(event.which == 2)
         mmbPressed = false;
