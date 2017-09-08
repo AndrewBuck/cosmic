@@ -272,13 +272,13 @@ function handleMouseButtonDown(event)
 {
     if(mode == '' && event.which == 1 && !ctrlKeyPressed)
     {
-        mode = 'translate';
-        lmbPageX = event.pageX;
-        lmbPageY = event.pageY;
-
         i = getSelectedImagesIndexByMousePosition();
         if(i != -1)
         {
+            mode = 'translate';
+            lmbPageX = event.pageX;
+            lmbPageY = event.pageY;
+
             imageIndexToTranslate = i;
             imageToTranslate = selectedImages[i];
             translationStartingMatrix = imageToTranslate.transformMatrix;
