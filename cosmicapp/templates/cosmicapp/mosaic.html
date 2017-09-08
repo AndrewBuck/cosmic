@@ -115,6 +115,9 @@ function addImageToDesktop(id)
 			);
 	}
 
+    selectedImages[i].originX = selectedImages[i].width/2;
+    selectedImages[i].originY = selectedImages[i].height/2;
+
     sizeString = document.getElementById("thumbnailSizeInput").value
 
     thumbUrl = $.ajax(
@@ -175,7 +178,8 @@ function drawCanvas()
         }
 
         context.drawImage(
-            selectedImages[i].image, 0, 0,
+            selectedImages[i].image,
+            -selectedImages[i].originX, -selectedImages[i].originY,
             selectedImages[i].width, selectedImages[i].height
         );
 
@@ -184,8 +188,21 @@ function drawCanvas()
         context.beginPath();
         context.lineWidth = 4;
 		context.strokeStyle = 'hsla(' + selectedImages[i].highlightColor + ', 100%, 50%, ' + borderAlpha + ')';
-		context.rect(-2, -2, selectedImages[i].width+4, selectedImages[i].height+4);
+		context.rect(-(2+selectedImages[i].originX), -(2+selectedImages[i].originY), selectedImages[i].width+4, selectedImages[i].height+4);
         context.stroke();
+
+        if(ctrlKeyPressed)
+        {
+            context.beginPath();
+            context.moveTo(-20, 0);
+            context.lineTo(20, 0);
+            context.stroke();
+
+            context.beginPath();
+            context.moveTo(0, -20);
+            context.lineTo(0, 20);
+            context.stroke();
+        }
     }
 
     context.font = '24px sans-serif';
@@ -386,13 +403,19 @@ function handleMouseWheel(event)
 function handleKeyDown(event)
 {
     if(event.which == 17)
+    {
         ctrlKeyPressed = true;
+        drawCanvas();
+    }
 };
 
 function handleKeyUp(event)
 {
     if(event.which == 17)
+    {
         ctrlKeyPressed = false;
+        drawCanvas();
+    }
 };
 
 function getSelectedImagesIndexById(id)
@@ -428,7 +451,7 @@ function getSelectedImagesIndexByMousePosition()
         x = mouseImageVector.subset(math.index(0));
         y = mouseImageVector.subset(math.index(1));
         im = selectedImages[i];
-        if(x >= 0 && y >= 0 && x <= im.width && y <= im.height)
+        if(x >= -im.originX && y >= -im.originY && x <= im.width-im.originX && y <= im.height-im.originY)
         {
             arrayIndex = i;
             break;
@@ -478,6 +501,8 @@ $(document).ready(function()
 
     $(document).on('imageTableLoadEvent', onImageTableLoad)
     $(window).on('resize', drawCanvas)
+
+    canvasMatrix = math.add(canvasMatrix, [ [0, 0, canvas.offsetWidth/2], [0, 0, canvas.offsetHeight/2], [0, 0, 0] ]);
 });
 
 </script>
