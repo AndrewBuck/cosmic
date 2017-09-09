@@ -39,7 +39,7 @@ var rmbPageX, rmbPageY;
 var imageToTranslate, translationStartingMatrix;
 var ctrlKeyPressed = false;
 
-// Coordinate systems:
+// left-handed Coordinate systems: x-right, y-down
 // Image - relative to each image origin
 // Workspace - independent of image
 // Canvas - the view window on the page
@@ -56,6 +56,21 @@ var mouseWorkspaceX = 0, mouseWorkspaceY = 0;
 
 context.setMatrixTransform = function(m)
 {
+/*
+context.setTransform(a,b,c,d,e,f);
+a	Horizontal scaling 	
+b	Horizontal skewing 	
+c	Vertical skewing 	
+d	Vertical scaling 	
+e	Horizontal moving 	
+f	Vertical moving 	
+
+	affineMatrix = math.matrix([
+		[ "a", "b", "e" ],
+		[ "c", "d", "f" ],
+		[ "0", "0", "1" ]
+	]);
+*/
 	this.setTransform(
 		m.subset(math.index(0, 0)),
 		m.subset(math.index(1, 0)),
@@ -87,6 +102,11 @@ function addImageToDesktop(id)
             attr = results[0].attributes;
             selectedImages[i].width = Number(attr.getNamedItem('dimX').nodeValue);
             selectedImages[i].height = Number(attr.getNamedItem('dimY').nodeValue);
+			selectedImages[i].sizeVector = math.matrix([
+				selectedImages[i].width , 
+				selectedImages[i].height , 
+				1
+			]);
         }
     });
 
@@ -94,7 +114,7 @@ function addImageToDesktop(id)
 
 	if (i == 1)
 	{
-		// second image is offset at rotated by 15 deg
+		// second image is offset and rotated by 15 deg
 		selectedImages[i].transformMatrix = math.matrix([
 			[	(Math.sqrt(3) + 1)/(2*Math.sqrt(2)) ,
 				(Math.sqrt(3) - 1)/(2*Math.sqrt(2)) ,
@@ -145,6 +165,7 @@ function drawCanvas()
     canvas.height = canvas.offsetHeight;
 
     mousedOverImageIndex = getSelectedImagesIndexByMousePosition();
+	mousedOverImagesList = imageListByWorkspaceCoordinates();
 
     for(i = 0; i < selectedImages.length; i++)
     {
@@ -171,7 +192,7 @@ function drawCanvas()
         else
         {
             context.globalAlpha = 0.5;
-            if(i == mousedOverImageIndex)
+            if(1 == selectedImages[i].mouseover)
                 borderAlpha = 1.0;
             else
                 borderAlpha = 0.3;
@@ -179,8 +200,9 @@ function drawCanvas()
 
         context.drawImage(
             selectedImages[i].image,
-            -selectedImages[i].originX, -selectedImages[i].originY,
-            selectedImages[i].width, selectedImages[i].height
+            0, 0,
+            selectedImages[i].width,
+			selectedImages[i].height
         );
 
         context.globalAlpha = 1.0;
@@ -188,7 +210,7 @@ function drawCanvas()
         context.beginPath();
         context.lineWidth = 4;
 		context.strokeStyle = 'hsla(' + selectedImages[i].highlightColor + ', 100%, 50%, ' + borderAlpha + ')';
-		context.rect(-(2+selectedImages[i].originX), -(2+selectedImages[i].originY), selectedImages[i].width+4, selectedImages[i].height+4);
+		context.rect(0,0,selectedImages[i].width, selectedImages[i].height);
         context.stroke();
 
         if(ctrlKeyPressed || mode == 'rotate')
@@ -212,6 +234,8 @@ function drawCanvas()
     context.fillStyle = 'blue';
 	context.setTransform(1, 0, 0, 1, 0, offset += 24);
 	context.fillText(
+		mousedOverImagesList
+		+ " , " +
 		mouseCanvasVector.format(3)
 		 + " , " + 
 		mouseWorkspaceVector.format(3)
@@ -247,7 +271,13 @@ function drawCanvas()
     for(i = 0; i < selectedImages.length; i++)
     {
 		context.setTransform(1, 0, 0, 1, 0, offset += 24);
-		context.fillText(selectedImages[i].transformMatrix.format(3), 10, 34);
+		context.fillText(
+			selectedImages[i].transformMatrix.format(3)
+			+ " , " +
+			selectedImages[i].mouseImageVector.format(3)
+			+ " , " +
+			selectedImages[i].mouseover
+		, 10, 34);
 	}
 
 };
@@ -266,6 +296,15 @@ function getMouseCoordinates(event)
 		math.inv(canvasMatrix),
 		mouseCanvasVector
 	);
+
+    for(i = 0; i < selectedImages.length; i++)
+    {
+		selectedImages[i].mouseImageVector = math.multiply(
+			math.inv(selectedImages[i].transformMatrix) ,
+			mouseWorkspaceVector
+		);
+	}
+
 }
 
 function handleMouseButtonDown(event)
@@ -492,6 +531,31 @@ function getSelectedImagesIndexById(id)
 
     return arrayIndex;
 };
+
+function isCoordInsideRect(a, b)
+{
+// Returns '1' if 'a' is in a rectangle from the origin to 'b' else '-1'
+	return math.sign(math.sum(math.sign(math.subtract(b,a))) * math.sum(math.sign(a)) - 5);
+// -5 is special to affine vectors.  Can be altered to check if vector is affine first 
+}
+
+function imageListByWorkspaceCoordinates(coord)
+{
+// Returns sorted list of images which have pixels at the given workspace coords
+	var list = [];
+	
+    for(i = 0; i < selectedImages.length; i++)
+    {
+		selectedImages[i].mouseover = isCoordInsideRect(
+			selectedImages[i].mouseImageVector ,
+			selectedImages[i].sizeVector)
+		if (1 == selectedImages[i].mouseover)
+		{
+			list[list.length] = selectedImages[i].id;
+		}
+	}
+	return list;
+}
 
 function getSelectedImagesIndexByMousePosition()
 {
