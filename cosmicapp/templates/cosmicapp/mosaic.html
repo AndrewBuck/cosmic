@@ -21,6 +21,45 @@ Image opacity: <input id="imageOpacitySlider" type=range min="0" max="100" value
 {% include "./jquery.html" %}
 
 <script>
+var undoStack = [], redoStack = [];
+
+function UndoObject(uAction, rAction, uData, rData)
+{
+    this.undoAction = uAction;
+    this.redoAction = rAction;
+    this.undoData = uData;
+    this.redoData = rData;
+};
+
+function executeUndoableAction(undoObject)
+{
+    undoObject.redoAction;
+    redoStack = [];
+    undoStack.push(undoObject);
+};
+
+function performUndo()
+{
+    if(undoStack.length > 0)
+    {
+        action = undoStack.pop();
+        action.undoAction();
+        redoStack.push(action);
+    }
+};
+
+function performRedo()
+{
+    if(redoStack.length > 0)
+    {
+        action = redoStack.pop();
+        action.redoAction();
+        undoStack.push(action);
+    }
+};
+</script>
+
+<script>
 var canvas = document.getElementById('desktop');
 var context = canvas.getContext('2d');
 
@@ -38,7 +77,7 @@ var mode = '';
 var lmbPageX, lmbPageY;
 var rmbPageX, rmbPageY;
 var imageToTranslate, translationStartingMatrix;
-var ctrlKeyPressed = false;
+var ctrlKeyPressed = false, shiftKeyPressed = false;
 
 // Coordinate systems:
 // Image - relative to each image origin
@@ -423,15 +462,63 @@ function handleMouseMove(event)
 function handleMouseButtonUp(event)
 {
     if(mode == 'translate' && event.which == 1)
-        //TODO: Add undo event
+    {
         mode = '';
+
+        undoObject = new UndoObject(
+            function()
+            {
+                this.undoData.image.transformMatrix = this.undoData.matrix;
+                drawCanvas();
+            },
+            function()
+            {
+                this.redoData.image.transformMatrix = this.redoData.matrix;
+                drawCanvas();
+            },
+            {
+                image: imageToTranslate,
+                matrix: translationStartingMatrix
+            },
+            {
+                image: imageToTranslate,
+                matrix: imageToTranslate.transformMatrix
+            }
+        );
+
+        executeUndoableAction(undoObject);
+    }
 
     if(mode == 'pan' && event.which == 3)
         mode = '';
 
     if(mode == 'rotate' && event.which == 1)
-        //TODO: Add undo event
+    {
         mode = '';
+
+        undoObject = new UndoObject(
+            function()
+            {
+                this.undoData.image.transformMatrix = this.undoData.matrix;
+                drawCanvas();
+            },
+            function()
+            {
+                this.redoData.image.transformMatrix = this.redoData.matrix;
+                drawCanvas();
+            },
+            {
+                image: imageToTranslate,
+                matrix: translationStartingMatrix
+            },
+            {
+                image: imageToTranslate,
+                matrix: imageToTranslate.transformMatrix
+            }
+        );
+
+        executeUndoableAction(undoObject);
+    }
 
     drawCanvas();
     return true;
@@ -462,20 +549,41 @@ function handleMouseWheel(event)
 
 function handleKeyDown(event)
 {
+    // ctrl key
     if(event.which == 17)
     {
         ctrlKeyPressed = true;
         drawCanvas();
     }
+
+    // shift key
+    if(event.which == 16)
+        shiftKeyPressed = true;
+
+    // z key
+    if(event.which == 90)
+    {
+        if(ctrlKeyPressed && !shiftKeyPressed)
+            performUndo();
+
+        if(ctrlKeyPressed && shiftKeyPressed)
+            performRedo();
+    }
 };
 
 function handleKeyUp(event)
 {
+    // ctrl key
     if(event.which == 17)
     {
         ctrlKeyPressed = false;
         drawCanvas();
     }
+
+    // shift key
+    if(event.which == 16)
+        shiftKeyPressed = false;
+
 };
 
 function getSelectedImagesIndexById(id)
