@@ -9,7 +9,8 @@
   <script src="/static/cosmicapp/math.min.js" type="text/javascript"></script>
 </head>
 
-<input id="thumbnailSizeInput" type=text value=full>
+Thumbnail size: <input id="thumbnailSizeInput" type=text value=full>
+Image opacity: <input id="imageOpacitySlider" type=range min="0" max="100" value="50" onchange="drawCanvas()">
 
 <div class="mosaicDesktop" id="desktopDiv">
     <canvas class="mosaicCanvas" id="desktop">
@@ -164,13 +165,13 @@ function drawCanvas()
             }
             else
             {
-                context.globalAlpha = 0.5;
+                context.globalAlpha = $('#imageOpacitySlider').val()/100.0;
                 borderAlpha = 0.3;
             }
         }
         else
         {
-            context.globalAlpha = 0.5;
+            context.globalAlpha = $('#imageOpacitySlider').val()/100.0;
             if(i == mousedOverImageIndex)
                 borderAlpha = 1.0;
             else
@@ -324,7 +325,6 @@ function handleMouseButtonDown(event)
 
 function handleMouseMove(event)
 {
-
     rect = canvas.getBoundingClientRect();
 
 	getMouseCoordinates(event);
@@ -434,7 +434,7 @@ function handleMouseButtonUp(event)
         mode = '';
 
     drawCanvas();
-    return false;
+    return true;
 };
 
 function handleMouseWheel(event)
