@@ -358,6 +358,31 @@ function handleMouseButtonDown(event)
             drawCanvas();
         }
     }
+    else if(mode == '' && event.which == 3 && ctrlKeyPressed)
+    {
+        i = getSelectedImagesIndexByMousePosition();
+        if(i != -1)
+        {
+            oldX = selectedImages[i].originX;
+            oldY = selectedImages[i].originY;
+
+            mouseImageVector = getMousePositionOnImage(i);
+            x = mouseImageVector.subset(math.index(0));
+            y = mouseImageVector.subset(math.index(1));
+
+            selectedImages[i].originX = x + oldX;
+            selectedImages[i].originY = y + oldY;
+
+            translationMatrix = math.matrix([
+                [1, 0, x],
+                [0, 1, y],
+                [0, 0, 1]
+            ]);
+
+            selectedImages[i].transformMatrix = math.multiply(selectedImages[i].transformMatrix, translationMatrix);
+            drawCanvas();
+        }
+    }
 
     return false;
 };
@@ -601,21 +626,30 @@ function getSelectedImagesIndexById(id)
     return arrayIndex;
 };
 
+/*
+ * Returns the position of the mouse cursor on a specified image, relative to the image origin.
+ * Note that a position will always be returned, even if the coordinates are outside of the image.
+ * Return type: a 3 vector with the third component set to 1
+*/
+function getMousePositionOnImage(i)
+{
+    return math.multiply(
+        math.inv(
+            math.multiply(
+                canvasMatrix,
+                selectedImages[i].transformMatrix
+            ),
+        ),
+        mouseCanvasVector
+    );
+};
+
 function getSelectedImagesIndexByMousePosition()
 {
     arrayIndex = -1;
     for(i = selectedImages.length-1; i >= 0; i--)
     {
-        mouseImageVector = math.multiply(
-            math.inv(
-                math.multiply(
-                    canvasMatrix,
-                    selectedImages[i].transformMatrix
-                ),
-            ),
-            mouseCanvasVector
-        );
-
+        mouseImageVector = getMousePositionOnImage(i);
         x = mouseImageVector.subset(math.index(0));
         y = mouseImageVector.subset(math.index(1));
         im = selectedImages[i];
