@@ -64,20 +64,22 @@ var canvas = document.getElementById('desktop');
 var context = canvas.getContext('2d');
 
 var selectedImages = [];
+var imageListForTransform = [];
 var zoomMatrix = math.matrix([
 	[ Math.sqrt(2),       0 ,         0 ],
 	[   0,           Math.sqrt(2) ,   0 ],
 	[   0,                0 ,         1 ]
 ]);
 var canvasMatrix = math.eye(3);
-
-var tempMatrix = math.eye(3);
+var temporaryCanvasMatrix = math.eye(3); //applied during workspace pan and rotate operations
+var temporaryImageMatrix = math.eye(3); //applied during image translate and rotate operations
 
 var mode = '';
-var lmbPageX, lmbPageY;
-var rmbPageX, rmbPageY;
-var imageToTranslate, translationStartingMatrix;
+
 var ctrlKeyPressed = false, shiftKeyPressed = false;
+
+var mouseCanvasVector = math.matrix([[0,0,1]]);
+var mouseWorkspaceVector = math.matrix([[0,0,1]]);
 
 // left-handed Coordinate systems: x-right, y-down
 // Image - relative to each image origin
@@ -89,8 +91,11 @@ var ctrlKeyPressed = false, shiftKeyPressed = false;
 var mouseCanvasVector = math.matrix([[0,0,1]]);
 var mouseWorkspaceVector = math.matrix([[0,0,1]]);
 */
+/*
 var mouseCanvasVector = math.matrix([[0],[0],[1]]);
 var mouseWorkspaceVector = math.matrix([[0],[0],[1]]);
+*/
+
 var mouseCanvasX = 0, mouseCanvasY = 0;
 var mouseWorkspaceX = 0, mouseWorkspaceY = 0;
 
@@ -98,17 +103,23 @@ context.setMatrixTransform = function(m)
 {
 /*
 context.setTransform(a,b,c,d,e,f);
-a	Horizontal scaling 	
-b	Horizontal skewing 	
-c	Vertical skewing 	
-d	Vertical scaling 	
-e	Horizontal moving 	
-f	Vertical moving 	
+a	Horizontal scaling
+b	Horizontal skewing (vertical shear)
+c	Vertical skewing (horizontal shear)
+d	Vertical scaling
+e	Horizontal moving
+f	Vertical moving
 
 	affineMatrix = math.matrix([
-		[ "a", "b", "e" ],
-		[ "c", "d", "f" ],
+		[ "a", "c", "e" ],
+		[ "b", "d", "f" ],
 		[ "0", "0", "1" ]
+	]);
+
+	rotationMatrix = math.matrix([
+		[  cos(a), sin(a), 0 ],
+		[ -sin(a), cos(a), 0 ],
+		[       0,      0, 1 ]
 	]);
 */
 	this.setTransform(
@@ -130,8 +141,6 @@ function addImageToDesktop(id)
         image: new Image()
         });
 
-    selectedImages[i].highlightColor = (77 * i) % 360;
-
     $.ajax({
         url : "/query/?queryfor=image&id=" + id,
         type : "get",
@@ -140,18 +149,20 @@ function addImageToDesktop(id)
         {
             results = xml.getElementsByTagName('Image')
             attr = results[0].attributes;
-            selectedImages[i].width = Number(attr.getNamedItem('dimX').nodeValue);
-            selectedImages[i].height = Number(attr.getNamedItem('dimY').nodeValue);
 			selectedImages[i].sizeVector = math.matrix([
-				selectedImages[i].width , 
-				selectedImages[i].height , 
+				Number(attr.getNamedItem('dimX').nodeValue) , 
+				Number(attr.getNamedItem('dimY').nodeValue) , 
 				1
 			]);
         }
     });
 
 	selectedImages[i].transformMatrix = math.eye(3);
-
+	selectedImages[i].mouseImageVector = math.matrix([ 0, 0, 1 ]);
+	selectedImages[i].mouseover = false;
+	selectedImages[i].active = false;
+	selectedImages[i].highlightColor = (77 * i) % 360;
+/*
 	if (i == 1)
 	{
 		// second image is offset and rotated by 15 deg
@@ -163,7 +174,9 @@ function addImageToDesktop(id)
 				(Math.sqrt(3) + 1)/(2*Math.sqrt(2)) ,
 				Math.floor(selectedImages[i].height/16) ] ,
 			[ 0, 0, 1 ]]);
-	} else if (i > 1) {
+	} else
+*/
+	if (i > 1) {
 		// if two or more images are on the screen, assume they are aligned, and
 		// position the next image to follow the alignment 
 		selectedImages[i].transformMatrix = math.multiply(
@@ -174,9 +187,6 @@ function addImageToDesktop(id)
 				)
 			);
 	}
-
-    selectedImages[i].originX = selectedImages[i].width/2;
-    selectedImages[i].originY = selectedImages[i].height/2;
 
     sizeString = document.getElementById("thumbnailSizeInput").value
 
@@ -204,46 +214,37 @@ function drawCanvas()
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
 
-    mousedOverImageIndex = getSelectedImagesIndexByMousePosition();
-	mousedOverImagesList = imageListByWorkspaceCoordinates();
+	flagImagesUnderMouse();
+
+	var workingCanvasMatrix = math.multiply(temporaryCanvasMatrix, canvasMatrix);
 
     for(i = 0; i < selectedImages.length; i++)
     {
-		context.setMatrixTransform(
-			math.multiply(
-				canvasMatrix,
-				selectedImages[i].transformMatrix
-			)
+
+		workingImageMatrix = math.multiply(
+			workingCanvasMatrix,
+			selectedImages[i].transformMatrix
 		);
 
-        if(mode == 'translate' || mode == 'rotate')
-        {
-            if(i == imageIndexToTranslate)
-            {
-                context.globalAlpha = 0.3;
-                borderAlpha = 1.0;
-            }
-            else
-            {
-                context.globalAlpha = $('#imageOpacitySlider').val()/100.0;
-                borderAlpha = 0.3;
-            }
-        }
-        else
-        {
-            context.globalAlpha = $('#imageOpacitySlider').val()/100.0;
-            if(1 == selectedImages[i].mouseover)
-                borderAlpha = 1.0;
-            else
-                borderAlpha = 0.3;
-        }
+		if (selectedImages[i].active)
+			workingImageMatrix = math.multiply(temporaryImageMatrix, workingImageMatrix);
+
+		context.setMatrixTransform(workingImageMatrix);
+
+        context.globalAlpha = $('#imageOpacitySlider').val()/100.0;
+		borderAlpha = $('#imageOpacitySlider').val()/100.0;
 
         context.drawImage(
             selectedImages[i].image,
             0, 0,
-            selectedImages[i].width,
-			selectedImages[i].height
+            selectedImages[i].sizeVector.subset(math.index(0)),
+			selectedImages[i].sizeVector.subset(math.index(1))
         );
+
+		if (selectedImages[i].mouseover)
+			borderAlpha = 1.0;
+
+		if (selectedImages[i].active)
 
         context.globalAlpha = 1.0;
 
@@ -273,14 +274,15 @@ function drawCanvas()
 
     context.fillStyle = 'blue';
 	context.setTransform(1, 0, 0, 1, 0, offset += 24);
+
 	context.fillText(
-		mousedOverImagesList
+		mode
+		+ " , " +
+		imageListForTransform
 		+ " , " +
 		mouseCanvasVector.format(3)
 		 + " , " + 
 		mouseWorkspaceVector.format(3)
-		 + " , " + 
-		tempMatrix.format(3)
 		, 10, 34);
 
     context.fillStyle = 'green';
@@ -290,16 +292,10 @@ function drawCanvas()
 		[ "d", "e", "f" ],
 		[ "g", "h", "i" ]
 	]);
-	testVector = math.matrix([1,2,3]);
-	testReplacement = math.subset(testMatrix,math.index([0,1,2],2),testVector);
-	testVector = math.multiply(
-				math.subtract(
-					math.eye(3) ,
-					zoomMatrix
-				) ,
-				mouseCanvasVector);
 	context.fillText(
-		testVector.subset(math.index([0,1]))
+		temporaryCanvasMatrix.format(3)
+		 + " , " + 
+		workingCanvasMatrix.format(3)
 		, 10, 34);
 
     context.fillStyle = 'red';
@@ -317,6 +313,8 @@ function drawCanvas()
 			selectedImages[i].mouseImageVector.format(3)
 			+ " , " +
 			selectedImages[i].mouseover
+			+ " , " +
+			selectedImages[i].active
 		, 10, 34);
 	}
 
@@ -326,9 +324,10 @@ function getMouseCoordinates(event)
 {
     rect = canvas.getBoundingClientRect();
 
+// jquery claims to normalized pageX/Y across browsers
 	mouseCanvasVector = math.matrix([
-		event.clientX - rect.left ,
-		event.clientY - rect.top ,
+		event.pageX - rect.left ,
+		event.pageY - rect.top ,
 		1
 	]);
 
@@ -349,240 +348,164 @@ function getMouseCoordinates(event)
 
 function handleMouseButtonDown(event)
 {
+	getMouseCoordinates(event);
+ 
+	mouseButtonDownCanvasVector = mouseCanvasVector;
+
+// TODO: have a list of selected images for operation
+// for now, operate on the top-most image currently under the mouse
+	for(i = 0; i < selectedImages.length; i++)
+		selectedImages[i].active = false;
+
+	imageListForTransform = imageIndexListByWorkspaceCoordinates(mouseWorkspaceVector);
+
+	var i = imageListForTransform[0];
+	if ( 0 <= i && selectedImages.length > i)
+		selectedImages[i].active = true;
+
+	mode = '';
     if(mode == '' && event.which == 1 && !ctrlKeyPressed)
-    {
-        i = getSelectedImagesIndexByMousePosition();
-        if(i != -1)
-        {
-            mode = 'translate';
-            lmbPageX = event.pageX;
-            lmbPageY = event.pageY;
-
-            imageIndexToTranslate = i;
-            imageToTranslate = selectedImages[i];
-            translationStartingMatrix = imageToTranslate.transformMatrix;
-            drawCanvas();
-        }
-    }
+		mode = 'translate';
     else if(mode == '' && event.which == 2 && !ctrlKeyPressed)
-    {
-        i = getSelectedImagesIndexByMousePosition();
-        if(i != -1)
-        {
-            tempImage = selectedImages[i];
-            selectedImages.splice(i, 1);
-            selectedImages.splice(0, 0, tempImage);
-            drawCanvas();
-        }
-    }
+		mode = 'movetoback'
     else if(mode == '' && event.which == 3 && !ctrlKeyPressed)
-    {
         mode = 'pan';
-        rmbPageX  = event.pageX;
-        rmbPageY  = event.pageY;
-    }
     else if(mode == '' && event.which == 1 && ctrlKeyPressed)
-    {
-        i = getSelectedImagesIndexByMousePosition();
-        if(i != -1)
-        {
-            mode = 'rotate';
-            lmbPageX = event.offsetX;
-            lmbPageY = event.offsetY;
-
-            //TODO: Consider renaming these from 'translate' to 'rotate' or remove this comment.
-            imageIndexToTranslate = i;
-            imageToTranslate = selectedImages[i];
-            translationStartingMatrix = imageToTranslate.transformMatrix;
-            drawCanvas();
-        }
-    }
-    else if(mode == '' && event.which == 3 && ctrlKeyPressed)
-    {
-        i = getSelectedImagesIndexByMousePosition();
-        if(i != -1)
-        {
-            oldX = selectedImages[i].originX;
-            oldY = selectedImages[i].originY;
-
-            mouseImageVector = getMousePositionOnImage(i);
-            x = mouseImageVector.subset(math.index(0));
-            y = mouseImageVector.subset(math.index(1));
-
-            selectedImages[i].originX = x + oldX;
-            selectedImages[i].originY = y + oldY;
-
-            translationMatrix = math.matrix([
-                [1, 0, x],
-                [0, 1, y],
-                [0, 0, 1]
-            ]);
-
-            selectedImages[i].transformMatrix = math.multiply(selectedImages[i].transformMatrix, translationMatrix);
-            drawCanvas();
-        }
-    }
+		mode = 'rotateimages';
+	else if(mode == '' && event.which == 3 && ctrlKeyPressed)
+		mode = 'rotatecanvas';
 
     return false;
 };
 
 function handleMouseMove(event)
 {
-    rect = canvas.getBoundingClientRect();
+    // Flag to prevent calling the draw function needlessly
+    var staleDrawing = false;
+	staleDrawing = true;
 
 	getMouseCoordinates(event);
 
-    // Flag to prevent calling the draw function multiple times.
-    drawAlreadyDone = false;
+	switch (mode) {
+		case 'translate':
+			temporaryImageMatrix = math.eye(3).subset(
+				math.index([0,1],2),
+				math.subtract(
+					mouseCanvasVector,
+					mouseButtonDownCanvasVector
+				).subset(math.index([0,1]))
+			);
+			staleDrawing = true;
+			break;
+		case 'rotateimages':
+			staleDrawing = true;
+			break;
+		case 'pan':
+			temporaryCanvasMatrix = math.eye(3).subset(
+				math.index([0,1],2),
+				math.subtract(
+					mouseCanvasVector,
+					mouseButtonDownCanvasVector
+				).subset(math.index([0,1]))
+			);
+			staleDrawing = true;
+			break;
+		case 'rotatecanvas':
+			staleDrawing = true;
+			break;
+		default:
+			temporaryCanvasMatrix = math.eye(3);
+			temporaryImageMatrix = math.eye(3);
+	}
 
-    if(mode == 'translate')
-    {
-        translationMatrix = math.matrix([
-            [1, 0, (event.pageX - lmbPageX)/canvasMatrix.subset(math.index(0, 0))],
-            [0, 1, (event.pageY - lmbPageY)/canvasMatrix.subset(math.index(1, 1))],
-            [0, 0, 1]
-        ]);
-
-        imageToTranslate.transformMatrix = math.multiply(imageToTranslate.transformMatrix, translationMatrix);
-
-        lmbPageX  = event.pageX;
-        lmbPageY  = event.pageY;
-
+	if (staleDrawing)
+	{
         drawCanvas();
-        drawAlreadyDone = true;
+        staleDrawing = false;
     }
-
-    if(mode == 'pan')
-    {
-        translationMatrix = math.matrix([
-            [1, 0, (event.pageX - rmbPageX)/canvasMatrix.subset(math.index(0, 0))],
-            [0, 1, (event.pageY - rmbPageY)/canvasMatrix.subset(math.index(1, 1))],
-            [0, 0, 1]
-        ]);
-
-        canvasMatrix = math.multiply(canvasMatrix, translationMatrix);
-
-        rmbPageX  = event.pageX;
-        rmbPageY  = event.pageY;
-
-        drawCanvas();
-        drawAlreadyDone = true;
-    }
-
-    if(mode == 'rotate')
-    {
-        originVector = math.multiply(
-            math.multiply(
-                canvasMatrix,
-                imageToTranslate.transformMatrix
-            ),
-            math.matrix([0, 0, 1])
-        );
-
-        oldMouseVector = math.matrix([lmbPageX, lmbPageY, 1]);
-        newMouseVector = math.matrix([event.offsetX, event.offsetY, 1]);
-
-        oldVector = math.subtract(oldMouseVector, originVector);
-        newVector = math.subtract(newMouseVector, originVector);
-
-        oldDx = oldVector.subset(math.index(0));
-        oldDy = oldVector.subset(math.index(1));
-        newDx = newVector.subset(math.index(0));
-        newDy = newVector.subset(math.index(1));
-
-        oldTheta = math.atan2(oldDy, oldDx);
-        newTheta = math.atan2(newDy, newDx);
-        theta = newTheta - oldTheta;
-
-        rotationMatrix = math.matrix([
-            [math.cos(theta), -math.sin(theta), 0],
-            [math.sin(theta),  math.cos(theta), 0],
-            [0, 0, 1]
-        ]);
-
-        imageToTranslate.transformMatrix = math.multiply(imageToTranslate.transformMatrix, rotationMatrix);
-
-        lmbPageX  = event.offsetX;
-        lmbPageY  = event.offsetY;
-
-        drawCanvas();
-        drawAlreadyDone = true;
-    }
-
-    if(event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom)
-    {
-        // Update the canvas to redraw new mouse coords and handle any highlighting of moused over images, etc.
-        if(!drawAlreadyDone)
-            drawCanvas();
-
-        return false;
-    }
-    else
-    {
-        return true;
-    }
+	return true;
 };
 
 function handleMouseButtonUp(event)
 {
-    if(mode == 'translate' && event.which == 1)
-    {
-        mode = '';
+	getMouseCoordinates(event);
+ 
+	mouseButtonUpCanvasVector = mouseCanvasVector;
 
-        undoObject = new UndoObject(
-            function()
-            {
-                this.undoData.image.transformMatrix = this.undoData.matrix;
-                drawCanvas();
-            },
-            function()
-            {
-                this.redoData.image.transformMatrix = this.redoData.matrix;
-                drawCanvas();
-            },
-            {
-                image: imageToTranslate,
-                matrix: translationStartingMatrix
-            },
-            {
-                image: imageToTranslate,
-                matrix: imageToTranslate.transformMatrix
-            }
-        );
+	if ( 0 <= i && selectedImages.length > i)
+		selectedImages[i].active = true;
 
-        executeUndoableAction(undoObject);
-    }
-
-    if(mode == 'pan' && event.which == 3)
-        mode = '';
-
-    if(mode == 'rotate' && event.which == 1)
-    {
-        mode = '';
-
-        undoObject = new UndoObject(
-            function()
-            {
-                this.undoData.image.transformMatrix = this.undoData.matrix;
-                drawCanvas();
-            },
-            function()
-            {
-                this.redoData.image.transformMatrix = this.redoData.matrix;
-                drawCanvas();
-            },
-            {
-                image: imageToTranslate,
-                matrix: translationStartingMatrix
-            },
-            {
-                image: imageToTranslate,
-                matrix: imageToTranslate.transformMatrix
-            }
-        );
-
-        executeUndoableAction(undoObject);
-    }
+	switch (mode) {
+		case 'translate':
+			temporaryImageMatrix = math.eye(3).subset(
+				math.index([0,1],2),
+				math.subtract(
+					mouseButtonUpCanvasVector,
+					mouseButtonDownCanvasVector
+				).subset(math.index([0,1]))
+			);
+			//TODO: loop over all images to be transformed in imageListForTransform
+			var i = imageListForTransform[0];
+			if (0 <= i && selectedImages.length > i)
+			{
+				// NOTE: next operation assumes translate and pan are exclusive
+				selectedImages[i].transformMatrix = math.multiply(
+					math.multiply(
+						math.inv(canvasMatrix),
+						temporaryImageMatrix
+					) , math.multiply(
+					canvasMatrix , 
+					selectedImages[i].transformMatrix
+					)
+				);
+				temporaryImageMatrix = math.eye(3);
+				staleDrawing = true;
+				undoObject = new UndoObject(
+				    function()
+				    {
+				        this.undoData.image.transformMatrix = this.undoData.matrix;
+				        drawCanvas();
+				    },
+				    function()
+				    {
+				        this.redoData.image.transformMatrix = this.redoData.matrix;
+				        drawCanvas();
+				    },
+				    {
+				        image: imageListForTransform,
+				        matrix: temporaryImageMatrix
+				    },
+				    {
+				        image: imageListForTransform,
+				        matrix: temporaryImageMatrix
+				    }
+				);
+				executeUndoableAction(undoObject);
+			}
+			break;
+		case 'rotateimages':
+			staleDrawing = true;
+			break;
+		case 'pan':
+			temporaryCanvasMatrix = math.eye(3).subset(
+				math.index([0,1],2),
+				math.subtract(
+					mouseButtonUpCanvasVector,
+					mouseButtonDownCanvasVector
+				).subset(math.index([0,1]))
+			);
+			canvasMatrix = math.multiply(temporaryCanvasMatrix, canvasMatrix);
+			temporaryCanvasMatrix = math.eye(3);
+			staleDrawing = true;
+			break;
+		case 'rotatecanvas':
+			staleDrawing = true;
+			break;
+		default:
+			temporaryImageMatrix = math.eye(3);
+			temporaryCanvasMatrix = math.eye(3);
+	}
+	mode = '';
 
     drawCanvas();
     return true;
@@ -667,27 +590,35 @@ function getSelectedImagesIndexById(id)
 
 function isCoordInsideRect(a, b)
 {
-// Returns '1' if 'a' is in a rectangle from the origin to 'b' else '-1'
-	return math.sign(math.sum(math.sign(math.subtract(b,a))) * math.sum(math.sign(a)) - 5);
+// Returns 'true' if 'a' is in a rectangle from the origin to 'b' else 'false'
+	return Boolean((math.sign(math.sum(math.sign(math.subtract(b,a))) * math.sum(math.sign(a)) - 5)+1)>>1);
 // -5 is special to affine vectors.  Can be altered to check if vector is affine first 
 }
 
-function imageListByWorkspaceCoordinates(coord)
+function imageIndexListByWorkspaceCoordinates(coordWorkspaceVector)
 {
 // Returns sorted list of images which have pixels at the given workspace coords
 	var list = [];
 	
     for(i = 0; i < selectedImages.length; i++)
     {
-		selectedImages[i].mouseover = isCoordInsideRect(
-			selectedImages[i].mouseImageVector ,
-			selectedImages[i].sizeVector)
-		if (1 == selectedImages[i].mouseover)
-		{
-			list[list.length] = selectedImages[i].id;
-		}
+		coordImageVector = math.multiply(
+			math.inv(selectedImages[i].transformMatrix),
+			coordWorkspaceVector
+		);
+		if (isCoordInsideRect(coordImageVector, selectedImages[i].sizeVector))
+			list[list.length] = i;
 	}
 	return list;
+}
+
+function flagImagesUnderMouse()
+{
+    for(i = 0; i < selectedImages.length; i++)
+    {
+		mouseImageVector = math.multiply(selectedImages[i].transformMatrix, mouseWorkspaceVector);
+		selectedImages[i].mouseover = isCoordInsideRect(mouseImageVector, selectedImages[i].sizeVector);
+	}
 }
 
 /*
@@ -768,7 +699,6 @@ $(document).ready(function()
     $(document).on('imageTableLoadEvent', onImageTableLoad)
     $(window).on('resize', drawCanvas)
 
-    canvasMatrix = math.add(canvasMatrix, [ [0, 0, canvas.offsetWidth/2], [0, 0, canvas.offsetHeight/2], [0, 0, 0] ]);
 });
 
 </script>
