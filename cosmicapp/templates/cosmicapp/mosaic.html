@@ -324,10 +324,9 @@ function getMouseCoordinates(event)
 {
     rect = canvas.getBoundingClientRect();
 
-// jquery claims to normalized pageX/Y across browsers
 	mouseCanvasVector = math.matrix([
-		event.pageX - rect.left ,
-		event.pageY - rect.top ,
+		(event.clientX - rect.left) / (rect.right - rect.left) * canvas.width ,
+		(event.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height ,
 		1
 	]);
 
