@@ -214,12 +214,17 @@ function drawCanvas()
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
 
-	flagImagesUnderMouse();
-
 	var workingCanvasMatrix = math.multiply(temporaryCanvasMatrix, canvasMatrix);
 
     for(i = 0; i < selectedImages.length; i++)
     {
+		var strokeAlpha = $('#imageOpacitySlider').val()/100.0;
+		selectedImages[i].alpha = strokeAlpha;
+
+		if (selectedImages[i].mouseover)
+			strokeAlpha = 1.0;
+
+		selectedImages[i].strokestyle = 'hsla(' + selectedImages[i].highlightColor + ', 100%, 50%, ' + strokeAlpha + ')';
 
 		workingImageMatrix = math.multiply(
 			workingCanvasMatrix,
@@ -227,13 +232,15 @@ function drawCanvas()
 		);
 
 		if (selectedImages[i].active)
+		{
+			selectedImages[i].alpha = 1.0;
 			workingImageMatrix = math.multiply(temporaryImageMatrix, workingImageMatrix);
+		}
 
+// perform drawing in image coordinates
 		context.setMatrixTransform(workingImageMatrix);
 
-        context.globalAlpha = $('#imageOpacitySlider').val()/100.0;
-		borderAlpha = $('#imageOpacitySlider').val()/100.0;
-
+        context.globalAlpha = selectedImages[i].alpha;
         context.drawImage(
             selectedImages[i].image,
             0, 0,
@@ -241,17 +248,14 @@ function drawCanvas()
 			selectedImages[i].sizeVector.subset(math.index(1))
         );
 
-		if (selectedImages[i].mouseover)
-			borderAlpha = 1.0;
-
-		if (selectedImages[i].active)
-
-        context.globalAlpha = 1.0;
-
-        context.beginPath();
+		context.beginPath();
+		context.globalAlpha = 1;
         context.lineWidth = 4;
-		context.strokeStyle = 'hsla(' + selectedImages[i].highlightColor + ', 100%, 50%, ' + borderAlpha + ')';
-		context.rect(0,0,selectedImages[i].width, selectedImages[i].height);
+		context.strokeStyle = selectedImages[i].strokestyle;
+		context.rect(0,0,
+			selectedImages[i].sizeVector.subset(math.index(0)),
+			selectedImages[i].sizeVector.subset(math.index(1))
+		);
         context.stroke();
 
         if(ctrlKeyPressed || mode == 'rotate')
@@ -317,6 +321,8 @@ function drawCanvas()
 			selectedImages[i].mouseover
 			+ " , " +
 			selectedImages[i].active
+			+ " , " +
+			selectedImages[i].strokestyle
 		, 10, 34);
 	}
 
@@ -341,10 +347,11 @@ function getMouseCoordinates(event)
     {
 		selectedImages[i].mouseImageVector = math.multiply(
 			math.inv(selectedImages[i].transformMatrix) ,
-			mouseWorkspaceVector
-		);
+			mouseWorkspaceVector);
+		selectedImages[i].mouseover = isCoordInsideRect(
+			selectedImages[i].mouseImageVector ,
+			selectedImages[i].sizeVector);
 	}
-
 }
 
 function handleMouseButtonDown(event)
@@ -593,6 +600,7 @@ function isCoordInsideRect(a, b)
 {
 // Returns 'true' if 'a' is in a rectangle from the origin to 'b' else 'false'
 	return Boolean((math.sign(math.sum(math.sign(math.subtract(b,a))) * math.sum(math.sign(a)) - 5)+1)>>1);
+//	return (math.sign(math.sum(math.sign(math.subtract(b,a))) * math.sum(math.sign(a)) - 5)+1)>>1;
 // -5 is special to affine vectors.  Can be altered to check if vector is affine first 
 }
 
@@ -613,14 +621,7 @@ function imageIndexListByWorkspaceCoordinates(coordWorkspaceVector)
 	return list;
 }
 
-function flagImagesUnderMouse()
-{
-    for(i = 0; i < selectedImages.length; i++)
-    {
-		mouseImageVector = math.multiply(selectedImages[i].transformMatrix, mouseWorkspaceVector);
-		selectedImages[i].mouseover = isCoordInsideRect(mouseImageVector, selectedImages[i].sizeVector);
-	}
-}
+
 
 /*
  * Returns the position of the mouse cursor on a specified image, relative to the image origin.
@@ -638,25 +639,6 @@ function getMousePositionOnImage(i)
         ),
         mouseCanvasVector
     );
-};
-
-function getSelectedImagesIndexByMousePosition()
-{
-    arrayIndex = -1;
-    for(i = selectedImages.length-1; i >= 0; i--)
-    {
-        mouseImageVector = getMousePositionOnImage(i);
-        x = mouseImageVector.subset(math.index(0));
-        y = mouseImageVector.subset(math.index(1));
-        im = selectedImages[i];
-        if(x >= -im.originX && y >= -im.originY && x <= im.width-im.originX && y <= im.height-im.originY)
-        {
-            arrayIndex = i;
-            break;
-        }
-    }
-
-    return arrayIndex;
 };
 
 function onImageTableLoad()
