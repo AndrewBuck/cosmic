@@ -19,6 +19,55 @@ sudo pip3 install astropy
 
 
 
+Install pyraf library:
+
+sudo pip3 install pyraf
+
+I am not sure whether or not we actually need miniconda and all this.  We
+certainly don't need to actially run 'source activate iraf3' as the standalone
+pyraf from pip3 is enough to make python work, but we may still need iraf
+installed and the miniconda route might be the easiest way to do that.  The
+'SKIP' section below is the miniconda specific instructions.
+
+==== BEGIN SKIP ====
+For interfacing with IRAF we will use pyraf, which depends on Miniconda.  Get
+and install Miniconda 3.
+
+https://conda.io/miniconda.html
+
+chmod +x Miniconda3-latest-Linux-x86_64.sh
+./Miniconda3-latest-Linux-x86_64.sh
+
+Close and reopen a terminal or source your ~/.bashrc to make sure 'conda' is in
+your path.  Next, configure conda to use the astroconda channel.
+
+conda config --add channels http://ssb.stsci.edu/astroconda
+
+Install IRAF through conda.  (The instructions recommend the python 2.7 command
+due to some incompatabilities, however we are running python3 for everything so
+we will go with that for now and hope the incompatabilities are only in tasks
+we won't be relying on right until they are fixed).
+
+# conda create -n iraf27 python=2.7 iraf-all pyraf-all stsci
+conda create -n iraf3 python=3 iraf-all pyraf-all stsci
+
+Once everything is installed we can activate the iraf environment (note this
+needs to be done each time a shell is run, so it may be a good idea to add this
+to a .bashrc file).
+
+source activate iraf3
+
+Should not be needed but if desired it can be deactivated with:
+source deactivate iraf3
+Or you can just close the terminal where it was activated.
+
+Conda packages can be updated with the command:
+
+conda update
+==== END SKIP ====
+
+
+
 Make a directory to store uploaded files:
 
 sudo mkdir /cosmicmedia

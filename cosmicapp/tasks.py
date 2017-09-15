@@ -2,6 +2,7 @@ from __future__ import absolute_import, unicode_literals
 from celery import shared_task
 from django.db import transaction
 from django.conf import settings
+from pyraf import iraf
 
 import subprocess
 import json
@@ -249,6 +250,57 @@ def sextractor(filename):
                         )
 
                     record.save()
+
+    try:
+        os.remove(catfileName)
+    except OSError:
+        pass
+
+    return True
+
+@shared_task
+def daofind(filename):
+    #TODO: daofind can only handle .fit files.  Should autoconvert the file to .fit if necessary before running.
+    catfileName = settings.MEDIA_ROOT + filename + ".daofind.cat"
+
+    #TODO: Should set the sigma to the background standard deviation of this specific image, just using a hardcoded constant for now.
+    iraf.datapars.sigma = 20
+
+    iraf.unlearn(iraf.daofind)
+    iraf.daofind(settings.MEDIA_ROOT + filename, output=catfileName)
+
+    print("daofind: " + filename)
+    sys.stdout.flush()
+
+    # Get the image record
+    image = Image.objects.get(fileRecord__onDiskFileName=filename)
+
+    with open(catfileName, 'r') as catfile:
+        with transaction.atomic():
+            for line in catfile:
+                #TODO: Read in and store the parameters in the commented section.
+                if line.startswith('#'):
+                    continue
+
+                fields = line.split()
+
+                try:
+                    mag = float(fields[2])
+                except:
+                    mag = None
+
+                result = DaofindResult(
+                    image = image,
+                    pixelX = float(fields[0]),
+                    pixelY = float(fields[1]),
+                    pixelZ = None,    #TODO: Handle multi-extension fits files.
+                    mag = mag,
+                    sharpness = float(fields[3]),
+                    sround = float(fields[4]),
+                    ground = float(fields[5])
+                    )
+
+                result.save()
 
     try:
         os.remove(catfileName)

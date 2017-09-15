@@ -231,14 +231,25 @@ class ProcessOutputFile(models.Model):
 
 
 
-class SextractorResult(models.Model):
+class SourceFindResult(models.Model):
     image = models.ForeignKey(Image, on_delete=models.CASCADE)
     pixelX = models.FloatField(null=True)
     pixelY = models.FloatField(null=True)
     pixelZ = models.FloatField(null=True)
+
+    class Meta:
+        abstract = True
+
+class SextractorResult(SourceFindResult):
     fluxAuto = models.FloatField(null=True)
     fluxAutoErr = models.FloatField(null=True)
     flags = models.IntegerField(null=True)
+
+class DaofindResult(SourceFindResult):
+    mag = models.FloatField(null=True)
+    sharpness = models.FloatField(null=True)
+    sround = models.FloatField(null=True)
+    ground = models.FloatField(null=True)
 
 
 
