@@ -23,13 +23,6 @@ Install pyraf library:
 
 sudo pip3 install pyraf
 
-I am not sure whether or not we actually need miniconda and all this.  We
-certainly don't need to actially run 'source activate iraf3' as the standalone
-pyraf from pip3 is enough to make python work, but we may still need iraf
-installed and the miniconda route might be the easiest way to do that.  The
-'SKIP' section below is the miniconda specific instructions.
-
-==== BEGIN SKIP ====
 For interfacing with IRAF we will use pyraf, which depends on Miniconda.  Get
 and install Miniconda 3.
 
@@ -54,17 +47,6 @@ conda create -n iraf3 python=3 iraf-all pyraf-all stsci
 Once everything is installed we can activate the iraf environment (note this
 needs to be done each time a shell is run, so it may be a good idea to add this
 to a .bashrc file).
-
-source activate iraf3
-
-Should not be needed but if desired it can be deactivated with:
-source deactivate iraf3
-Or you can just close the terminal where it was activated.
-
-Conda packages can be updated with the command:
-
-conda update
-==== END SKIP ====
 
 
 
