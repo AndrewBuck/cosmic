@@ -6,7 +6,6 @@
 {% block mainbody %}
 
 <head>
-  <script src="/static/cosmicapp/math.min.js" type="text/javascript"></script>
 </head>
 
 Thumbnail size: <input id="thumbnailSizeInput" type=text value=full>
@@ -156,9 +155,23 @@ function addImageToDesktop(id)
 			]);
         }
     });
-
+	var xdim = selectedImages[i].sizeVector.get([0]);
+	var ydim = selectedImages[i].sizeVector.get([1]);
+	selectedImages[i].controlPoints = [];
+	selectedImages[i].controlPoints[0] = math.matrix([
+		Math.floor(Math.random() * xdim),
+		Math.floor(Math.random() * ydim),
+		1 ]);
+	selectedImages[i].controlPoints[1] = math.matrix([
+		Math.floor(Math.random() * xdim),
+		Math.floor(Math.random() * ydim),
+		1 ]);
+	selectedImages[i].controlPoints[2] = math.matrix([
+		Math.floor(Math.random() * xdim),
+		Math.floor(Math.random() * ydim),
+		1 ]);
 	selectedImages[i].transformMatrix = math.eye(3);
-	selectedImages[i].mouseImageVector = math.matrix([ 0, 0, 1 ]);
+	selectedImages[i].mouseVector = math.matrix([ 0, 0, 1 ]);
 	selectedImages[i].mouseover = false;
 	selectedImages[i].active = false;
 	selectedImages[i].highlightColor = (77 * i) % 360;
@@ -214,7 +227,12 @@ function drawCanvas()
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
 
+	var fntsz = 16;
+
+    context.font = fntsz + 'px sans-serif';
+
 	var workingCanvasMatrix = math.multiply(temporaryCanvasMatrix, canvasMatrix);
+	var workingCanvasZoom = math.sqrt(math.det(workingCanvasMatrix.subset(math.index([0,1],[0,1]))));
 
     for(i = 0; i < selectedImages.length; i++)
     {
@@ -226,10 +244,7 @@ function drawCanvas()
 
 		selectedImages[i].strokestyle = 'hsla(' + selectedImages[i].highlightColor + ', 100%, 50%, ' + strokeAlpha + ')';
 
-		workingImageMatrix = math.multiply(
-			workingCanvasMatrix,
-			selectedImages[i].transformMatrix
-		);
+		workingImageMatrix = selectedImages[i].transformMatrix;
 
 		if (selectedImages[i].active)
 		{
@@ -237,6 +252,9 @@ function drawCanvas()
 			workingImageMatrix = math.multiply(temporaryImageMatrix, workingImageMatrix);
 		}
 
+		workingImageMatrix = math.multiply(workingCanvasMatrix, workingImageMatrix);
+
+		var workingImageZoom = math.sqrt(math.det(workingImageMatrix.subset(math.index([0,1],[0,1]))));
 // perform drawing in image coordinates
 		context.setMatrixTransform(workingImageMatrix);
 
@@ -250,49 +268,55 @@ function drawCanvas()
 
 		context.beginPath();
 		context.globalAlpha = 1;
-        context.lineWidth = 4;
+        context.lineWidth = 2;
 		context.strokeStyle = selectedImages[i].strokestyle;
 		context.rect(0,0,
 			selectedImages[i].sizeVector.subset(math.index(0)),
 			selectedImages[i].sizeVector.subset(math.index(1))
 		);
         context.stroke();
-
-        if(ctrlKeyPressed || mode == 'rotate')
+		context.fillStyle = selectedImages[i].strokestyle;
+        if(ctrlKeyPressed || mode == 'rotate' || true)
         {
-            context.beginPath();
-            context.moveTo(-20, 0);
-            context.lineTo(20, 0);
-            context.stroke();
+			for(j = 0; j < selectedImages[i].controlPoints.length; j++)
+			{
+				context.save();
+				context.translate(
+					selectedImages[i].controlPoints[j].get([0]) ,
+					selectedImages[i].controlPoints[j].get([1]) );
+				var unzoom = 1.0/workingImageZoom;
+				context.scale(unzoom, unzoom);
+				context.fillText(j, 0, 0);
 
-            context.beginPath();
-            context.moveTo(0, -20);
-            context.lineTo(0, 20);
-            context.stroke();
+		        context.beginPath();
+		        context.moveTo(-20, 0);
+		        context.lineTo(20, 0);
+		        context.stroke();
+
+		        context.beginPath();
+		        context.moveTo(0, -20);
+		        context.lineTo(0, 20);
+		        context.stroke();
+				context.restore();
+			}
         }
     }
 
-	var fntsz = 12;
 
-    context.font = fntsz + 'px sans-serif';
-
-	var offset = -32;
+	var offset = 3;
 
     context.fillStyle = 'blue';
-	context.setTransform(1, 0, 0, 1, 0, offset += fntsz);
+	context.setTransform(1, 0, 0, 1, 0, 0);
 
 	context.fillText(
 		mode
 		+ " , " +
-		imageListForTransform
-		+ " , " +
 		mouseCanvasVector.format(3)
 		 + " , " + 
 		mouseWorkspaceVector.format(3)
-		, 10, 34);
+		, 3, offset += fntsz);
 
     context.fillStyle = 'green';
-    context.setTransform(1, 0, 0, 1, 0, offset += fntsz);
 	testMatrix = math.matrix([
 		[ "a", "b", "c" ],
 		[ "d", "e", "f" ],
@@ -300,30 +324,36 @@ function drawCanvas()
 	]);
 	context.fillText(
 		temporaryCanvasMatrix.format(3)
-		 + " , " + 
+		 + " . " + 
+		canvasMatrix.format(3)
+		 + " = " + 
 		workingCanvasMatrix.format(3)
-		, 10, 34);
+		 + " , det(2x2)= " + 
+		workingCanvasZoom
+		, 3, offset += fntsz);
 
     context.fillStyle = 'red';
-    context.setTransform(1, 0, 0, 1, 0, offset += fntsz);
-	context.fillText(canvasMatrix.format(3), 10, 34);
+	context.fillText(
+		imageListForTransform
+		+ " , " +
+		temporaryImageMatrix.format(3)
+		, 3, offset += fntsz);
 
     context.fillStyle = 'teal';
 
     for(i = 0; i < selectedImages.length; i++)
     {
-		context.setTransform(1, 0, 0, 1, 0, offset += fntsz);
 		context.fillText(
 			selectedImages[i].transformMatrix.format(3)
 			+ " , " +
-			selectedImages[i].mouseImageVector.format(3)
+			selectedImages[i].mouseVector.format(3)
+			+ " , " +
+			selectedImages[i].controlPoints[0].format(3)
 			+ " , " +
 			selectedImages[i].mouseover
 			+ " , " +
 			selectedImages[i].active
-			+ " , " +
-			selectedImages[i].strokestyle
-		, 10, 34);
+			, 3, offset += fntsz);
 	}
 
 };
@@ -345,11 +375,11 @@ function getMouseCoordinates(event)
 
     for(i = 0; i < selectedImages.length; i++)
     {
-		selectedImages[i].mouseImageVector = math.multiply(
+		selectedImages[i].mouseVector = math.multiply(
 			math.inv(selectedImages[i].transformMatrix) ,
 			mouseWorkspaceVector);
 		selectedImages[i].mouseover = isCoordInsideRect(
-			selectedImages[i].mouseImageVector ,
+			selectedImages[i].mouseVector ,
 			selectedImages[i].sizeVector);
 	}
 }
@@ -359,6 +389,7 @@ function handleMouseButtonDown(event)
 	getMouseCoordinates(event);
  
 	mouseButtonDownCanvasVector = mouseCanvasVector;
+	mouseButtonDownWorkspaceVector = mouseWorkspaceVector;
 
 // TODO: have a list of selected images for operation
 // for now, operate on the top-most image currently under the mouse
@@ -367,24 +398,62 @@ function handleMouseButtonDown(event)
 
 	imageListForTransform = imageIndexListByWorkspaceCoordinates(mouseWorkspaceVector);
 
+	mode = '';
 	var i = imageListForTransform[0];
 	if ( 0 <= i && selectedImages.length > i)
+	{
 		selectedImages[i].active = true;
 
-	mode = '';
-    if(mode == '' && event.which == 1 && !ctrlKeyPressed)
-		mode = 'translate';
-    else if(mode == '' && event.which == 2 && !ctrlKeyPressed)
-		mode = 'movetoback'
-    else if(mode == '' && event.which == 3 && !ctrlKeyPressed)
-        mode = 'pan';
-    else if(mode == '' && event.which == 1 && ctrlKeyPressed)
-		mode = 'rotateimages';
-	else if(mode == '' && event.which == 3 && ctrlKeyPressed)
-		mode = 'rotatecanvas';
+		if(mode == '' && event.which == 1 && !ctrlKeyPressed)
+			mode = 'translate';
+		else if(mode == '' && event.which == 2 && !ctrlKeyPressed)
+			mode = 'movetoback'
+		else if(mode == '' && event.which == 3 && !ctrlKeyPressed)
+		    mode = 'pan';
+		else if(mode == '' && event.which == 1 && ctrlKeyPressed)
+			mode = 'rotateimages';
+		else if(mode == '' && event.which == 3 && ctrlKeyPressed)
+			mode = 'rotatecanvas';
+	}
 
     return false;
 };
+
+// given an axis and two points,
+// construct a affine rotation that
+// makes the points colinear
+function rotationMatrix(originVec, startVec, endVec)
+{
+// move into image axis reference frame
+	var axisTransform = math.eye(3).subset(
+			math.index([0,1],2),
+			originVec.subset(math.index([0,1]))
+		);
+	var aVec = math.subtract(startVec, originVec);
+	var aMag = math.norm(aVec);
+	var aHat = math.divide(aVec, aMag);
+
+	var bVec = math.subtract(endVec, originVec);
+	var bMag = math.norm(bVec);
+	var bHat = math.divide(bVec, bMag);
+
+	var d = math.dot(aHat, bHat);
+// a x b (rh) = b x a (lh)
+	var e = math.cross(bHat, aHat).subset(math.index(2));
+//	var e = math.norm(math.cross(bHat, aHat));
+
+	return(
+		math.multiply(
+			axisTransform ,
+			math.multiply(
+				math.eye(3).subset(
+					math.index([0,1],[0,1]) ,
+					[[ d ,-e ] ,
+					 [ e , d ]]) , 
+				math.inv(axisTransform)
+			)
+		));
+}
 
 function handleMouseMove(event)
 {
@@ -399,13 +468,28 @@ function handleMouseMove(event)
 			temporaryImageMatrix = math.eye(3).subset(
 				math.index([0,1],2),
 				math.subtract(
-					mouseCanvasVector,
-					mouseButtonDownCanvasVector
+					mouseWorkspaceVector,
+					mouseButtonDownWorkspaceVector
 				).subset(math.index([0,1]))
 			);
 			staleDrawing = true;
 			break;
 		case 'rotateimages':
+			var i = imageListForTransform[0];
+			var mouseButtonDownImageVector = math.multiply(
+				math.inv(selectedImages[i].transformMatrix) ,
+				mouseButtonDownWorkspaceVector);
+			temporaryImageMatrix =
+				math.multiply(
+					selectedImages[i].transformMatrix ,
+					math.multiply(
+						rotationMatrix(
+							selectedImages[i].controlPoints[0] ,
+							selectedImages[i].mouseVector ,
+							mouseButtonDownImageVector),
+						math.inv(selectedImages[i].transformMatrix)
+					)
+				);
 			staleDrawing = true;
 			break;
 		case 'pan':
@@ -436,6 +520,7 @@ function handleMouseMove(event)
 
 function handleMouseButtonUp(event)
 {
+	var staleDrawing = false;
 	getMouseCoordinates(event);
  
 	mouseButtonUpCanvasVector = mouseCanvasVector;
@@ -493,6 +578,20 @@ function handleMouseButtonUp(event)
 			break;
 		case 'rotateimages':
 			staleDrawing = true;
+			temporaryImageMatrix = math.eye(3);
+			var i = imageListForTransform[0];
+			var mouseButtonDownImageVector = math.multiply(
+				math.inv(selectedImages[i].transformMatrix) ,
+				mouseButtonDownWorkspaceVector);
+			selectedImages[i].transformMatrix =
+				math.multiply(
+					selectedImages[i].transformMatrix ,
+					rotationMatrix(
+						selectedImages[i].controlPoints[0] ,
+						selectedImages[i].mouseVector ,
+						mouseButtonDownImageVector)
+				);
+			staleDrawing = true;
 			break;
 		case 'pan':
 			temporaryCanvasMatrix = math.eye(3).subset(
@@ -515,7 +614,11 @@ function handleMouseButtonUp(event)
 	}
 	mode = '';
 
-    drawCanvas();
+	if (staleDrawing)
+	{
+        drawCanvas();
+        staleDrawing = false;
+    }
     return true;
 };
 
