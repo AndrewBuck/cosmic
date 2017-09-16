@@ -38,15 +38,37 @@
         </tr>
     </table>
 
-<p>Source extractor detected {{numSources}} sources in the image.  <a href="/image/{{id}}/sources/">View sources</a></p>
-
+<p>Source extractor detected {{numSextractorSources}} sources in the image.<br>
+Daofind detected {{numDaofindSources}} sources in the image.<br>
+<a href="/image/{{id}}/sources/">View sources</a></p>
 <p>This image has {{numProperties}} property tags assosciatied with it.  <a href="/image/{{id}}/properties/">View properties</a></p>
 
 <p>Answer questions about this image.  <a href="/image/{{id}}/question/">Answer questions</a></p>
 
+<table border="2px">
+<tr>
+<th>Channel</th>
+<th>Type</th>
+<th>Mean</th>
+<th>Medain</th>
+<th>StdDev</th>
+<th>Background<br>Mean</th>
+<th>Background<br>Median</th>
+<th>Background<br>StdDev</th>
+</tr>
 {% for channel in image.imagechannelinfo_set.all %}
-Image channel {{channel.index}}: {{channel.channelType}}<br>
+<tr>
+<td>{{channel.index}}</td>
+<td>{{channel.channelType}}</td>
+<td>{{channel.mean|floatformat:3}}</td>
+<td>{{channel.median|floatformat:3}}</td>
+<td>{{channel.stdDev|floatformat:3}}</td>
+<td>{{channel.bgMean|floatformat:3}}</td>
+<td>{{channel.bgMedian|floatformat:3}}</td>
+<td>{{channel.bgStdDev|floatformat:3}}</td>
+</tr>
 {% endfor %}
+</table>
 
 <p>Original uploaded filename: <b>{{image.fileRecord.originalFileName}}</b></p>
 <p>SHA 256 hash of original file: <b>{{image.fileRecord.fileSha256}}</b></p>

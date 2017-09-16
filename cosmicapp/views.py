@@ -143,6 +143,27 @@ def upload(request):
 
                 paSextractor.save()
 
+                piDaofind = ProcessInput(
+                    process = "daofind",
+                    requestor = User.objects.get(pk=request.user.pk),
+                    submittedDateTime = timezone.now(),
+                    priority = 3000,
+                    estCostCPU = 2.0 * record.uploadSize / 1e6,
+                    estCostBandwidth = 0,
+                    estCostStorage = 3000,
+                    estCostIO = record.uploadSize
+                    )
+
+                piDaofind.save()
+
+                paDaofind = ProcessArgument(
+                    processInput = piDaofind,
+                    argIndex = 1,
+                    arg = record.onDiskFileName
+                    )
+
+                paDaofind.save()
+
                 piHeaders = ProcessInput(
                     process = "parseheaders",
                     requestor = User.objects.get(pk=request.user.pk),
@@ -233,8 +254,11 @@ def image(request, id):
 
     context['image'] = image
 
-    numSources = SextractorResult.objects.filter(image_id=image.pk).count()
-    context['numSources'] = numSources
+    numSextractorSources = SextractorResult.objects.filter(image_id=image.pk).count()
+    context['numSextractorSources'] = numSextractorSources
+
+    numDaofindSources = DaofindResult.objects.filter(image_id=image.pk).count()
+    context['numDaofindSources'] = numDaofindSources
 
     numProperties = ImageProperty.objects.filter(image_id=image.pk).count()
     context['numProperties'] = numProperties

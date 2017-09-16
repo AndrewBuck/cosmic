@@ -177,6 +177,12 @@ class ImageChannelInfo(models.Model):
     image = models.ForeignKey(Image, on_delete=models.CASCADE)
     index = models.IntegerField()
     channelType = models.CharField(max_length=16)
+    mean = models.FloatField(null=True)
+    median = models.FloatField(null=True)
+    stdDev = models.FloatField(null=True)
+    bgMean = models.FloatField(null=True)
+    bgMedian = models.FloatField(null=True)
+    bgStdDev = models.FloatField(null=True)
 
 class ImageProperty(models.Model):
     image = models.ForeignKey(Image, on_delete=models.CASCADE, related_name='properties')
@@ -231,14 +237,25 @@ class ProcessOutputFile(models.Model):
 
 
 
-class SextractorResult(models.Model):
+class SourceFindResult(models.Model):
     image = models.ForeignKey(Image, on_delete=models.CASCADE)
     pixelX = models.FloatField(null=True)
     pixelY = models.FloatField(null=True)
     pixelZ = models.FloatField(null=True)
+
+    class Meta:
+        abstract = True
+
+class SextractorResult(SourceFindResult):
     fluxAuto = models.FloatField(null=True)
     fluxAutoErr = models.FloatField(null=True)
     flags = models.IntegerField(null=True)
+
+class DaofindResult(SourceFindResult):
+    mag = models.FloatField(null=True)
+    sharpness = models.FloatField(null=True)
+    sround = models.FloatField(null=True)
+    ground = models.FloatField(null=True)
 
 
 

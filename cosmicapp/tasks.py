@@ -2,6 +2,7 @@ from __future__ import absolute_import, unicode_literals
 from celery import shared_task
 from django.db import transaction
 from django.conf import settings
+from pyraf import iraf
 
 import subprocess
 import json
@@ -11,6 +12,7 @@ import re
 
 from astropy import wcs
 from astropy.io import fits
+from astropy.stats import sigma_clipped_stats
 
 from .models import *
 
@@ -145,6 +147,47 @@ def imagestats(filename):
         else:
             print("WCS not found in header")
 
+    print("imagestats:background: " + filename)
+    if os.path.splitext(filename)[-1].lower() in ['.fit', '.fits']:
+        hdulist = fits.open(settings.MEDIA_ROOT + filename)
+        with transaction.atomic():
+            channelIndex = 0
+            for hdu in hdulist:
+                if len(hdu.data.shape) == 2:
+                    channelInfo = ImageChannelInfo.objects.get(image=image, index=channelIndex)
+                    mean, median, stdDev = sigma_clipped_stats(hdu.data, iters=0)
+                    bgMean, bgMedian, bgStdDev = sigma_clipped_stats(hdu.data, iters=1)
+
+                    #TODO: For some reason the median and bgMedain are always 0.  Need to fix this.
+                    channelInfo.mean = mean
+                    channelInfo.median = median
+                    channelInfo.stdDev = stdDev
+                    channelInfo.bgMean = bgMean
+                    channelInfo.bgMedian = bgMedian
+                    channelInfo.bgStdDev = bgStdDev
+                    channelInfo.save()
+
+                    channelIndex += 1
+
+                if len(hdu.data.shape) == 3:
+                    for i in range(hdu.data.shape[0]):
+                        channelInfo = ImageChannelInfo.objects.get(image=image, index=channelIndex)
+                        mean, median, stdDev = sigma_clipped_stats(hdu.data[channelIndex], iters=0)
+                        bgMean, bgMedian, bgStdDev = sigma_clipped_stats(hdu.data[channelIndex], iters=1)
+
+                        #TODO: For some reason the median and bgMedain are always 0.  Need to fix this.
+                        channelInfo.mean = mean
+                        channelInfo.median = median
+                        channelInfo.stdDev = stdDev
+                        channelInfo.bgMean = bgMean
+                        channelInfo.bgMedian = bgMedian
+                        channelInfo.bgStdDev = bgStdDev
+                        channelInfo.save()
+
+                        channelIndex += 1
+
+        hdulist.close()
+
     return True
 
 @shared_task
@@ -249,6 +292,58 @@ def sextractor(filename):
                         )
 
                     record.save()
+
+    try:
+        os.remove(catfileName)
+    except OSError:
+        pass
+
+    return True
+
+@shared_task
+def daofind(filename):
+    print("daofind: " + filename)
+    sys.stdout.flush()
+
+    #TODO: daofind can only handle .fit files.  Should autoconvert the file to .fit if necessary before running.
+    catfileName = settings.MEDIA_ROOT + filename + ".daofind.cat"
+
+    image = Image.objects.get(fileRecord__onDiskFileName=filename)
+
+    #TODO: Handle multi-extension fits files.
+    channelInfos = ImageChannelInfo.objects.filter(image=image).order_by('index')
+
+    iraf.datapars.sigma = channelInfos[0].bgStdDev
+
+    iraf.unlearn(iraf.daofind)
+    iraf.daofind(settings.MEDIA_ROOT + filename, output=catfileName)
+
+    with open(catfileName, 'r') as catfile:
+        with transaction.atomic():
+            for line in catfile:
+                #TODO: Read in and store the parameters in the commented section.
+                if line.startswith('#'):
+                    continue
+
+                fields = line.split()
+
+                try:
+                    mag = float(fields[2])
+                except:
+                    mag = None
+
+                result = DaofindResult(
+                    image = image,
+                    pixelX = float(fields[0]),
+                    pixelY = float(fields[1]),
+                    pixelZ = None,    #TODO: Handle multi-extension fits files.
+                    mag = mag,
+                    sharpness = float(fields[3]),
+                    sround = float(fields[4]),
+                    ground = float(fields[5])
+                    )
+
+                result.save()
 
     try:
         os.remove(catfileName)
