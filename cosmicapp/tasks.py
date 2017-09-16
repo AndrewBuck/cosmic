@@ -302,20 +302,21 @@ def sextractor(filename):
 
 @shared_task
 def daofind(filename):
-    #TODO: daofind can only handle .fit files.  Should autoconvert the file to .fit if necessary before running.
-    catfileName = settings.MEDIA_ROOT + filename + ".daofind.cat"
-
-    #TODO: Should set the sigma to the background standard deviation of this specific image, just using a hardcoded constant for now.
-    iraf.datapars.sigma = 20
-
-    iraf.unlearn(iraf.daofind)
-    iraf.daofind(settings.MEDIA_ROOT + filename, output=catfileName)
-
     print("daofind: " + filename)
     sys.stdout.flush()
 
-    # Get the image record
+    #TODO: daofind can only handle .fit files.  Should autoconvert the file to .fit if necessary before running.
+    catfileName = settings.MEDIA_ROOT + filename + ".daofind.cat"
+
     image = Image.objects.get(fileRecord__onDiskFileName=filename)
+
+    #TODO: Handle multi-extension fits files.
+    channelInfos = ImageChannelInfo.objects.filter(image=image).order_by('index')
+
+    iraf.datapars.sigma = channelInfos[0].bgStdDev
+
+    iraf.unlearn(iraf.daofind)
+    iraf.daofind(settings.MEDIA_ROOT + filename, output=catfileName)
 
     with open(catfileName, 'r') as catfile:
         with transaction.atomic():
