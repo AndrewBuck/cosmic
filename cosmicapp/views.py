@@ -254,8 +254,11 @@ def image(request, id):
 
     context['image'] = image
 
-    numSources = SextractorResult.objects.filter(image_id=image.pk).count()
-    context['numSources'] = numSources
+    numSextractorSources = SextractorResult.objects.filter(image_id=image.pk).count()
+    context['numSextractorSources'] = numSextractorSources
+
+    numDaofindSources = DaofindResult.objects.filter(image_id=image.pk).count()
+    context['numDaofindSources'] = numDaofindSources
 
     numProperties = ImageProperty.objects.filter(image_id=image.pk).count()
     context['numProperties'] = numProperties
