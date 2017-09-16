@@ -41,12 +41,14 @@ due to some incompatabilities, however we are running python3 for everything so
 we will go with that for now and hope the incompatabilities are only in tasks
 we won't be relying on right until they are fixed).
 
-# conda create -n iraf27 python=2.7 iraf-all pyraf-all stsci
 conda create -n iraf3 python=3 iraf-all pyraf-all stsci
 
-Once everything is installed we can activate the iraf environment (note this
-needs to be done each time a shell is run, so it may be a good idea to add this
-to a .bashrc file).
+After conda is set up and iraf is installed you should COMMENT OUT the lines
+added to your .bashrc file as they are no longer needed and will break python
+for the rest of the site.
+
+# added by Miniconda3 4.3.21 installer
+#export PATH="/home/buck/miniconda3/bin:$PATH"
 
 
 
