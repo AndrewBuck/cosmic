@@ -12,6 +12,7 @@ import re
 
 from astropy import wcs
 from astropy.io import fits
+from astropy.stats import sigma_clipped_stats
 
 from .models import *
 
@@ -145,6 +146,47 @@ def imagestats(filename):
             image.save()
         else:
             print("WCS not found in header")
+
+    print("imagestats:background: " + filename)
+    if os.path.splitext(filename)[-1].lower() in ['.fit', '.fits']:
+        hdulist = fits.open(settings.MEDIA_ROOT + filename)
+        with transaction.atomic():
+            channelIndex = 0
+            for hdu in hdulist:
+                if len(hdu.data.shape) == 2:
+                    channelInfo = ImageChannelInfo.objects.get(image=image, index=channelIndex)
+                    mean, median, stdDev = sigma_clipped_stats(hdu.data, iters=0)
+                    bgMean, bgMedian, bgStdDev = sigma_clipped_stats(hdu.data, iters=1)
+
+                    #TODO: For some reason the median and bgMedain are always 0.  Need to fix this.
+                    channelInfo.mean = mean
+                    channelInfo.median = median
+                    channelInfo.stdDev = stdDev
+                    channelInfo.bgMean = bgMean
+                    channelInfo.bgMedian = bgMedian
+                    channelInfo.bgStdDev = bgStdDev
+                    channelInfo.save()
+
+                    channelIndex += 1
+
+                if len(hdu.data.shape) == 3:
+                    for i in range(hdu.data.shape[0]):
+                        channelInfo = ImageChannelInfo.objects.get(image=image, index=channelIndex)
+                        mean, median, stdDev = sigma_clipped_stats(hdu.data[channelIndex], iters=0)
+                        bgMean, bgMedian, bgStdDev = sigma_clipped_stats(hdu.data[channelIndex], iters=1)
+
+                        #TODO: For some reason the median and bgMedain are always 0.  Need to fix this.
+                        channelInfo.mean = mean
+                        channelInfo.median = median
+                        channelInfo.stdDev = stdDev
+                        channelInfo.bgMean = bgMean
+                        channelInfo.bgMedian = bgMedian
+                        channelInfo.bgStdDev = bgStdDev
+                        channelInfo.save()
+
+                        channelIndex += 1
+
+        hdulist.close()
 
     return True
 
