@@ -401,7 +401,7 @@ def query(request):
         if request.GET['queryfor'] == 'image':
             if limit > 100:
                 limit = 100
-        elif request.GET['queryfor'] == 'sextractorResult':
+        elif request.GET['queryfor'] == 'sextractorResult' or request.GET['queryfor'] == 'daofindResult':
             if limit > 10000:
                 limit = 10000
 
@@ -493,6 +493,31 @@ def query(request):
             sextractorDict['flags'] = str(result.flags)
 
             etree.SubElement(root, "SextractorResult", sextractorDict)
+
+    elif request.GET['queryfor'] == 'daofindResult':
+        orderField, ascDesc = parseQueryOrderBy(request, {'mag': 'mag'}, 'mag', '-')
+        results = DaofindResult.objects
+
+        if 'imageId' in request.GET:
+            for valueString in request.GET.getlist('imageId'):
+                values = cleanupQueryValues(valueString, 'int')
+                if len(values) > 0:
+                    results = results.filter(image__pk__in=values)
+
+        results = results.order_by(ascDesc + orderField)[offset:offset+limit]
+
+        for result in results:
+            daofindDict = {}
+            daofindDict['imageId'] = str(result.image.pk)
+            daofindDict['pixelX'] = str(result.pixelX)
+            daofindDict['pixelY'] = str(result.pixelY)
+            daofindDict['pixelZ'] = str(result.pixelZ)
+            daofindDict['mag'] = str(result.mag)
+            daofindDict['sharpness'] = str(result.sharpness)
+            daofindDict['sround'] = str(result.sround)
+            daofindDict['ground'] = str(result.ground)
+
+            etree.SubElement(root, "DaofindResult", daofindDict)
 
     elif request.GET['queryfor'] == 'ota':
         results = OTA.objects

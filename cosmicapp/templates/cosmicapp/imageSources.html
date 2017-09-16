@@ -14,7 +14,7 @@ Your browser does not support the HTML5 canvas tag.
 <script>
 //TODO: Rewrite this to use /query/ instead of this hacky way of doing it.
 var imageId = {{id}};
-var sextractorResults = [];
+var sextractorResults = [], daofindResults = [];
 var canvas, context;
 
 function getSextractorResults()
@@ -44,6 +44,34 @@ function getSextractorResults()
     });
 };
 
+function getDaofindResults()
+{
+    $.ajax({
+        url : "/query/?queryfor=daofindResult&limit=10000&imageId=" + imageId,
+        type : "get",
+        async: true,
+        success : function(xml)
+        {
+            results = xml.getElementsByTagName('DaofindResult')
+            for(i = 0; i < results.length; i++)
+            {
+                attr = results[i].attributes;
+                daofindResults[daofindResults.length] = new Object({
+                    x: Number(attr.getNamedItem('pixelX').nodeValue),
+                    y: Number(attr.getNamedItem('pixelY').nodeValue),
+                    z: Number(attr.getNamedItem('pixelZ').nodeValue),
+                    mag: Number(attr.getNamedItem('mag').nodeValue),
+                    sharpness: Number(attr.getNamedItem('sharpness').nodeValue),
+                    sround: Number(attr.getNamedItem('sround').nodeValue),
+                    ground: Number(attr.getNamedItem('ground').nodeValue)
+                });
+            }
+
+            drawSources();
+        }
+    });
+};
+
 function drawSources()
 {
     context.strokeStyle = "#E02010"
@@ -53,6 +81,16 @@ function drawSources()
         context.beginPath();
         context.arc(sextractorResults[i].x, {{image.dimY}} - sextractorResults[i].y,
             .2*Math.pow(Math.log(sextractorResults[i].fluxAuto), 1.75), 0, 2*Math.PI)
+        context.stroke();
+    }
+
+    context.strokeStyle = "#20E010"
+
+    for(i = 0; i < daofindResults.length; i++)
+    {
+        context.beginPath();
+        context.arc(daofindResults[i].x, {{image.dimY}} - daofindResults[i].y,
+            10*Math.pow(2, daofindResults[i].mag), 0, 2*Math.PI)
         context.stroke();
     }
 };
@@ -66,6 +104,7 @@ window.onload = function()
     context.drawImage(img, 0, 0);
 
     getSextractorResults();
+    getDaofindResults();
 };
 </script>
 {% endblock %}
