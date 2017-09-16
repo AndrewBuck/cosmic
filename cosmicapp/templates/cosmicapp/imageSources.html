@@ -5,41 +5,67 @@
 
 {% block mainbody %}
 
+{% include "./jquery.html" %}
+
 <canvas id="sourcesCanvas" width="{{image.dimX}}" height="{{image.dimY}}" style="border:4px solid #00A030">
 Your browser does not support the HTML5 canvas tag.
 </canvas>
 
 <script>
 //TODO: Rewrite this to use /query/ instead of this hacky way of doing it.
-var sextractorResults =
-[
-    {% for source in sources %}
-    {pk: {{source.pk}}, x: {{source.pixelX}}, y: {{source.pixelY}}, flux: {{source.fluxAuto}} },
-    {% endfor %}
-]
+var imageId = {{id}};
+var sextractorResults = [];
+var canvas, context;
 
-function drawSources(ctx)
+function getSextractorResults()
 {
-    ctx.strokeStyle = "#E02010"
+    $.ajax({
+        url : "/query/?queryfor=sextractorResult&limit=10000&imageId=" + imageId,
+        type : "get",
+        async: true,
+        success : function(xml)
+        {
+            results = xml.getElementsByTagName('SextractorResult')
+            for(i = 0; i < results.length; i++)
+            {
+                attr = results[i].attributes;
+                sextractorResults[sextractorResults.length] = new Object({
+                    x: Number(attr.getNamedItem('pixelX').nodeValue),
+                    y: Number(attr.getNamedItem('pixelY').nodeValue),
+                    z: Number(attr.getNamedItem('pixelZ').nodeValue),
+                    fluxAuto: Number(attr.getNamedItem('fluxAuto').nodeValue),
+                    fluxAutoErr: Number(attr.getNamedItem('fluxAutoErr').nodeValue),
+                    flags: Number(attr.getNamedItem('flags').nodeValue)
+                });
+            }
+
+            drawSources();
+        }
+    });
+};
+
+function drawSources()
+{
+    context.strokeStyle = "#E02010"
 
     for(i = 0; i < sextractorResults.length; i++)
     {
-        ctx.beginPath();
-        ctx.arc(sextractorResults[i].x, {{image.dimY}} - sextractorResults[i].y,
-            .2*Math.pow(Math.log(sextractorResults[i].flux), 1.75), 0, 2*Math.PI)
-        ctx.stroke();
+        context.beginPath();
+        context.arc(sextractorResults[i].x, {{image.dimY}} - sextractorResults[i].y,
+            .2*Math.pow(Math.log(sextractorResults[i].fluxAuto), 1.75), 0, 2*Math.PI)
+        context.stroke();
     }
 };
 
 window.onload = function()
 {
-    var canvas = document.getElementById("sourcesCanvas");
-    var ctx = canvas.getContext("2d");
+    canvas = document.getElementById("sourcesCanvas");
+    context = canvas.getContext("2d");
     var img = new Image();
     img.src = '{{image.getThumbnailUrlFull|safe}}';
-    ctx.drawImage(img, 0, 0);
+    context.drawImage(img, 0, 0);
 
-    drawSources(ctx);
+    getSextractorResults();
 };
 </script>
 {% endblock %}
