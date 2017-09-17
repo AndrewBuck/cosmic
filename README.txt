@@ -15,7 +15,7 @@ sudo apt-get install rabbitmq-server
 Astropy is used for various calculations and data reductions on the server and
 on the celery worker nodes:
 
-sudo pip3 install astropy
+sudo pip3 install astropy photutils scipy
 
 
 

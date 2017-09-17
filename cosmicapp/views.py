@@ -495,7 +495,7 @@ def query(request):
             etree.SubElement(root, "SextractorResult", sextractorDict)
 
     elif request.GET['queryfor'] == 'daofindResult':
-        orderField, ascDesc = parseQueryOrderBy(request, {'mag': 'mag'}, 'mag', '-')
+        orderField, ascDesc = parseQueryOrderBy(request, {'mag': 'mag'}, 'mag', '')
         results = DaofindResult.objects
 
         if 'imageId' in request.GET:

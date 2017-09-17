@@ -13,6 +13,7 @@ import re
 from astropy import wcs
 from astropy.io import fits
 from astropy.stats import sigma_clipped_stats
+from photutils import make_source_mask
 
 from .models import *
 
@@ -159,12 +160,14 @@ def imagestats(filename):
 
                 if len(hdu.data.shape) == 3:
                     for i in range(hdu.data.shape[0]):
-                        frames.append(hdu.data[channelIndex])
+                        frames.append(hdu.data[channelIndex+i])
 
                 for frame in frames:
                     channelInfo = ImageChannelInfo.objects.get(image=image, index=channelIndex)
-                    mean, median, stdDev = sigma_clipped_stats(frame, iters=0)
-                    bgMean, bgMedian, bgStdDev = sigma_clipped_stats(frame, iters=1)
+                    mean, median, stdDev = sigma_clipped_stats(frame, sigma=10, iters=0)
+
+                    #mask = make_source_mask(frame, snr=10, npixels=5, dilate_size=11)
+                    bgMean, bgMedian, bgStdDev = sigma_clipped_stats(frame, sigma=3, iters=1)
 
                     #TODO: For some reason the median and bgMedain are always 0.  Need to fix this.
                     channelInfo.mean = mean
@@ -304,9 +307,16 @@ def daofind(filename):
     #TODO: Handle multi-extension fits files.
     channelInfos = ImageChannelInfo.objects.filter(image=image).order_by('index')
 
-    iraf.datapars.sigma = channelInfos[0].bgStdDev
-
     iraf.unlearn(iraf.daofind)
+
+    iraf.datapars.sigma = channelInfos[0].bgStdDev
+    iraf.datapars.fwhmpsf = 2.5
+    iraf.findpars.threshold = 4
+    iraf.findpars.sharplo = 0.0
+    iraf.findpars.sharphi = 0.8
+    iraf.findpars.roundlo = -0.6
+    iraf.findpars.roundhi = 0.6
+
     iraf.daofind(settings.MEDIA_ROOT + filename, output=catfileName)
 
     with open(catfileName, 'r') as catfile:
