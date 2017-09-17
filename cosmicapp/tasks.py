@@ -153,10 +153,18 @@ def imagestats(filename):
         with transaction.atomic():
             channelIndex = 0
             for hdu in hdulist:
+                frames = []
                 if len(hdu.data.shape) == 2:
+                    frames.append(hdu.data)
+
+                if len(hdu.data.shape) == 3:
+                    for i in range(hdu.data.shape[0]):
+                        frames.append(hdu.data[channelIndex])
+
+                for frame in frames:
                     channelInfo = ImageChannelInfo.objects.get(image=image, index=channelIndex)
-                    mean, median, stdDev = sigma_clipped_stats(hdu.data, iters=0)
-                    bgMean, bgMedian, bgStdDev = sigma_clipped_stats(hdu.data, iters=1)
+                    mean, median, stdDev = sigma_clipped_stats(frame, iters=0)
+                    bgMean, bgMedian, bgStdDev = sigma_clipped_stats(frame, iters=1)
 
                     #TODO: For some reason the median and bgMedain are always 0.  Need to fix this.
                     channelInfo.mean = mean
@@ -168,23 +176,6 @@ def imagestats(filename):
                     channelInfo.save()
 
                     channelIndex += 1
-
-                if len(hdu.data.shape) == 3:
-                    for i in range(hdu.data.shape[0]):
-                        channelInfo = ImageChannelInfo.objects.get(image=image, index=channelIndex)
-                        mean, median, stdDev = sigma_clipped_stats(hdu.data[channelIndex], iters=0)
-                        bgMean, bgMedian, bgStdDev = sigma_clipped_stats(hdu.data[channelIndex], iters=1)
-
-                        #TODO: For some reason the median and bgMedain are always 0.  Need to fix this.
-                        channelInfo.mean = mean
-                        channelInfo.median = median
-                        channelInfo.stdDev = stdDev
-                        channelInfo.bgMean = bgMean
-                        channelInfo.bgMedian = bgMedian
-                        channelInfo.bgStdDev = bgStdDev
-                        channelInfo.save()
-
-                        channelIndex += 1
 
         hdulist.close()
 
