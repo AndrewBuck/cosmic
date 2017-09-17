@@ -99,12 +99,12 @@ while not quit:
     #TODO: This forces the task to complete before the next task is submitted to celery.  In the future when we have
     # multiple celery workers this should be expanded to pass out several jobs at a time and replace any completed
     # ones in order to keep the various celery nodes busy.
-    waitTime = 0.0
+    waitTime = 0.5
     while not celeryResult.ready():
         print("   Task running, waiting " + str(waitTime) + " seconds.")
         sys.stdout.flush()
         time.sleep(waitTime)
-        waitTime += 0.1
+        waitTime += 1
 
     # Write the result of the returned value back to the database, either success, failure, or error (early exit).
     if celeryResult.info == True:
