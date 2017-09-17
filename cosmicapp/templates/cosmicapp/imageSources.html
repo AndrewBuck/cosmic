@@ -5,22 +5,75 @@
 
 {% block mainbody %}
 
+<head>
+  <script src="/static/cosmicapp/math.min.js" type="text/javascript"></script>
+</head>
+
 {% include "./jquery.html" %}
+
+<table border=2px>
+<tr>
+<th></th>
+<th>Sextractor</th>
+<th>Daofind</th>
+</tr>
+<tr>
+<td>Size:</td>
+<td><input id="sextractorSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td><input id="daofindSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+</tr>
+
+<tr>
+<td>Size scale:</td>
+<td><input id="sextractorSizeScaleSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td><input id="daofindSizeScaleSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+</tr>
+
+<tr>
+<td>Label thresh:</td>
+<td><input id="sextractorLabelThresholdSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td><input id="daofindLabelThresholdSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+</tr>
+
+<tr>
+<td>Label size:</td>
+<td><input id="sextractorLabelSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td><input id="daofindLabelSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+</tr>
+
+<tr>
+<td>Label:</td>
+    <td>
+    <input type=checkbox id=sextractorLabelFlux onchange="drawSources()"> Flux<br>
+    <input type=checkbox id=sextractorLabelFluxErr onchange="drawSources()"> Flux Err<br>
+    <input type=checkbox id=sextractorLabelFlags onchange="drawSources()"> Flags<br>
+    <input type=checkbox id=sextractorLabelConfidence onchange="drawSources()" checked> Confidence
+    </td>
+
+    <td>
+    <input type=checkbox id=daofindLabelMag onchange="drawSources()"> Magnitude<br>
+    <input type=checkbox id=daofindLabelSharpness onchange="drawSources()"> Sharpness<br>
+    <input type=checkbox id=daofindLabelSRound onchange="drawSources()"> Symmetry roundness<br>
+    <input type=checkbox id=daofindLabelGRound onchange="drawSources()"> Gaussian roundess<br>
+    <input type=checkbox id=daofindLabelConfidence onchange="drawSources()" checked> Confidence
+    </td>
+</tr>
+</table>
 
 <canvas id="sourcesCanvas" width="{{image.dimX}}" height="{{image.dimY}}" style="border:4px solid #00A030">
 Your browser does not support the HTML5 canvas tag.
 </canvas>
 
 <script>
-//TODO: Rewrite this to use /query/ instead of this hacky way of doing it.
 var imageId = {{id}};
 var sextractorResults = [], daofindResults = [];
 var canvas, context;
+var img;
 
 function getSextractorResults()
 {
     $.ajax({
-        url : "/query/?queryfor=sextractorResult&limit=10000&imageId=" + imageId,
+        url : "/query/?queryfor=sextractorResult&limit=1000&imageId=" + imageId,
         type : "get",
         async: true,
         success : function(xml)
@@ -29,7 +82,7 @@ function getSextractorResults()
             for(i = 0; i < results.length; i++)
             {
                 attr = results[i].attributes;
-                sextractorResults[sextractorResults.length] = new Object({
+                sextractorResults[i] = new Object({
                     x: Number(attr.getNamedItem('pixelX').nodeValue),
                     y: Number(attr.getNamedItem('pixelY').nodeValue),
                     z: Number(attr.getNamedItem('pixelZ').nodeValue),
@@ -37,6 +90,8 @@ function getSextractorResults()
                     fluxAutoErr: Number(attr.getNamedItem('fluxAutoErr').nodeValue),
                     flags: Number(attr.getNamedItem('flags').nodeValue)
                 });
+
+                sextractorResults[i].confidence = math.pow(sextractorResults[i].fluxAuto / sextractorResults[i].fluxAutoErr, 2);
             }
 
             drawSources();
@@ -47,7 +102,7 @@ function getSextractorResults()
 function getDaofindResults()
 {
     $.ajax({
-        url : "/query/?queryfor=daofindResult&limit=10000&imageId=" + imageId,
+        url : "/query/?queryfor=daofindResult&limit=1000&imageId=" + imageId,
         type : "get",
         async: true,
         success : function(xml)
@@ -56,7 +111,7 @@ function getDaofindResults()
             for(i = 0; i < results.length; i++)
             {
                 attr = results[i].attributes;
-                daofindResults[daofindResults.length] = new Object({
+                daofindResults[i] = new Object({
                     x: Number(attr.getNamedItem('pixelX').nodeValue),
                     y: Number(attr.getNamedItem('pixelY').nodeValue),
                     z: Number(attr.getNamedItem('pixelZ').nodeValue),
@@ -65,6 +120,11 @@ function getDaofindResults()
                     sround: Number(attr.getNamedItem('sround').nodeValue),
                     ground: Number(attr.getNamedItem('ground').nodeValue)
                 });
+
+                daofindResults[i].confidence = 10.0/(math.pow(daofindResults[i].sharpness - 0.4, 2) + 0.1)
+                                             + 1.0/(math.abs(daofindResults[i].sround) + 0.1)
+                                             + 1.0/(math.abs(daofindResults[i].ground) + 0.1)
+                                             + 100*math.pow(daofindResults[i].mag, 2);
             }
 
             drawSources();
@@ -74,24 +134,81 @@ function getDaofindResults()
 
 function drawSources()
 {
-    context.strokeStyle = "#E02010"
+    context.drawImage(img, 0, 0);
 
+    context.strokeStyle = "#E02010"
+    context.fillStyle = context.strokeStyle;
+
+    sizeFactor = $('#sextractorSizeSlider').val()/250.0;
+    sizeScaleFactor = $('#sextractorSizeScaleSlider').val()/30.0;
+    labelThreshold = $('#sextractorLabelThresholdSlider').val()*10;
+    labelSize= $('#sextractorLabelSizeSlider').val()/5 + 10
     for(i = 0; i < sextractorResults.length; i++)
     {
         context.beginPath();
         context.arc(sextractorResults[i].x, {{image.dimY}} - sextractorResults[i].y,
-            .2*Math.pow(Math.log(sextractorResults[i].fluxAuto), 1.75), 0, 2*Math.PI)
+            sizeFactor*Math.pow(Math.log(sextractorResults[i].fluxAuto), sizeScaleFactor), 0, 2*Math.PI)
         context.stroke();
+
+        if(sextractorResults[i].confidence > labelThreshold)
+        {
+            labelArray = [];
+
+            if($('#sextractorLabelFlux').is(':checked'))
+                labelArray[labelArray.length] = math.round(sextractorResults[i].fluxAuto, 2);
+
+            if($('#sextractorLabelFluxErr').is(':checked'))
+                labelArray[labelArray.length] = math.round(sextractorResults[i].fluxAutoErr, 2);
+
+            if($('#sextractorLabelFlags').is(':checked'))
+                labelArray[labelArray.length] = sextractorResults[i].flags;
+
+            if($('#sextractorLabelConfidence').is(':checked'))
+                labelArray[labelArray.length] = math.round(sextractorResults[i].confidence, 0);
+
+            labelText = labelArray.join(' ');
+            context.font = labelSize + 'px sans-serif'
+            context.fillText(labelText, sextractorResults[i].x + labelSize/2, {{image.dimY}} - sextractorResults[i].y - labelSize/2)
+        }
     }
 
     context.strokeStyle = "#20E010"
+    context.fillStyle = context.strokeStyle;
 
+    sizeFactor = $('#daofindSizeSlider').val()/50.0;
+    sizeScaleFactor = $('#daofindSizeScaleSlider').val()/150.0;
+    labelThreshold = $('#daofindLabelThresholdSlider').val()*20;
+    labelSize= $('#daofindLabelSizeSlider').val()/5 + 10
     for(i = 0; i < daofindResults.length; i++)
     {
         context.beginPath();
         context.arc(daofindResults[i].x, {{image.dimY}} - daofindResults[i].y,
-            10*Math.pow(2, daofindResults[i].mag), 0, 2*Math.PI)
+            sizeFactor*Math.pow(math.abs(daofindResults[i].confidence), sizeScaleFactor), 0, 2*Math.PI)
         context.stroke();
+
+        if(daofindResults[i].confidence > labelThreshold)
+        {
+            labelArray = [];
+
+            if($('#daofindLabelMag').is(':checked'))
+                labelArray[labelArray.length] = math.round(daofindResults[i].mag, 2);
+
+            if($('#daofindLabelSharpness').is(':checked'))
+                labelArray[labelArray.length] = math.round(daofindResults[i].sharpness, 2);
+
+            if($('#daofindLabelSRound').is(':checked'))
+                labelArray[labelArray.length] = math.round(daofindResults[i].sround, 2);
+
+            if($('#daofindLabelGRound').is(':checked'))
+                labelArray[labelArray.length] = math.round(daofindResults[i].ground, 2);
+
+            if($('#daofindLabelConfidence').is(':checked'))
+                labelArray[labelArray.length] = math.round(daofindResults[i].confidence, 0);
+
+            labelText = labelArray.join(' ');
+            context.font = labelSize + 'px sans-serif'
+            context.fillText(labelText, daofindResults[i].x + labelSize/2, {{image.dimY}} - daofindResults[i].y + labelSize/2)
+        }
     }
 };
 
@@ -99,9 +216,12 @@ window.onload = function()
 {
     canvas = document.getElementById("sourcesCanvas");
     context = canvas.getContext("2d");
-    var img = new Image();
+
+    //TODO: Use the thumbnail url query rather than this hardcoded value, maybe?
+    img = new Image();
     img.src = '{{image.getThumbnailUrlFull|safe}}';
-    context.drawImage(img, 0, 0);
+
+    drawSources();
 
     getSextractorResults();
     getDaofindResults();
