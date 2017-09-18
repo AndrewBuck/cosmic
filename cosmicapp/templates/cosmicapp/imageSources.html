@@ -16,29 +16,34 @@
 <th></th>
 <th>Sextractor</th>
 <th>Daofind</th>
+<th>Starfind</th>
 </tr>
 <tr>
 <td>Size:</td>
 <td><input id="sextractorSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 <td><input id="daofindSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td><input id="starfindSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 </tr>
 
 <tr>
 <td>Size scale:</td>
 <td><input id="sextractorSizeScaleSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 <td><input id="daofindSizeScaleSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td><input id="starfindSizeScaleSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 </tr>
 
 <tr>
 <td>Label thresh:</td>
 <td><input id="sextractorLabelThresholdSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 <td><input id="daofindLabelThresholdSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td><input id="starfindLabelThresholdSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 </tr>
 
 <tr>
 <td>Label size:</td>
 <td><input id="sextractorLabelSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 <td><input id="daofindLabelSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td><input id="starfindLabelSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 </tr>
 
 <tr>
@@ -57,6 +62,16 @@
     <input type=checkbox id=daofindLabelGRound onchange="drawSources()"> Gaussian roundess<br>
     <input type=checkbox id=daofindLabelConfidence onchange="drawSources()" checked> Confidence
     </td>
+
+    <td>
+    <input type=checkbox id=starfindLabelMag onchange="drawSources()"> Magnitude<br>
+    <input type=checkbox id=starfindLabelArea onchange="drawSources()"> Area<br>
+    <input type=checkbox id=starfindLabelHWHM onchange="drawSources()"> HWHM<br>
+    <input type=checkbox id=starfindLabelRoundness onchange="drawSources()"> Roundness<br>
+    <input type=checkbox id=starfindLabelPA onchange="drawSources()"> PA<br>
+    <input type=checkbox id=starfindLabelSharpness onchange="drawSources()"> Sharpness<br>
+    <input type=checkbox id=starfindLabelConfidence onchange="drawSources()" checked> Confidence
+    </td>
 </tr>
 </table>
 
@@ -66,9 +81,12 @@ Your browser does not support the HTML5 canvas tag.
 
 <script>
 var imageId = {{id}};
-var sextractorResults = [], daofindResults = [];
+var sextractorResults = [], daofindResults = [], starfindResults = [];
 var canvas, context;
 var img;
+var sextractorColor = "#E02010";
+var daofindColor = "#20E010";
+var starfindColor = "#E0E020";
 
 function getSextractorResults()
 {
@@ -132,11 +150,46 @@ function getDaofindResults()
     });
 };
 
+function getStarfindResults()
+{
+    $.ajax({
+        url : "/query/?queryfor=starfindResult&limit=1000&imageId=" + imageId,
+        type : "get",
+        async: true,
+        success : function(xml)
+        {
+            results = xml.getElementsByTagName('StarfindResult')
+            for(i = 0; i < results.length; i++)
+            {
+                attr = results[i].attributes;
+                starfindResults[i] = new Object({
+                    x: Number(attr.getNamedItem('pixelX').nodeValue),
+                    y: Number(attr.getNamedItem('pixelY').nodeValue),
+                    z: Number(attr.getNamedItem('pixelZ').nodeValue),
+                    mag: Number(attr.getNamedItem('mag').nodeValue),
+                    area: Number(attr.getNamedItem('area').nodeValue),
+                    hwhm: Number(attr.getNamedItem('hwhm').nodeValue),
+                    roundness: Number(attr.getNamedItem('roundness').nodeValue),
+                    pa: Number(attr.getNamedItem('pa').nodeValue),
+                    sharpness: Number(attr.getNamedItem('sharpness').nodeValue)
+                });
+
+                starfindResults[i].confidence = 10.0/(math.pow(starfindResults[i].sharpness - 1.2, 2) + 0.1)
+                                             + 1.0/(math.abs(starfindResults[i].roundness) + 0.1)
+                                             + 1*(math.pow(starfindResults[i].area, 2) + 0.1)
+                                             + 1*math.pow(starfindResults[i].mag, 2);
+            }
+
+            drawSources();
+        }
+    });
+};
+
 function drawSources()
 {
     context.drawImage(img, 0, 0);
 
-    context.strokeStyle = "#E02010"
+    context.strokeStyle = sextractorColor;
     context.fillStyle = context.strokeStyle;
 
     sizeFactor = $('#sextractorSizeSlider').val()/250.0;
@@ -168,11 +221,11 @@ function drawSources()
 
             labelText = labelArray.join(' ');
             context.font = labelSize + 'px sans-serif'
-            context.fillText(labelText, sextractorResults[i].x + labelSize/2, {{image.dimY}} - sextractorResults[i].y - labelSize/2)
+            context.fillText(labelText, sextractorResults[i].x + labelSize/2, {{image.dimY}} - sextractorResults[i].y - labelSize)
         }
     }
 
-    context.strokeStyle = "#20E010"
+    context.strokeStyle = daofindColor;
     context.fillStyle = context.strokeStyle;
 
     sizeFactor = $('#daofindSizeSlider').val()/50.0;
@@ -207,7 +260,52 @@ function drawSources()
 
             labelText = labelArray.join(' ');
             context.font = labelSize + 'px sans-serif'
-            context.fillText(labelText, daofindResults[i].x + labelSize/2, {{image.dimY}} - daofindResults[i].y + labelSize/2)
+            context.fillText(labelText, daofindResults[i].x + labelSize/2, {{image.dimY}} - daofindResults[i].y)
+        }
+    }
+
+    context.strokeStyle = starfindColor;
+    context.fillStyle = context.strokeStyle;
+
+    sizeFactor = $('#starfindSizeSlider').val()/50.0;
+    sizeScaleFactor = $('#starfindSizeScaleSlider').val()/150.0;
+    labelThreshold = $('#starfindLabelThresholdSlider').val()*20;
+    labelSize= $('#starfindLabelSizeSlider').val()/5 + 10
+    for(i = 0; i < starfindResults.length; i++)
+    {
+        context.beginPath();
+        context.arc(starfindResults[i].x, {{image.dimY}} - starfindResults[i].y,
+            sizeFactor*Math.pow(math.abs(starfindResults[i].confidence), sizeScaleFactor), 0, 2*Math.PI)
+        context.stroke();
+
+        if(starfindResults[i].confidence > labelThreshold)
+        {
+            labelArray = [];
+
+            if($('#starfindLabelMag').is(':checked'))
+                labelArray[labelArray.length] = math.round(starfindResults[i].mag, 2);
+
+            if($('#starfindLabelArea').is(':checked'))
+                labelArray[labelArray.length] = math.round(starfindResults[i].area, 2);
+
+            if($('#starfindLabelHWHM').is(':checked'))
+                labelArray[labelArray.length] = math.round(starfindResults[i].hwhm, 2);
+
+            if($('#starfindLabelRoundness').is(':checked'))
+                labelArray[labelArray.length] = math.round(starfindResults[i].roundness, 2);
+
+            if($('#starfindLabelPA').is(':checked'))
+                labelArray[labelArray.length] = math.round(starfindResults[i].pa, 2);
+
+            if($('#starfindLabelSharpness').is(':checked'))
+                labelArray[labelArray.length] = math.round(starfindResults[i].sharpness, 2);
+
+            if($('#starfindLabelConfidence').is(':checked'))
+                labelArray[labelArray.length] = math.round(starfindResults[i].confidence, 0);
+
+            labelText = labelArray.join(' ');
+            context.font = labelSize + 'px sans-serif'
+            context.fillText(labelText, starfindResults[i].x + labelSize/2, {{image.dimY}} - starfindResults[i].y + labelSize)
         }
     }
 };
@@ -225,6 +323,7 @@ window.onload = function()
 
     getSextractorResults();
     getDaofindResults();
+    getStarfindResults();
 };
 </script>
 {% endblock %}

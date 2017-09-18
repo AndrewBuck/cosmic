@@ -322,7 +322,6 @@ def daofind(filename):
     with open(catfileName, 'r') as catfile:
         with transaction.atomic():
             for line in catfile:
-                #TODO: Read in and store the parameters in the commented section.
                 if line.startswith('#'):
                     continue
 
@@ -342,6 +341,62 @@ def daofind(filename):
                     sharpness = float(fields[3]),
                     sround = float(fields[4]),
                     ground = float(fields[5])
+                    )
+
+                result.save()
+
+    try:
+        os.remove(catfileName)
+    except OSError:
+        pass
+
+    return True
+
+@shared_task
+def starfind(filename):
+    print("starfind: " + filename)
+    sys.stdout.flush()
+
+    #TODO: starfind can only handle .fit files.  Should autoconvert the file to .fit if necessary before running.
+    catfileName = settings.MEDIA_ROOT + filename + ".starfind.cat"
+
+    image = Image.objects.get(fileRecord__onDiskFileName=filename)
+
+    #TODO: Handle multi-extension fits files.
+    channelInfos = ImageChannelInfo.objects.filter(image=image).order_by('index')
+
+    iraf.unlearn(iraf.starfind)
+
+    iraf.starfind(settings.MEDIA_ROOT + filename,
+                  output=catfileName,
+                  hwhmpsf=1.25,
+                  threshold=channelInfos[0].bgStdDev*4,
+                  npixmin=5,
+                  roundlo=0.0,
+                  roundhi=0.5,
+                  sharplo=0.5,
+                  sharphi=2.0
+                  )
+
+    with open(catfileName, 'r') as catfile:
+        with transaction.atomic():
+            for line in catfile:
+                if len(line) <= 1 or line.startswith('#'):
+                    continue
+
+                fields = line.split()
+
+                result = StarfindResult(
+                    image = image,
+                    pixelX = float(fields[0]),
+                    pixelY = float(fields[1]),
+                    pixelZ = None,    #TODO: Handle multi-extension fits files.
+                    mag = float(fields[2]),
+                    area = float(fields[3]),
+                    hwhm = float(fields[4]),
+                    roundness = float(fields[5]),
+                    pa = float(fields[6]),
+                    sharpness = float(fields[7])
                     )
 
                 result.save()

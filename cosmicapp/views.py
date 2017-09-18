@@ -164,6 +164,27 @@ def upload(request):
 
                 paDaofind.save()
 
+                piStarfind = ProcessInput(
+                    process = "starfind",
+                    requestor = User.objects.get(pk=request.user.pk),
+                    submittedDateTime = timezone.now(),
+                    priority = 3000,
+                    estCostCPU = 2.0 * record.uploadSize / 1e6,
+                    estCostBandwidth = 0,
+                    estCostStorage = 3000,
+                    estCostIO = record.uploadSize
+                    )
+
+                piStarfind.save()
+
+                paStarfind = ProcessArgument(
+                    processInput = piStarfind,
+                    argIndex = 1,
+                    arg = record.onDiskFileName
+                    )
+
+                paStarfind.save()
+
                 piHeaders = ProcessInput(
                     process = "parseheaders",
                     requestor = User.objects.get(pk=request.user.pk),
@@ -259,6 +280,9 @@ def image(request, id):
 
     numDaofindSources = DaofindResult.objects.filter(image_id=image.pk).count()
     context['numDaofindSources'] = numDaofindSources
+
+    numStarfindSources = StarfindResult.objects.filter(image_id=image.pk).count()
+    context['numStarfindSources'] = numStarfindSources
 
     numProperties = ImageProperty.objects.filter(image_id=image.pk).count()
     context['numProperties'] = numProperties
@@ -401,7 +425,7 @@ def query(request):
         if request.GET['queryfor'] == 'image':
             if limit > 100:
                 limit = 100
-        elif request.GET['queryfor'] == 'sextractorResult' or request.GET['queryfor'] == 'daofindResult':
+        elif request.GET['queryfor'] in ['sextractorResult', 'daofindResult', 'starfindResult']:
             if limit > 10000:
                 limit = 10000
 
@@ -518,6 +542,33 @@ def query(request):
             daofindDict['ground'] = str(result.ground)
 
             etree.SubElement(root, "DaofindResult", daofindDict)
+
+    elif request.GET['queryfor'] == 'starfindResult':
+        orderField, ascDesc = parseQueryOrderBy(request, {'mag': 'mag'}, 'mag', '')
+        results = StarfindResult.objects
+
+        if 'imageId' in request.GET:
+            for valueString in request.GET.getlist('imageId'):
+                values = cleanupQueryValues(valueString, 'int')
+                if len(values) > 0:
+                    results = results.filter(image__pk__in=values)
+
+        results = results.order_by(ascDesc + orderField)[offset:offset+limit]
+
+        for result in results:
+            starfindDict = {}
+            starfindDict['imageId'] = str(result.image.pk)
+            starfindDict['pixelX'] = str(result.pixelX)
+            starfindDict['pixelY'] = str(result.pixelY)
+            starfindDict['pixelZ'] = str(result.pixelZ)
+            starfindDict['mag'] = str(result.mag)
+            starfindDict['area'] = str(result.area)
+            starfindDict['hwhm'] = str(result.hwhm)
+            starfindDict['roundness'] = str(result.roundness)
+            starfindDict['pa'] = str(result.pa)
+            starfindDict['sharpness'] = str(result.sharpness)
+
+            etree.SubElement(root, "StarfindResult", starfindDict)
 
     elif request.GET['queryfor'] == 'ota':
         results = OTA.objects

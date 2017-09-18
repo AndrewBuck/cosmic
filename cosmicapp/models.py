@@ -257,6 +257,14 @@ class DaofindResult(SourceFindResult):
     sround = models.FloatField(null=True)
     ground = models.FloatField(null=True)
 
+class StarfindResult(SourceFindResult):
+    mag = models.FloatField(null=True)
+    area = models.FloatField(null=True)
+    hwhm = models.FloatField(null=True)
+    roundness = models.FloatField(null=True)
+    pa = models.FloatField(null=True)
+    sharpness = models.FloatField(null=True)
+
 
 
 class Catalog(models.Model):
