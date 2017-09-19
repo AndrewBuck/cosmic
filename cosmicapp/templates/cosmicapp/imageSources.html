@@ -11,7 +11,7 @@
 
 {% include "./jquery.html" %}
 
-<table border=2px>
+<table border=2px style="border-collapse: collapse; margin: 1em;">
 <tr>
 <th></th>
 <th>Sextractor</th>
@@ -19,48 +19,57 @@
 <th>Starfind</th>
 <th>Multiple<br>Method<br>Matches</th>
 </tr>
+
+<tr>
+<td>Enabled:</td>
+<td align=center class='sextractorResults'><input type=checkbox id=sextractorEnabledCheckbox onchange="updateTable()" checked></td>
+<td align=center class='daofindResults'><input type=checkbox id=daofindEnabledCheckbox onchange="updateTable()" checked></td>
+<td align=center class='starfindResults'><input type=checkbox id=starfindEnabledCheckbox onchange="updateTable()" checked></td>
+<td align=center class='sourceFindMatchesResults'><input type=checkbox id=sourceFindMatchesEnabledCheckbox onchange="updateTable()" checked></td>
+</tr>
+
 <tr>
 <td>Size:</td>
-<td><input id="sextractorSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
-<td><input id="daofindSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
-<td><input id="starfindSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
-<td><input id="sourceFindMatchesSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td class='sextractorResults'><input id="sextractorSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td class='daofindResults'><input id="daofindSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td class='starfindResults'><input id="starfindSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td class='sourceFindMatchesResults'><input id="sourceFindMatchesSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 </tr>
 
 <tr>
 <td>Size scale:</td>
-<td><input id="sextractorSizeScaleSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
-<td><input id="daofindSizeScaleSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
-<td><input id="starfindSizeScaleSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
-<td><input id="sourceFindMatchesSizeScaleSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td class='sextractorResults'><input id="sextractorSizeScaleSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td class='daofindResults'><input id="daofindSizeScaleSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td class='starfindResults'><input id="starfindSizeScaleSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td class='sourceFindMatchesResults'><input id="sourceFindMatchesSizeScaleSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 </tr>
 
 <tr>
 <td>Label thresh:</td>
-<td><input id="sextractorLabelThresholdSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
-<td><input id="daofindLabelThresholdSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
-<td><input id="starfindLabelThresholdSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
-<td><input id="sourceFindMatchesLabelThresholdSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td class='sextractorResults'><input id="sextractorLabelThresholdSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td class='daofindResults'><input id="daofindLabelThresholdSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td class='starfindResults'><input id="starfindLabelThresholdSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td class='sourceFindMatchesResults'><input id="sourceFindMatchesLabelThresholdSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 </tr>
 
 <tr>
 <td>Label size:</td>
-<td><input id="sextractorLabelSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
-<td><input id="daofindLabelSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
-<td><input id="starfindLabelSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
-<td><input id="sourceFindMatchesLabelSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td class='sextractorResults'><input id="sextractorLabelSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td class='daofindResults'><input id="daofindLabelSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td class='starfindResults'><input id="starfindLabelSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td class='sourceFindMatchesResults'><input id="sourceFindMatchesLabelSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 </tr>
 
 <tr>
 <td>Label:</td>
-    <td>
+    <td class='sextractorResults'>
     <input type=checkbox id=sextractorLabelFlux onchange="drawSources()"> Flux<br>
     <input type=checkbox id=sextractorLabelFluxErr onchange="drawSources()"> Flux Err<br>
     <input type=checkbox id=sextractorLabelFlags onchange="drawSources()"> Flags<br>
     <input type=checkbox id=sextractorLabelConfidence onchange="drawSources()" checked> Confidence
     </td>
 
-    <td>
+    <td class='daofindResults'>
     <input type=checkbox id=daofindLabelMag onchange="drawSources()"> Magnitude<br>
     <input type=checkbox id=daofindLabelSharpness onchange="drawSources()"> Sharpness<br>
     <input type=checkbox id=daofindLabelSRound onchange="drawSources()"> Symmetry roundness<br>
@@ -68,7 +77,7 @@
     <input type=checkbox id=daofindLabelConfidence onchange="drawSources()" checked> Confidence
     </td>
 
-    <td>
+    <td class='starfindResults'>
     <input type=checkbox id=starfindLabelMag onchange="drawSources()"> Magnitude<br>
     <input type=checkbox id=starfindLabelArea onchange="drawSources()"> Area<br>
     <input type=checkbox id=starfindLabelHWHM onchange="drawSources()"> HWHM<br>
@@ -78,7 +87,7 @@
     <input type=checkbox id=starfindLabelConfidence onchange="drawSources()" checked> Confidence
     </td>
 
-    <td>
+    <td class='sourceFindMatchesResults'>
     <input type=checkbox id=sourceFindMatchesLabelNum onchange="drawSources()"> Num Methods<br>
     <input type=checkbox id=sourceFindMatchesLabelConfidence onchange="drawSources()" checked> Confidence
     </td>
@@ -303,6 +312,7 @@ function drawSources()
     sizeScaleFactor = $('#sextractorSizeScaleSlider').val()/30.0;
     labelThreshold = $('#sextractorLabelThresholdSlider').val()*10;
     labelSize= $('#sextractorLabelSizeSlider').val()/5 + 10
+    if($('#sextractorEnabledCheckbox').is(':checked'))
     for(i = 0; i < sextractorResults.length; i++)
     {
         context.beginPath();
@@ -339,6 +349,7 @@ function drawSources()
     sizeScaleFactor = $('#daofindSizeScaleSlider').val()/150.0;
     labelThreshold = $('#daofindLabelThresholdSlider').val()*20;
     labelSize= $('#daofindLabelSizeSlider').val()/5 + 10
+    if($('#daofindEnabledCheckbox').is(':checked'))
     for(i = 0; i < daofindResults.length; i++)
     {
         context.beginPath();
@@ -378,6 +389,7 @@ function drawSources()
     sizeScaleFactor = $('#starfindSizeScaleSlider').val()/150.0;
     labelThreshold = $('#starfindLabelThresholdSlider').val()*20;
     labelSize= $('#starfindLabelSizeSlider').val()/5 + 10
+    if($('#starfindEnabledCheckbox').is(':checked'))
     for(i = 0; i < starfindResults.length; i++)
     {
         context.beginPath();
@@ -423,6 +435,7 @@ function drawSources()
     sizeScaleFactor = $('#sourceFindMatchesSizeScaleSlider').val()/300.0;
     labelThreshold = $('#sourceFindMatchesLabelThresholdSlider').val()*500;
     labelSize= $('#sourceFindMatchesLabelSizeSlider').val()/5 + 10
+    if($('#sourceFindMatchesEnabledCheckbox').is(':checked'))
     for(i = 0; i < sourceFindMatches.length; i++)
     {
         context.beginPath();
@@ -449,6 +462,31 @@ function drawSources()
     }
 };
 
+function updateTable()
+{
+    if($('#sextractorEnabledCheckbox').is(':checked'))
+        $('.sextractorResults').css('background-color', sextractorColor);
+    else
+        $('.sextractorResults').css('background-color', 'transparent');
+
+    if($('#daofindEnabledCheckbox').is(':checked'))
+        $('.daofindResults').css('background-color', daofindColor);
+    else
+        $('.daofindResults').css('background-color', 'transparent');
+
+    if($('#starfindEnabledCheckbox').is(':checked'))
+        $('.starfindResults').css('background-color', starfindColor);
+    else
+        $('.starfindResults').css('background-color', 'transparent');
+
+    if($('#sourceFindMatchesEnabledCheckbox').is(':checked'))
+        $('.sourceFindMatchesResults').css('background-color', sourceFindMatchesColor);
+    else
+        $('.sourceFindMatchesResults').css('background-color', 'transparent');
+
+    drawSources();
+};
+
 window.onload = function()
 {
     canvas = document.getElementById("sourcesCanvas");
@@ -458,7 +496,7 @@ window.onload = function()
     img = new Image();
     img.src = '{{image.getThumbnailUrlFull|safe}}';
 
-    drawSources();
+    updateTable();
 
     getSextractorResults();
     getDaofindResults();
