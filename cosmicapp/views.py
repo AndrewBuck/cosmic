@@ -450,7 +450,7 @@ def query(request):
         if request.GET['queryfor'] == 'image':
             if limit > 100:
                 limit = 100
-        elif request.GET['queryfor'] in ['sextractorResult', 'daofindResult', 'starfindResult']:
+        elif request.GET['queryfor'] in ['sextractorResult', 'daofindResult', 'starfindResult', 'sourceFindMatch']:
             if limit > 10000:
                 limit = 10000
 
@@ -533,6 +533,7 @@ def query(request):
 
         for result in results:
             sextractorDict = {}
+            sextractorDict['id'] = str(result.pk)
             sextractorDict['imageId'] = str(result.image.pk)
             sextractorDict['pixelX'] = str(result.pixelX)
             sextractorDict['pixelY'] = str(result.pixelY)
@@ -557,6 +558,7 @@ def query(request):
 
         for result in results:
             daofindDict = {}
+            daofindDict['id'] = str(result.pk)
             daofindDict['imageId'] = str(result.image.pk)
             daofindDict['pixelX'] = str(result.pixelX)
             daofindDict['pixelY'] = str(result.pixelY)
@@ -582,6 +584,7 @@ def query(request):
 
         for result in results:
             starfindDict = {}
+            starfindDict['id'] = str(result.pk)
             starfindDict['imageId'] = str(result.image.pk)
             starfindDict['pixelX'] = str(result.pixelX)
             starfindDict['pixelY'] = str(result.pixelY)
@@ -594,6 +597,31 @@ def query(request):
             starfindDict['sharpness'] = str(result.sharpness)
 
             etree.SubElement(root, "StarfindResult", starfindDict)
+
+    elif request.GET['queryfor'] == 'sourceFindMatch':
+        orderField, ascDesc = parseQueryOrderBy(request, {'id': 'pk'}, 'id', '')
+        results = SourceFindMatch.objects
+
+        if 'imageId' in request.GET:
+            for valueString in request.GET.getlist('imageId'):
+                values = cleanupQueryValues(valueString, 'int')
+                if len(values) > 0:
+                    results = results.filter(image__pk__in=values)
+
+        results = results.order_by(ascDesc + orderField)[offset:offset+limit]
+
+        for result in results:
+            sourceFindMatchDict = {}
+            sourceFindMatchDict['id'] = str(result.pk)
+            sourceFindMatchDict['imageId'] = str(result.image.pk)
+            if result.sextractorResult:
+                sourceFindMatchDict['sextractorResult'] = str(result.sextractorResult.pk)
+            if result.daofindResult:
+                sourceFindMatchDict['daofindResult'] = str(result.daofindResult.pk)
+            if result.starfindResult:
+                sourceFindMatchDict['starfindResult'] = str(result.starfindResult.pk)
+
+            etree.SubElement(root, "SourceFindMatch", sourceFindMatchDict)
 
     elif request.GET['queryfor'] == 'ota':
         results = OTA.objects

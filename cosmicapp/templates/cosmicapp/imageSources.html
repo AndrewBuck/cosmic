@@ -17,12 +17,14 @@
 <th>Sextractor</th>
 <th>Daofind</th>
 <th>Starfind</th>
+<th>Multiple<br>Method<br>Matches</th>
 </tr>
 <tr>
 <td>Size:</td>
 <td><input id="sextractorSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 <td><input id="daofindSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 <td><input id="starfindSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td><input id="sourceFindMatchesSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 </tr>
 
 <tr>
@@ -30,6 +32,7 @@
 <td><input id="sextractorSizeScaleSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 <td><input id="daofindSizeScaleSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 <td><input id="starfindSizeScaleSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td><input id="sourceFindMatchesSizeScaleSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 </tr>
 
 <tr>
@@ -37,6 +40,7 @@
 <td><input id="sextractorLabelThresholdSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 <td><input id="daofindLabelThresholdSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 <td><input id="starfindLabelThresholdSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td><input id="sourceFindMatchesLabelThresholdSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 </tr>
 
 <tr>
@@ -44,6 +48,7 @@
 <td><input id="sextractorLabelSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 <td><input id="daofindLabelSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 <td><input id="starfindLabelSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td><input id="sourceFindMatchesLabelSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 </tr>
 
 <tr>
@@ -72,6 +77,11 @@
     <input type=checkbox id=starfindLabelSharpness onchange="drawSources()"> Sharpness<br>
     <input type=checkbox id=starfindLabelConfidence onchange="drawSources()" checked> Confidence
     </td>
+
+    <td>
+    <input type=checkbox id=sourceFindMatchesLabelNum onchange="drawSources()"> Num Methods<br>
+    <input type=checkbox id=sourceFindMatchesLabelConfidence onchange="drawSources()" checked> Confidence
+    </td>
 </tr>
 </table>
 
@@ -82,16 +92,33 @@ Your browser does not support the HTML5 canvas tag.
 <script>
 var imageId = {{id}};
 var sextractorResults = [], daofindResults = [], starfindResults = [];
+var sextractorResultsPromise, daofindResultsPromise, starfindResultsPromise;
+var sourceFindMatches = [];
 var canvas, context;
 var img;
 var sextractorColor = "#E02010";
 var daofindColor = "#20E010";
 var starfindColor = "#E0E020";
+var sourceFindMatchesColor = "#FF7700";
+
+function getObjectById(objectList, id)
+{
+    if(id == null)
+        return null;
+
+    for(index = 0; index < objectList.length; index++)
+    {
+        if(objectList[index].id == id)
+            return objectList[index];
+    }
+
+    return null;
+};
 
 function getSextractorResults()
 {
-    $.ajax({
-        url : "/query/?queryfor=sextractorResult&limit=1000&imageId=" + imageId,
+    sextractorResultsPromise = $.ajax({
+        url : "/query/?queryfor=sextractorResult&limit=10000&imageId=" + imageId,
         type : "get",
         async: true,
         success : function(xml)
@@ -101,6 +128,7 @@ function getSextractorResults()
             {
                 attr = results[i].attributes;
                 sextractorResults[i] = new Object({
+                    id: Number(attr.getNamedItem('id').nodeValue),
                     x: Number(attr.getNamedItem('pixelX').nodeValue),
                     y: Number(attr.getNamedItem('pixelY').nodeValue),
                     z: Number(attr.getNamedItem('pixelZ').nodeValue),
@@ -113,14 +141,15 @@ function getSextractorResults()
             }
 
             drawSources();
+            Promise.resolve(true);
         }
     });
 };
 
 function getDaofindResults()
 {
-    $.ajax({
-        url : "/query/?queryfor=daofindResult&limit=1000&imageId=" + imageId,
+    daofindResultsPromise = $.ajax({
+        url : "/query/?queryfor=daofindResult&limit=10000&imageId=" + imageId,
         type : "get",
         async: true,
         success : function(xml)
@@ -130,6 +159,7 @@ function getDaofindResults()
             {
                 attr = results[i].attributes;
                 daofindResults[i] = new Object({
+                    id: Number(attr.getNamedItem('id').nodeValue),
                     x: Number(attr.getNamedItem('pixelX').nodeValue),
                     y: Number(attr.getNamedItem('pixelY').nodeValue),
                     z: Number(attr.getNamedItem('pixelZ').nodeValue),
@@ -146,14 +176,15 @@ function getDaofindResults()
             }
 
             drawSources();
+            Promise.resolve(true);
         }
     });
 };
 
 function getStarfindResults()
 {
-    $.ajax({
-        url : "/query/?queryfor=starfindResult&limit=1000&imageId=" + imageId,
+    starfindResultsPromise = $.ajax({
+        url : "/query/?queryfor=starfindResult&limit=10000&imageId=" + imageId,
         type : "get",
         async: true,
         success : function(xml)
@@ -163,6 +194,7 @@ function getStarfindResults()
             {
                 attr = results[i].attributes;
                 starfindResults[i] = new Object({
+                    id: Number(attr.getNamedItem('id').nodeValue),
                     x: Number(attr.getNamedItem('pixelX').nodeValue),
                     y: Number(attr.getNamedItem('pixelY').nodeValue),
                     z: Number(attr.getNamedItem('pixelZ').nodeValue),
@@ -181,6 +213,81 @@ function getStarfindResults()
             }
 
             drawSources();
+            Promise.resolve(true);
+        }
+    });
+};
+
+function getSourceFindMatches()
+{
+    $.ajax({
+        url : "/query/?queryfor=sourceFindMatch&limit=10000&imageId=" + imageId,
+        type : "get",
+        async: true,
+        success : function(xml)
+        {
+            results = xml.getElementsByTagName('SourceFindMatch')
+            for(i = 0; i < results.length; i++)
+            {
+                attr = results[i].attributes;
+
+                sextractorId = null, daofindId = null, starfindId = null;
+                if(attr.getNamedItem('sextractorResult') != null)
+                    sextractorId = Number(attr.getNamedItem('sextractorResult').nodeValue);
+
+                if(attr.getNamedItem('daofindResult') != null)
+                    daofindId = Number(attr.getNamedItem('daofindResult').nodeValue);
+
+                if(attr.getNamedItem('starfindResult') != null)
+                    starfindId = Number(attr.getNamedItem('starfindResult').nodeValue);
+
+                sourceFindMatches[i] = new Object({
+                    id: Number(attr.getNamedItem('id').nodeValue),
+                    sextractorResultId: sextractorId,
+                    daofindResultId: daofindId,
+                    starfindResultId: starfindId
+                });
+
+                //TODO: Since this code depends on accessing other objects we will need to break it out into a function
+                //and call it again every time new objects are added to the lists.
+                sourceFindMatches[i].sextractorResult = getObjectById(sextractorResults, sourceFindMatches[i].sextractorResultId);
+                sourceFindMatches[i].daofindResult = getObjectById(daofindResults, sourceFindMatches[i].daofindResultId);
+                sourceFindMatches[i].starfindResult = getObjectById(starfindResults, sourceFindMatches[i].starfindResultId);
+
+                x = 0, y = 0, confidence = 1, num = 0;
+                if(sourceFindMatches[i].sextractorResult != null)
+                {
+                    x += sourceFindMatches[i].sextractorResult.x;
+                    y += sourceFindMatches[i].sextractorResult.y;
+                    confidence *= sourceFindMatches[i].sextractorResult.confidence;
+                    num++;
+                }
+
+                if(sourceFindMatches[i].daofindResult != null)
+                {
+                    x += sourceFindMatches[i].daofindResult.x;
+                    y += sourceFindMatches[i].daofindResult.y;
+                    confidence *= sourceFindMatches[i].daofindResult.confidence;
+                    num++;
+                }
+
+                if(sourceFindMatches[i].starfindResult != null)
+                {
+                    x += sourceFindMatches[i].starfindResult.x;
+                    y += sourceFindMatches[i].starfindResult.y;
+                    confidence *= sourceFindMatches[i].starfindResult.confidence;
+                    num++;
+                }
+
+                sourceFindMatches[i].x = x/num;
+                sourceFindMatches[i].y = y/num;
+
+                sourceFindMatches[i].num = num;
+                sourceFindMatches[i].confidence = confidence;
+            }
+
+            drawSources();
+            Promise.resolve(true);
         }
     });
 };
@@ -308,6 +415,38 @@ function drawSources()
             context.fillText(labelText, starfindResults[i].x + labelSize/2, {{image.dimY}} - starfindResults[i].y + labelSize)
         }
     }
+
+    context.strokeStyle = sourceFindMatchesColor;
+    context.fillStyle = context.strokeStyle;
+
+    sizeFactor = $('#sourceFindMatchesSizeSlider').val()/500.0;
+    sizeScaleFactor = $('#sourceFindMatchesSizeScaleSlider').val()/300.0;
+    labelThreshold = $('#sourceFindMatchesLabelThresholdSlider').val()*500;
+    labelSize= $('#sourceFindMatchesLabelSizeSlider').val()/5 + 10
+    for(i = 0; i < sourceFindMatches.length; i++)
+    {
+        context.beginPath();
+        context.arc(sourceFindMatches[i].x, {{image.dimY}} - sourceFindMatches[i].y,
+            sizeFactor*Math.pow(math.abs(sourceFindMatches[i].confidence), sizeScaleFactor), 0, 2*Math.PI)
+        context.stroke();
+
+        if(sourceFindMatches[i].confidence > labelThreshold)
+        {
+            labelArray = [];
+
+            if($('#sourceFindMatchesLabelNum').is(':checked'))
+                labelArray[labelArray.length] = math.round(sourceFindMatches[i].num, 0);
+
+            if($('#sourceFindMatchesLabelConfidence').is(':checked'))
+                labelArray[labelArray.length] = math.round(sourceFindMatches[i].confidence, 0);
+
+            labelText = labelArray.join(' ');
+            context.font = labelSize + 'px sans-serif'
+            context.textAlign = 'end';
+            context.fillText(labelText, sourceFindMatches[i].x - labelSize/2, {{image.dimY}} - sourceFindMatches[i].y)
+            context.textAlign = 'start';
+        }
+    }
 };
 
 window.onload = function()
@@ -324,6 +463,7 @@ window.onload = function()
     getSextractorResults();
     getDaofindResults();
     getStarfindResults();
+    $.when(sextractorResultsPromise, daofindResultsPromise, starfindResultsPromise).done(getSourceFindMatches);
 };
 </script>
 {% endblock %}
