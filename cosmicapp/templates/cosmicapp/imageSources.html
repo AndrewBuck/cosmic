@@ -107,8 +107,29 @@ var canvas, context;
 var img;
 var sextractorColor = "#E02010";
 var daofindColor = "#20E010";
-var starfindColor = "#E0E020";
-var sourceFindMatchesColor = "#FF7700";
+var starfindColor = "#7199E2";
+var sourceFindMatchesColor = "#F99740";
+
+function drawStroked(c, text, x, y)
+{
+    oldLineWidth = c.lineWidth;
+    oldStrokeStyle = c.strokeStyle;
+    oldLineJoin = c.lineJoin;
+    oldMiterLimit = c.miterLimit;
+
+    c.lineWidth = 4;
+    c.strokeStyle = 'black';
+    c.lineJoin="miter"; //Experiment with "bevel" & "round" for the effect you want!
+    c.miterLimit=2;
+
+    c.strokeText(text, x, y);
+    c.fillText(text, x, y);
+
+    c.lineWidth = oldLineWidth;
+    c.strokeStyle = oldStrokeStyle;
+    c.lineJoin = oldLineJoin;
+    c.miterLimit = oldMiterLimit;
+};
 
 function getObjectById(objectList, id)
 {
@@ -304,9 +325,10 @@ function getSourceFindMatches()
 function drawSources()
 {
     context.drawImage(img, 0, 0);
+    context.lineWidth = 2;
 
     context.strokeStyle = sextractorColor;
-    context.fillStyle = context.strokeStyle;
+    context.fillStyle = sextractorColor;
 
     sizeFactor = $('#sextractorSizeSlider').val()/250.0;
     sizeScaleFactor = $('#sextractorSizeScaleSlider').val()/30.0;
@@ -337,13 +359,14 @@ function drawSources()
                 labelArray[labelArray.length] = math.round(sextractorResults[i].confidence, 0);
 
             labelText = labelArray.join(' ');
+
             context.font = labelSize + 'px sans-serif'
-            context.fillText(labelText, sextractorResults[i].x + labelSize/2, {{image.dimY}} - sextractorResults[i].y - labelSize)
+            drawStroked(context, labelText, sextractorResults[i].x + labelSize/2, {{image.dimY}} - sextractorResults[i].y - labelSize)
         }
     }
 
     context.strokeStyle = daofindColor;
-    context.fillStyle = context.strokeStyle;
+    context.fillStyle = daofindColor;
 
     sizeFactor = $('#daofindSizeSlider').val()/50.0;
     sizeScaleFactor = $('#daofindSizeScaleSlider').val()/150.0;
@@ -377,13 +400,14 @@ function drawSources()
                 labelArray[labelArray.length] = math.round(daofindResults[i].confidence, 0);
 
             labelText = labelArray.join(' ');
+
             context.font = labelSize + 'px sans-serif'
-            context.fillText(labelText, daofindResults[i].x + labelSize/2, {{image.dimY}} - daofindResults[i].y)
+            drawStroked(context, labelText, daofindResults[i].x + labelSize/2, {{image.dimY}} - daofindResults[i].y)
         }
     }
 
     context.strokeStyle = starfindColor;
-    context.fillStyle = context.strokeStyle;
+    context.fillStyle = starfindColor;
 
     sizeFactor = $('#starfindSizeSlider').val()/50.0;
     sizeScaleFactor = $('#starfindSizeScaleSlider').val()/150.0;
@@ -423,13 +447,14 @@ function drawSources()
                 labelArray[labelArray.length] = math.round(starfindResults[i].confidence, 0);
 
             labelText = labelArray.join(' ');
+
             context.font = labelSize + 'px sans-serif'
-            context.fillText(labelText, starfindResults[i].x + labelSize/2, {{image.dimY}} - starfindResults[i].y + labelSize)
+            drawStroked(context, labelText, starfindResults[i].x + labelSize/2, {{image.dimY}} - starfindResults[i].y + labelSize)
         }
     }
 
     context.strokeStyle = sourceFindMatchesColor;
-    context.fillStyle = context.strokeStyle;
+    context.fillStyle = sourceFindMatchesColor;
 
     sizeFactor = $('#sourceFindMatchesSizeSlider').val()/500.0;
     sizeScaleFactor = $('#sourceFindMatchesSizeScaleSlider').val()/300.0;
@@ -454,9 +479,10 @@ function drawSources()
                 labelArray[labelArray.length] = math.round(sourceFindMatches[i].confidence, 0);
 
             labelText = labelArray.join(' ');
+
             context.font = labelSize + 'px sans-serif'
             context.textAlign = 'end';
-            context.fillText(labelText, sourceFindMatches[i].x - labelSize/2, {{image.dimY}} - sourceFindMatches[i].y)
+            drawStroked(context, labelText, sourceFindMatches[i].x - labelSize/2, {{image.dimY}} - sourceFindMatches[i].y)
             context.textAlign = 'start';
         }
     }
