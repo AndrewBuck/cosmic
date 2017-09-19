@@ -238,9 +238,18 @@ def generateThumbnails(filename):
 
 @shared_task
 def sextractor(filename):
+    # Get the image record
+    image = Image.objects.get(fileRecord__onDiskFileName=filename)
+
+    #TODO: Handle multi-extension fits files.
+    channelInfos = ImageChannelInfo.objects.filter(image=image).order_by('index')
+
+    detectThreshold = 4.0*channelInfos[0].bgStdDev
+
     #TODO: sextractor can only handle .fit files.  Should autoconvert the file to .fit if necessary before running.
     catfileName = settings.MEDIA_ROOT + filename + ".cat"
-    proc = subprocess.Popen(['sextractor', '-CATALOG_NAME', catfileName, settings.MEDIA_ROOT + filename],
+    proc = subprocess.Popen(['sextractor', '-CATALOG_NAME', catfileName, settings.MEDIA_ROOT + filename,
+    '-THRESH_TYPE', 'ABSOLUTE', '-DETECT_THRESH', str(detectThreshold)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         cwd=settings.MEDIA_ROOT
@@ -252,9 +261,6 @@ def sextractor(filename):
 
     print("sextractor: " + filename + "   " + output + "   " + error)
     sys.stdout.flush()
-
-    # Get the image record
-    image = Image.objects.get(fileRecord__onDiskFileName=filename)
 
     with open(catfileName, 'r') as catfile:
         fieldDict = {}
