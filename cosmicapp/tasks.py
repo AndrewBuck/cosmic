@@ -9,6 +9,8 @@ import json
 import sys
 import os
 import re
+import itertools
+import math
 
 from astropy import wcs
 from astropy.io import fits
@@ -405,6 +407,94 @@ def starfind(filename):
         os.remove(catfileName)
     except OSError:
         pass
+
+    return True
+
+@shared_task
+def starmatch(filename):
+    print("starmatch: " + filename)
+    sys.stdout.flush()
+
+    image = Image.objects.get(fileRecord__onDiskFileName=filename)
+
+    #NOTE: It may be faster if these dictionary 'name' entries were shortened or changed to 'ints', maybe an enum.
+    inputs = [
+        { 'name': 'sextractor', 'model': SextractorResult },
+        { 'name': 'daofind', 'model': DaofindResult },
+        { 'name': 'starfind', 'model': StarfindResult }
+        ]
+
+    # Loop over all the pairs of source extraction methods listed in 'inputs'.
+    matchedResults = []
+    for i1, i2 in itertools.combinations(inputs, 2):
+        results1 = i1['model'].objects.filter(image=image)
+        results2 = i2['model'].objects.filter(image=image)
+
+        print('Matching {} {} results with {} {} results'.format(len(results1), i1['name'], len(results2), i2['name']))
+
+        # Loop over all the pairs of results in the two current methods and record
+        # any match pairs that are within 3 pixels of eachother.
+        matches = []
+        for r1 in results1:
+            nearestDist = 3.0
+            nearestDistSq = nearestDist * nearestDist
+            nearestResult = None
+            x1 = r1.pixelX
+            y1 = r1.pixelY
+            for r2 in results2:
+                dx = r2.pixelX - x1
+                dy = r2.pixelY - y1
+                dSq = dx*dx + dy*dy
+
+                if dSq < nearestDistSq:
+                    nearestDist = math.sqrt(dSq)
+                    nearestDistSq = dSq
+                    nearestResult = r2
+
+            if nearestResult != None:
+                matches.append( (r1, nearestResult) )
+
+        print('   Found {} matches.'.format(len(matches)))
+        matchedResults.append( (i1, i2, matches) )
+
+    # Now that we have all the matches between every two individual methods, combine them into 'superMatches' where 3
+    # or more different match types all agree on the same star.
+    superMatches = []
+    for i1, i2, matches in matchedResults:
+        for match in matches:
+            # Check to see if either of the matched pair in the current match exist anyhere in the super matches already
+            for superMatch in superMatches:
+                if i1['name'] in superMatch:
+                    if superMatch[i1['name']] == match[0]:
+                        superMatch[i2['name']] = match[1]
+                        break
+                if i2['name'] in superMatch:
+                    if superMatch[i2['name']] == match[1]:
+                        superMatch[i1['name']] = match[0]
+                        break
+            # Nether of the current match pair exists anywhere in the superMatch array already, so create a new entry
+            # containing the current match pair.
+            else:
+                d = {}
+                d[i1['name']] = match[0]
+                d[i2['name']] = match[1]
+                superMatches.append(d)
+
+    # Loop over all the superMatch entries and create a database entry for each one.
+    with transaction.atomic():
+        for superMatch in superMatches:
+            sextractorResult = superMatch.get('sextractor', None)
+            daofindResult = superMatch.get('daofind', None)
+            starfindResult = superMatch.get('starfind', None)
+
+            record = SourceFindMatch(
+                image = image,
+                sextractorResult = sextractorResult,
+                daofindResult = daofindResult,
+                starfindResult = starfindResult
+                )
+
+            record.save()
 
     return True
 

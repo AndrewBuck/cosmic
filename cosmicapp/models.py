@@ -265,6 +265,12 @@ class StarfindResult(SourceFindResult):
     pa = models.FloatField(null=True)
     sharpness = models.FloatField(null=True)
 
+class SourceFindMatch(models.Model):
+    image = models.ForeignKey(Image, on_delete=models.CASCADE)
+    sextractorResult = models.ForeignKey(SextractorResult, null=True, on_delete=models.CASCADE)
+    daofindResult = models.ForeignKey(DaofindResult, null=True, on_delete=models.CASCADE)
+    starfindResult = models.ForeignKey(StarfindResult, null=True, on_delete=models.CASCADE)
+
 
 
 class Catalog(models.Model):

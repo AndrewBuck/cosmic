@@ -73,6 +73,7 @@ def upload(request):
 
             fileBase, fileExtension = os.path.splitext(record.onDiskFileName)
 
+            #TODO: Need to wrap creation of these process inputs in a transaction so that processes and prerequisites are entered fully before any tasks start executing
             if fileExtension.lower() in settings.SUPPORTED_IMAGE_TYPES:
                 imageRecord = Image(
                     fileRecord = record
@@ -184,6 +185,30 @@ def upload(request):
                     )
 
                 paStarfind.save()
+
+                piStarmatch = ProcessInput(
+                    process = "starmatch",
+                    requestor = User.objects.get(pk=request.user.pk),
+                    submittedDateTime = timezone.now(),
+                    priority = 3000,
+                    estCostCPU = 10,
+                    estCostBandwidth = 0,
+                    estCostStorage = 3000,
+                    estCostIO = 10000
+                    )
+
+                piStarmatch.save()
+
+                paStarmatch = ProcessArgument(
+                    processInput = piStarmatch,
+                    argIndex = 1,
+                    arg = record.onDiskFileName
+                    )
+
+                paStarmatch.save()
+                piStarmatch.prerequisites.add(piSextractor)
+                piStarmatch.prerequisites.add(piDaofind)
+                piStarmatch.prerequisites.add(piStarfind)
 
                 piHeaders = ProcessInput(
                     process = "parseheaders",
