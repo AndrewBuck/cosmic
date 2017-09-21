@@ -24,10 +24,10 @@
 <table border=2px style="border-collapse: collapse; margin: 1em;">
 <tr>
 <th></th>
-<th>Sextractor</th>
-<th>Daofind</th>
-<th>Starfind</th>
-<th>Multiple<br>Method<br>Matches</th>
+<th>Sextractor<div id=sextractorLoadingDiv></div></th>
+<th>Daofind<div id=daofindLoadingDiv></div></th>
+<th>Starfind<div id=starfindLoadingDiv></div></th>
+<th>Multiple<br>Method<br>Matches<div id=sourceFindMatchesLoadingDiv></div></th>
 </tr>
 
 <tr>
@@ -243,6 +243,8 @@ function addHistogramToPlot(data, nBins, lineColor, legendStr, dashArray)
 
 function getSextractorResults()
 {
+    $('#sextractorLoadingDiv').html('<br><br>Loading...');
+
     sextractorResultsPromise = $.ajax({
         url : "/query/?queryfor=sextractorResult&limit=10000&imageId=" + imageId,
         type : "get",
@@ -265,6 +267,7 @@ function getSextractorResults()
                     flags: Number(attr.getNamedItem('flags').nodeValue)
                 });
 
+                //TODO:  Add confidence for this and other types to the bokeh histogram plot.
                 sextractorResults[i].confidence = math.pow(sextractorResults[i].fluxAuto / sextractorResults[i].fluxAutoErr, 2);
 
                 fluxAutoValues[i] = sextractorResults[i].fluxAuto;
@@ -273,6 +276,7 @@ function getSextractorResults()
             addHistogramToPlot(fluxAutoValues, numberOfBins, sextractorColor, 'Flux (sextractor)', []);
 
             drawSources();
+            $('#sextractorLoadingDiv').html('');
             Promise.resolve(true);
         }
     });
@@ -280,6 +284,8 @@ function getSextractorResults()
 
 function getDaofindResults()
 {
+    $('#daofindLoadingDiv').html('<br><br>Loading...');
+
     daofindResultsPromise = $.ajax({
         url : "/query/?queryfor=daofindResult&limit=10000&imageId=" + imageId,
         type : "get",
@@ -323,6 +329,7 @@ function getDaofindResults()
             addHistogramToPlot(groundValues, numberOfBins, daofindColor, 'G Round (daofind)', [6, 6]);
 
             drawSources();
+            $('#daofindLoadingDiv').html('');
             Promise.resolve(true);
         }
     });
@@ -330,6 +337,8 @@ function getDaofindResults()
 
 function getStarfindResults()
 {
+    $('#starfindLoadingDiv').html('<br><br>Loading...');
+
     starfindResultsPromise = $.ajax({
         url : "/query/?queryfor=starfindResult&limit=10000&imageId=" + imageId,
         type : "get",
@@ -381,6 +390,7 @@ function getStarfindResults()
             addHistogramToPlot(sharpnessValues, numberOfBins, starfindColor, 'Sharpness (starfind)', [2, 2, 2, 2, 5]);
 
             drawSources();
+            $('#starfindLoadingDiv').html('');
             Promise.resolve(true);
         }
     });
@@ -388,6 +398,8 @@ function getStarfindResults()
 
 function getSourceFindMatches()
 {
+    $('#sourceFindMatchesLoadingDiv').html('<br><br>Loading...');
+
     $.ajax({
         url : "/query/?queryfor=sourceFindMatch&limit=10000&imageId=" + imageId,
         type : "get",
@@ -455,6 +467,7 @@ function getSourceFindMatches()
             }
 
             drawSources();
+            $('#sourceFindMatchesLoadingDiv').html('');
             Promise.resolve(true);
         }
     });
@@ -669,6 +682,7 @@ window.onload = function()
         background_fill_color: "#F2F2F7"
         });
 
+    //TODO: One way to clear this plot would be to delete the innerHtml of this div and re-display the plot from scratch.
     div = document.getElementById("bokehPlotDiv");
     Bokeh.Plotting.show(plot, div);
 
