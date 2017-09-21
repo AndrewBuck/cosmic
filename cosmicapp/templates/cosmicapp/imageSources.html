@@ -207,21 +207,23 @@ function addHistogramToPlot(data, nBins, lineColor, legendStr, dashArray)
         y: bins[1]
         } });
 
-    /*
     l = bins[0].slice(0, bins[0].length);
-    r = bins[0].slice(1, bins[0].length);   r.push(bins[0][bins[0].length]+1); //TODO: Fix this +1 to be plus the difference in the last two bins.
+    r = bins[0].slice(1, bins[0].length);
+    r.push(2*bins[0][bins[0].length] - bins[0][bins[0].length]);
     t = bins[1];
     b = 0;
-    */
 
-    //plot.quad(l, r, t, b, {
-    plot.line(bins[0], bins[1], {
-        line_color: lineColor,
-        //fill_color: lineColor,
+    quad = plot.quad(l, r, b, t, {
+        line_color: '#000000',
+        fill_color: lineColor,
+        fill_alpha: 0.25,
         line_width: 2,
         line_dash: dashArray,
         legend: legendStr
         });
+
+    // Hack to force a window resize event which makes the plot properly draw the axis labels.
+    window.dispatchEvent(new Event('resize'));
 
     /*
     oldXRange = plot.x_range;
@@ -235,6 +237,8 @@ function addHistogramToPlot(data, nBins, lineColor, legendStr, dashArray)
 
     //plot.legend[0].location = "top_left";
     //plot.legend[0].click_policy="hide";
+
+    return quad;
 };
 
 function getSextractorResults()
@@ -266,7 +270,7 @@ function getSextractorResults()
                 fluxAutoValues[i] = sextractorResults[i].fluxAuto;
             }
 
-            addHistogramToPlot(fluxAutoValues, numberOfBins, sextractorColor, 'Flux', []);
+            addHistogramToPlot(fluxAutoValues, numberOfBins, sextractorColor, 'Flux (sextractor)', []);
 
             drawSources();
             Promise.resolve(true);
@@ -313,10 +317,10 @@ function getDaofindResults()
                 groundValues[i] = daofindResults[i].ground;
             }
 
-            addHistogramToPlot(magValues, numberOfBins, daofindColor, 'Mag', []);
-            addHistogramToPlot(sharpnessValues, numberOfBins, daofindColor, 'Sharpness', [3, 3]);
-            addHistogramToPlot(sroundValues, numberOfBins, daofindColor, 'S Round', [3, 6]);
-            addHistogramToPlot(groundValues, numberOfBins, daofindColor, 'G Round', [6, 6]);
+            addHistogramToPlot(magValues, numberOfBins, daofindColor, 'Mag (daofind)', []);
+            addHistogramToPlot(sharpnessValues, numberOfBins, daofindColor, 'Sharpness (daofind)', [3, 3]);
+            addHistogramToPlot(sroundValues, numberOfBins, daofindColor, 'S Round (daofind)', [3, 6]);
+            addHistogramToPlot(groundValues, numberOfBins, daofindColor, 'G Round (daofind)', [6, 6]);
 
             drawSources();
             Promise.resolve(true);
@@ -369,12 +373,12 @@ function getStarfindResults()
                                              + 1*math.pow(starfindResults[i].mag, 2);
             }
 
-            addHistogramToPlot(magValues, numberOfBins, starfindColor, 'Mag', []);
-            addHistogramToPlot(areaValues, numberOfBins, starfindColor, 'Area', [3, 3]);
-            addHistogramToPlot(hwhmValues, numberOfBins, starfindColor, 'HWHM', [3, 6]);
-            addHistogramToPlot(roundnessValues, numberOfBins, starfindColor, 'Roundness', [6, 6]);
-            addHistogramToPlot(paValues, numberOfBins, starfindColor, 'PA', [2, 2, 5]);
-            addHistogramToPlot(sharpnessValues, numberOfBins, starfindColor, 'Sharpness', [2, 2, 2, 2, 5]);
+            addHistogramToPlot(magValues, numberOfBins, starfindColor, 'Mag (starfind)', []);
+            addHistogramToPlot(areaValues, numberOfBins, starfindColor, 'Area (starfind)', [3, 3]);
+            addHistogramToPlot(hwhmValues, numberOfBins, starfindColor, 'HWHM (starfind)', [3, 6]);
+            addHistogramToPlot(roundnessValues, numberOfBins, starfindColor, 'Roundness (starfind)', [6, 6]);
+            addHistogramToPlot(paValues, numberOfBins, starfindColor, 'PA (starfind)', [2, 2, 5]);
+            addHistogramToPlot(sharpnessValues, numberOfBins, starfindColor, 'Sharpness (starfind)', [2, 2, 2, 2, 5]);
 
             drawSources();
             Promise.resolve(true);
@@ -678,6 +682,7 @@ window.onload = function()
     getDaofindResults();
     getStarfindResults();
     $.when(sextractorResultsPromise, daofindResultsPromise, starfindResultsPromise).done(getSourceFindMatches);
+
 };
 </script>
 
