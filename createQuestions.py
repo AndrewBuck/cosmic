@@ -255,14 +255,14 @@ r, created = QuestionResponse.objects.get_or_create(
     valueToSet = '2'
     )
 
-pcStarsInFrame, created = AnswerPrecondition.objects.get_or_create(
+pcPointSourcesInFrame, created = AnswerPrecondition.objects.get_or_create(
     descriptionText = 'If stars or other pointlike objects are present.',
     firstQuestion = qObjectsPresent,
     secondQuestion = qMotionBlur
     )
 
-pccStarsInFrameYes, created = AnswerPreconditionCondition.objects.get_or_create(
-    answerPrecondition = pcStarsInFrame,
+pccPointSourcesInFrame, created = AnswerPreconditionCondition.objects.get_or_create(
+    answerPrecondition = pcPointSourcesInFrame,
     invert = False,
     key = 'containsStars|containsPlanets|containsAsteroids|containsTheMoon',
     value = 'yes|yes|yes|yes'
@@ -305,12 +305,68 @@ pcGalaxiesInFrame, created = AnswerPrecondition.objects.get_or_create(
     secondQuestion = qGalaxyStructure
     )
 
-pccStarsInFrameYes, created = AnswerPreconditionCondition.objects.get_or_create(
+pccGalaxiesInFrameYes, created = AnswerPreconditionCondition.objects.get_or_create(
     answerPrecondition = pcGalaxiesInFrame,
     invert = False,
     key = 'containsGalaxies',
     value = 'yes'
     )
+
+#--------------------------------------------------------------------------------
+
+qClustersPresent, created = Question.objects.get_or_create(
+    text = 'Are there any dense clusters of stars in the image?',
+    descriptionText = 'Knowing if there are dense star clusters can help locate images which do not have plate solutions.',
+    titleText = 'Clusters Present',
+    aboutType = 'Image',
+    priority = 1000,
+    previousVersion = None
+    )
+
+r, created = QuestionResponse.objects.get_or_create(
+    question = qClustersPresent,
+    index = 0,
+    inputType = 'radioButton',
+    text = 'No dense clusters',
+    descriptionText = 'Just individual stars or small groups of 2 or 3.',
+    keyToSet = 'containsStarClusters',
+    valueToSet = 'none'
+    )
+
+r, created = QuestionResponse.objects.get_or_create(
+    question = qClustersPresent,
+    index = 1,
+    inputType = 'radioButton',
+    text = 'Small clusters',
+    descriptionText = 'Clusters of tens of stars.',
+    keyToSet = 'containsStarClusters',
+    valueToSet = 'moderate'
+    )
+
+r, created = QuestionResponse.objects.get_or_create(
+    question = qClustersPresent,
+    index = 2,
+    inputType = 'radioButton',
+    text = 'Dense clusters',
+    descriptionText = 'Globular or open cluster with hundreds of stars.',
+    keyToSet = 'containsStarClusters',
+    valueToSet = 'dense'
+    )
+
+pcStarsInFrame, created = AnswerPrecondition.objects.get_or_create(
+    descriptionText = 'If stars are present.',
+    firstQuestion = qObjectsPresent,
+    secondQuestion = qClustersPresent
+    )
+
+pccStarsInFrameYes, created = AnswerPreconditionCondition.objects.get_or_create(
+    answerPrecondition = pcStarsInFrame,
+    invert = False,
+    key = 'containsStars',
+    value = 'yes'
+    )
+
+#--------------------------------------------------------------------------------
 
 '''
 q, created = Question.objects.get_or_create(
