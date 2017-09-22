@@ -15,6 +15,7 @@ import math
 from astropy import wcs
 from astropy.io import fits
 from astropy.stats import sigma_clipped_stats
+from astropy.table import Table
 from photutils import make_source_mask
 
 from .models import *
@@ -501,6 +502,64 @@ def starmatch(filename):
                 )
 
             record.save()
+
+    return True
+
+@shared_task
+def astrometryNet(filename):
+    print("astrometrynet: " + filename)
+    sys.stdout.flush()
+
+    image = Image.objects.get(fileRecord__onDiskFileName=filename)
+    superMatches = SourceFindMatch.objects.filter(image=image)
+
+    stars = []
+    for superMatch in superMatches:
+        numMatches = 0
+
+        if superMatch.sextractorResult != None:
+            numMatches += 1
+
+        if superMatch.daofindResult != None:
+            numMatches += 1
+
+        if superMatch.starfindResult != None:
+            numMatches += 1
+
+        #TODO: Choose a better algorithm for checking which stars to use.
+        if numMatches >= 1:
+            stars.append(superMatch)
+
+    xValues = []
+    yValues = []
+    for star in stars:
+        #TODO: Change this to use the (to be) stored average of the match result x-y values, instead of just a single one like now.
+        #TODO: Sort these by brightness.
+        xValues.append(star.starfindResult.pixelX)
+        yValues.append(star.starfindResult.pixelY)
+
+    try:
+        tableFilename = settings.MEDIA_ROOT + filename + ".sources.xyls"
+        table = Table([xValues, yValues], names=("XIMAGE", "YIMAGE"), dtype=('f4', 'f4'));
+        table.write(tableFilename, format='fits')
+    except OSError:
+        print('ERROR: Could not open file for writing: ' + tableFilename)
+        return False
+
+    proc = subprocess.Popen(['solve-field', '--depth', '12', '--x-column', 'XIMAGE', '--y-column', 'YIMAGE',
+            '--overwrite', '--width', str(image.dimX), '--height', str(image.dimY), tableFilename],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE)
+
+    output, error = proc.communicate()
+    output = output.decode('utf-8')
+    error = error.decode('utf-8')
+
+    print("astrometrynet: " + filename + "   " + output + "   " + error)
+    sys.stdout.flush()
+
+    os.remove(tableFilename)
+    #TODO: Read in results.
 
     return True
 

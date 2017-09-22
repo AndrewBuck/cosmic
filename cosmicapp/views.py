@@ -81,7 +81,7 @@ def upload(request):
 
                 imageRecord.save()
 
-                pi = ProcessInput(
+                piImagestats = ProcessInput(
                     process = "imagestats",
                     requestor = User.objects.get(pk=request.user.pk),
                     submittedDateTime = timezone.now(),
@@ -92,15 +92,15 @@ def upload(request):
                     estCostIO = record.uploadSize
                     )
 
-                pi.save()
+                piImagestats.save()
 
-                pa = ProcessArgument(
-                    processInput = pi,
+                paImagestats = ProcessArgument(
+                    processInput = piImagestats,
                     argIndex = 1,
                     arg = record.onDiskFileName
                     )
 
-                pa.save()
+                paImagestats.save()
 
                 piThumbnails = ProcessInput(
                     process = "generateThumbnails",
@@ -210,6 +210,29 @@ def upload(request):
                 piStarmatch.prerequisites.add(piDaofind)
                 piStarmatch.prerequisites.add(piStarfind)
 
+                piAstrometryNet = ProcessInput(
+                    process = "astrometrynet",
+                    requestor = User.objects.get(pk=request.user.pk),
+                    submittedDateTime = timezone.now(),
+                    priority = 1000,
+                    estCostCPU = 100,
+                    estCostBandwidth = 3000,
+                    estCostStorage = 3000,
+                    estCostIO = 10000000000
+                    )
+
+                piAstrometryNet.save()
+
+                paAstrometryNet = ProcessArgument(
+                    processInput = piAstrometryNet,
+                    argIndex = 1,
+                    arg = record.onDiskFileName
+                    )
+
+                paAstrometryNet.save()
+                piAstrometryNet.prerequisites.add(piImagestats)
+                piAstrometryNet.prerequisites.add(piStarmatch)
+
                 piHeaders = ProcessInput(
                     process = "parseheaders",
                     requestor = User.objects.get(pk=request.user.pk),
@@ -222,7 +245,7 @@ def upload(request):
                     )
 
                 piHeaders.save()
-                piHeaders.prerequisites.add(pi)
+                piHeaders.prerequisites.add(piImagestats)
 
                 paHeaders = ProcessArgument(
                     processInput = piHeaders,
