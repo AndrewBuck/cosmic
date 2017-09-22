@@ -594,8 +594,11 @@ def astrometryNet(filename):
     for star in stars:
         #TODO: Change this to use the (to be) stored average of the match result x-y values, instead of just a single one like now.
         #TODO: Sort these by brightness.
-        xValues.append(star.starfindResult.pixelX)
-        yValues.append(star.starfindResult.pixelY)
+        for result in [star.sextractorResult, star.image2xyResult, star.daofindResult, star.starfindResult]:
+            if result != None:
+                xValues.append(result.pixelX)
+                yValues.append(result.pixelY)
+                break
 
     try:
         tableFilename = settings.MEDIA_ROOT + filename + ".sources.xyls"
