@@ -198,10 +198,22 @@ def generateThumbnails(filename):
 
     for tempFilename, sizeArg, sizeString in [(filenameFull, "100%", "full"), (filenameSmall, "100x100", "small"),
                                               (filenameMedium, "300x300", "medium"), (filenameLarge, "900x900", "large")]:
+
+        #TODO: Play around with the 'convolve' kernel here to see what the best one to use is.
+        # Consider bad horiz/vert lines, also bad pixels, and finally noise.
+        # For bad lines use low/negative values along the middle row/col in the kernel.
+        proc = subprocess.Popen(['convert', "-gamma", "0.8", "-convolve", "1,2,4,2,1,2,4,6,4,2,3,5,10,5,3,2,4,6,4,2,1,2,4,2,1",
+                "-contrast-stretch", ".1%x.1%", "-strip", "-filter", "spline", "-resize",
+                sizeArg, "-verbose", settings.MEDIA_ROOT + filename, staticDirectory + "images/" + tempFilename],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
+
+        '''
         proc = subprocess.Popen(['convert', "-contrast-stretch", "2%x1%", "-strip", "-filter", "spline", "-unsharp", "0x1", "-resize",
                 sizeArg, "-verbose", settings.MEDIA_ROOT + filename, staticDirectory + "images/" + tempFilename],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE)
+        '''
 
         output, error = proc.communicate()
         output = output.decode('utf-8')
