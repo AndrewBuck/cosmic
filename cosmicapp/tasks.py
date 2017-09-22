@@ -316,6 +316,50 @@ def sextractor(filename):
     return True
 
 @shared_task
+def image2xy(filename):
+    # Get the image record
+    image = Image.objects.get(fileRecord__onDiskFileName=filename)
+
+    #TODO: Use the -P option to handle images with multiple planes.  Also has support for multi-extension fits built in if called with appropriate params.
+    #TODO: Consider using the -d option to downsample by a given factor before running.
+    #TODO: image2xy can only handle .fit files.  Should autoconvert the file to .fit if necessary before running.
+    outputFilename = settings.MEDIA_ROOT + filename + ".xy.fits"
+    proc = subprocess.Popen(['image2xy', '-o', outputFilename, settings.MEDIA_ROOT + filename],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        cwd=settings.MEDIA_ROOT
+        )
+
+    output, error = proc.communicate()
+    output = output.decode('utf-8')
+    error = error.decode('utf-8')
+
+    print("image2xy: " + filename + "   " + output + "   " + error)
+    sys.stdout.flush()
+
+    table = Table.read(outputFilename, format='fits')
+
+    with transaction.atomic():
+        for row in table:
+            result = Image2xyResult(
+                image = image,
+                pixelX = row['X'],
+                pixelY = row['Y'],
+                pixelZ = None,
+                flux = row['FLUX'],
+                background = row['BACKGROUND']
+                )
+
+            result.save()
+
+    try:
+        os.remove(outputFilename)
+    except OSError:
+        pass
+
+    return True
+
+@shared_task
 def daofind(filename):
     print("daofind: " + filename)
     sys.stdout.flush()
@@ -439,6 +483,7 @@ def starmatch(filename):
     #NOTE: It may be faster if these dictionary 'name' entries were shortened or changed to 'ints', maybe an enum.
     inputs = [
         { 'name': 'sextractor', 'model': SextractorResult },
+        { 'name': 'image2xy', 'model': Image2xyResult },
         { 'name': 'daofind', 'model': DaofindResult },
         { 'name': 'starfind', 'model': StarfindResult }
         ]
@@ -503,12 +548,14 @@ def starmatch(filename):
     with transaction.atomic():
         for superMatch in superMatches:
             sextractorResult = superMatch.get('sextractor', None)
+            image2xyResult = superMatch.get('image2xy', None)
             daofindResult = superMatch.get('daofind', None)
             starfindResult = superMatch.get('starfind', None)
 
             record = SourceFindMatch(
                 image = image,
                 sextractorResult = sextractorResult,
+                image2xyResult = image2xyResult,
                 daofindResult = daofindResult,
                 starfindResult = starfindResult
                 )

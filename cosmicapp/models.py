@@ -251,6 +251,10 @@ class SextractorResult(SourceFindResult):
     fluxAutoErr = models.FloatField(null=True)
     flags = models.IntegerField(null=True)
 
+class Image2xyResult(SourceFindResult):
+    flux = models.FloatField(null=True)
+    background = models.FloatField(null=True)
+
 class DaofindResult(SourceFindResult):
     mag = models.FloatField(null=True)
     sharpness = models.FloatField(null=True)
@@ -269,6 +273,7 @@ class SourceFindMatch(models.Model):
     #TODO: Extend this from SourceFindResult and store the average pixelX and pixelY values.
     image = models.ForeignKey(Image, on_delete=models.CASCADE)
     sextractorResult = models.ForeignKey(SextractorResult, null=True, on_delete=models.CASCADE)
+    image2xyResult = models.ForeignKey(Image2xyResult, null=True, on_delete=models.CASCADE)
     daofindResult = models.ForeignKey(DaofindResult, null=True, on_delete=models.CASCADE)
     starfindResult = models.ForeignKey(StarfindResult, null=True, on_delete=models.CASCADE)
 

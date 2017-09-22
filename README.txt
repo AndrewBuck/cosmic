@@ -133,6 +133,13 @@ sextractor - Source Extractor: Finds stars and galaxies in an image.  Also must
 
 	http://mensa.ast.uct.ac.za/~holwerda/SE/Manual.html
 
+solve-field - The main executable for astrometry.net.
+	sudo apt-get install astrometry.net
+
+image2xy - A source extraction tool that comes with astrometry.net (this is the
+	default if you don't use sextractor).  Should be installed
+	automatically with astrometry.net but good to double check.
+
 
 Catalogs
 

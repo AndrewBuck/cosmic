@@ -79,6 +79,10 @@ while not quit:
         arg = pi.processargument_set.all()[0].arg
         celeryResult = sextractor.delay(arg)
 
+    elif pi.process == 'image2xy':
+        arg = pi.processargument_set.all()[0].arg
+        celeryResult = image2xy.delay(arg)
+
     elif pi.process == 'daofind':
         arg = pi.processargument_set.all()[0].arg
         celeryResult = daofind.delay(arg)

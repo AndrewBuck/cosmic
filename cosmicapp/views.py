@@ -144,6 +144,27 @@ def upload(request):
 
                 paSextractor.save()
 
+                piImage2xy = ProcessInput(
+                    process = "image2xy",
+                    requestor = User.objects.get(pk=request.user.pk),
+                    submittedDateTime = timezone.now(),
+                    priority = 3000,
+                    estCostCPU = 2.0 * record.uploadSize / 1e6,
+                    estCostBandwidth = 0,
+                    estCostStorage = 3000,
+                    estCostIO = record.uploadSize
+                    )
+
+                piImage2xy.save()
+
+                paImage2xy = ProcessArgument(
+                    processInput = piImage2xy,
+                    argIndex = 1,
+                    arg = record.onDiskFileName
+                    )
+
+                paImage2xy.save()
+
                 piDaofind = ProcessInput(
                     process = "daofind",
                     requestor = User.objects.get(pk=request.user.pk),
@@ -473,7 +494,7 @@ def query(request):
         if request.GET['queryfor'] == 'image':
             if limit > 100:
                 limit = 100
-        elif request.GET['queryfor'] in ['sextractorResult', 'daofindResult', 'starfindResult', 'sourceFindMatch']:
+        elif request.GET['queryfor'] in ['sextractorResult', 'image2xyResult', 'daofindResult', 'starfindResult', 'sourceFindMatch']:
             if limit > 10000:
                 limit = 10000
 
