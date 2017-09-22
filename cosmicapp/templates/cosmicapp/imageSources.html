@@ -18,9 +18,6 @@
 
 {% include "./jquery.html" %}
 
-<div id=bokehPlotDiv style="float: right;">
-</div>
-
 <table border=2px style="border-collapse: collapse; margin: 1em;">
 <tr>
 <th></th>
@@ -107,6 +104,9 @@
 <canvas id="sourcesCanvas" width="{{image.dimX}}" height="{{image.dimY}}" style="border:4px solid #00A030">
 Your browser does not support the HTML5 canvas tag.
 </canvas>
+
+<div id=bokehPlotDiv>
+</div>
 
 <script>
 var imageId = {{id}};
