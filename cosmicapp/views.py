@@ -347,6 +347,9 @@ def image(request, id):
     numSextractorSources = SextractorResult.objects.filter(image_id=image.pk).count()
     context['numSextractorSources'] = numSextractorSources
 
+    numImage2xySources = Image2xyResult.objects.filter(image_id=image.pk).count()
+    context['numImage2xySources'] = numImage2xySources
+
     numDaofindSources = DaofindResult.objects.filter(image_id=image.pk).count()
     context['numDaofindSources'] = numDaofindSources
 
@@ -588,6 +591,30 @@ def query(request):
 
             etree.SubElement(root, "SextractorResult", sextractorDict)
 
+    elif request.GET['queryfor'] == 'image2xyResult':
+        orderField, ascDesc = parseQueryOrderBy(request, {'flux': 'flux'}, 'flux', '-')
+        results = Image2xyResult.objects
+
+        if 'imageId' in request.GET:
+            for valueString in request.GET.getlist('imageId'):
+                values = cleanupQueryValues(valueString, 'int')
+                if len(values) > 0:
+                    results = results.filter(image__pk__in=values)
+
+        results = results.order_by(ascDesc + orderField)[offset:offset+limit]
+
+        for result in results:
+            image2xyDict = {}
+            image2xyDict['id'] = str(result.pk)
+            image2xyDict['imageId'] = str(result.image.pk)
+            image2xyDict['pixelX'] = str(result.pixelX)
+            image2xyDict['pixelY'] = str(result.pixelY)
+            image2xyDict['pixelZ'] = str(result.pixelZ)
+            image2xyDict['flux'] = str(result.flux)
+            image2xyDict['background'] = str(result.background)
+
+            etree.SubElement(root, "Image2xyResult", image2xyDict)
+
     elif request.GET['queryfor'] == 'daofindResult':
         orderField, ascDesc = parseQueryOrderBy(request, {'mag': 'mag'}, 'mag', '')
         results = DaofindResult.objects
@@ -660,6 +687,8 @@ def query(request):
             sourceFindMatchDict['imageId'] = str(result.image.pk)
             if result.sextractorResult:
                 sourceFindMatchDict['sextractorResult'] = str(result.sextractorResult.pk)
+            if result.image2xyResult:
+                sourceFindMatchDict['image2xyResult'] = str(result.image2xyResult.pk)
             if result.daofindResult:
                 sourceFindMatchDict['daofindResult'] = str(result.daofindResult.pk)
             if result.starfindResult:

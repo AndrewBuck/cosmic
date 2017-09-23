@@ -338,9 +338,13 @@ def image2xy(filename):
     sys.stdout.flush()
 
     table = Table.read(outputFilename, format='fits')
+    print(table)
 
     with transaction.atomic():
         for row in table:
+            if row['FLUX'] < 0.1:
+                continue
+
             result = Image2xyResult(
                 image = image,
                 pixelX = row['X'],
@@ -577,6 +581,9 @@ def astrometryNet(filename):
         numMatches = 0
 
         if superMatch.sextractorResult != None:
+            numMatches += 1
+
+        if superMatch.image2xyResult != None:
             numMatches += 1
 
         if superMatch.daofindResult != None:

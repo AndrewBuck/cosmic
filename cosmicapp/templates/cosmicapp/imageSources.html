@@ -22,6 +22,7 @@
 <tr>
 <th></th>
 <th>Sextractor<div id=sextractorLoadingDiv></div></th>
+<th>Image2xy<div id=image2xyLoadingDiv></div></th>
 <th>Daofind<div id=daofindLoadingDiv></div></th>
 <th>Starfind<div id=starfindLoadingDiv></div></th>
 <th>Multiple<br>Method<br>Matches<div id=sourceFindMatchesLoadingDiv></div></th>
@@ -30,6 +31,7 @@
 <tr>
 <td>Enabled:</td>
 <td align=center class='sextractorResults'><input type=checkbox id=sextractorEnabledCheckbox onchange="updateTable()" checked></td>
+<td align=center class='image2xyResults'><input type=checkbox id=image2xyEnabledCheckbox onchange="updateTable()" checked></td>
 <td align=center class='daofindResults'><input type=checkbox id=daofindEnabledCheckbox onchange="updateTable()" checked></td>
 <td align=center class='starfindResults'><input type=checkbox id=starfindEnabledCheckbox onchange="updateTable()" checked></td>
 <td align=center class='sourceFindMatchesResults'><input type=checkbox id=sourceFindMatchesEnabledCheckbox onchange="updateTable()" checked></td>
@@ -38,6 +40,7 @@
 <tr>
 <td>Size:</td>
 <td class='sextractorResults'><input id="sextractorSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td class='image2xyResults'><input id="image2xySizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 <td class='daofindResults'><input id="daofindSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 <td class='starfindResults'><input id="starfindSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 <td class='sourceFindMatchesResults'><input id="sourceFindMatchesSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
@@ -46,6 +49,7 @@
 <tr>
 <td>Size scale:</td>
 <td class='sextractorResults'><input id="sextractorSizeScaleSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td class='image2xyResults'><input id="image2xySizeScaleSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 <td class='daofindResults'><input id="daofindSizeScaleSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 <td class='starfindResults'><input id="starfindSizeScaleSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 <td class='sourceFindMatchesResults'><input id="sourceFindMatchesSizeScaleSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
@@ -54,6 +58,7 @@
 <tr>
 <td>Label thresh:</td>
 <td class='sextractorResults'><input id="sextractorLabelThresholdSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td class='image2xyResults'><input id="image2xyLabelThresholdSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 <td class='daofindResults'><input id="daofindLabelThresholdSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 <td class='starfindResults'><input id="starfindLabelThresholdSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 <td class='sourceFindMatchesResults'><input id="sourceFindMatchesLabelThresholdSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
@@ -62,6 +67,7 @@
 <tr>
 <td>Label size:</td>
 <td class='sextractorResults'><input id="sextractorLabelSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td class='image2xyResults'><input id="image2xyLabelSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 <td class='daofindResults'><input id="daofindLabelSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 <td class='starfindResults'><input id="starfindLabelSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
 <td class='sourceFindMatchesResults'><input id="sourceFindMatchesLabelSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
@@ -74,6 +80,12 @@
     <input type=checkbox id=sextractorLabelFluxErr onchange="drawSources()"> Flux Err<br>
     <input type=checkbox id=sextractorLabelFlags onchange="drawSources()"> Flags<br>
     <input type=checkbox id=sextractorLabelConfidence onchange="drawSources()" checked> Confidence
+    </td>
+
+    <td class='image2xyResults'>
+    <input type=checkbox id=image2xyLabelFlux onchange="drawSources()"> Flux<br>
+    <input type=checkbox id=image2xyLabelBackground onchange="drawSources()"> Background<br>
+    <input type=checkbox id=image2xyLabelConfidence onchange="drawSources()" checked> Confidence
     </td>
 
     <td class='daofindResults'>
@@ -110,19 +122,19 @@ Your browser does not support the HTML5 canvas tag.
 
 <script>
 var imageId = {{id}};
-var sextractorResults = [], daofindResults = [], starfindResults = [];
-var sextractorResultsPromise, daofindResultsPromise, starfindResultsPromise;
+var sextractorResults = [], image2xyResults = [], daofindResults = [], starfindResults = [];
+var sextractorResultsPromise, image2xyResultsPromise, daofindResultsPromise, starfindResultsPromise;
 var sourceFindMatches = [];
 var canvas, context;
 var img;
 var sextractorColor = "#E02010";
+var image2xyColor = "#14D3FF";
 var daofindColor = "#20E010";
 var starfindColor = "#7199E2";
 var sourceFindMatchesColor = "#F99740";
 var numberOfBins = 10;
 
 var plot;
-var sextractorFluxAutoBins = null;
 
 function drawStroked(c, text, x, y)
 {
@@ -161,6 +173,8 @@ function getObjectById(objectList, id)
 
 function binData(data, nBins)
 {
+    var i;
+
     if(data.length == 0)
         return null;
 
@@ -243,6 +257,7 @@ function addHistogramToPlot(data, nBins, lineColor, legendStr, dashArray)
 
 function getSextractorResults()
 {
+    var i;
     $('#sextractorLoadingDiv').html('<br><br>Loading...');
 
     sextractorResultsPromise = $.ajax({
@@ -253,7 +268,7 @@ function getSextractorResults()
         {
             fluxAutoValues = [];
 
-            results = xml.getElementsByTagName('SextractorResult')
+            var results = xml.getElementsByTagName('SextractorResult')
             for(i = 0; i < results.length; i++)
             {
                 attr = results[i].attributes;
@@ -282,8 +297,53 @@ function getSextractorResults()
     });
 };
 
+function getImage2xyResults()
+{
+    var i;
+
+    $('#image2xyLoadingDiv').html('<br><br>Loading...');
+
+    image2xyResultsPromise = $.ajax({
+        url : "/query/?queryfor=image2xyResult&limit=10000&imageId=" + imageId,
+        type : "get",
+        async: true,
+        success : function(xml)
+        {
+            fluxValues = [];
+            backgroundValues = [];
+
+            var results = xml.getElementsByTagName('Image2xyResult')
+            for(i = 0; i < results.length; i++)
+            {
+                attr = results[i].attributes;
+                image2xyResults[i] = new Object({
+                    id: Number(attr.getNamedItem('id').nodeValue),
+                    x: Number(attr.getNamedItem('pixelX').nodeValue),
+                    y: Number(attr.getNamedItem('pixelY').nodeValue),
+                    z: Number(attr.getNamedItem('pixelZ').nodeValue),
+                    flux: Number(attr.getNamedItem('flux').nodeValue),
+                    background: Number(attr.getNamedItem('background').nodeValue),
+                });
+
+                //TODO:  Add confidence for this and other types to the bokeh histogram plot.
+                image2xyResults[i].confidence = math.pow(math.log(image2xyResults[i].flux), 2);
+
+                fluxValues[i] = image2xyResults[i].flux;
+            }
+
+            addHistogramToPlot(fluxValues, numberOfBins, image2xyColor, 'Flux (image2xy)', []);
+
+            drawSources();
+            $('#image2xyLoadingDiv').html('');
+            Promise.resolve(true);
+        }
+    });
+};
+
 function getDaofindResults()
 {
+    var i;
+
     $('#daofindLoadingDiv').html('<br><br>Loading...');
 
     daofindResultsPromise = $.ajax({
@@ -297,7 +357,7 @@ function getDaofindResults()
             sroundValues = [];
             groundValues = [];
 
-            results = xml.getElementsByTagName('DaofindResult')
+            var results = xml.getElementsByTagName('DaofindResult')
             for(i = 0; i < results.length; i++)
             {
                 attr = results[i].attributes;
@@ -337,6 +397,8 @@ function getDaofindResults()
 
 function getStarfindResults()
 {
+    var i;
+
     $('#starfindLoadingDiv').html('<br><br>Loading...');
 
     starfindResultsPromise = $.ajax({
@@ -352,7 +414,7 @@ function getStarfindResults()
             paValues = [];
             sharpnessValues = [];
 
-            results = xml.getElementsByTagName('StarfindResult')
+            var results = xml.getElementsByTagName('StarfindResult')
             for(i = 0; i < results.length; i++)
             {
                 attr = results[i].attributes;
@@ -398,6 +460,8 @@ function getStarfindResults()
 
 function getSourceFindMatches()
 {
+    var i;
+
     $('#sourceFindMatchesLoadingDiv').html('<br><br>Loading...');
 
     $.ajax({
@@ -406,14 +470,17 @@ function getSourceFindMatches()
         async: true,
         success : function(xml)
         {
-            results = xml.getElementsByTagName('SourceFindMatch')
+            var results = xml.getElementsByTagName('SourceFindMatch')
             for(i = 0; i < results.length; i++)
             {
                 attr = results[i].attributes;
 
-                sextractorId = null, daofindId = null, starfindId = null;
+                sextractorId = null, image2xyId = null, daofindId = null, starfindId = null;
                 if(attr.getNamedItem('sextractorResult') != null)
                     sextractorId = Number(attr.getNamedItem('sextractorResult').nodeValue);
+
+                if(attr.getNamedItem('image2xyResult') != null)
+                    image2xyId = Number(attr.getNamedItem('image2xyResult').nodeValue);
 
                 if(attr.getNamedItem('daofindResult') != null)
                     daofindId = Number(attr.getNamedItem('daofindResult').nodeValue);
@@ -424,6 +491,7 @@ function getSourceFindMatches()
                 sourceFindMatches[i] = new Object({
                     id: Number(attr.getNamedItem('id').nodeValue),
                     sextractorResultId: sextractorId,
+                    image2xyResultId: image2xyId,
                     daofindResultId: daofindId,
                     starfindResultId: starfindId
                 });
@@ -431,6 +499,7 @@ function getSourceFindMatches()
                 //TODO: Since this code depends on accessing other objects we will need to break it out into a function
                 //and call it again every time new objects are added to the lists.
                 sourceFindMatches[i].sextractorResult = getObjectById(sextractorResults, sourceFindMatches[i].sextractorResultId);
+                sourceFindMatches[i].image2xyResult = getObjectById(image2xyResults, sourceFindMatches[i].image2xyResultId);
                 sourceFindMatches[i].daofindResult = getObjectById(daofindResults, sourceFindMatches[i].daofindResultId);
                 sourceFindMatches[i].starfindResult = getObjectById(starfindResults, sourceFindMatches[i].starfindResultId);
 
@@ -440,6 +509,14 @@ function getSourceFindMatches()
                     x += sourceFindMatches[i].sextractorResult.x;
                     y += sourceFindMatches[i].sextractorResult.y;
                     confidence *= sourceFindMatches[i].sextractorResult.confidence;
+                    num++;
+                }
+
+                if(sourceFindMatches[i].image2xyResult != null)
+                {
+                    x += sourceFindMatches[i].image2xyResult.x;
+                    y += sourceFindMatches[i].image2xyResult.y;
+                    confidence *= sourceFindMatches[i].image2xyResult.confidence;
                     num++;
                 }
 
@@ -475,6 +552,8 @@ function getSourceFindMatches()
 
 function drawSources()
 {
+    var i;
+
     context.drawImage(img, 0, 0);
     context.lineWidth = 2;
 
@@ -513,6 +592,41 @@ function drawSources()
 
             context.font = labelSize + 'px sans-serif'
             drawStroked(context, labelText, sextractorResults[i].x + labelSize/2, {{image.dimY}} - sextractorResults[i].y - labelSize)
+        }
+    }
+
+    context.strokeStyle = image2xyColor;
+    context.fillStyle = image2xyColor;
+
+    sizeFactor = $('#image2xySizeSlider').val()/100.0;
+    sizeScaleFactor = $('#image2xySizeScaleSlider').val()/50.0;
+    labelThreshold = $('#image2xyLabelThresholdSlider').val()*0.5;
+    labelSize= $('#image2xyLabelSizeSlider').val()/5 + 10
+    if($('#image2xyEnabledCheckbox').is(':checked'))
+    for(i = 0; i < image2xyResults.length; i++)
+    {
+        context.beginPath();
+        context.arc(image2xyResults[i].x, {{image.dimY}} - image2xyResults[i].y,
+            sizeFactor*Math.pow(Math.log(image2xyResults[i].confidence), sizeScaleFactor), 0, 2*Math.PI)
+        context.stroke();
+
+        if(image2xyResults[i].confidence > labelThreshold)
+        {
+            labelArray = [];
+
+            if($('#image2xyLabelFlux').is(':checked'))
+                labelArray[labelArray.length] = math.round(image2xyResults[i].flux, 2);
+
+            if($('#image2xyLabelBackground').is(':checked'))
+                labelArray[labelArray.length] = math.round(image2xyResults[i].background, 2);
+
+            if($('#image2xyLabelConfidence').is(':checked'))
+                labelArray[labelArray.length] = math.round(image2xyResults[i].confidence, 0);
+
+            labelText = labelArray.join(' ');
+
+            context.font = labelSize + 'px sans-serif'
+            drawStroked(context, labelText, image2xyResults[i].x + labelSize/2, {{image.dimY}} - image2xyResults[i].y + 2*labelSize)
         }
     }
 
@@ -646,6 +760,11 @@ function updateTable()
     else
         $('.sextractorResults').css('background-color', 'transparent');
 
+    if($('#image2xyEnabledCheckbox').is(':checked'))
+        $('.image2xyResults').css('background-color', image2xyColor);
+    else
+        $('.image2xyResults').css('background-color', 'transparent');
+
     if($('#daofindEnabledCheckbox').is(':checked'))
         $('.daofindResults').css('background-color', daofindColor);
     else
@@ -693,9 +812,10 @@ window.onload = function()
     updateTable();
 
     getSextractorResults();
+    getImage2xyResults();
     getDaofindResults();
     getStarfindResults();
-    $.when(sextractorResultsPromise, daofindResultsPromise, starfindResultsPromise).done(getSourceFindMatches);
+    $.when(sextractorResultsPromise, image2xyResultsPromise, daofindResultsPromise, starfindResultsPromise).done(getSourceFindMatches);
 
 };
 </script>
