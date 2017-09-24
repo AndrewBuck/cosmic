@@ -18,10 +18,10 @@
 
 {% include "./jquery.html" %}
 
-<!-- TODO: Add checkbox that locks all the sliders/checkboxes of a similar type to the same value so adjusting one adjusts them all. -->
 <table border=2px style="border-collapse: collapse; margin: 1em;">
 <tr>
 <th></th>
+<th>Lock</th>
 <th>Sextractor<div id=sextractorLoadingDiv></div></th>
 <th>Image2xy<div id=image2xyLoadingDiv></div></th>
 <th>Daofind<div id=daofindLoadingDiv></div></th>
@@ -31,51 +31,57 @@
 
 <tr>
 <td>Enabled:</td>
-<td align=center class='sextractorResults'><input type=checkbox id=sextractorEnabledCheckbox onchange="updateTable()" checked></td>
-<td align=center class='image2xyResults'><input type=checkbox id=image2xyEnabledCheckbox onchange="updateTable()" checked></td>
-<td align=center class='daofindResults'><input type=checkbox id=daofindEnabledCheckbox onchange="updateTable()" checked></td>
-<td align=center class='starfindResults'><input type=checkbox id=starfindEnabledCheckbox onchange="updateTable()" checked></td>
-<td align=center class='sourceFindMatchesResults'><input type=checkbox id=sourceFindMatchesEnabledCheckbox onchange="updateTable()" checked></td>
+<td align=center><input type=checkbox id=methodEnabledLockCheckbox onchange="updateTable(this.id)" checked></td>
+<td align=center class='sextractorResults'><input type=checkbox id=sextractorEnabledCheckbox onchange="updateTable(this.id)" checked></td>
+<td align=center class='image2xyResults'><input type=checkbox id=image2xyEnabledCheckbox onchange="updateTable(this.id)" checked></td>
+<td align=center class='daofindResults'><input type=checkbox id=daofindEnabledCheckbox onchange="updateTable(this.id)" checked></td>
+<td align=center class='starfindResults'><input type=checkbox id=starfindEnabledCheckbox onchange="updateTable(this.id)" checked></td>
+<td align=center class='sourceFindMatchesResults'><input type=checkbox id=sourceFindMatchesEnabledCheckbox onchange="updateTable(this.id)" checked></td>
 </tr>
 
 <tr>
 <td>Size:</td>
-<td class='sextractorResults'><input id="sextractorSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
-<td class='image2xyResults'><input id="image2xySizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
-<td class='daofindResults'><input id="daofindSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
-<td class='starfindResults'><input id="starfindSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
-<td class='sourceFindMatchesResults'><input id="sourceFindMatchesSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td align=center><input type=checkbox id=methodSizeLockCheckbox onchange="updateTable(this.id)" checked></td>
+<td class='sextractorResults'><input id="sextractorSizeSlider" type=range min="0" max="100" value="50" onchange="updateTable(this.id)"></td>
+<td class='image2xyResults'><input id="image2xySizeSlider" type=range min="0" max="100" value="50" onchange="updateTable(this.id)"></td>
+<td class='daofindResults'><input id="daofindSizeSlider" type=range min="0" max="100" value="50" onchange="updateTable(this.id)"></td>
+<td class='starfindResults'><input id="starfindSizeSlider" type=range min="0" max="100" value="50" onchange="updateTable(this.id)"></td>
+<td class='sourceFindMatchesResults'><input id="sourceFindMatchesSizeSlider" type=range min="0" max="100" value="50" onchange="updateTable(this.id)"></td>
 </tr>
 
 <tr>
 <td>Size scale:</td>
-<td class='sextractorResults'><input id="sextractorSizeScaleSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
-<td class='image2xyResults'><input id="image2xySizeScaleSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
-<td class='daofindResults'><input id="daofindSizeScaleSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
-<td class='starfindResults'><input id="starfindSizeScaleSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
-<td class='sourceFindMatchesResults'><input id="sourceFindMatchesSizeScaleSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td align=center><input type=checkbox id=methodSizeScaleLockCheckbox onchange="updateTable(this.id)" checked></td>
+<td class='sextractorResults'><input id="sextractorSizeScaleSlider" type=range min="0" max="100" value="50" onchange="updateTable(this.id)"></td>
+<td class='image2xyResults'><input id="image2xySizeScaleSlider" type=range min="0" max="100" value="50" onchange="updateTable(this.id)"></td>
+<td class='daofindResults'><input id="daofindSizeScaleSlider" type=range min="0" max="100" value="50" onchange="updateTable(this.id)"></td>
+<td class='starfindResults'><input id="starfindSizeScaleSlider" type=range min="0" max="100" value="50" onchange="updateTable(this.id)"></td>
+<td class='sourceFindMatchesResults'><input id="sourceFindMatchesSizeScaleSlider" type=range min="0" max="100" value="50" onchange="updateTable(this.id)"></td>
 </tr>
 
 <tr>
 <td>Label thresh:</td>
-<td class='sextractorResults'><input id="sextractorLabelThresholdSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
-<td class='image2xyResults'><input id="image2xyLabelThresholdSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
-<td class='daofindResults'><input id="daofindLabelThresholdSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
-<td class='starfindResults'><input id="starfindLabelThresholdSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
-<td class='sourceFindMatchesResults'><input id="sourceFindMatchesLabelThresholdSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td align=center><input type=checkbox id=methodLabelThresholdLockCheckbox onchange="updateTable(this.id)" checked></td>
+<td class='sextractorResults'><input id="sextractorLabelThresholdSlider" type=range min="0" max="100" value="50" onchange="updateTable(this.id)"></td>
+<td class='image2xyResults'><input id="image2xyLabelThresholdSlider" type=range min="0" max="100" value="50" onchange="updateTable(this.id)"></td>
+<td class='daofindResults'><input id="daofindLabelThresholdSlider" type=range min="0" max="100" value="50" onchange="updateTable(this.id)"></td>
+<td class='starfindResults'><input id="starfindLabelThresholdSlider" type=range min="0" max="100" value="50" onchange="updateTable(this.id)"></td>
+<td class='sourceFindMatchesResults'><input id="sourceFindMatchesLabelThresholdSlider" type=range min="0" max="100" value="50" onchange="updateTable(this.id)"></td>
 </tr>
 
 <tr>
 <td>Label size:</td>
-<td class='sextractorResults'><input id="sextractorLabelSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
-<td class='image2xyResults'><input id="image2xyLabelSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
-<td class='daofindResults'><input id="daofindLabelSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
-<td class='starfindResults'><input id="starfindLabelSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
-<td class='sourceFindMatchesResults'><input id="sourceFindMatchesLabelSizeSlider" type=range min="0" max="100" value="50" onchange="drawSources()"></td>
+<td align=center><input type=checkbox id=methodLabelSizeLockCheckbox onchange="updateTable(this.id)" checked></td>
+<td class='sextractorResults'><input id="sextractorLabelSizeSlider" type=range min="0" max="100" value="50" onchange="updateTable(this.id)"></td>
+<td class='image2xyResults'><input id="image2xyLabelSizeSlider" type=range min="0" max="100" value="50" onchange="updateTable(this.id)"></td>
+<td class='daofindResults'><input id="daofindLabelSizeSlider" type=range min="0" max="100" value="50" onchange="updateTable(this.id)"></td>
+<td class='starfindResults'><input id="starfindLabelSizeSlider" type=range min="0" max="100" value="50" onchange="updateTable(this.id)"></td>
+<td class='sourceFindMatchesResults'><input id="sourceFindMatchesLabelSizeSlider" type=range min="0" max="100" value="50" onchange="updateTable(this.id)"></td>
 </tr>
 
 <tr>
 <td>Label:</td>
+<td></td>
     <td class='sextractorResults'>
     <input type=checkbox id=sextractorLabelFlux onchange="drawSources()"> Flux<br>
     <input type=checkbox id=sextractorLabelFluxErr onchange="drawSources()"> Flux Err<br>
@@ -583,7 +589,7 @@ function drawSources()
             labelText = labelArray.join(' ');
 
             context.font = labelSize + 'px sans-serif'
-            drawStroked(context, labelText, image2xyResults[i].x + labelSize/2, {{image.dimY}} - image2xyResults[i].y + 2*labelSize)
+            drawStroked(context, labelText, image2xyResults[i].x + labelSize/2, {{image.dimY}} - image2xyResults[i].y)
         }
     }
 
@@ -624,7 +630,7 @@ function drawSources()
             labelText = labelArray.join(' ');
 
             context.font = labelSize + 'px sans-serif'
-            drawStroked(context, labelText, daofindResults[i].x + labelSize/2, {{image.dimY}} - daofindResults[i].y)
+            drawStroked(context, labelText, daofindResults[i].x + labelSize/2, {{image.dimY}} - daofindResults[i].y + labelSize)
         }
     }
 
@@ -671,7 +677,7 @@ function drawSources()
             labelText = labelArray.join(' ');
 
             context.font = labelSize + 'px sans-serif'
-            drawStroked(context, labelText, starfindResults[i].x + labelSize/2, {{image.dimY}} - starfindResults[i].y + labelSize)
+            drawStroked(context, labelText, starfindResults[i].x + labelSize/2, {{image.dimY}} - starfindResults[i].y + 2*labelSize)
         }
     }
 
@@ -710,8 +716,121 @@ function drawSources()
     }
 };
 
-function updateTable()
+function updateTable(id)
 {
+    var temp;
+
+    switch(id)
+    {
+        case undefined:
+            break;
+
+        case 'sextractorEnabledCheckbox':
+        case 'image2xyEnabledCheckbox':
+        case 'daofindEnabledCheckbox':
+        case 'starfindEnabledCheckbox':
+        case 'sourceFindMatchesEnabledCheckbox':
+        case 'methodEnabledLockCheckbox':
+            if($('#methodEnabledLockCheckbox').is(':checked'))
+            {
+                if(id != 'methodEnabledLockCheckbox')
+                    temp = $('#'+id).is(':checked');
+                else
+                    temp = $('#sextractorEnabledCheckbox').is(':checked');
+
+                $('#sextractorEnabledCheckbox').prop('checked', temp)
+                $('#image2xyEnabledCheckbox').prop('checked', temp)
+                $('#daofindEnabledCheckbox').prop('checked', temp)
+                $('#starfindEnabledCheckbox').prop('checked', temp)
+                $('#sourceFindMatchesEnabledCheckbox').prop('checked', temp)
+            }
+            break;
+
+        case 'sextractorSizeSlider':
+        case 'image2xySizeSlider':
+        case 'daofindSizeSlider':
+        case 'starfindSizeSlider':
+        case 'sourceFindMatchesSizeSlider':
+        case 'methodSizeLockCheckbox':
+            if($('#methodSizeLockCheckbox').is(':checked'))
+            {
+                if(id != 'methodSizeLockCheckbox')
+                    temp = $('#'+id).prop('value');
+                else
+                    temp = $('#sextractorSizeSlider').prop('value');
+
+                $('#sextractorSizeSlider').prop('value', temp)
+                $('#image2xySizeSlider').prop('value', temp)
+                $('#daofindSizeSlider').prop('value', temp)
+                $('#starfindSizeSlider').prop('value', temp)
+                $('#sourceFindMatchesSizeSlider').prop('value', temp)
+            }
+            break;
+
+        case 'sextractorSizeScaleSlider':
+        case 'image2xySizeScaleSlider':
+        case 'daofindSizeScaleSlider':
+        case 'starfindSizeScaleSlider':
+        case 'sourceFindMatchesSizeScaleSlider':
+        case 'methodSizeScaleLockCheckbox':
+            if($('#methodSizeScaleLockCheckbox').is(':checked'))
+            {
+                if(id != 'methodSizeScaleLockCheckbox')
+                    temp = $('#'+id).prop('value');
+                else
+                    temp = $('#sextractorSizeScaleSlider').prop('value');
+
+                $('#sextractorSizeScaleSlider').prop('value', temp)
+                $('#image2xySizeScaleSlider').prop('value', temp)
+                $('#daofindSizeScaleSlider').prop('value', temp)
+                $('#starfindSizeScaleSlider').prop('value', temp)
+                $('#sourceFindMatchesSizeScaleSlider').prop('value', temp)
+            }
+            break;
+
+        case 'sextractorLabelThresholdSlider':
+        case 'image2xyLabelThresholdSlider':
+        case 'daofindLabelThresholdSlider':
+        case 'starfindLabelThresholdSlider':
+        case 'sourceFindMatchesLabelThresholdSlider':
+        case 'methodLabelThresholdLockCheckbox':
+            if($('#methodLabelThresholdLockCheckbox').is(':checked'))
+            {
+                if(id != 'methodLabelThresholdLockCheckbox')
+                    temp = $('#'+id).prop('value');
+                else
+                    temp = $('#sextractorLabelThresholdSlider').prop('value');
+
+                $('#sextractorLabelThresholdSlider').prop('value', temp)
+                $('#image2xyLabelThresholdSlider').prop('value', temp)
+                $('#daofindLabelThresholdSlider').prop('value', temp)
+                $('#starfindLabelThresholdSlider').prop('value', temp)
+                $('#sourceFindMatchesLabelThresholdSlider').prop('value', temp)
+            }
+            break;
+
+        case 'sextractorLabelSizeSlider':
+        case 'image2xyLabelSizeSlider':
+        case 'daofindLabelSizeSlider':
+        case 'starfindLabelSizeSlider':
+        case 'sourceFindMatchesLabelSizeSlider':
+        case 'methodLabelSizeLockCheckbox':
+            if($('#methodLabelSizeLockCheckbox').is(':checked'))
+            {
+                if(id != 'methodLabelSizeLockCheckbox')
+                    temp = $('#'+id).prop('value');
+                else
+                    temp = $('#sextractorLabelSizeSlider').prop('value');
+
+                $('#sextractorLabelSizeSlider').prop('value', temp)
+                $('#image2xyLabelSizeSlider').prop('value', temp)
+                $('#daofindLabelSizeSlider').prop('value', temp)
+                $('#starfindLabelSizeSlider').prop('value', temp)
+                $('#sourceFindMatchesLabelSizeSlider').prop('value', temp)
+            }
+            break;
+    }
+
     if($('#sextractorEnabledCheckbox').is(':checked'))
         $('.sextractorResults').css('background-color', sextractorColor);
     else
