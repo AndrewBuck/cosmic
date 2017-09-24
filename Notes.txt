@@ -1,0 +1,51 @@
+solve-field - potentially useful commandline options:
+--depth      try just 10 or so objects first then if it fails re-queue later with a deeper depth.
+--cpulimit
+--guess-scale
+-ra, --dec, --radius
+
+
+
+
+allow users to upload a text file containing md5 or sha hashes of filenames to be checked against uploaded files to
+ensure they uploaded correctly.
+
+
+
+imhisto - iraf task that computes and prints a histogram of an image.  Should
+          probably do this in 2 stages, first with bins across the whole range,
+          then a second pass across the range that captures 95% of pixels.
+
+          Astropy actually has an implementation of this so it probably makes
+          more sense to use that.
+
+inverse - iraf calculate an inverse fourier transform of an image
+
+imcore  - standalone program for source extraction (automatically handles multi-extension fits files)
+          http://casu.ast.cam.ac.uk/surveys-projects/software-release/imcore
+
+fitsverify - a fits file utility to verify a fits file does not contain errors.
+
+
+
+
+Here is a paper on source detection - not sure if there is a software package that implements it:
+http://iopscience.iop.org/article/10.1086/515393/
+
+
+Here is a paper on source detection in multi-spectral imagery.  Probably good for dslr submitted rgb images.
+        A multi-scale, multi-wavelength source extraction method: getsources
+        https://arxiv.org/abs/1204.4508
+
+
+Here is a paper on estimating the completeness of a sextractor results file by
+varying the input parameters to sextractor and seeing how the detection rate
+changes as a function of the input parameters:
+        ComEst: a Completeness Estimator of Source Extraction on Astronomical Imaging
+        https://arxiv.org/abs/1605.02650
+
+
+Here is a paper on neural nets and more advanced methods of source detection:
+Mining pixels: The Extraction and Classification of Astronomical Sources
+http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.464.1598&rep=rep1&type=pdf
+
