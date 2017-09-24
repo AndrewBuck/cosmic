@@ -2,6 +2,7 @@ from __future__ import absolute_import, unicode_literals
 from celery import shared_task
 from django.db import transaction
 from django.conf import settings
+from django.db.models import Avg, StdDev
 from pyraf import iraf
 
 import subprocess
@@ -21,6 +22,9 @@ from photutils import make_source_mask
 from .models import *
 
 staticDirectory = os.path.dirname(os.path.realpath(__file__)) + "/static/cosmicapp/"
+
+def sigmoid(x):
+    return 1 / (1 + math.exp(-x))
 
 @shared_task
 def imagestats(filename):
@@ -308,6 +312,24 @@ def sextractor(filename):
 
                     record.save()
 
+            records = SextractorResult.objects.filter(image=image)
+            meanFluxAuto = records.aggregate(Avg('fluxAuto'))['fluxAuto__avg']
+
+            #TODO: Switch to this commented out line when we convert to postgre-sql.
+            #stdDevFluxAuto = records.aggregate(StdDev('fluxAuto'))
+            stdDevFluxAuto = 0
+            if len(records) >= 2:
+                for record in records:
+                    stdDevFluxAuto += math.pow(record.fluxAuto - meanFluxAuto, 2)
+                stdDevFluxAuto /= len(records) - 1
+                stdDevFluxAuto = math.sqrt(stdDevFluxAuto)
+            else:
+                stdDevFluxAuto = 1
+
+            for record in records:
+                record.confidence = sigmoid((record.fluxAuto-meanFluxAuto)/stdDevFluxAuto)
+                record.save()
+
     try:
         os.remove(catfileName)
     except OSError:
@@ -338,7 +360,6 @@ def image2xy(filename):
     sys.stdout.flush()
 
     table = Table.read(outputFilename, format='fits')
-    print(table)
 
     with transaction.atomic():
         for row in table:
@@ -355,6 +376,24 @@ def image2xy(filename):
                 )
 
             result.save()
+
+        records = Image2xyResult.objects.filter(image=image)
+        meanFlux = records.aggregate(Avg('flux'))['flux__avg']
+
+        #TODO: Switch to this commented out line when we convert to postgre-sql.
+        #stdDevFlux = records.aggregate(StdDev('flux'))
+        stdDevFlux = 0
+        if len(records) >= 2:
+            for record in records:
+                stdDevFlux += math.pow(record.flux - meanFlux, 2)
+            stdDevFlux /= len(records) - 1
+            stdDevFlux = math.sqrt(stdDevFlux)
+        else:
+            stdDevFlux = 1
+
+        for record in records:
+            record.confidence = sigmoid((record.flux-meanFlux)/stdDevFlux)
+            record.save()
 
     try:
         os.remove(outputFilename)
@@ -414,6 +453,25 @@ def daofind(filename):
 
                 result.save()
 
+            records = DaofindResult.objects.filter(image=image)
+            meanMag = records.aggregate(Avg('mag'))['mag__avg']
+
+            #TODO: Switch to this commented out line when we convert to postgre-sql.
+            #TODO: Also incorporate sharpness, sround, and ground into the calculation.
+            #stdDevMag = records.aggregate(StdDev('mag'))
+            stdDevMag = 0
+            if len(records) >= 2:
+                for record in records:
+                    stdDevMag += math.pow(record.mag - meanMag, 2)
+                stdDevMag /= len(records) - 1
+                stdDevMag = math.sqrt(stdDevMag)
+            else:
+                stdDevMag = 1
+
+            for record in records:
+                record.confidence = sigmoid((meanMag-record.mag)/stdDevMag)
+                record.save()
+
     try:
         os.remove(catfileName)
     except OSError:
@@ -469,6 +527,26 @@ def starfind(filename):
                     )
 
                 result.save()
+
+            records = StarfindResult.objects.filter(image=image)
+            meanMag = records.aggregate(Avg('mag'))['mag__avg']
+
+            #TODO: Switch to this commented out line when we convert to postgre-sql.
+            #TODO: Also incorporate sharpness, roundness, etc, into the calculation.
+            #stdDevMag = records.aggregate(StdDev('mag'))
+            stdDevMag = 0
+            if len(records) >= 2:
+                for record in records:
+                    stdDevMag += math.pow(record.mag - meanMag, 2)
+                stdDevMag /= len(records) - 1
+                stdDevMag = math.sqrt(stdDevMag)
+            else:
+                stdDevMag = 1
+
+            print(meanMag, stdDevMag)
+            for record in records:
+                record.confidence = sigmoid((meanMag-record.mag)/stdDevMag)
+                record.save()
 
     try:
         os.remove(catfileName)
@@ -556,8 +634,30 @@ def starmatch(filename):
             daofindResult = superMatch.get('daofind', None)
             starfindResult = superMatch.get('starfind', None)
 
+            numMatches = 0
+            confidence = 1
+            x = 0
+            y = 0
+            z = 0
+            for result in [sextractorResult, image2xyResult, daofindResult, starfindResult]:
+                if result != None:
+                    numMatches += 1
+                    confidence *= result.confidence
+                    x += result.pixelX
+                    y += result.pixelY
+                    z = result.pixelZ
+
+            confidence = math.pow(confidence, 1/numMatches)
+            x /= numMatches
+            y /= numMatches
+
             record = SourceFindMatch(
                 image = image,
+                pixelX = x,
+                pixelY = y,
+                pixelZ = z,
+                confidence = confidence,
+                numMatches = numMatches,
                 sextractorResult = sextractorResult,
                 image2xyResult = image2xyResult,
                 daofindResult = daofindResult,

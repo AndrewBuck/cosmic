@@ -581,6 +581,7 @@ def query(request):
         for result in results:
             sextractorDict = {}
             sextractorDict['id'] = str(result.pk)
+            sextractorDict['confidence'] = str(result.confidence)
             sextractorDict['imageId'] = str(result.image.pk)
             sextractorDict['pixelX'] = str(result.pixelX)
             sextractorDict['pixelY'] = str(result.pixelY)
@@ -606,6 +607,7 @@ def query(request):
         for result in results:
             image2xyDict = {}
             image2xyDict['id'] = str(result.pk)
+            image2xyDict['confidence'] = str(result.confidence)
             image2xyDict['imageId'] = str(result.image.pk)
             image2xyDict['pixelX'] = str(result.pixelX)
             image2xyDict['pixelY'] = str(result.pixelY)
@@ -630,6 +632,7 @@ def query(request):
         for result in results:
             daofindDict = {}
             daofindDict['id'] = str(result.pk)
+            daofindDict['confidence'] = str(result.confidence)
             daofindDict['imageId'] = str(result.image.pk)
             daofindDict['pixelX'] = str(result.pixelX)
             daofindDict['pixelY'] = str(result.pixelY)
@@ -656,6 +659,7 @@ def query(request):
         for result in results:
             starfindDict = {}
             starfindDict['id'] = str(result.pk)
+            starfindDict['confidence'] = str(result.confidence)
             starfindDict['imageId'] = str(result.image.pk)
             starfindDict['pixelX'] = str(result.pixelX)
             starfindDict['pixelY'] = str(result.pixelY)
@@ -684,6 +688,11 @@ def query(request):
         for result in results:
             sourceFindMatchDict = {}
             sourceFindMatchDict['id'] = str(result.pk)
+            sourceFindMatchDict['confidence'] = str(result.confidence)
+            sourceFindMatchDict['numMatches'] = str(result.numMatches)
+            sourceFindMatchDict['pixelX'] = str(result.pixelX)
+            sourceFindMatchDict['pixelY'] = str(result.pixelY)
+            sourceFindMatchDict['pixelZ'] = str(result.pixelZ)
             sourceFindMatchDict['imageId'] = str(result.image.pk)
             if result.sextractorResult:
                 sourceFindMatchDict['sextractorResult'] = str(result.sextractorResult.pk)

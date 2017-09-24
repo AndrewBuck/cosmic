@@ -18,6 +18,7 @@
 
 {% include "./jquery.html" %}
 
+<!-- TODO: Add checkbox that locks all the sliders/checkboxes of a similar type to the same value so adjusting one adjusts them all. -->
 <table border=2px style="border-collapse: collapse; margin: 1em;">
 <tr>
 <th></th>
@@ -91,8 +92,8 @@
     <td class='daofindResults'>
     <input type=checkbox id=daofindLabelMag onchange="drawSources()"> Magnitude<br>
     <input type=checkbox id=daofindLabelSharpness onchange="drawSources()"> Sharpness<br>
-    <input type=checkbox id=daofindLabelSRound onchange="drawSources()"> Symmetry roundness<br>
-    <input type=checkbox id=daofindLabelGRound onchange="drawSources()"> Gaussian roundess<br>
+    <input type=checkbox id=daofindLabelSRound onchange="drawSources()"> Sym roundness<br>
+    <input type=checkbox id=daofindLabelGRound onchange="drawSources()"> Gauss roundess<br>
     <input type=checkbox id=daofindLabelConfidence onchange="drawSources()" checked> Confidence
     </td>
 
@@ -107,8 +108,8 @@
     </td>
 
     <td class='sourceFindMatchesResults'>
-    <input type=checkbox id=sourceFindMatchesLabelNum onchange="drawSources()"> Num Methods<br>
-    <input type=checkbox id=sourceFindMatchesLabelConfidence onchange="drawSources()" checked> Confidence
+    <input type=checkbox id=sourceFindMatchesLabelNum onchange="drawSources()" checked> Num Methods<br>
+    <input type=checkbox id=sourceFindMatchesLabelConfidence onchange="drawSources()"> Confidence
     </td>
 </tr>
 </table>
@@ -274,6 +275,7 @@ function getSextractorResults()
                 attr = results[i].attributes;
                 sextractorResults[i] = new Object({
                     id: Number(attr.getNamedItem('id').nodeValue),
+                    confidence: Number(attr.getNamedItem('confidence').nodeValue),
                     x: Number(attr.getNamedItem('pixelX').nodeValue),
                     y: Number(attr.getNamedItem('pixelY').nodeValue),
                     z: Number(attr.getNamedItem('pixelZ').nodeValue),
@@ -283,8 +285,6 @@ function getSextractorResults()
                 });
 
                 //TODO:  Add confidence for this and other types to the bokeh histogram plot.
-                sextractorResults[i].confidence = math.pow(sextractorResults[i].fluxAuto / sextractorResults[i].fluxAutoErr, 2);
-
                 fluxAutoValues[i] = sextractorResults[i].fluxAuto;
             }
 
@@ -318,6 +318,7 @@ function getImage2xyResults()
                 attr = results[i].attributes;
                 image2xyResults[i] = new Object({
                     id: Number(attr.getNamedItem('id').nodeValue),
+                    confidence: Number(attr.getNamedItem('confidence').nodeValue),
                     x: Number(attr.getNamedItem('pixelX').nodeValue),
                     y: Number(attr.getNamedItem('pixelY').nodeValue),
                     z: Number(attr.getNamedItem('pixelZ').nodeValue),
@@ -326,8 +327,6 @@ function getImage2xyResults()
                 });
 
                 //TODO:  Add confidence for this and other types to the bokeh histogram plot.
-                image2xyResults[i].confidence = math.pow(math.log(image2xyResults[i].flux), 2);
-
                 fluxValues[i] = image2xyResults[i].flux;
             }
 
@@ -363,6 +362,7 @@ function getDaofindResults()
                 attr = results[i].attributes;
                 daofindResults[i] = new Object({
                     id: Number(attr.getNamedItem('id').nodeValue),
+                    confidence: Number(attr.getNamedItem('confidence').nodeValue),
                     x: Number(attr.getNamedItem('pixelX').nodeValue),
                     y: Number(attr.getNamedItem('pixelY').nodeValue),
                     z: Number(attr.getNamedItem('pixelZ').nodeValue),
@@ -371,11 +371,6 @@ function getDaofindResults()
                     sround: Number(attr.getNamedItem('sround').nodeValue),
                     ground: Number(attr.getNamedItem('ground').nodeValue)
                 });
-
-                daofindResults[i].confidence = 10.0/(math.pow(daofindResults[i].sharpness - 0.4, 2) + 0.1)
-                                             + 1.0/(math.abs(daofindResults[i].sround) + 0.1)
-                                             + 1.0/(math.abs(daofindResults[i].ground) + 0.1)
-                                             + 100*math.pow(daofindResults[i].mag, 2);
 
                 magValues[i] = daofindResults[i].mag;
                 sharpnessValues[i] = daofindResults[i].sharpness;
@@ -420,6 +415,7 @@ function getStarfindResults()
                 attr = results[i].attributes;
                 starfindResults[i] = new Object({
                     id: Number(attr.getNamedItem('id').nodeValue),
+                    confidence: Number(attr.getNamedItem('confidence').nodeValue),
                     x: Number(attr.getNamedItem('pixelX').nodeValue),
                     y: Number(attr.getNamedItem('pixelY').nodeValue),
                     z: Number(attr.getNamedItem('pixelZ').nodeValue),
@@ -437,11 +433,6 @@ function getStarfindResults()
                 roundnessValues[i] = starfindResults[i].roundness;
                 paValues[i] = starfindResults[i].pa;
                 sharpnessValues[i] = starfindResults[i].sharpness;
-
-                starfindResults[i].confidence = 10.0/(math.pow(starfindResults[i].sharpness - 1.2, 2) + 0.1)
-                                             + 1.0/(math.abs(starfindResults[i].roundness) + 0.1)
-                                             + 1*(math.pow(starfindResults[i].area, 2) + 0.1)
-                                             + 1*math.pow(starfindResults[i].mag, 2);
             }
 
             addHistogramToPlot(magValues, numberOfBins, starfindColor, 'Mag (starfind)', []);
@@ -490,6 +481,11 @@ function getSourceFindMatches()
 
                 sourceFindMatches[i] = new Object({
                     id: Number(attr.getNamedItem('id').nodeValue),
+                    confidence: Number(attr.getNamedItem('confidence').nodeValue),
+                    numMatches: Number(attr.getNamedItem('numMatches').nodeValue),
+                    x: Number(attr.getNamedItem('pixelX').nodeValue),
+                    y: Number(attr.getNamedItem('pixelY').nodeValue),
+                    z: Number(attr.getNamedItem('pixelZ').nodeValue),
                     sextractorResultId: sextractorId,
                     image2xyResultId: image2xyId,
                     daofindResultId: daofindId,
@@ -502,45 +498,6 @@ function getSourceFindMatches()
                 sourceFindMatches[i].image2xyResult = getObjectById(image2xyResults, sourceFindMatches[i].image2xyResultId);
                 sourceFindMatches[i].daofindResult = getObjectById(daofindResults, sourceFindMatches[i].daofindResultId);
                 sourceFindMatches[i].starfindResult = getObjectById(starfindResults, sourceFindMatches[i].starfindResultId);
-
-                x = 0, y = 0, confidence = 1, num = 0;
-                if(sourceFindMatches[i].sextractorResult != null)
-                {
-                    x += sourceFindMatches[i].sextractorResult.x;
-                    y += sourceFindMatches[i].sextractorResult.y;
-                    confidence *= sourceFindMatches[i].sextractorResult.confidence;
-                    num++;
-                }
-
-                if(sourceFindMatches[i].image2xyResult != null)
-                {
-                    x += sourceFindMatches[i].image2xyResult.x;
-                    y += sourceFindMatches[i].image2xyResult.y;
-                    confidence *= sourceFindMatches[i].image2xyResult.confidence;
-                    num++;
-                }
-
-                if(sourceFindMatches[i].daofindResult != null)
-                {
-                    x += sourceFindMatches[i].daofindResult.x;
-                    y += sourceFindMatches[i].daofindResult.y;
-                    confidence *= sourceFindMatches[i].daofindResult.confidence;
-                    num++;
-                }
-
-                if(sourceFindMatches[i].starfindResult != null)
-                {
-                    x += sourceFindMatches[i].starfindResult.x;
-                    y += sourceFindMatches[i].starfindResult.y;
-                    confidence *= sourceFindMatches[i].starfindResult.confidence;
-                    num++;
-                }
-
-                sourceFindMatches[i].x = x/num;
-                sourceFindMatches[i].y = y/num;
-
-                sourceFindMatches[i].num = num;
-                sourceFindMatches[i].confidence = confidence;
             }
 
             drawSources();
@@ -560,16 +517,16 @@ function drawSources()
     context.strokeStyle = sextractorColor;
     context.fillStyle = sextractorColor;
 
-    sizeFactor = $('#sextractorSizeSlider').val()/250.0;
-    sizeScaleFactor = $('#sextractorSizeScaleSlider').val()/30.0;
-    labelThreshold = $('#sextractorLabelThresholdSlider').val()*10;
+    sizeFactor = $('#sextractorSizeSlider').val();
+    sizeScaleFactor = 1 + $('#sextractorSizeScaleSlider').val()/25.0;
+    labelThreshold = $('#sextractorLabelThresholdSlider').val()/100.0;
     labelSize= $('#sextractorLabelSizeSlider').val()/5 + 10
     if($('#sextractorEnabledCheckbox').is(':checked'))
     for(i = 0; i < sextractorResults.length; i++)
     {
         context.beginPath();
         context.arc(sextractorResults[i].x, {{image.dimY}} - sextractorResults[i].y,
-            sizeFactor*Math.pow(Math.log(sextractorResults[i].fluxAuto), sizeScaleFactor), 0, 2*Math.PI)
+            sizeFactor*Math.pow(sextractorResults[i].confidence, sizeScaleFactor), 0, 2*Math.PI)
         context.stroke();
 
         if(sextractorResults[i].confidence > labelThreshold)
@@ -586,7 +543,7 @@ function drawSources()
                 labelArray[labelArray.length] = sextractorResults[i].flags;
 
             if($('#sextractorLabelConfidence').is(':checked'))
-                labelArray[labelArray.length] = math.round(sextractorResults[i].confidence, 0);
+                labelArray[labelArray.length] = math.round(sextractorResults[i].confidence, 2);
 
             labelText = labelArray.join(' ');
 
@@ -598,16 +555,16 @@ function drawSources()
     context.strokeStyle = image2xyColor;
     context.fillStyle = image2xyColor;
 
-    sizeFactor = $('#image2xySizeSlider').val()/100.0;
-    sizeScaleFactor = $('#image2xySizeScaleSlider').val()/50.0;
-    labelThreshold = $('#image2xyLabelThresholdSlider').val()*0.5;
+    sizeFactor = $('#image2xySizeSlider').val();
+    sizeScaleFactor = 1.0 + $('#image2xySizeScaleSlider').val()/25.0;
+    labelThreshold = $('#image2xyLabelThresholdSlider').val()/100.0;
     labelSize= $('#image2xyLabelSizeSlider').val()/5 + 10
     if($('#image2xyEnabledCheckbox').is(':checked'))
     for(i = 0; i < image2xyResults.length; i++)
     {
         context.beginPath();
         context.arc(image2xyResults[i].x, {{image.dimY}} - image2xyResults[i].y,
-            sizeFactor*Math.pow(Math.log(image2xyResults[i].confidence), sizeScaleFactor), 0, 2*Math.PI)
+            sizeFactor*Math.pow(image2xyResults[i].confidence, sizeScaleFactor), 0, 2*Math.PI)
         context.stroke();
 
         if(image2xyResults[i].confidence > labelThreshold)
@@ -621,7 +578,7 @@ function drawSources()
                 labelArray[labelArray.length] = math.round(image2xyResults[i].background, 2);
 
             if($('#image2xyLabelConfidence').is(':checked'))
-                labelArray[labelArray.length] = math.round(image2xyResults[i].confidence, 0);
+                labelArray[labelArray.length] = math.round(image2xyResults[i].confidence, 2);
 
             labelText = labelArray.join(' ');
 
@@ -633,16 +590,16 @@ function drawSources()
     context.strokeStyle = daofindColor;
     context.fillStyle = daofindColor;
 
-    sizeFactor = $('#daofindSizeSlider').val()/50.0;
-    sizeScaleFactor = $('#daofindSizeScaleSlider').val()/150.0;
-    labelThreshold = $('#daofindLabelThresholdSlider').val()*20;
+    sizeFactor = $('#daofindSizeSlider').val();
+    sizeScaleFactor = 1.0 + $('#daofindSizeScaleSlider').val()/25.0;
+    labelThreshold = $('#daofindLabelThresholdSlider').val()/100.0;
     labelSize= $('#daofindLabelSizeSlider').val()/5 + 10
     if($('#daofindEnabledCheckbox').is(':checked'))
     for(i = 0; i < daofindResults.length; i++)
     {
         context.beginPath();
         context.arc(daofindResults[i].x, {{image.dimY}} - daofindResults[i].y,
-            sizeFactor*Math.pow(math.abs(daofindResults[i].confidence), sizeScaleFactor), 0, 2*Math.PI)
+            sizeFactor*Math.pow(daofindResults[i].confidence, sizeScaleFactor), 0, 2*Math.PI)
         context.stroke();
 
         if(daofindResults[i].confidence > labelThreshold)
@@ -662,7 +619,7 @@ function drawSources()
                 labelArray[labelArray.length] = math.round(daofindResults[i].ground, 2);
 
             if($('#daofindLabelConfidence').is(':checked'))
-                labelArray[labelArray.length] = math.round(daofindResults[i].confidence, 0);
+                labelArray[labelArray.length] = math.round(daofindResults[i].confidence, 2);
 
             labelText = labelArray.join(' ');
 
@@ -674,16 +631,16 @@ function drawSources()
     context.strokeStyle = starfindColor;
     context.fillStyle = starfindColor;
 
-    sizeFactor = $('#starfindSizeSlider').val()/50.0;
-    sizeScaleFactor = $('#starfindSizeScaleSlider').val()/150.0;
-    labelThreshold = $('#starfindLabelThresholdSlider').val()*20;
+    sizeFactor = $('#starfindSizeSlider').val();
+    sizeScaleFactor = 1.0 + $('#starfindSizeScaleSlider').val()/25.0;
+    labelThreshold = $('#starfindLabelThresholdSlider').val()/100.0;
     labelSize= $('#starfindLabelSizeSlider').val()/5 + 10
     if($('#starfindEnabledCheckbox').is(':checked'))
     for(i = 0; i < starfindResults.length; i++)
     {
         context.beginPath();
         context.arc(starfindResults[i].x, {{image.dimY}} - starfindResults[i].y,
-            sizeFactor*Math.pow(math.abs(starfindResults[i].confidence), sizeScaleFactor), 0, 2*Math.PI)
+            sizeFactor*Math.pow(starfindResults[i].confidence, sizeScaleFactor), 0, 2*Math.PI)
         context.stroke();
 
         if(starfindResults[i].confidence > labelThreshold)
@@ -709,7 +666,7 @@ function drawSources()
                 labelArray[labelArray.length] = math.round(starfindResults[i].sharpness, 2);
 
             if($('#starfindLabelConfidence').is(':checked'))
-                labelArray[labelArray.length] = math.round(starfindResults[i].confidence, 0);
+                labelArray[labelArray.length] = math.round(starfindResults[i].confidence, 2);
 
             labelText = labelArray.join(' ');
 
@@ -721,16 +678,16 @@ function drawSources()
     context.strokeStyle = sourceFindMatchesColor;
     context.fillStyle = sourceFindMatchesColor;
 
-    sizeFactor = $('#sourceFindMatchesSizeSlider').val()/500.0;
-    sizeScaleFactor = $('#sourceFindMatchesSizeScaleSlider').val()/300.0;
-    labelThreshold = $('#sourceFindMatchesLabelThresholdSlider').val()*500;
+    sizeFactor = $('#sourceFindMatchesSizeSlider').val();
+    sizeScaleFactor = $('#sourceFindMatchesSizeScaleSlider').val()/25.0;
+    labelThreshold = $('#sourceFindMatchesLabelThresholdSlider').val()/100.0;
     labelSize= $('#sourceFindMatchesLabelSizeSlider').val()/5 + 10
     if($('#sourceFindMatchesEnabledCheckbox').is(':checked'))
     for(i = 0; i < sourceFindMatches.length; i++)
     {
         context.beginPath();
         context.arc(sourceFindMatches[i].x, {{image.dimY}} - sourceFindMatches[i].y,
-            sizeFactor*Math.pow(math.abs(sourceFindMatches[i].confidence), sizeScaleFactor), 0, 2*Math.PI)
+            sizeFactor*Math.pow(sourceFindMatches[i].confidence, sizeScaleFactor), 0, 2*Math.PI)
         context.stroke();
 
         if(sourceFindMatches[i].confidence > labelThreshold)
@@ -738,10 +695,10 @@ function drawSources()
             labelArray = [];
 
             if($('#sourceFindMatchesLabelNum').is(':checked'))
-                labelArray[labelArray.length] = math.round(sourceFindMatches[i].num, 0);
+                labelArray[labelArray.length] = sourceFindMatches[i].numMatches, 0;
 
             if($('#sourceFindMatchesLabelConfidence').is(':checked'))
-                labelArray[labelArray.length] = math.round(sourceFindMatches[i].confidence, 0);
+                labelArray[labelArray.length] = math.round(sourceFindMatches[i].confidence, 2);
 
             labelText = labelArray.join(' ');
 

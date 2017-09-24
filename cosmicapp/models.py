@@ -242,6 +242,7 @@ class SourceFindResult(models.Model):
     pixelX = models.FloatField(null=True)
     pixelY = models.FloatField(null=True)
     pixelZ = models.FloatField(null=True)
+    confidence = models.FloatField(null=True)
 
     class Meta:
         abstract = True
@@ -269,9 +270,8 @@ class StarfindResult(SourceFindResult):
     pa = models.FloatField(null=True)
     sharpness = models.FloatField(null=True)
 
-class SourceFindMatch(models.Model):
-    #TODO: Extend this from SourceFindResult and store the average pixelX and pixelY values.
-    image = models.ForeignKey(Image, on_delete=models.CASCADE)
+class SourceFindMatch(SourceFindResult):
+    numMatches = models.IntegerField()
     sextractorResult = models.ForeignKey(SextractorResult, null=True, on_delete=models.CASCADE)
     image2xyResult = models.ForeignKey(Image2xyResult, null=True, on_delete=models.CASCADE)
     daofindResult = models.ForeignKey(DaofindResult, null=True, on_delete=models.CASCADE)
