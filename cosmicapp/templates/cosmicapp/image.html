@@ -3,10 +3,26 @@
 
 {% block extratitle %} - Image {{id}} {% endblock %}
 
+{% block extrahead %}
+<style>
+td.numSourceResults
+{
+    background-color: #69F;
+    text-align: center;
+}
+
+td.numMatchResults
+{
+    background-color: #EE4;
+    text-align: center;
+}
+</style>
+{% endblock extrahead %}
+
 {% block mainbody %}
 <h2>Image {{id}}</h2>
 
-    <table border="2px">
+    <table border=2px style="border-collapse: collapse; margin: 1em;">
         <tr>
         <th> Uploaded By <br> (username) </th>
         <th> Instrument <br> (telescope) </th>
@@ -38,16 +54,7 @@
         </tr>
     </table>
 
-<p>Source extractor detected {{numSextractorSources}} sources in the image.<br>
-Image2xy detected {{numImage2xySources}} sources in the image.<br>
-Daofind detected {{numDaofindSources}} sources in the image.<br>
-Starfind detected {{numStarfindSources}} sources in the image.<br>
-<a href="/image/{{id}}/sources/">View sources</a></p>
-<p>This image has {{numProperties}} property tags assosciatied with it.  <a href="/image/{{id}}/properties/">View properties</a></p>
-
-<p>Answer questions about this image.  <a href="/image/{{id}}/question/">Answer questions</a></p>
-
-<table border="2px">
+<table border=2px style="border-collapse: collapse; margin: 1em;">
 <tr>
 <th>Channel</th>
 <th>Type</th>
@@ -71,6 +78,65 @@ Starfind detected {{numStarfindSources}} sources in the image.<br>
 </tr>
 {% endfor %}
 </table>
+
+<br>
+<a href="/image/{{id}}/sources/">View sources</a></p>
+    <table border=2px style="border-collapse: collapse; margin: 1em;">
+        <tr>
+        <th rowspan=2 colspan=2></th>
+        <th>Sextractor</th>
+        <th>Image2xy</th>
+        <th>Daofind</th>
+        <th>Starfind</th>
+        </tr>
+
+        <tr>
+        <td class=numSourceResults>{{numSextractorSources}}</td>
+        <td class=numSourceResults>{{numImage2xySources}}</td>
+        <td class=numSourceResults>{{numDaofindSources}}</td>
+        <td class=numSourceResults>{{numStarfindSources}}</td>
+        </tr>
+
+        <tr>
+        <th>Sextractor</th>
+        <td class=numSourceResults>{{numSextractorSources}}</td>
+        <td class=numMatchResults></td>
+        <td class=numMatchResults>{{numSextractorImage2xyMatches}}</td>
+        <td class=numMatchResults>{{numSextractorDaofindMatches}}</td>
+        <td class=numMatchResults>{{numSextractorStarfindMatches}}</td>
+        </tr>
+
+        <tr>
+        <th>Image2xy</th>
+        <td class=numSourceResults>{{numImage2xySources}}</td>
+        <td class=numMatchResults>{{numSextractorImage2xyMatches}}</td>
+        <td class=numMatchResults></td>
+        <td class=numMatchResults>{{numImage2xyDaofindMatches}}</td>
+        <td class=numMatchResults>{{numImage2xyStarfindMatches}}</td>
+        </tr>
+
+        <tr>
+        <th>Daofind</th>
+        <td class=numSourceResults>{{numDaofindSources}}</td>
+        <td class=numMatchResults>{{numSextractorDaofindMatches}}</td>
+        <td class=numMatchResults>{{numImage2xyDaofindMatches}}</td>
+        <td class=numMatchResults></td>
+        <td class=numMatchResults>{{numDaofindStarfindMatches}}</td>
+        </tr>
+
+        <tr>
+        <th>Starfind</th>
+        <td class=numSourceResults>{{numStarfindSources}}</td>
+        <td class=numMatchResults>{{numSextractorStarfindMatches}}</td>
+        <td class=numMatchResults>{{numImage2xyStarfindMatches}}</td>
+        <td class=numMatchResults>{{numDaofindStarfindMatches}}</td>
+        <td class=numMatchResults></td>
+        </tr>
+    </table>
+
+<p>This image has {{numProperties}} property tags assosciatied with it.  <a href="/image/{{id}}/properties/">View properties</a></p>
+
+<p>Answer questions about this image.  <a href="/image/{{id}}/question/">Answer questions</a></p>
 
 <p>Original uploaded filename: <b>{{image.fileRecord.originalFileName}}</b></p>
 <p>SHA 256 hash of original file: <b>{{image.fileRecord.fileSha256}}</b></p>

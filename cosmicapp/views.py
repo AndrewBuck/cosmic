@@ -356,6 +356,14 @@ def image(request, id):
     numStarfindSources = StarfindResult.objects.filter(image_id=image.pk).count()
     context['numStarfindSources'] = numStarfindSources
 
+    matches = SourceFindMatch.objects.filter(image_id=image.pk)
+    context['numDaofindStarfindMatches'] = matches.filter(daofindResult__isnull=False, starfindResult__isnull=False).count()
+    context['numImage2xyDaofindMatches'] = matches.filter(image2xyResult__isnull=False, daofindResult__isnull=False).count()
+    context['numImage2xyStarfindMatches'] = matches.filter(image2xyResult__isnull=False, starfindResult__isnull=False).count()
+    context['numSextractorDaofindMatches'] = matches.filter(sextractorResult__isnull=False, daofindResult__isnull=False).count()
+    context['numSextractorImage2xyMatches'] = matches.filter(sextractorResult__isnull=False, image2xyResult__isnull=False).count()
+    context['numSextractorStarfindMatches'] = matches.filter(sextractorResult__isnull=False, starfindResult__isnull=False).count()
+
     numProperties = ImageProperty.objects.filter(image_id=image.pk).count()
     context['numProperties'] = numProperties
 
