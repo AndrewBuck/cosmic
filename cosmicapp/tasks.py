@@ -3,7 +3,6 @@ from celery import shared_task
 from django.db import transaction
 from django.conf import settings
 from django.db.models import Avg, StdDev
-from pyraf import iraf
 
 import subprocess
 import json
@@ -420,8 +419,6 @@ def daofind(filename):
     sys.stdout.flush()
 
     #TODO: daofind can only handle .fit files.  Should autoconvert the file to .fit if necessary before running.
-    catfileName = settings.MEDIA_ROOT + filename + ".daofind.cat"
-
     image = Image.objects.get(fileRecord__onDiskFileName=filename)
 
     #TODO: Handle multi-extension fits files.
@@ -442,8 +439,6 @@ def daofind(filename):
                 mag = source['mag'],
                 flux = source['flux'],
                 peak = source['peak'],
-                sky = source['sky'],
-                npix = source['npix'],
                 sharpness = source['sharpness'],
                 sround = source['roundness1'],
                 ground = source['roundness2']
@@ -470,11 +465,6 @@ def daofind(filename):
             record.confidence = sigmoid((meanMag-record.mag)/stdDevMag)
             record.save()
 
-    try:
-        os.remove(catfileName)
-    except OSError:
-        pass
-
     return True
 
 @shared_task
@@ -483,73 +473,52 @@ def starfind(filename):
     sys.stdout.flush()
 
     #TODO: starfind can only handle .fit files.  Should autoconvert the file to .fit if necessary before running.
-    catfileName = settings.MEDIA_ROOT + filename + ".starfind.cat"
-
     image = Image.objects.get(fileRecord__onDiskFileName=filename)
 
     #TODO: Handle multi-extension fits files.
     channelInfos = ImageChannelInfo.objects.filter(image=image).order_by('index')
 
-    iraf.unlearn(iraf.starfind)
+    hdulist = fits.open(settings.MEDIA_ROOT + filename)
+    data = hdulist[0].data
+    starfinder = IRAFStarFinder(fwhm = 2.5, threshold = 4*channelInfos[0].bgStdDev)
+    sources = starfinder(data - channelInfos[0].bgMedian)
 
-    iraf.starfind(settings.MEDIA_ROOT + filename,
-                  output=catfileName,
-                  hwhmpsf=1.25,
-                  threshold=channelInfos[0].bgStdDev*4,
-                  npixmin=5,
-                  roundlo=0.0,
-                  roundhi=0.5,
-                  sharplo=0.5,
-                  sharphi=2.0
-                  )
+    with transaction.atomic():
+        for source in sources:
+            result = StarfindResult(
+                image = image,
+                pixelX = source['xcentroid'],
+                pixelY = source['ycentroid'],
+                pixelZ = None,    #TODO: Handle multi-extension fits files.
+                mag = source['mag'],
+                peak = source['peak'],
+                flux = source['flux'],
+                fwhm = source['fwhm'],
+                sharpness = source['sharpness'],
+                roundness = source['roundness'],
+                pa = source['pa']
+                )
 
-    with open(catfileName, 'r') as catfile:
-        with transaction.atomic():
-            for line in catfile:
-                if len(line) <= 1 or line.startswith('#'):
-                    continue
+            result.save()
 
-                fields = line.split()
+        records = StarfindResult.objects.filter(image=image)
+        meanMag = records.aggregate(Avg('mag'))['mag__avg']
 
-                result = StarfindResult(
-                    image = image,
-                    pixelX = float(fields[0]),
-                    pixelY = float(fields[1]),
-                    pixelZ = None,    #TODO: Handle multi-extension fits files.
-                    mag = float(fields[2]),
-                    area = float(fields[3]),
-                    hwhm = float(fields[4]),
-                    roundness = float(fields[5]),
-                    pa = float(fields[6]),
-                    sharpness = float(fields[7])
-                    )
-
-                result.save()
-
-            records = StarfindResult.objects.filter(image=image)
-            meanMag = records.aggregate(Avg('mag'))['mag__avg']
-
-            #TODO: Switch to this commented out line when we convert to postgre-sql.
-            #TODO: Also incorporate sharpness, roundness, etc, into the calculation.
-            #stdDevMag = records.aggregate(StdDev('mag'))
-            stdDevMag = 0
-            if len(records) >= 2:
-                for record in records:
-                    stdDevMag += math.pow(record.mag - meanMag, 2)
-                stdDevMag /= len(records) - 1
-                stdDevMag = math.sqrt(stdDevMag)
-            else:
-                stdDevMag = 1
-
-            print(meanMag, stdDevMag)
+        #TODO: Switch to this commented out line when we convert to postgre-sql.
+        #TODO: Also incorporate sharpness, roundness, etc, into the calculation.
+        #stdDevMag = records.aggregate(StdDev('mag'))
+        stdDevMag = 0
+        if len(records) >= 2:
             for record in records:
-                record.confidence = sigmoid((meanMag-record.mag)/stdDevMag)
-                record.save()
+                stdDevMag += math.pow(record.mag - meanMag, 2)
+            stdDevMag /= len(records) - 1
+            stdDevMag = math.sqrt(stdDevMag)
+        else:
+            stdDevMag = 1
 
-    try:
-        os.remove(catfileName)
-    except OSError:
-        pass
+        for record in records:
+            record.confidence = sigmoid((meanMag-record.mag)/stdDevMag)
+            record.save()
 
     return True
 
