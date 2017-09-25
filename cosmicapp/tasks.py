@@ -17,7 +17,7 @@ from astropy import wcs
 from astropy.io import fits
 from astropy.stats import sigma_clipped_stats
 from astropy.table import Table
-from photutils import make_source_mask
+from photutils import make_source_mask, DAOStarFinder, IRAFStarFinder
 
 from .models import *
 
@@ -427,62 +427,48 @@ def daofind(filename):
     #TODO: Handle multi-extension fits files.
     channelInfos = ImageChannelInfo.objects.filter(image=image).order_by('index')
 
-    iraf.unlearn(iraf.daofind)
+    hdulist = fits.open(settings.MEDIA_ROOT + filename)
+    data = hdulist[0].data
+    daofind = DAOStarFinder(fwhm = 2.5, threshold = 4*channelInfos[0].bgStdDev)
+    sources = daofind(data - channelInfos[0].bgMedian)
 
-    iraf.datapars.sigma = channelInfos[0].bgStdDev
-    iraf.datapars.fwhmpsf = 2.5
-    iraf.findpars.threshold = 4
-    iraf.findpars.sharplo = 0.0
-    iraf.findpars.sharphi = 0.8
-    iraf.findpars.roundlo = -0.6
-    iraf.findpars.roundhi = 0.6
+    with transaction.atomic():
+        for source in sources:
+            result = DaofindResult(
+                image = image,
+                pixelX = source['xcentroid'],
+                pixelY = source['ycentroid'],
+                pixelZ = None,    #TODO: Handle multi-extension fits files.
+                mag = source['mag'],
+                flux = source['flux'],
+                peak = source['peak'],
+                sky = source['sky'],
+                npix = source['npix'],
+                sharpness = source['sharpness'],
+                sround = source['roundness1'],
+                ground = source['roundness2']
+                )
 
-    iraf.daofind(settings.MEDIA_ROOT + filename, output=catfileName)
+            result.save()
 
-    with open(catfileName, 'r') as catfile:
-        with transaction.atomic():
-            for line in catfile:
-                if line.startswith('#'):
-                    continue
+        records = DaofindResult.objects.filter(image=image)
+        meanMag = records.aggregate(Avg('mag'))['mag__avg']
 
-                fields = line.split()
-
-                try:
-                    mag = float(fields[2])
-                except:
-                    mag = None
-
-                result = DaofindResult(
-                    image = image,
-                    pixelX = float(fields[0]),
-                    pixelY = float(fields[1]),
-                    pixelZ = None,    #TODO: Handle multi-extension fits files.
-                    mag = mag,
-                    sharpness = float(fields[3]),
-                    sround = float(fields[4]),
-                    ground = float(fields[5])
-                    )
-
-                result.save()
-
-            records = DaofindResult.objects.filter(image=image)
-            meanMag = records.aggregate(Avg('mag'))['mag__avg']
-
-            #TODO: Switch to this commented out line when we convert to postgre-sql.
-            #TODO: Also incorporate sharpness, sround, and ground into the calculation.
-            #stdDevMag = records.aggregate(StdDev('mag'))
-            stdDevMag = 0
-            if len(records) >= 2:
-                for record in records:
-                    stdDevMag += math.pow(record.mag - meanMag, 2)
-                stdDevMag /= len(records) - 1
-                stdDevMag = math.sqrt(stdDevMag)
-            else:
-                stdDevMag = 1
-
+        #TODO: Switch to this commented out line when we convert to postgre-sql.
+        #TODO: Also incorporate sharpness, sround, and ground into the calculation.
+        #stdDevMag = records.aggregate(StdDev('mag'))
+        stdDevMag = 0
+        if len(records) >= 2:
             for record in records:
-                record.confidence = sigmoid((meanMag-record.mag)/stdDevMag)
-                record.save()
+                stdDevMag += math.pow(record.mag - meanMag, 2)
+            stdDevMag /= len(records) - 1
+            stdDevMag = math.sqrt(stdDevMag)
+        else:
+            stdDevMag = 1
+
+        for record in records:
+            record.confidence = sigmoid((meanMag-record.mag)/stdDevMag)
+            record.save()
 
     try:
         os.remove(catfileName)
@@ -652,6 +638,8 @@ def starmatch(filename):
             y = 0
             z = 0
             for result in [sextractorResult, image2xyResult, daofindResult, starfindResult]:
+                # TODO: Should add an else clause here to pull down the confidence if the given result
+                # does not agree with the others.  Need to figure out how to weigh this disagreement.
                 if result != None:
                     numMatches += 1
                     confidence *= result.confidence

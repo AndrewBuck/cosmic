@@ -302,6 +302,10 @@ class Image2xyResult(SourceFindResult):
 
 class DaofindResult(SourceFindResult):
     mag = models.FloatField(null=True)
+    flux = models.FloatField(null=True)
+    peak = models.FloatField(null=True)
+    sky = models.FloatField(null=True)
+    npix = models.FloatField(null=True)
     sharpness = models.FloatField(null=True)
     sround = models.FloatField(null=True)
     ground = models.FloatField(null=True)
