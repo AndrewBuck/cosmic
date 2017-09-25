@@ -243,6 +243,18 @@ class ProcessInput(models.Model):
     class Meta:
         ordering = ['-priority', 'submittedDateTime']
 
+    def addArguments(self, argList):
+        for arg in argList:
+            i = 1
+            pa = ProcessArgument(
+                processInput = self,
+                argIndex = i,
+                arg = arg
+                )
+
+            pa.save()
+            i += 1
+
 class ProcessOutput(models.Model):
     processInput = models.ForeignKey(ProcessInput, on_delete=models.CASCADE)
     finishedDateTime = models.DateTimeField(null=True)

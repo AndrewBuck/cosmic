@@ -93,14 +93,7 @@ def upload(request):
                     )
 
                 piImagestats.save()
-
-                paImagestats = ProcessArgument(
-                    processInput = piImagestats,
-                    argIndex = 1,
-                    arg = record.onDiskFileName
-                    )
-
-                paImagestats.save()
+                piImagestats.addArguments([record.onDiskFileName])
 
                 piThumbnails = ProcessInput(
                     process = "generateThumbnails",
@@ -114,98 +107,63 @@ def upload(request):
                     )
 
                 piThumbnails.save()
-
-                paThumbnails = ProcessArgument(
-                    processInput = piThumbnails,
-                    argIndex = 1,
-                    arg = record.onDiskFileName
-                    )
-
-                paThumbnails.save()
+                piThumbnails.addArguments([record.onDiskFileName])
 
                 piSextractor = ProcessInput(
                     process = "sextractor",
                     requestor = User.objects.get(pk=request.user.pk),
                     submittedDateTime = timezone.now(),
                     priority = 3000,
-                    estCostCPU = 2.0 * record.uploadSize / 1e6,
+                    estCostCPU = 0.5 * record.uploadSize / 1e6,
                     estCostBandwidth = 0,
                     estCostStorage = 3000,
                     estCostIO = record.uploadSize
                     )
 
                 piSextractor.save()
-
-                paSextractor = ProcessArgument(
-                    processInput = piSextractor,
-                    argIndex = 1,
-                    arg = record.onDiskFileName
-                    )
-
-                paSextractor.save()
+                piSextractor.addArguments([record.onDiskFileName])
 
                 piImage2xy = ProcessInput(
                     process = "image2xy",
                     requestor = User.objects.get(pk=request.user.pk),
                     submittedDateTime = timezone.now(),
                     priority = 3000,
-                    estCostCPU = 2.0 * record.uploadSize / 1e6,
+                    estCostCPU = 0.5 * record.uploadSize / 1e6,
                     estCostBandwidth = 0,
                     estCostStorage = 3000,
                     estCostIO = record.uploadSize
                     )
 
                 piImage2xy.save()
-
-                paImage2xy = ProcessArgument(
-                    processInput = piImage2xy,
-                    argIndex = 1,
-                    arg = record.onDiskFileName
-                    )
-
-                paImage2xy.save()
+                piImage2xy.addArguments([record.onDiskFileName])
 
                 piDaofind = ProcessInput(
                     process = "daofind",
                     requestor = User.objects.get(pk=request.user.pk),
                     submittedDateTime = timezone.now(),
                     priority = 3000,
-                    estCostCPU = 2.0 * record.uploadSize / 1e6,
+                    estCostCPU = 0.5 * record.uploadSize / 1e6,
                     estCostBandwidth = 0,
                     estCostStorage = 3000,
                     estCostIO = record.uploadSize
                     )
 
                 piDaofind.save()
-
-                paDaofind = ProcessArgument(
-                    processInput = piDaofind,
-                    argIndex = 1,
-                    arg = record.onDiskFileName
-                    )
-
-                paDaofind.save()
+                piDaofind.addArguments([record.onDiskFileName])
 
                 piStarfind = ProcessInput(
                     process = "starfind",
                     requestor = User.objects.get(pk=request.user.pk),
                     submittedDateTime = timezone.now(),
                     priority = 3000,
-                    estCostCPU = 2.0 * record.uploadSize / 1e6,
+                    estCostCPU = 0.5 * record.uploadSize / 1e6,
                     estCostBandwidth = 0,
                     estCostStorage = 3000,
                     estCostIO = record.uploadSize
                     )
 
                 piStarfind.save()
-
-                paStarfind = ProcessArgument(
-                    processInput = piStarfind,
-                    argIndex = 1,
-                    arg = record.onDiskFileName
-                    )
-
-                paStarfind.save()
+                piStarfind.addArguments([record.onDiskFileName])
 
                 piStarmatch = ProcessInput(
                     process = "starmatch",
@@ -219,14 +177,7 @@ def upload(request):
                     )
 
                 piStarmatch.save()
-
-                paStarmatch = ProcessArgument(
-                    processInput = piStarmatch,
-                    argIndex = 1,
-                    arg = record.onDiskFileName
-                    )
-
-                paStarmatch.save()
+                piStarmatch.addArguments([record.onDiskFileName])
                 piStarmatch.prerequisites.add(piSextractor)
                 piStarmatch.prerequisites.add(piDaofind)
                 piStarmatch.prerequisites.add(piStarfind)
@@ -243,14 +194,8 @@ def upload(request):
                     )
 
                 piAstrometryNet.save()
-
-                paAstrometryNet = ProcessArgument(
-                    processInput = piAstrometryNet,
-                    argIndex = 1,
-                    arg = record.onDiskFileName
-                    )
-
-                paAstrometryNet.save()
+                #TODO: Add additional arguments for depth, cpu timeout, postion guess, etc.
+                piAstrometryNet.addArguments([record.onDiskFileName])
                 piAstrometryNet.prerequisites.add(piImagestats)
                 piAstrometryNet.prerequisites.add(piStarmatch)
 
@@ -266,15 +211,8 @@ def upload(request):
                     )
 
                 piHeaders.save()
+                piHeaders.addArguments([imageRecord.pk])
                 piHeaders.prerequisites.add(piImagestats)
-
-                paHeaders = ProcessArgument(
-                    processInput = piHeaders,
-                    argIndex = 1,
-                    arg = imageRecord.pk
-                    )
-
-                paHeaders.save()
 
         context['upload_successful'] = True
         context['records'] = records
