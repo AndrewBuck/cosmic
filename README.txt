@@ -255,6 +255,20 @@ GCVS - General Catalogue of Variable Stars
 
 
 
+Messier Catalog - The Messier Objects
+
+	The Messier objects are the famous list of 110 objects of varying
+	types.  The data for the catalog was downloaded from Simbad and checked
+	into the git repository along with code to import it.  To run the
+	import simply execute:
+
+		python3 import_cat_messier.py
+
+	Attribution:  "1850CDT..1784..227M - Connaissance des Temps, 1784,
+		227-269 (1850) - 01.01.86 20.07.15"
+
+
+
 
 NOTES:
 
