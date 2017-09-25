@@ -37,6 +37,8 @@ def imagestats(filename):
     output = output.decode('utf-8')
     error = error.decode('utf-8')
 
+    proc.wait()
+
     output = output.rstrip().rstrip(',')
     output = '[' + output + ']'
 
@@ -99,6 +101,8 @@ def imagestats(filename):
     output, error = proc.communicate()
     output = output.decode('utf-8')
     error = error.decode('utf-8')
+
+    proc.wait()
 
     print("imagestats:tags: " + filename)
     sys.stdout.flush()
@@ -203,6 +207,9 @@ def generateThumbnails(filename):
     for tempFilename, sizeArg, sizeString in [(filenameFull, "100%", "full"), (filenameSmall, "100x100", "small"),
                                               (filenameMedium, "300x300", "medium"), (filenameLarge, "900x900", "large")]:
 
+        #TODO: Change to 8 bit thumbnails instead of the default of 16 bit.
+        #TODO: Small images will actually get thumbnails made which are bigger than the original, should implement
+        # protection against this - will need to test all callers to make sure that is safe.
         #TODO: Play around with the 'convolve' kernel here to see what the best one to use is.
         # Consider bad horiz/vert lines, also bad pixels, and finally noise.
         # For bad lines use low/negative values along the middle row/col in the kernel.
@@ -212,16 +219,11 @@ def generateThumbnails(filename):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE)
 
-        '''
-        proc = subprocess.Popen(['convert', "-contrast-stretch", "2%x1%", "-strip", "-filter", "spline", "-unsharp", "0x1", "-resize",
-                sizeArg, "-verbose", settings.MEDIA_ROOT + filename, staticDirectory + "images/" + tempFilename],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE)
-        '''
-
         output, error = proc.communicate()
         output = output.decode('utf-8')
         error = error.decode('utf-8')
+
+        proc.wait()
 
         print("generateThumbnails: " + tempFilename)
         sys.stdout.flush()
@@ -232,7 +234,6 @@ def generateThumbnails(filename):
                     fields = line.split()
                     outputFilename = fields[0].split('=>')[1]
                     channelIndicator = re.findall(r'\[\d+\]$', outputFilename)
-                    print('channelIndicator "', channelIndicator, '"')
 
                     if len(channelIndicator) == 0:
                         channel = 0
@@ -242,8 +243,15 @@ def generateThumbnails(filename):
 
                     outputFilename = os.path.basename(outputFilename)
 
+                    dimensions = fields[3].split('+')[0].split('x')
+                    w = int(dimensions[0])
+                    h = int(dimensions[1])
+                    print('Thumbnail width: {}      height: {}'.format(w, h))
+
                     record = ImageThumbnail(
                         image = image,
+                        width = w,
+                        height = h,
                         size = sizeString,
                         channel = channel,
                         filename = outputFilename
@@ -275,6 +283,8 @@ def sextractor(filename):
     output, error = proc.communicate()
     output = output.decode('utf-8')
     error = error.decode('utf-8')
+
+    proc.wait()
 
     print("sextractor: " + filename + "   " + output + "   " + error)
     sys.stdout.flush()
@@ -355,6 +365,8 @@ def image2xy(filename):
     output, error = proc.communicate()
     output = output.decode('utf-8')
     error = error.decode('utf-8')
+
+    proc.wait()
 
     print("image2xy: " + filename + "   " + output + "   " + error)
     sys.stdout.flush()

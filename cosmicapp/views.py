@@ -401,7 +401,6 @@ def imageProperties(request, id):
 
     return render(request, "cosmicapp/imageProperties.html", context)
 
-#TODO: Allow this function to accept a size like 300px and have it return a suitable thumbnail.
 def imageThumbnailUrl(request, id, size):
     context = {"user" : request.user}
 
@@ -410,7 +409,11 @@ def imageThumbnailUrl(request, id, size):
     except Image.DoesNotExist:
         return render(request, "cosmicapp/imagenotfound.html", context)
 
-    return HttpResponse(image.getThumbnailUrl(size))
+    hintWidth = int(request.GET.get('hintWidth', -1))
+    hintHeight = int(request.GET.get('hintHeight', -1))
+    stretch = request.GET.get('stretch', 'false')
+
+    return HttpResponse(image.getThumbnailUrl(size, hintWidth, hintHeight, stretch))
 
 def parseQueryOrderBy(request, mappingDict, fallbackEntry, fallbackAscDesc):
     if 'order' in request.GET:
@@ -567,6 +570,7 @@ def query(request):
             imageDict['centerROT'] = str(result.centerROT)
             imageDict['resolutionX'] = str(result.resolutionX)
             imageDict['resolutionY'] = str(result.resolutionY)
+            #TODO: These next lines can be replaced by a direct db query which is faster than calling this function which does more calculation than we need here.
             imageDict['thumbUrlSmall'] = result.getThumbnailUrlSmall()
             imageDict['thumbUrlMedium'] = result.getThumbnailUrlMedium()
             imageDict['thumbUrlLarge'] = result.getThumbnailUrlLarge()

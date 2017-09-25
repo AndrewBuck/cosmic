@@ -121,18 +121,44 @@ class Image(models.Model):
     resolutionY = models.FloatField(null=True)
     answers = GenericRelation('Answer')
 
-    def getThumbnailUrl(self, sizeString):
+    def getThumbnailUrl(self, sizeString, hintWidth=-1, hintHeight=-1, stretch='false'):
+        #TODO: Specify an image with something like "thumbnail not found" to display in place of this thumbnail.
+        thumbnailNotFound = ""
+
         try:
-            records = ImageThumbnail.objects.filter(image__pk=self.pk, size=sizeString)
+            records = ImageThumbnail.objects.filter(image__pk=self.pk).order_by('width')
         except:
-            #TODO: Specify an image with something like "thumbnail not found" to display in place of this thumbnail.
-            return ""
+            return thumbnailNotFound
 
         if len(records) == 0:
-            return ""
+            return thumbnailNotFound
 
-        return '/static/cosmicapp/images/' + records[0].filename
+        if hintWidth != -1 and hintHeight != -1:
+            for i in range(len(records)):
+                if records[i].size == sizeString:
+                    record = records[i]
+                    break
 
+                if records[i].width >= hintWidth and records[i].height >= hintHeight:
+                    if stretch == 'true' and i > 0:
+                        record = records[i-1]
+                    else:
+                        record = records[i]
+                    break;
+            else:
+                record = records[len(records)-1]
+        else:
+            for i in range(len(records)):
+                if records[i].size == sizeString:
+                    record = records[i]
+                    break
+            else:
+                return thumbnailNotFound
+
+        #TODO: Also return width, height, etc, in a proper XML response.  Will need to adapt the recivers of this call though.
+        return '/static/cosmicapp/images/' + record.filename
+
+    #DEPRECATED: Should remove, need to fix callers first.
     def getThumbnail(self, sizeString):
         url = self.getThumbnailUrl(sizeString)
         return '<a href=/image/' + str(self.pk) + '><img src="' + url + '"></a>'
@@ -149,21 +175,27 @@ class Image(models.Model):
     def getThumbnailUrlLarge(self):
         return self.getThumbnailUrl("large")
 
+    #DEPRECATED: Should remove, need to fix callers first.
     def getThumbnailFull(self):
         return self.getThumbnail("full")
 
+    #DEPRECATED: Should remove, need to fix callers first.
     def getThumbnailSmall(self):
         return self.getThumbnail("small")
 
+    #DEPRECATED: Should remove, need to fix callers first.
     def getThumbnailMedium(self):
         return self.getThumbnail("medium")
 
+    #DEPRECATED: Should remove, need to fix callers first.
     def getThumbnailLarge(self):
         return self.getThumbnail("large")
 
 class ImageThumbnail(models.Model):
     image = models.ForeignKey(Image, on_delete=models.CASCADE)
     size = models.CharField(max_length=10)
+    width = models.IntegerField()
+    height = models.IntegerField()
     channel = models.IntegerField()
     filename = models.CharField(max_length=256)
 
