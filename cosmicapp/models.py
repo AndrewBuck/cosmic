@@ -323,6 +323,7 @@ class SourceFindMatch(SourceFindResult):
 
 
 
+#TODO: Create a base class for catalog object entries with some standard params in it to make querying more uniform.
 class Catalog(models.Model):
     name = models.CharField(max_length=64, null=True)
     fullName = models.CharField(max_length=64, null=True)
@@ -377,6 +378,19 @@ class TwoMassXSCRecord(models.Model):
     isophotalKAngle = models.FloatField(null=True)
     isophotalKMag = models.FloatField(null=True)
     isophotalKMagErr = models.FloatField(null=True)
+
+class MessierRecord(models.Model):
+    identifier = models.CharField(max_length=24)
+    ra = models.FloatField()
+    dec = models.FloatField()
+    objectType = models.CharField(max_length=3)
+    spectralType = models.CharField(max_length=10, null=True)
+    magU = models.FloatField(null=True)
+    magB = models.FloatField(null=True)
+    magV = models.FloatField(null=True)
+    magR = models.FloatField(null=True)
+    magI = models.FloatField(null=True)
+    numReferences = models.IntegerField()
 
 
 
