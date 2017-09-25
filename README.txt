@@ -19,6 +19,11 @@ sudo pip3 install astropy photutils scipy scikit-image
 
 
 
+========== SKIP THIS SECTION ==========
+As of now we the code has been refactored to no longer be dependant on IRAF.
+This may change in the future, however for now this part of the setup can be
+skipped over as it is not currently used.
+
 Install pyraf library:
 
 sudo pip3 install pyraf
@@ -50,6 +55,7 @@ for the rest of the site.
 # added by Miniconda3 4.3.21 installer
 #export PATH="/home/buck/miniconda3/bin:$PATH"
 
+========== END SKIP SECTION ==========
 
 
 Make a directory to store uploaded files:

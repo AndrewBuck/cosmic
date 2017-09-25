@@ -97,6 +97,8 @@
 
     <td class='daofindResults'>
     <input type=checkbox id=daofindLabelMag onchange="drawSources()"> Magnitude<br>
+    <input type=checkbox id=daofindLabelPeak onchange="drawSources()"> Peak<br>
+    <input type=checkbox id=daofindLabelFlux onchange="drawSources()"> Flux<br>
     <input type=checkbox id=daofindLabelSharpness onchange="drawSources()"> Sharpness<br>
     <input type=checkbox id=daofindLabelSRound onchange="drawSources()"> Sym roundness<br>
     <input type=checkbox id=daofindLabelGRound onchange="drawSources()"> Gauss roundess<br>
@@ -105,8 +107,9 @@
 
     <td class='starfindResults'>
     <input type=checkbox id=starfindLabelMag onchange="drawSources()"> Magnitude<br>
-    <input type=checkbox id=starfindLabelArea onchange="drawSources()"> Area<br>
-    <input type=checkbox id=starfindLabelHWHM onchange="drawSources()"> HWHM<br>
+    <input type=checkbox id=starfindLabelPeak onchange="drawSources()"> Peak<br>
+    <input type=checkbox id=starfindLabelFlux onchange="drawSources()"> Flux<br>
+    <input type=checkbox id=starfindLabelFWHM onchange="drawSources()"> FWHM<br>
     <input type=checkbox id=starfindLabelRoundness onchange="drawSources()"> Roundness<br>
     <input type=checkbox id=starfindLabelPA onchange="drawSources()"> PA<br>
     <input type=checkbox id=starfindLabelSharpness onchange="drawSources()"> Sharpness<br>
@@ -358,6 +361,8 @@ function getDaofindResults()
         success : function(xml)
         {
             magValues = [];
+            fluxValues = [];
+            peakValues = [];
             sharpnessValues = [];
             sroundValues = [];
             groundValues = [];
@@ -373,18 +378,24 @@ function getDaofindResults()
                     y: Number(attr.getNamedItem('pixelY').nodeValue),
                     z: Number(attr.getNamedItem('pixelZ').nodeValue),
                     mag: Number(attr.getNamedItem('mag').nodeValue),
+                    flux: Number(attr.getNamedItem('flux').nodeValue),
+                    peak: Number(attr.getNamedItem('peak').nodeValue),
                     sharpness: Number(attr.getNamedItem('sharpness').nodeValue),
                     sround: Number(attr.getNamedItem('sround').nodeValue),
                     ground: Number(attr.getNamedItem('ground').nodeValue)
                 });
 
                 magValues[i] = daofindResults[i].mag;
+                fluxValues[i] = daofindResults[i].flux;
+                peakValues[i] = daofindResults[i].peak;
                 sharpnessValues[i] = daofindResults[i].sharpness;
                 sroundValues[i] = daofindResults[i].sround;
                 groundValues[i] = daofindResults[i].ground;
             }
 
             addHistogramToPlot(magValues, numberOfBins, daofindColor, 'Mag (daofind)', []);
+            addHistogramToPlot(fluxValues, numberOfBins, daofindColor, 'Flux (daofind)', [1, 3]);
+            addHistogramToPlot(peakValues, numberOfBins, daofindColor, 'Peak(daofind)', [1, 3, 3, 5]);
             addHistogramToPlot(sharpnessValues, numberOfBins, daofindColor, 'Sharpness (daofind)', [3, 3]);
             addHistogramToPlot(sroundValues, numberOfBins, daofindColor, 'S Round (daofind)', [3, 6]);
             addHistogramToPlot(groundValues, numberOfBins, daofindColor, 'G Round (daofind)', [6, 6]);
@@ -409,8 +420,9 @@ function getStarfindResults()
         success : function(xml)
         {
             magValues = [];
-            areaValues = [];
-            hwhmValues = [];
+            peakValues = [];
+            fluxValues = [];
+            fwhmValues = [];
             roundnessValues = [];
             paValues = [];
             sharpnessValues = [];
@@ -426,24 +438,27 @@ function getStarfindResults()
                     y: Number(attr.getNamedItem('pixelY').nodeValue),
                     z: Number(attr.getNamedItem('pixelZ').nodeValue),
                     mag: Number(attr.getNamedItem('mag').nodeValue),
-                    area: Number(attr.getNamedItem('area').nodeValue),
-                    hwhm: Number(attr.getNamedItem('hwhm').nodeValue),
+                    peak: Number(attr.getNamedItem('peak').nodeValue),
+                    flux: Number(attr.getNamedItem('flux').nodeValue),
+                    fwhm: Number(attr.getNamedItem('fwhm').nodeValue),
                     roundness: Number(attr.getNamedItem('roundness').nodeValue),
                     pa: Number(attr.getNamedItem('pa').nodeValue),
                     sharpness: Number(attr.getNamedItem('sharpness').nodeValue)
                 });
 
                 magValues[i] = starfindResults[i].mag;
-                areaValues[i] = starfindResults[i].area;
-                hwhmValues[i] = starfindResults[i].hwhm;
+                peakValues[i] = starfindResults[i].peak;
+                fluxValues[i] = starfindResults[i].flux;
+                fwhmValues[i] = starfindResults[i].fwhm;
                 roundnessValues[i] = starfindResults[i].roundness;
                 paValues[i] = starfindResults[i].pa;
                 sharpnessValues[i] = starfindResults[i].sharpness;
             }
 
             addHistogramToPlot(magValues, numberOfBins, starfindColor, 'Mag (starfind)', []);
-            addHistogramToPlot(areaValues, numberOfBins, starfindColor, 'Area (starfind)', [3, 3]);
-            addHistogramToPlot(hwhmValues, numberOfBins, starfindColor, 'HWHM (starfind)', [3, 6]);
+            addHistogramToPlot(peakValues, numberOfBins, starfindColor, 'Peak (starfind)', [1, 3]);
+            addHistogramToPlot(fluxValues, numberOfBins, starfindColor, 'Flux (starfind)', [1, 3, 3, 5]);
+            addHistogramToPlot(fwhmValues, numberOfBins, starfindColor, 'FWHM (starfind)', [3, 6]);
             addHistogramToPlot(roundnessValues, numberOfBins, starfindColor, 'Roundness (starfind)', [6, 6]);
             addHistogramToPlot(paValues, numberOfBins, starfindColor, 'PA (starfind)', [2, 2, 5]);
             addHistogramToPlot(sharpnessValues, numberOfBins, starfindColor, 'Sharpness (starfind)', [2, 2, 2, 2, 5]);
@@ -615,6 +630,12 @@ function drawSources()
             if($('#daofindLabelMag').is(':checked'))
                 labelArray[labelArray.length] = math.round(daofindResults[i].mag, 2);
 
+            if($('#daofindLabelPeak').is(':checked'))
+                labelArray[labelArray.length] = math.round(daofindResults[i].peak, 2);
+
+            if($('#daofindLabelFlux').is(':checked'))
+                labelArray[labelArray.length] = math.round(daofindResults[i].flux, 2);
+
             if($('#daofindLabelSharpness').is(':checked'))
                 labelArray[labelArray.length] = math.round(daofindResults[i].sharpness, 2);
 
@@ -656,11 +677,14 @@ function drawSources()
             if($('#starfindLabelMag').is(':checked'))
                 labelArray[labelArray.length] = math.round(starfindResults[i].mag, 2);
 
-            if($('#starfindLabelArea').is(':checked'))
-                labelArray[labelArray.length] = math.round(starfindResults[i].area, 2);
+            if($('#starfindLabelPeak').is(':checked'))
+                labelArray[labelArray.length] = math.round(starfindResults[i].peak, 2);
 
-            if($('#starfindLabelHWHM').is(':checked'))
-                labelArray[labelArray.length] = math.round(starfindResults[i].hwhm, 2);
+            if($('#starfindLabelFlux').is(':checked'))
+                labelArray[labelArray.length] = math.round(starfindResults[i].flux, 2);
+
+            if($('#starfindLabelFWHM').is(':checked'))
+                labelArray[labelArray.length] = math.round(starfindResults[i].fwhm, 2);
 
             if($('#starfindLabelRoundness').is(':checked'))
                 labelArray[labelArray.length] = math.round(starfindResults[i].roundness, 2);
