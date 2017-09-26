@@ -25,6 +25,21 @@ staticDirectory = os.path.dirname(os.path.realpath(__file__)) + "/static/cosmica
 def sigmoid(x):
     return 1 / (1 + math.exp(-x))
 
+def storeImageLocation(image, w):
+    #TODO: should check w.lattyp and w.lontyp to make sure we are storing these world coordinates correctly.
+    raCen, decCen = w.all_pix2world(image.dimX/2, image.dimY/2, 1)
+    raScale, decScale = wcs.utils.proj_plane_pixel_scales(w)
+    raScale *= 3600.0
+    decScale *= 3600.0
+
+    image.centerRA = raCen
+    image.centerDEC = decCen
+    image.resolutionX = raScale
+    image.resolutionY = decScale
+    #TODO: Store image.centerROT
+    #TODO: Should also store the four corners of the image position on the sky.
+    image.save()
+
 @shared_task
 def imagestats(filename):
     formatString = '{"width" : %w, "height" : %h, "depth" : %z, "channels" : "%[channels]"},'
@@ -142,19 +157,15 @@ def imagestats(filename):
         if w.has_celestial:
             print("WCS found in header")
 
-            #TODO: should check w.lattyp and w.lontyp to make sure we are storing these world coordinates correctly.
-            raCen, decCen = w.all_pix2world(image.dimX/2, image.dimY/2, 1)
-            raScale, decScale = wcs.utils.proj_plane_pixel_scales(w)
-            raScale *= 3600.0
-            decScale *= 3600.0
+            storeImageLocation(image, w)
 
-            image.centerRA = raCen
-            image.centerDEC = decCen
-            image.resolutionX = raScale
-            image.resolutionY = decScale
-            #TODO: Store image.centerROT
-            #TODO: Should also store the four corners of the image position on the sky.
-            image.save()
+            ps = PlateSolution(
+                image = image,
+                wcsHeader = w.to_header_string(True),
+                source = 'original'
+                )
+
+            ps.save()
         else:
             print("WCS not found in header")
 
@@ -674,8 +685,41 @@ def astrometryNet(filename):
 
     proc.wait()
 
-    os.remove(tableFilename)
-    #TODO: Read in results.
+    solvedFilename = settings.MEDIA_ROOT + filename + '.sources.solved'
+    if os.path.isfile(solvedFilename):
+        print('\n\nPlate solved successfully.')
+        w = wcs.WCS(settings.MEDIA_ROOT + filename + '.sources.wcs')
+
+        storeImageLocation(image, w)
+
+        ps = PlateSolution(
+            image = image,
+            wcsHeader = w.to_header_string(True),
+            source = 'astrometryNet'
+            )
+
+        ps.save()
+    else:
+        print('\n\nNo plate solution found.')
+
+    filesToCleanup = [
+        tableFilename,
+        settings.MEDIA_ROOT + filename + '.sources.axy',
+        settings.MEDIA_ROOT + filename + '.sources.corr',
+        settings.MEDIA_ROOT + filename + '.sources-indx.xyls',
+        settings.MEDIA_ROOT + filename + '.sources.match',
+        settings.MEDIA_ROOT + filename + '.sources.rdls',
+        settings.MEDIA_ROOT + filename + '.sources.solved',
+        settings.MEDIA_ROOT + filename + '.sources.wcs'
+        ]
+
+    for f in filesToCleanup:
+        try:
+            os.remove(f)
+        except FileNotFoundError:
+            pass
+        except:
+            print('Error in removing file {}\nError was: {}'.format(f, sys.exc_info()[0]))
 
     return True
 

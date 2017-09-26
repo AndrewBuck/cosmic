@@ -222,6 +222,11 @@ class ImageProperty(models.Model):
     key = models.TextField()
     value = models.TextField()
 
+class PlateSolution(models.Model):
+    image = models.ForeignKey(Image, on_delete=models.CASCADE)
+    wcsHeader = models.TextField()
+    source = models.CharField(max_length=32)
+
 
 
 
