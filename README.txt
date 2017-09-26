@@ -19,6 +19,38 @@ sudo pip3 install astropy photutils scipy scikit-image
 
 
 
+Install and setup Postgre SQL:
+
+sudo apt-get install python-pip python-dev libpq-dev postgresql postgresql-contrib
+
+sudo su - postgres
+
+psql
+
+CREATE DATABASE cosmic;
+
+# Pick a proper password for a production site, the code in git uses the password below for development.
+CREATE USER cosmicweb WITH PASSWORD 'password';
+
+ALTER ROLE cosmicweb SET client_encoding TO 'utf8';
+ALTER ROLE cosmicweb SET default_transaction_isolation TO 'read committed';
+ALTER ROLE cosmicweb SET timezone TO 'UTC';
+
+GRANT ALL PRIVILEGES ON DATABASE cosmic TO cosmicweb;
+
+\q
+exit
+
+sudo pip3 install psycopg2
+
+# Optional create a superuser on the cosmic website (a user who can access cosmic.science/admin).
+python manage.py createsuperuser
+
+# Optional install pgadmin, which is a gui to manage the postgre database, view tables, etc.
+sudo apt-get install pgadmin3
+
+
+
 ========== SKIP THIS SECTION ==========
 As of now we the code has been refactored to no longer be dependant on IRAF.
 This may change in the future, however for now this part of the setup can be
