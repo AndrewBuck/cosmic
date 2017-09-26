@@ -528,6 +528,13 @@ function getSourceFindMatches()
     });
 };
 
+function drawSource(c, x, y, size, sizeFactor, sizeScaleFactor)
+{
+    c.beginPath();
+    c.arc(x, {{image.dimY}} - y, sizeFactor*Math.pow(size, sizeScaleFactor), 0, 2*Math.PI)
+    c.stroke();
+};
+
 function drawSources()
 {
     var i;
@@ -545,10 +552,7 @@ function drawSources()
     if($('#sextractorEnabledCheckbox').is(':checked'))
     for(i = 0; i < sextractorResults.length; i++)
     {
-        context.beginPath();
-        context.arc(sextractorResults[i].x, {{image.dimY}} - sextractorResults[i].y,
-            sizeFactor*Math.pow(sextractorResults[i].confidence, sizeScaleFactor), 0, 2*Math.PI)
-        context.stroke();
+        drawSource(context, sextractorResults[i].x, sextractorResults[i].y, sextractorResults[i].confidence, sizeFactor, sizeScaleFactor);
 
         if(sextractorResults[i].confidence > labelThreshold)
         {
@@ -583,10 +587,7 @@ function drawSources()
     if($('#image2xyEnabledCheckbox').is(':checked'))
     for(i = 0; i < image2xyResults.length; i++)
     {
-        context.beginPath();
-        context.arc(image2xyResults[i].x, {{image.dimY}} - image2xyResults[i].y,
-            sizeFactor*Math.pow(image2xyResults[i].confidence, sizeScaleFactor), 0, 2*Math.PI)
-        context.stroke();
+        drawSource(context, image2xyResults[i].x, image2xyResults[i].y, image2xyResults[i].confidence, sizeFactor, sizeScaleFactor);
 
         if(image2xyResults[i].confidence > labelThreshold)
         {
@@ -618,10 +619,7 @@ function drawSources()
     if($('#daofindEnabledCheckbox').is(':checked'))
     for(i = 0; i < daofindResults.length; i++)
     {
-        context.beginPath();
-        context.arc(daofindResults[i].x, {{image.dimY}} - daofindResults[i].y,
-            sizeFactor*Math.pow(daofindResults[i].confidence, sizeScaleFactor), 0, 2*Math.PI)
-        context.stroke();
+        drawSource(context, daofindResults[i].x, daofindResults[i].y, daofindResults[i].confidence, sizeFactor, sizeScaleFactor);
 
         if(daofindResults[i].confidence > labelThreshold)
         {
@@ -665,10 +663,7 @@ function drawSources()
     if($('#starfindEnabledCheckbox').is(':checked'))
     for(i = 0; i < starfindResults.length; i++)
     {
-        context.beginPath();
-        context.arc(starfindResults[i].x, {{image.dimY}} - starfindResults[i].y,
-            sizeFactor*Math.pow(starfindResults[i].confidence, sizeScaleFactor), 0, 2*Math.PI)
-        context.stroke();
+        drawSource(context, starfindResults[i].x, starfindResults[i].y, starfindResults[i].confidence, sizeFactor, sizeScaleFactor);
 
         if(starfindResults[i].confidence > labelThreshold)
         {
@@ -715,17 +710,14 @@ function drawSources()
     if($('#sourceFindMatchesEnabledCheckbox').is(':checked'))
     for(i = 0; i < sourceFindMatches.length; i++)
     {
-        context.beginPath();
-        context.arc(sourceFindMatches[i].x, {{image.dimY}} - sourceFindMatches[i].y,
-            sizeFactor*Math.pow(sourceFindMatches[i].confidence, sizeScaleFactor), 0, 2*Math.PI)
-        context.stroke();
+        drawSource(context, sourceFindMatches[i].x, sourceFindMatches[i].y, sourceFindMatches[i].confidence, sizeFactor, sizeScaleFactor);
 
         if(sourceFindMatches[i].confidence > labelThreshold)
         {
             labelArray = [];
 
             if($('#sourceFindMatchesLabelNum').is(':checked'))
-                labelArray[labelArray.length] = sourceFindMatches[i].numMatches, 0;
+                labelArray[labelArray.length] = sourceFindMatches[i].numMatches;
 
             if($('#sourceFindMatchesLabelConfidence').is(':checked'))
                 labelArray[labelArray.length] = math.round(sourceFindMatches[i].confidence, 2);
