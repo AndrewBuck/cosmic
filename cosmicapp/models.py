@@ -342,6 +342,7 @@ class Catalog(models.Model):
     attributionLong = models.TextField(null=True)
     vizierID = models.TextField(null=True)
     vizierUrl = models.TextField(null=True)
+    url = models.TextField(null=True)
     cosmicNotes = models.TextField(null=True)
 
 class UCAC4Record(models.Model):
@@ -400,6 +401,34 @@ class MessierRecord(models.Model):
     magI = models.FloatField(null=True)
     numReferences = models.IntegerField()
 
+class AstorbRecord(models.Model):
+    number = models.IntegerField(null=True)
+    name = models.CharField(max_length=18)
+    absMag = models.FloatField()
+    colorIndex = models.FloatField(null=True)
+    diameter = models.FloatField(null=True)
+    taxanomicClass = models.CharField(max_length=7)
+    orbitCode = models.IntegerField()
+    criticalCode = models.IntegerField()
+    astrometryNeededCode = models.IntegerField()
+    observationArc = models.IntegerField()
+    numObservations = models.IntegerField()
+    epoch = models.DateField()
+    meanAnomaly = models.FloatField()
+    argPerihelion = models.FloatField()
+    lonAscendingNode = models.FloatField()
+    inclination = models.FloatField()
+    eccentricity = models.FloatField()
+    semiMajorAxis = models.FloatField()
+    ceu = models.FloatField()
+    ceuRate = models.FloatField()
+    ceuDate = models.DateField()
+    nextPEU = models.FloatField()
+    nextPEUDate = models.DateField()
+    tenYearPEU = models.FloatField()
+    tenYearPEUDate = models.DateField()
+    tenYearPEUIfObserved = models.FloatField()
+    tenYearPEUDateIfObserved = models.DateField()
 
 
 

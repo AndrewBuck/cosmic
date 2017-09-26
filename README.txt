@@ -275,6 +275,31 @@ Messier Catalog - The Messier Objects
 
 
 
+Astorb - The Asteroid Orbital Elements Database
+
+    The Astorb database is the current list of orbital elements and basic data
+    for all known asteroids.  It is updated daily from the Minor Planet Center
+    and then some additional processing is done on it by the Lowell Observatory
+    to add a few columns of data on ephemeris uncertainty for each asteroid.  As
+    of 2017 the downloaded file is 54mb and it uncompresses to 200mb, containing
+    data for about 700,000 asteroids.
+
+    To import the data, first download and unzip the astorb.dat file from:
+
+        ftp://ftp.lowell.edu/pub/elgb/astorb.html
+
+    Then run the import python script:
+
+        python3 import_cat_astorb.py /path/to/astorb.dat
+
+    Attribution: The research and computing needed to generate astorb.dat were
+        funded principally by NASA grant NAG5-4741, and in part by the Lowell
+        Observatory endowment. astorb.dat may be freely used, copied, and
+        transmitted provided attribution to Dr. Edward Bowell and the
+        aforementioned funding sources is made.
+
+
+
 
 NOTES:
 

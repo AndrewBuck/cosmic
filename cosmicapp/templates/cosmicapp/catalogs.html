@@ -16,17 +16,19 @@ in our database and what sources it is gathered from.</p>
 <h2>Imported Catalogs</h2>
 
 {% for catalog in catalogs %}
+    <br>
     <h3>{{catalog.name}}</h3>
 
     <p><i>{{catalog.fullName}}</i></p>
 
     <p>Contains {{catalog.numObjects}} objects of type: {{catalog.objectTypes}} - down to a limiting magnitude of {{catalog.limMagnitude}}</p>
 
-    <p>Link to catalog entry on VizieR: <a href="{{catalog.vizierUrl}}">{{catalog.vizierID}}</a></p>
+    <p>Link to catalog entry on VizieR: <a href="{{catalog.vizierUrl}}">{{catalog.vizierID}}</a>
+    {% if catalog.url %}&emsp;&emsp;<a href="{{catalog.url}}">Alternate link</a>{% endif %}</p>
 
     <p>Attribution: "{{catalog.attributionShort}}"</p>
 
-    {% if catalog.attributionLong %}<p>{{catalog.attributionLong}}</p>{% endif %}
+    {% if catalog.attributionLong %}<p><i>{{catalog.attributionLong}}</i></p>{% endif %}
 
     {% if catalog.cosmicNotes %}<p>Notes specific to the Cosmic website: <i>{{catalog.cosmicNotes}}</i></p>{% endif %}
 
