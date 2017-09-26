@@ -535,6 +535,24 @@ function drawSource(c, x, y, size, sizeFactor, sizeScaleFactor)
     c.stroke();
 };
 
+function constructLabelText(paramArray)
+{
+    var i;
+    var labelArray = [];
+    var id, value, round;
+    for(i = 0; i < paramArray.length; i++)
+    {
+        id = paramArray[i][0];
+        value = paramArray[i][1];
+        round = paramArray[i][2];
+
+        if($(id).is(':checked'))
+            labelArray[i] = math.round(value, round);
+    }
+
+    return labelArray.join(' ');
+};
+
 function drawSources()
 {
     var i;
@@ -556,21 +574,12 @@ function drawSources()
 
         if(sextractorResults[i].confidence > labelThreshold)
         {
-            labelArray = [];
-
-            if($('#sextractorLabelFlux').is(':checked'))
-                labelArray[labelArray.length] = math.round(sextractorResults[i].fluxAuto, 2);
-
-            if($('#sextractorLabelFluxErr').is(':checked'))
-                labelArray[labelArray.length] = math.round(sextractorResults[i].fluxAutoErr, 2);
-
-            if($('#sextractorLabelFlags').is(':checked'))
-                labelArray[labelArray.length] = sextractorResults[i].flags;
-
-            if($('#sextractorLabelConfidence').is(':checked'))
-                labelArray[labelArray.length] = math.round(sextractorResults[i].confidence, 2);
-
-            labelText = labelArray.join(' ');
+            labelText = constructLabelText([
+                ['#sextractorLabelFlux', sextractorResults[i].fluxAuto, 2],
+                ['#sextractorLabelFluxErr', sextractorResults[i].fluxAutoErr, 2],
+                ['#sextractorLabelFlags', sextractorResults[i].flags, 0],
+                ['#sextractorLabelConfidence', sextractorResults[i].confidence, 2],
+                ]);
 
             context.font = labelSize + 'px sans-serif'
             drawStroked(context, labelText, sextractorResults[i].x + labelSize/2, {{image.dimY}} - sextractorResults[i].y - labelSize)
@@ -591,18 +600,11 @@ function drawSources()
 
         if(image2xyResults[i].confidence > labelThreshold)
         {
-            labelArray = [];
-
-            if($('#image2xyLabelFlux').is(':checked'))
-                labelArray[labelArray.length] = math.round(image2xyResults[i].flux, 2);
-
-            if($('#image2xyLabelBackground').is(':checked'))
-                labelArray[labelArray.length] = math.round(image2xyResults[i].background, 2);
-
-            if($('#image2xyLabelConfidence').is(':checked'))
-                labelArray[labelArray.length] = math.round(image2xyResults[i].confidence, 2);
-
-            labelText = labelArray.join(' ');
+            labelText = constructLabelText([
+                ['#image2xyLabelFlux', image2xyResults[i].flux, 2],
+                ['#image2xyLabelBackground', image2xyResults[i].background, 2],
+                ['#image2xyLabelConfidence', image2xyResults[i].confidence, 2],
+                ]);
 
             context.font = labelSize + 'px sans-serif'
             drawStroked(context, labelText, image2xyResults[i].x + labelSize/2, {{image.dimY}} - image2xyResults[i].y)
@@ -623,30 +625,15 @@ function drawSources()
 
         if(daofindResults[i].confidence > labelThreshold)
         {
-            labelArray = [];
-
-            if($('#daofindLabelMag').is(':checked'))
-                labelArray[labelArray.length] = math.round(daofindResults[i].mag, 2);
-
-            if($('#daofindLabelPeak').is(':checked'))
-                labelArray[labelArray.length] = math.round(daofindResults[i].peak, 2);
-
-            if($('#daofindLabelFlux').is(':checked'))
-                labelArray[labelArray.length] = math.round(daofindResults[i].flux, 2);
-
-            if($('#daofindLabelSharpness').is(':checked'))
-                labelArray[labelArray.length] = math.round(daofindResults[i].sharpness, 2);
-
-            if($('#daofindLabelSRound').is(':checked'))
-                labelArray[labelArray.length] = math.round(daofindResults[i].sround, 2);
-
-            if($('#daofindLabelGRound').is(':checked'))
-                labelArray[labelArray.length] = math.round(daofindResults[i].ground, 2);
-
-            if($('#daofindLabelConfidence').is(':checked'))
-                labelArray[labelArray.length] = math.round(daofindResults[i].confidence, 2);
-
-            labelText = labelArray.join(' ');
+            labelText = constructLabelText([
+                ['#daofindLabelMag', daofindResults[i].mag, 2],
+                ['#daofindLabelPeak', daofindResults[i].peak, 2],
+                ['#daofindLabelFlux', daofindResults[i].flux, 2],
+                ['#daofindLabelSharpness', daofindResults[i].sharpness, 2],
+                ['#daofindLabelSRound', daofindResults[i].sround, 2],
+                ['#daofindLabelGRound', daofindResults[i].ground, 2],
+                ['#daofindLabelConfidence', daofindResults[i].confidence, 2],
+                ]);
 
             context.font = labelSize + 'px sans-serif'
             drawStroked(context, labelText, daofindResults[i].x + labelSize/2, {{image.dimY}} - daofindResults[i].y + labelSize)
@@ -667,33 +654,16 @@ function drawSources()
 
         if(starfindResults[i].confidence > labelThreshold)
         {
-            labelArray = [];
-
-            if($('#starfindLabelMag').is(':checked'))
-                labelArray[labelArray.length] = math.round(starfindResults[i].mag, 2);
-
-            if($('#starfindLabelPeak').is(':checked'))
-                labelArray[labelArray.length] = math.round(starfindResults[i].peak, 2);
-
-            if($('#starfindLabelFlux').is(':checked'))
-                labelArray[labelArray.length] = math.round(starfindResults[i].flux, 2);
-
-            if($('#starfindLabelFWHM').is(':checked'))
-                labelArray[labelArray.length] = math.round(starfindResults[i].fwhm, 2);
-
-            if($('#starfindLabelRoundness').is(':checked'))
-                labelArray[labelArray.length] = math.round(starfindResults[i].roundness, 2);
-
-            if($('#starfindLabelPA').is(':checked'))
-                labelArray[labelArray.length] = math.round(starfindResults[i].pa, 2);
-
-            if($('#starfindLabelSharpness').is(':checked'))
-                labelArray[labelArray.length] = math.round(starfindResults[i].sharpness, 2);
-
-            if($('#starfindLabelConfidence').is(':checked'))
-                labelArray[labelArray.length] = math.round(starfindResults[i].confidence, 2);
-
-            labelText = labelArray.join(' ');
+            labelText = constructLabelText([
+                ['#starfindLabelMag', starfindResults[i].mag, 2],
+                ['#starfindLabelPeak', starfindResults[i].peak, 2],
+                ['#starfindLabelFlux', starfindResults[i].flux, 2],
+                ['#starfindLabelFWHM', starfindResults[i].fwhm, 2],
+                ['#starfindLabelRoundness', starfindResults[i].roundness, 2],
+                ['#starfindLabelPA', starfindResults[i].pa, 2],
+                ['#starfindLabelSharpness', starfindResults[i].sharpness, 2],
+                ['#starfindLabelConfidence', starfindResults[i].confidence, 2],
+                ]);
 
             context.font = labelSize + 'px sans-serif'
             drawStroked(context, labelText, starfindResults[i].x + labelSize/2, {{image.dimY}} - starfindResults[i].y + 2*labelSize)
@@ -714,15 +684,10 @@ function drawSources()
 
         if(sourceFindMatches[i].confidence > labelThreshold)
         {
-            labelArray = [];
-
-            if($('#sourceFindMatchesLabelNum').is(':checked'))
-                labelArray[labelArray.length] = sourceFindMatches[i].numMatches;
-
-            if($('#sourceFindMatchesLabelConfidence').is(':checked'))
-                labelArray[labelArray.length] = math.round(sourceFindMatches[i].confidence, 2);
-
-            labelText = labelArray.join(' ');
+            labelText = constructLabelText([
+                ['#sourceFindMatchesLabelNum', sourceFindMatches[i].numMatches, 0],
+                ['#sourceFindMatchesLabelConfidence', sourceFindMatches[i].confidence, 2],
+                ]);
 
             context.font = labelSize + 'px sans-serif'
             context.textAlign = 'end';
