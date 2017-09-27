@@ -123,6 +123,7 @@ while not quit:
         waitTime += 1
 
     # Write the result of the returned value back to the database, either success, failure, or error (early exit).
+    #TODO: Pass the return result through directly as a string and modify the individual tasks to return more detailed strings.
     if celeryResult.info == True:
         pi.completed = 'success'
     elif celeryResult.info == False:

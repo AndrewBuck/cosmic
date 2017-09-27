@@ -17,6 +17,10 @@ on the celery worker nodes:
 
 sudo pip3 install astropy photutils scipy scikit-image
 
+PyEphem is used to compute ephemerides for asteroids, etc:
+
+sudo pip3 install pyephem
+
 
 
 Install and setup Postgre SQL:

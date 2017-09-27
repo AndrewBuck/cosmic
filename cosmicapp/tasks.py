@@ -18,6 +18,8 @@ from astropy.stats import sigma_clipped_stats
 from astropy.table import Table
 from photutils import make_source_mask, DAOStarFinder, IRAFStarFinder
 
+import ephem
+
 from .models import *
 
 staticDirectory = os.path.dirname(os.path.realpath(__file__)) + "/static/cosmicapp/"
@@ -558,6 +560,7 @@ def starmatch(filename):
 
         # Loop over all the pairs of results in the two current methods and record
         # any match pairs that are within 3 pixels of eachother.
+        #TODO: Sort stars into bins first to cut down on the n^2 growth.
         matches = []
         for r1 in results1:
             nearestDist = 3.0
@@ -701,6 +704,7 @@ def astrometryNet(filename):
         ps.save()
     else:
         print('\n\nNo plate solution found.')
+        #TODO: Add another job to the proess queue with lower priority and a deeper search.
 
     filesToCleanup = [
         tableFilename,
@@ -835,6 +839,48 @@ def parseHeaders(imageId):
                 )
 
             prop.save()
+
+    return True
+
+#TODO:  Need to figure out a way to schedule this task somehow.  Calling it manually works fine, but a more permanent solution needs to be found.
+@shared_task
+def computeAsteroidEphemerides(ephemTime):
+    asteroids = AstorbRecord.objects.all()
+
+    with transaction.atomic():
+        #Clear all asteroid ephemerides.
+        #TODO: Should we only clear old ones?  Maybe only ones where user=None?  Not really sure.
+        AstorbEphemeris.objects.all().delete()
+
+        for asteroid in asteroids:
+            body = ephem.EllipticalBody()
+
+            body._inc = asteroid.inclination
+            body._Om = asteroid.lonAscendingNode
+            body._om = asteroid.argPerihelion
+            body._a = asteroid.semiMajorAxis
+            body._M = asteroid.meanAnomaly
+            body._epoch_M = asteroid.epoch
+            body._epoch = asteroid.epoch
+            body._e = asteroid.eccentricity
+            body._H = asteroid.absMag
+            body._G = asteroid.slopeParam
+
+            #TODO: The computed RA/DEC are off slightly, fix this.  I think it is due the +0.5 day issue in the epoch time in the import script.
+            body.compute(ephemTime)
+
+            ephemeris = AstorbEphemeris(
+                astorbRecord = asteroid,
+                dateTime = ephemTime,
+                ra = body.ra * 180/math.pi,
+                dec = body.dec * 180/math.pi,
+                earthDist = body.earth_distance,
+                sunDist = body.sun_distance,
+                mag = body.mag,
+                elong = body.elong * 180/math.pi
+                )
+
+            ephemeris.save()
 
     return True
 
