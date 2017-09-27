@@ -586,6 +586,8 @@ def starmatch(filename):
 
     # Now that we have all the matches between every two individual methods, combine them into 'superMatches' where 3
     # or more different match types all agree on the same star.
+    print('Calculating super matches:')
+    sys.stdout.flush()
     superMatches = []
     for i1, i2, matches in matchedResults:
         for match in matches:
@@ -608,6 +610,8 @@ def starmatch(filename):
                 superMatches.append(d)
 
     # Loop over all the superMatch entries and create a database entry for each one.
+    print('Found {} super matches.  Writing them to the DB...'.format(len(superMatches)))
+    sys.stdout.flush()
     with transaction.atomic():
         for superMatch in superMatches:
             sextractorResult = superMatch.get('sextractor', None)
@@ -649,6 +653,8 @@ def starmatch(filename):
 
             record.save()
 
+    print('Done.')
+    sys.stdout.flush()
     return True
 
 @shared_task
