@@ -1,5 +1,6 @@
 {% extends "cosmicapp/base.html" %}
 {% load static %}
+{% load humanize %}
 
 {% block extratitle %} - Catalogs {% endblock %}
 
@@ -21,7 +22,7 @@ in our database and what sources it is gathered from.</p>
 
     <p><i>{{catalog.fullName}}</i></p>
 
-    <p>Contains {{catalog.numObjects}} objects of type: {{catalog.objectTypes}} - down to a limiting magnitude of {{catalog.limMagnitude}}</p>
+    <p>Contains {{catalog.numObjects|intcomma}} objects of type: {{catalog.objectTypes}} - down to a limiting magnitude of {{catalog.limMagnitude}}</p>
 
     <p>Link to catalog entry on VizieR: <a href="{{catalog.vizierUrl}}">{{catalog.vizierID}}</a>
     {% if catalog.url %}&emsp;&emsp;<a href="{{catalog.url}}">Alternate link</a>{% endif %}</p>

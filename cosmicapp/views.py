@@ -258,7 +258,7 @@ def userpage(request, username):
 def processQueue(request):
     context = {"user" : request.user}
 
-    processInputsUncompleted = ProcessInput.objects.filter(completed=None)[:50]
+    processInputsUncompleted = ProcessInput.objects.filter(completed=None).order_by('-priority')[:50]
     processInputsCompleted = ProcessInput.objects.filter(~Q(completed=None)).order_by('-startedDateTime')[:50]
     context['processInputsUncompleted'] = processInputsUncompleted
     context['processInputsCompleted'] = processInputsCompleted
@@ -492,6 +492,8 @@ def query(request):
                 values = cleanupQueryValues(valueString, 'int')
                 if len(values) > 0:
                     results = results.filter(pk__in=values)
+
+        #TODO: Allow querying by uploaded filename.
 
         results = results.order_by(ascDesc + orderField)[offset:offset+limit]
 

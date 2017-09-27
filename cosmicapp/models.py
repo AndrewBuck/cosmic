@@ -238,9 +238,9 @@ class ProcessInput(models.Model):
     startedDateTime = models.DateTimeField(null=True)
     priority = models.FloatField(null=True)
     estCostCPU = models.FloatField(null=True)
-    estCostBandwidth = models.FloatField(null=True)
-    estCostStorage = models.FloatField(null=True)
-    estCostIO = models.FloatField(null=True)
+    estCostBandwidth = models.BigIntegerField(null=True)
+    estCostStorage = models.BigIntegerField(null=True)
+    estCostIO = models.BigIntegerField(null=True)
     completed = models.TextField(null=True, default=None)
     #NOTE: We may want to add a field or an auto computed field for whether the process can be run now or not.  I.E.
     # whether it has any unmet prerequisites.
@@ -334,7 +334,7 @@ class SourceFindMatch(SourceFindResult):
 #TODO: Create a base class for catalog object entries with some standard params in it to make querying more uniform.
 class Catalog(models.Model):
     name = models.CharField(max_length=64, null=True)
-    fullName = models.CharField(max_length=64, null=True)
+    fullName = models.CharField(max_length=256, null=True)
     objectTypes = models.TextField(null=True)
     numObjects = models.TextField(null=True)
     limMagnitude = models.FloatField(null=True)
