@@ -405,6 +405,7 @@ class AstorbRecord(models.Model):
     number = models.IntegerField(null=True)
     name = models.CharField(max_length=18)
     absMag = models.FloatField()
+    slopeParam = models.FloatField()
     colorIndex = models.FloatField(null=True)
     diameter = models.FloatField(null=True)
     taxanomicClass = models.CharField(max_length=7)
@@ -422,13 +423,13 @@ class AstorbRecord(models.Model):
     semiMajorAxis = models.FloatField()
     ceu = models.FloatField()
     ceuRate = models.FloatField()
-    ceuDate = models.DateField()
+    ceuDate = models.DateField(null=True)
     nextPEU = models.FloatField()
-    nextPEUDate = models.DateField()
+    nextPEUDate = models.DateField(null=True)
     tenYearPEU = models.FloatField()
-    tenYearPEUDate = models.DateField()
+    tenYearPEUDate = models.DateField(null=True)
     tenYearPEUIfObserved = models.FloatField()
-    tenYearPEUDateIfObserved = models.DateField()
+    tenYearPEUDateIfObserved = models.DateField(null=True)
 
 
 

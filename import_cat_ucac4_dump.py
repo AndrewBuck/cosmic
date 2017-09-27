@@ -11,8 +11,15 @@ The dump program can be downloaded from:  ftp://cdsarc.u-strasbg.fr/cats/I/322A/
 To compile it run the command:  gfortran u4dump.f u4sub.f -o u4dump
 """
 
-skip = True
+skip = False
 skipFactor = 1000
+
+import sys
+
+usage = "\n\n\n\tUSAGE: " + sys.argv[0] + " </path/to/ascii/files/*.asc>\n\n\n"
+if len(sys.argv) < 2:
+    print(usage)
+    sys.exit(1)
 
 print("\n\n\n---------- WARNING ----------")
 
@@ -26,7 +33,6 @@ if skip:
 else:
     print("Importing all stars in the specified zone files.\n")
 
-import sys
 sys.stdout.flush()
 
 

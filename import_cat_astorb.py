@@ -10,7 +10,7 @@ and imports each data line as a record into the django database.
 NOTE: This program clears the existing table before starting to read the new values in to avoid duplicating values.
 """
 
-skip = True
+skip = False
 skipFactor = 50
 
 import os
@@ -79,7 +79,8 @@ with open(sys.argv[1], 'r') as f:
             record = AstorbRecord(
                 number = parseInt(line[0:6]),
                 name = line[7:26].strip(),
-                absMag = parseFloat(line[42:48]),
+                absMag = parseFloat(line[42:47]),
+                slopeParam = parseFloat(line[48:53]),
                 colorIndex = parseFloat(line[54:58]),
                 diameter = parseFloat(line[59:64]),
                 taxanomicClass = line[65:72].strip(),

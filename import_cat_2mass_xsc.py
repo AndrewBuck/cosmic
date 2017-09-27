@@ -1,12 +1,12 @@
 """
-This python scrupt is a standalone script which can be run to import the 2MASS Extended Sources catalogue into the
+This python script is a standalone script which can be run to import the 2MASS Extended Sources catalogue into the
 django database used by the website cosmic.  It takes as input the 2 ascii files downloaded from the 2MASS ftp site and
 imports each data line as a record into the django database.
 
 NOTE: This program clears the existing table before starting to read the new values in to avoid duplicating values.
 """
 
-skip = True
+skip = False
 skipFactor = 100
 
 import os
