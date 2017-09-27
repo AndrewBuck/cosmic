@@ -842,45 +842,106 @@ def parseHeaders(imageId):
 
     return True
 
+def computeSingleEphemeris(asteroid, ephemTime):
+    ephemTimeObject = ephem.Date(ephemTime)
+
+    body = ephem.EllipticalBody()
+
+    body._inc = asteroid.inclination
+    body._Om = asteroid.lonAscendingNode
+    body._om = asteroid.argPerihelion
+    body._a = asteroid.semiMajorAxis
+    body._M = asteroid.meanAnomaly
+    body._epoch_M = asteroid.epoch
+    body._epoch = asteroid.epoch
+    body._e = asteroid.eccentricity
+    body._H = asteroid.absMag
+    body._G = asteroid.slopeParam
+
+    #TODO: The computed RA/DEC are off slightly, fix this.  I think it is due the +0.5 day issue in the epoch time in the import script.
+    body.compute(ephemTimeObject)
+
+    ephemeris = AstorbEphemeris(
+        astorbRecord = asteroid,
+        dateTime = ephemTime,
+        ra = body.ra * 180/math.pi,
+        dec = body.dec * 180/math.pi,
+        earthDist = body.earth_distance,
+        sunDist = body.sun_distance,
+        mag = body.mag,
+        elong = body.elong * 180/math.pi
+        )
+
+    return ephemeris
+
+def computeSingleEphemerisRange(asteroid, ephemTimeStart, ephemTimeEnd, tolerance, startEphemeris, endEphemeris):
+    #print('Start time: {}    End time: {}'.format(ephemTimeStart, ephemTimeEnd))
+    if startEphemeris == None:
+        startEphemeris = computeSingleEphemeris(asteroid, ephemTimeStart)
+        startEphemeris.save()
+
+        #print('sTime: {}    RA: {:f}    DEC: {:+f}    Name: {}'.format(startEphemeris.dateTime, startEphemeris.ra, startEphemeris.dec, startEphemeris.astorbRecord.name))
+
+    if endEphemeris == None:
+        endEphemeris = computeSingleEphemeris(asteroid, ephemTimeEnd)
+        endEphemeris.save()
+
+        #print('eTime: {}    RA: {:f}    DEC: {:+f}    Name: {}'.format(endEphemeris.dateTime, endEphemeris.ra, endEphemeris.dec, endEphemeris.astorbRecord.name))
+
+    positionDelta = (180/math.pi)*ephem.separation(
+        (startEphemeris.ra*math.pi/180, startEphemeris.dec*math.pi/180),
+        (endEphemeris.ra*math.pi/180, endEphemeris.dec*math.pi/180)
+        )
+    #print('   Delta: {}'.format(positionDelta))
+
+    if positionDelta > tolerance:
+        steps = math.ceil(positionDelta/tolerance)
+        #print('   Delta: {}     Steps: {}'.format(positionDelta, steps))
+
+        timeDelta = (ephemTimeEnd - ephemTimeStart) / steps
+
+        s = startEphemeris
+        for i in range(steps-1):
+            ephemTimeMid = ephemTimeStart + timeDelta
+            (s, m) = computeSingleEphemerisRange(asteroid, ephemTimeStart, ephemTimeMid, tolerance, s, None)
+
+            #TODO: Add a check here and perform a linear interpolation between the s and m ephemeride positions.  If
+            # the interpolated position differs by more than some smaller tolerance, then compute an extra step in the
+            # middle.  This should mostly catch the special case where the asteroid undergoes retrograde motion and
+            # moves back to nearly the same spot, even though it was quite a bit farther away in between those two
+            # points.  This will not be a perfect solution but should be so close to perfect as to not matter.
+
+            ephemTimeStart = ephemTimeMid
+            s = m
+
+    return (startEphemeris, endEphemeris)
+
 #TODO:  Need to figure out a way to schedule this task somehow.  Calling it manually works fine, but a more permanent solution needs to be found.
 @shared_task
-def computeAsteroidEphemerides(ephemTime):
-    asteroids = AstorbRecord.objects.all()
+def computeAsteroidEphemerides(ephemTimeStart, ephemTimeEnd, tolerance, clearFirst):
+    offset = 0
+    pagesize = 25000
+
+    numAsteroids = AstorbRecord.objects.count()
+    print('Num asteroids to compute: {}'.format(numAsteroids))
+    sys.stdout.flush()
 
     with transaction.atomic():
-        #Clear all asteroid ephemerides.
-        #TODO: Should we only clear old ones?  Maybe only ones where user=None?  Not really sure.
-        AstorbEphemeris.objects.all().delete()
+        if clearFirst:
+            AstorbEphemeris.objects.all().delete()
 
-        for asteroid in asteroids:
-            body = ephem.EllipticalBody()
+        while offset < numAsteroids:
+            asteroids = AstorbRecord.objects.all()[offset : offset+pagesize]
 
-            body._inc = asteroid.inclination
-            body._Om = asteroid.lonAscendingNode
-            body._om = asteroid.argPerihelion
-            body._a = asteroid.semiMajorAxis
-            body._M = asteroid.meanAnomaly
-            body._epoch_M = asteroid.epoch
-            body._epoch = asteroid.epoch
-            body._e = asteroid.eccentricity
-            body._H = asteroid.absMag
-            body._G = asteroid.slopeParam
+            for asteroid in asteroids:
+                #print('--------------------------------------------------------------------------------')
+                #TODO: Add a check to see if there is already an ephemeris calculated near the start/end time and if so
+                # pass it along to this function (remember to change the time to match the ephemeris we are passing).
+                computeSingleEphemerisRange(asteroid, ephemTimeStart, ephemTimeEnd, tolerance, None, None)
 
-            #TODO: The computed RA/DEC are off slightly, fix this.  I think it is due the +0.5 day issue in the epoch time in the import script.
-            body.compute(ephemTime)
-
-            ephemeris = AstorbEphemeris(
-                astorbRecord = asteroid,
-                dateTime = ephemTime,
-                ra = body.ra * 180/math.pi,
-                dec = body.dec * 180/math.pi,
-                earthDist = body.earth_distance,
-                sunDist = body.sun_distance,
-                mag = body.mag,
-                elong = body.elong * 180/math.pi
-                )
-
-            ephemeris.save()
+            offset += pagesize
+            print('Processed {} astroids - {}% complete.'.format(offset, round(100*offset/numAsteroids,0)))
+            sys.stdout.flush()
 
     return True
 
