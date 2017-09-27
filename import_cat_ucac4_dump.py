@@ -28,14 +28,6 @@ print(      "---------- WARNING ----------")
 print("\n\n\n")
 
 
-if skip:
-    print("Skipping all but every " + str(skipFactor) + "th star.\n")
-else:
-    print("Importing all stars in the specified zone files.\n")
-
-sys.stdout.flush()
-
-
 import os
 import django
 from django.db import transaction
@@ -73,21 +65,23 @@ for filename in sys.argv[1:]:
                     sys.stdout.write("-")
                     sys.stdout.flush()
 
-                skipcounter += 1
-                if skip == True and skipcounter % skipFactor != 0:
-                    continue
-
                 fields = line.split()
+
+                magFit = int(fields[2])
+                magAperture = int(fields[3])
+                magError = int(fields[4])
+                pmra = int(fields[14])
+                pmdec = int(fields[15])
 
                 record = UCAC4Record(
                     identifier = "%03i-%06i" % (idZone, idCounter),
-                    ra = int(fields[0]) / float(3600*1000),
-                    dec = (int(fields[1]) - 324000000) / float(3600*1000),
-                    magFit = int(fields[2]) / 1000.0 if fields[2] != '20000' else None,
-                    magAperture = int(fields[3]) / 1000.0 if fields[3] != '20000' else None,
-                    magError = int(fields[4]) / 100.0 if fields[4] != '99' else None,
-                    pmra = int(fields[14]) / 10.0 if fields[14] not in ['0', '32767'] else None,
-                    pmdec = int(fields[15]) / 10.0 if fields[15] not in ['0', '32767'] else None,
+                    ra = int(fields[0]) / 3600000.0,
+                    dec = (int(fields[1]) - 324000000) / 3600000.0,
+                    magFit = magFit / 1000.0 if magFit != 20000 else None,
+                    magAperture = magAperture / 1000.0 if magAperture != 20000 else None,
+                    magError = magError / 100.0 if magError != 99 else None,
+                    pmra = pmra / 10.0 if pmra not in [0, 32767] else None,
+                    pmdec = pmdec / 10.0 if pmdec not in [0, 32767] else None,
                     id2mass = fields[18]
                     )
 
