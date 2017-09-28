@@ -923,6 +923,8 @@ def computeSingleEphemerisRange(asteroid, ephemTimeStart, ephemTimeEnd, toleranc
     return (startEphemeris, endEphemeris)
 
 #TODO:  Need to figure out a way to schedule this task somehow.  Calling it manually works fine, but a more permanent solution needs to be found.
+#TODO: Consider passing a limiting magnitude to this function and only store the result if the object is brighter than the limiting mag at the calculated ephemeris.
+#TODO: Consider adding a maximum time delta between successive calculations even if the spatial delta is within the tolerance.
 @shared_task
 def computeAsteroidEphemerides(ephemTimeStart, ephemTimeEnd, tolerance, clearFirst):
     offset = 0

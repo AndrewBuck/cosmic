@@ -83,6 +83,7 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     homeLat = models.FloatField(null=True, blank=True)
     homeLon = models.FloatField(null=True, blank=True)
+    elevation = models.FloatField(null=True, blank=True)
     birthDate = models.DateField(null=True, blank=True)
 
 @receiver(post_save, sender=User)
@@ -354,14 +355,14 @@ class UCAC4Record(models.Model):
     magFit = models.FloatField(null=True)
     magAperture = models.FloatField(null=True)
     magError = models.FloatField(null=True)
-    id2mass = models.CharField(max_length=32, null=True)
+    id2mass = models.CharField(max_length=10, null=True)
 
 class GCVSRecord(models.Model):
     constellationNumber = models.CharField(max_length=2, null=True)
     starNumber = models.CharField(max_length=5, null=True)
     identifier = models.CharField(max_length=10, null=True)
-    ra = models.FloatField(null=True)
-    dec = models.FloatField(null=True)
+    ra = models.FloatField(null=True, db_index=True)
+    dec = models.FloatField(null=True, db_index=True)
     pmRa = models.FloatField(null=True)
     pmDec = models.FloatField(null=True)
     variableType = models.CharField(max_length=10, null=True)
@@ -380,12 +381,12 @@ class GCVSRecord(models.Model):
 
 class TwoMassXSCRecord(models.Model):
     identifier = models.CharField(max_length=24)
-    ra = models.FloatField()
-    dec = models.FloatField()
+    ra = models.FloatField(db_index=True)
+    dec = models.FloatField(db_index=True)
     isophotalKSemiMajor = models.FloatField(null=True)
     isophotalKMinorMajor = models.FloatField(null=True)
     isophotalKAngle = models.FloatField(null=True)
-    isophotalKMag = models.FloatField(null=True)
+    isophotalKMag = models.FloatField(null=True, db_index=True)
     isophotalKMagErr = models.FloatField(null=True)
 
 class MessierRecord(models.Model):
@@ -434,11 +435,11 @@ class AstorbRecord(models.Model):
 class AstorbEphemeris(models.Model):
     astorbRecord = models.ForeignKey(AstorbRecord, on_delete=models.CASCADE)
     dateTime = models.DateTimeField()
-    ra = models.FloatField()
-    dec = models.FloatField()
+    ra = models.FloatField(db_index=True)
+    dec = models.FloatField(db_index=True)
     earthDist = models.FloatField()
     sunDist = models.FloatField()
-    mag = models.FloatField()
+    mag = models.FloatField(db_index=True)
     elong = models.FloatField()
 
     # If user is non-null the follwing fields MIGHT also be non-null, if user is null then they are un-computable.

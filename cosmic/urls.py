@@ -46,5 +46,7 @@ urlpatterns = [
 
     url(r'^mosaic/$', views.mosaic),
 
+    url(r'^observing/$', views.observing),
+
     url(r'^upload/$', views.upload)
 ]

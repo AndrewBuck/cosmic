@@ -10,4 +10,4 @@ class UserForm(forms.ModelForm):
 class ProfileForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields = ('homeLat', 'homeLon', 'birthDate')
+        fields = ('homeLat', 'homeLon', 'birthDate', 'elevation')

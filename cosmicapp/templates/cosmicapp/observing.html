@@ -1,0 +1,77 @@
+{% extends "cosmicapp/base.html" %}
+{% load static %}
+
+{% block extratitle %} - Observing list tool {% endblock %}
+
+{% block extrahead %}
+{% endblock extrahead %}
+
+{% block mainbody %}
+{% include "./jquery.html" %}
+
+<h2>Observing suggestions for tonight</h2>
+
+<p>Limiting mag set to {{limitingMag}}</p>
+
+<h3>Now</h3>
+
+<p>Your current zenith is at:&emsp;{{zenithNowRA}}&emsp;{{zenithNowDec}}</p>
+
+<div style="display: inline-block; margin: 2em;">
+    <p>There are {{asteroids|length}} asteroids within +/- {{windowSize}} degrees of your zenith.</p>
+
+    <table border=2px style="border-collapse: collapse; margin: 1em;">
+    <tr><th>Name</th> <th>RA</th> <th>Dec</th> <th>Mag</th></tr>
+        {% for asteroid in asteroids %}
+            <tr>
+            <td>{{asteroid.record.name}}</td>
+            <td>{{asteroid.ephem.ra|floatformat:3}}</td>
+            <td>{{asteroid.ephem.dec|floatformat:3}}</td>
+            <td>{{asteroid.ephem.mag|floatformat:2}}</td>
+            <tr>
+        {% endfor %}
+    </table>
+</div>
+
+<div style="display: inline-block; margin: 2em;">
+    <p>There are {{extendedSources|length}} deep sky objects within +/- {{windowSize}} degrees of your zenith.</p>
+
+    <table border=2px style="border-collapse: collapse; margin: 1em;">
+    <tr><th>Name</th> <th>RA</th> <th>Dec</th> <th>Mag</th> <th>Width</th> <th>W/H<br>ratio</th></tr>
+        {% for extendedSource in extendedSources %}
+            <tr>
+            <td>{{extendedSource.identifier}}</td>
+            <td>{{extendedSource.ra|floatformat:3}}</td>
+            <td>{{extendedSource.dec|floatformat:3}}</td>
+            <td>{{extendedSource.isophotalKMag|floatformat:2}}</td>
+            <td>{{extendedSource.isophotalKSemiMajor|floatformat:2}}</td>
+            <td>{{extendedSource.isophotalKMinorMajor|floatformat:2}}</td>
+            <tr>
+        {% endfor %}
+    </table>
+</div>
+
+<div style="display: inline-block; margin: 2em;">
+<p>There are {{variableStars|length}} variable stars within +/- {{windowSize}} degrees of your zenith.</p>
+
+    <table border=2px style="border-collapse: collapse; margin: 1em;">
+    <tr><th>Name</th> <th>RA</th> <th>Dec</th> <th>Mag<br>max</th> <th>Mag<br>min</th>
+    <th>Period</th> <th>Type</th> <th>Type2</th> <th>Spectral<br>type</th></tr>
+        {% for variableStar in variableStars %}
+            <tr>
+            <td>{{variableStar.identifier}}</td>
+            <td>{{variableStar.ra|floatformat:3}}</td>
+            <td>{{variableStar.dec|floatformat:3}}</td>
+            <td>{{variableStar.magMax|floatformat:2}}</td>
+            <td>{{variableStar.magMin|floatformat:2}}</td>
+            <td>{{variableStar.period|floatformat:2}}</td>
+            <td>{{variableStar.variableType}}</td>
+            <td>{{variableStar.variableType2}}</td>
+            <td>{{variableStar.spectralType}}</td>
+            </tr>
+        {% endfor %}
+    </table>
+</div>
+
+{% endblock mainbody %}
+

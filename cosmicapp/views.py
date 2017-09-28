@@ -1,5 +1,7 @@
 import hashlib
 import os
+import math
+from datetime import timedelta
 
 from django.middleware import csrf
 from django.http import HttpResponse
@@ -11,13 +13,18 @@ from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponseRedirect
 from django.utils import timezone
 from django.conf import settings
-from django.db.models import Q
+from django.db.models import Q, Max, Min, Avg, StdDev
 from django.db import transaction
 
 from lxml import etree
+import ephem
 
 from .models import *
 from .forms import *
+from .functions import *
+from .tasks import *
+
+#TODO: Replace all model.pk references with model.whatever_id as the second version does not fetch the joined model from the db.
 
 def index(request):
     context = {"user" : request.user}
@@ -242,6 +249,7 @@ def userpage(request, username):
                 foruser.profile.homeLat = profileForm.cleaned_data['homeLat']
                 foruser.profile.homeLon = profileForm.cleaned_data['homeLon']
                 foruser.profile.birthDate = profileForm.cleaned_data['birthDate']
+                foruser.profile.elevation = profileForm.cleaned_data['elevation']
                 foruser.profile.save()
 
                 return HttpResponseRedirect('/user/' + foruser.username + '/')
@@ -886,4 +894,72 @@ def mosaic(request):
     context = {"user" : request.user}
 
     return render(request, "cosmicapp/mosaic.html", context)
+
+@login_required
+def observing(request):
+    context = {"user" : request.user}
+
+    windowSize = 30
+    context['windowSize'] = windowSize
+
+    limitingMag = 18
+    context['limitingMag'] = limitingMag
+
+    #TODO: Allow setting a different lat/lon and go to a default if not logged in and none specified, once this is done
+    # we can remove the login_required decorator from this function.  (Use geoip database for non-logged in users)
+    currentTime = timezone.now()
+    observerNow = ephem.Observer()
+    observerNow.lon = (math.pi/180)*request.user.profile.homeLon
+    observerNow.lat = (math.pi/180)*request.user.profile.homeLat
+    observerNow.elevation = request.user.profile.elevation
+    observerNow.date = currentTime
+
+    zenithNowRA, zenithNowDec = observerNow.radec_of('0', '90')
+
+    context['observerNow'] = observerNow
+    context['zenithNowRA'] = zenithNowRA
+    context['zenithNowDec'] = zenithNowDec
+
+    zenithNowRA = zenithNowRA * 180/math.pi
+    zenithNowDec = zenithNowDec * 180/math.pi
+
+    #TODO: Make this a spatial query when postgis is available.
+    variableStars = GCVSRecord.objects.filter(
+        ra__range=[zenithNowRA-windowSize, zenithNowRA+windowSize],
+        dec__range=[zenithNowDec-windowSize, zenithNowDec+windowSize],
+        magMin__lt=limitingMag
+        ).order_by('magMin')[:250]
+
+    context['variableStars'] = variableStars
+
+    #TODO: Make this a spatial query when postgis is available.
+    extendedSources = TwoMassXSCRecord.objects.filter(
+        ra__range=[zenithNowRA-windowSize, zenithNowRA+windowSize],
+        dec__range=[zenithNowDec-windowSize, zenithNowDec+windowSize],
+        isophotalKMag__lt=limitingMag
+        ).order_by('isophotalKMag')[:250]
+
+    context['extendedSources'] = extendedSources
+
+    #TODO: Make this a spatial query when postgis is available.
+    timeWindow = timedelta(days=90)
+    asteroidsApprox = AstorbEphemeris.objects.filter(
+        ra__range=[zenithNowRA-windowSize, zenithNowRA+windowSize],
+        dec__range=[zenithNowDec-windowSize, zenithNowDec+windowSize],
+        dateTime__range=[currentTime-timeWindow, currentTime+timeWindow],
+        mag__lt=limitingMag
+        ).distinct('astorbRecord_id')[:250]
+
+    asteroids = []
+    for asteroid in asteroidsApprox:
+        asteroids.append({
+            'record': asteroid.astorbRecord,
+            'ephem': computeSingleEphemeris(asteroid.astorbRecord, currentTime)
+            })
+
+    asteroids = sorted(asteroids, key = lambda x: x['ephem'].mag)
+
+    context['asteroids'] = asteroids
+
+    return render(request, "cosmicapp/observing.html", context)
 

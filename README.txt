@@ -1,6 +1,6 @@
 Install Django:
 
-sudo pip3 install Django bokeh
+sudo pip3 install Django bokeh sqlparse
 
 
 
