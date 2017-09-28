@@ -33,7 +33,7 @@ h2 {
 }
 
 
-ul {
+ul.navBar {
     list-style-type: none;
     margin: 0;
     padding: 0;
@@ -41,7 +41,7 @@ ul {
     background-color: var(--color-bg-menu);
 }
 
-li {
+li.dropdown {
     float: left;
 }
 
