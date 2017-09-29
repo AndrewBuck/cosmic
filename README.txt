@@ -17,10 +17,15 @@ on the celery worker nodes:
 
 sudo pip3 install astropy photutils scipy scikit-image
 
+
 PyEphem is used to compute ephemerides for asteroids, etc:
 
 sudo pip3 install pyephem
 
+
+Julian is a small library for converting datetime objects to/from julian dates:
+
+sudo pip3 install julian
 
 
 Install and setup Postgre SQL:
@@ -367,6 +372,26 @@ GeoLite City Database - GeoIP Database
     downloaded files as they are no-longer needed.
 
     Attribution: Copyright (c) 2012 MaxMind LLC.  All Rights Reserved.
+
+
+
+Exoplanets Data Explorer Database
+
+    The Exoplanets Data Explorer is a database of well vetted exoplanet
+    discoveries and orbital information for these planets.  It contains fewer
+    planets than some other databases, but the data is more carefully checked
+    before inclusion in the database.  It can be downloaded from:
+
+        http://exoplanets.org/
+
+    After downloading the file can be imported with:
+
+        python3 import_cat_exoplanets.py /path/to/exoplanets.csv
+
+    After importing the csv file can be deleted as it is no longer needed.
+
+    Attribution: This research has made use of the Exoplanet Orbit Database and
+        the Exoplanet Data Explorer at exoplanets.org.
 
 
 
