@@ -346,6 +346,29 @@ Astorb - The Asteroid Orbital Elements Database
 
 
 
+GeoLite City Database - GeoIP Database
+
+    For certain tools on the site (such as the observing suggestions tool) we
+    need to know the lat/lon of the observer.  For non-logged in users we can
+    get approximate values from the GeoLite database, which is a free database
+    produced by the MaxMind company.  The company offers more precise databases
+    if you subscribe to the service, but the free "city level" database is good
+    enough for our purposes.  The database can be downloaded from the following
+    url (make sure to download the "city" version as this is what the importer
+    expects and other versions have not been tested):
+
+        https://dev.maxmind.com/geoip/legacy/geolite/
+
+    Once downloaded and unzipped, the data can be imported in Django with:
+
+        python3 import_cat_geoip_geolitecity.py
+
+    Once the data has been imported with the script, you can delete the
+    downloaded files as they are no-longer needed.
+
+    Attribution: Copyright (c) 2012 MaxMind LLC.  All Rights Reserved.
+
+
 
 NOTES:
 

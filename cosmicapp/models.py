@@ -442,6 +442,24 @@ class AstorbEphemeris(models.Model):
     mag = models.FloatField(db_index=True)
     elong = models.FloatField()
 
+class GeoLiteLocation(models.Model):
+    id = models.IntegerField(primary_key=True)
+    country = models.CharField(max_length=2)
+    region = models.CharField(max_length=2)
+    city = models.CharField(max_length=255)
+    postalCode = models.CharField(max_length=8)
+    lat = models.FloatField()
+    lon = models.FloatField()
+    metroCode = models.IntegerField(null=True)
+    areaCode = models.CharField(max_length=3)
+
+class GeoLiteBlock(models.Model):
+    location = models.ForeignKey(GeoLiteLocation, on_delete=models.CASCADE)
+    startIp = models.BigIntegerField(db_index=True)
+    endIp = models.BigIntegerField(db_index=True)
+
+
+
 
 class Question(models.Model):
     #TODO: Should maybe include a FK to an image property or an image header entry to display to the user.  For example

@@ -11,13 +11,55 @@
 
 <h2>Observing suggestions for tonight</h2>
 
-<p>Limiting mag set to {{limitingMag}}</p>
+<p>
+    <ul>
+        <form method=get>
+            <table cellpadding=5>
+            <tr>
+            <td>Lat:</td>
+            <td><input type=text name=lat value={{lat}}></td>
+            <td>(Latitude in degrees with North as positive and South as negative)</td>
+            </tr>
+
+            <tr>
+            <td>Lon:</td>
+            <td><input type=text name=lon value={{lon}}></td>
+            <td>(Longitude in degrees with East as positive and West as negative)</td>
+            </tr>
+
+            <tr>
+            <td>Ele:</td>
+            <td><input type=text name=ele value={{ele}}></td>
+            <td>(Elevation above sea level in meters)</td>
+            </tr>
+
+            <tr>
+            <td>Mag:</td>
+            <td><input type=text name=limitingMag value={{limitingMag}}></td>
+            <td>(Limiting magnitude - the magnitude of the dimmest object to show in the results)</td>
+            </tr>
+
+            <tr>
+            <td>Window<br>size:</td>
+            <td><input type=text name=windowSize value={{windowSize}}></td>
+            <td>(The maximum angle from zenith that an object can be)</td>
+            </tr>
+            </table>
+        <br>
+        <td><input type=submit></td>
+        </form>
+    </ul>
+</p>
 
 <h3>Now</h3>
 
 <p>Your current zenith is at:&emsp;{{zenithNowRA}}&emsp;{{zenithNowDec}}</p>
 
-<div style="display: inline-block; margin: 2em;">
+<a href="#asteroidDiv">Jump to Asteroid Results</a><br>
+<a href="#dsoDiv">Jump to Deep Sky Object Results</a><br>
+<a href="#variablesDiv">Jump to Variable Star Results</a><br>
+
+<div id=asteroidDiv style="display: inline-block; margin: 2em;">
     <p>There are {{asteroids|length}} asteroids within +/- {{windowSize}} degrees of your zenith.</p>
 
     <table border=2px style="border-collapse: collapse; margin: 1em;">
@@ -33,7 +75,7 @@
     </table>
 </div>
 
-<div style="display: inline-block; margin: 2em;">
+<div id=dsoDiv style="display: inline-block; margin: 2em;">
     <p>There are {{extendedSources|length}} deep sky objects within +/- {{windowSize}} degrees of your zenith.</p>
 
     <table border=2px style="border-collapse: collapse; margin: 1em;">
@@ -51,7 +93,7 @@
     </table>
 </div>
 
-<div style="display: inline-block; margin: 2em;">
+<div id=variablesDiv style="display: inline-block; margin: 2em;">
 <p>There are {{variableStars|length}} variable stars within +/- {{windowSize}} degrees of your zenith.</p>
 
     <table border=2px style="border-collapse: collapse; margin: 1em;">

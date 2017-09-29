@@ -895,23 +895,61 @@ def mosaic(request):
 
     return render(request, "cosmicapp/mosaic.html", context)
 
-@login_required
 def observing(request):
     context = {"user" : request.user}
 
-    windowSize = 30
+    if 'ele' in request.GET:
+        ele = float(request.GET['ele'])
+    else:
+        ele = 0
+
+    if 'limitingMag' in request.GET:
+        limitingMag = float(request.GET['limitingMag'])
+    else:
+        limitingMag = 16
+
+    if 'windowSize' in request.GET:
+        windowSize = float(request.GET['windowSize'])
+    else:
+        windowSize = 30
+
+    #TODO: Provide a input field like the ones for lat/lon/etc to set the observation date and then use position to calculate evening/midnight/morning for that location.
+
+    if 'lat' in request.GET and 'lon' in request.GET:
+        lat = float(request.GET['lat'])
+        lon = float(request.GET['lon'])
+    else:
+        if request.user.is_authenticated:
+            lat = request.user.profile.homeLat
+            lon = request.user.profile.homeLon
+            ele = request.user.profile.elevation
+            #TODO: Set limiting mag from user profile.
+
+            if lat == None or lon == None:
+                #TODO: Prompt user to edit profile.
+                (lat, lon) = getLocationForIp(getClientIp(request))
+
+            if ele == None:
+                #TODO: Prompt user to edit profile.
+                ele = 0
+        else:
+            (lat, lon) = getLocationForIp(getClientIp(request))
+
+    if windowSize > 90:
+        windowSize = 90
+
+    context['lat'] = lat
+    context['lon'] = lon
+    context['ele'] = ele
+    context['limitingMag'] = limitingMag
     context['windowSize'] = windowSize
 
-    limitingMag = 18
-    context['limitingMag'] = limitingMag
-
-    #TODO: Allow setting a different lat/lon and go to a default if not logged in and none specified, once this is done
-    # we can remove the login_required decorator from this function.  (Use geoip database for non-logged in users)
     currentTime = timezone.now()
+
     observerNow = ephem.Observer()
-    observerNow.lon = (math.pi/180)*request.user.profile.homeLon
-    observerNow.lat = (math.pi/180)*request.user.profile.homeLat
-    observerNow.elevation = request.user.profile.elevation
+    observerNow.lat = lat*(math.pi/180)
+    observerNow.lon = lon*(math.pi/180)
+    observerNow.elevation = ele
     observerNow.date = currentTime
 
     zenithNowRA, zenithNowDec = observerNow.radec_of('0', '90')
