@@ -328,6 +328,16 @@ Astorb - The Asteroid Orbital Elements Database
 
         python3 import_cat_astorb.py /path/to/astorb.dat
 
+    After the asteroid orbits themselves have been imported you need to load
+    the pre-calculated AstorbEphemeride table with data by running the
+    following script:
+
+        python3 calculate_astorb_ephemerides.py
+
+    The script will read the orbital data for each asteroid in the database and
+    caluclate and store its position approximately once each month over the
+    specified time period.
+
     Attribution: The research and computing needed to generate astorb.dat were
         funded principally by NASA grant NAG5-4741, and in part by the Lowell
         Observatory endowment. astorb.dat may be freely used, copied, and

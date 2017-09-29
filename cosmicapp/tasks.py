@@ -880,7 +880,7 @@ def computeSingleEphemeris(asteroid, ephemTime):
 
     return ephemeris
 
-def computeSingleEphemerisRange(asteroid, ephemTimeStart, ephemTimeEnd, tolerance, startEphemeris, endEphemeris):
+def computeSingleEphemerisRange(asteroid, ephemTimeStart, ephemTimeEnd, tolerance, timeTolerance, startEphemeris, endEphemeris):
     #print('Start time: {}    End time: {}'.format(ephemTimeStart, ephemTimeEnd))
     if startEphemeris == None:
         startEphemeris = computeSingleEphemeris(asteroid, ephemTimeStart)
@@ -906,10 +906,14 @@ def computeSingleEphemerisRange(asteroid, ephemTimeStart, ephemTimeEnd, toleranc
 
         timeDelta = (ephemTimeEnd - ephemTimeStart) / steps
 
+        if timeDelta > timeTolerance:
+            timeDelta = timeTolerance
+            steps = math.ceil((ephemTimeEnd - ephemTimeStart) / timeDelta)
+
         s = startEphemeris
         for i in range(steps-1):
             ephemTimeMid = ephemTimeStart + timeDelta
-            (s, m) = computeSingleEphemerisRange(asteroid, ephemTimeStart, ephemTimeMid, tolerance, s, None)
+            (s, m) = computeSingleEphemerisRange(asteroid, ephemTimeStart, ephemTimeMid, tolerance, timeTolerance, s, None)
 
             #TODO: Add a check here and perform a linear interpolation between the s and m ephemeride positions.  If
             # the interpolated position differs by more than some smaller tolerance, then compute an extra step in the
@@ -922,11 +926,7 @@ def computeSingleEphemerisRange(asteroid, ephemTimeStart, ephemTimeEnd, toleranc
 
     return (startEphemeris, endEphemeris)
 
-#TODO:  Need to figure out a way to schedule this task somehow.  Calling it manually works fine, but a more permanent solution needs to be found.
-#TODO: Consider passing a limiting magnitude to this function and only store the result if the object is brighter than the limiting mag at the calculated ephemeris.
-#TODO: Consider adding a maximum time delta between successive calculations even if the spatial delta is within the tolerance.
-@shared_task
-def computeAsteroidEphemerides(ephemTimeStart, ephemTimeEnd, tolerance, clearFirst):
+def computeAsteroidEphemerides(ephemTimeStart, ephemTimeEnd, tolerance, timeTolerance, clearFirst):
     offset = 0
     pagesize = 25000
 
@@ -945,7 +945,7 @@ def computeAsteroidEphemerides(ephemTimeStart, ephemTimeEnd, tolerance, clearFir
                 #print('--------------------------------------------------------------------------------')
                 #TODO: Add a check to see if there is already an ephemeris calculated near the start/end time and if so
                 # pass it along to this function (remember to change the time to match the ephemeris we are passing).
-                computeSingleEphemerisRange(asteroid, ephemTimeStart, ephemTimeEnd, tolerance, None, None)
+                computeSingleEphemerisRange(asteroid, ephemTimeStart, ephemTimeEnd, tolerance, timeTolerance, None, None)
 
             offset += pagesize
             print('Processed {} astroids - {}% complete.'.format(offset, round(100*offset/numAsteroids,0)))

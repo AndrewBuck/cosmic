@@ -442,12 +442,6 @@ class AstorbEphemeris(models.Model):
     mag = models.FloatField(db_index=True)
     elong = models.FloatField()
 
-    # If user is non-null the follwing fields MIGHT also be non-null, if user is null then they are un-computable.
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
-    riseTime = models.DateTimeField(null=True)
-    transitTime = models.DateTimeField(null=True)
-    setTime = models.DateTimeField(null=True)
-    transitAlt = models.FloatField(null=True)
 
 class Question(models.Model):
     #TODO: Should maybe include a FK to an image property or an image header entry to display to the user.  For example
