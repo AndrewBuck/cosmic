@@ -452,7 +452,7 @@ def query(request):
         except:
             pass
 
-        if request.GET['queryfor'] == 'image':
+        if request.GET['queryfor'] in ['image', 'imageTransform']:
             if limit > 100:
                 limit = 100
         elif request.GET['queryfor'] in ['sextractorResult', 'image2xyResult', 'daofindResult', 'starfindResult', 'sourceFindMatch']:
@@ -526,6 +526,35 @@ def query(request):
             imageDict['thumbUrlFull'] = result.getThumbnailUrlFull()
 
             etree.SubElement(root, "Image", imageDict)
+
+    if request.GET['queryfor'] == 'imageTransform':
+        orderField, ascDesc = parseQueryOrderBy(request, {'referenceImage': 'referenceImage'}, 'referenceImage', '')
+        results = ImageTransform.objects
+
+        if 'bothId' in request.GET:
+            for valueString in request.GET.getlist('bothId'):
+                values = cleanupQueryValues(valueString, 'int')
+                if len(values) > 0:
+                    results = results.filter(referenceImage__in=values)
+                    results = results.filter(subjectImage__in=values)
+
+        results = results.order_by(ascDesc + orderField)[offset:offset+limit]
+
+        for result in results:
+            imageTransformDict = {}
+            imageTransformDict['id'] = str(result.pk)
+            imageTransformDict['userId'] = str(result.user.pk)
+            imageTransformDict['userName'] = str(result.user.username)
+            imageTransformDict['referenceId'] = str(result.referenceImage.pk)
+            imageTransformDict['subjectId'] = str(result.subjectImage.pk)
+            imageTransformDict['m00'] = str(result.m00)
+            imageTransformDict['m01'] = str(result.m01)
+            imageTransformDict['m02'] = str(result.m02)
+            imageTransformDict['m10'] = str(result.m10)
+            imageTransformDict['m11'] = str(result.m11)
+            imageTransformDict['m12'] = str(result.m12)
+
+            etree.SubElement(root, "ImageTransform", imageTransformDict)
 
     elif request.GET['queryfor'] == 'sextractorResult':
         orderField, ascDesc = parseQueryOrderBy(request, {'fluxAuto': 'fluxAuto'}, 'fluxAuto', '-')

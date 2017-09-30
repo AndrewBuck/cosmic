@@ -83,6 +83,7 @@ function performRedo()
 </script>
 
 <script>
+var myUserId = {{user.pk}};
 var canvas = document.getElementById('desktop');
 var context = canvas.getContext('2d');
 
@@ -201,6 +202,7 @@ function addImageToDesktop(id)
 		Math.floor(Math.random() * ydim),
 		1 ]);
 	selectedImages[i].transformMatrix = math.eye(3);
+	selectedImages[i].storedTransformMatrixApplied = false;
 	selectedImages[i].mouseVector = math.matrix([ 0, 0, 1 ]);
 	selectedImages[i].mouseover = false;
 	selectedImages[i].active = false;
@@ -241,6 +243,8 @@ function addImageToDesktop(id)
 
     selectedImages[i].image.src = thumbUrl;
     selectedImages[i].image.onload = drawCanvas;
+
+    loadTransforms(false);
 };
 
 function removeImageFromDesktop(id)
@@ -251,6 +255,74 @@ function removeImageFromDesktop(id)
 
     selectedImages.splice(arrayIndex, 1);
     drawCanvas();
+};
+
+function loadTransforms(overwriteExisting)
+{
+    var i;
+    var idArray = []
+    var idString = '';
+
+    if(selectedImages.length < 2)
+        return;
+
+    //Build a list of all the image ids on the desktop.
+    for(i = 0; i < selectedImages.length; i++)
+        idArray[i] = selectedImages[i].id;
+
+    idString = idArray.join('|');
+
+    $.ajax({
+        url : "/query/?queryfor=imageTransform&bothId=" + idString,
+        type : "get",
+        async: false,
+        success : function(xml)
+        {
+            var results = xml.getElementsByTagName('ImageTransform')
+            for(i = 0; i < results.length; i++)
+            {
+                var attr = results[i].attributes;
+
+                var userId = Number(attr.getNamedItem('userId').nodeValue);
+                var referenceId = Number(attr.getNamedItem('referenceId').nodeValue);
+                var subjectId = Number(attr.getNamedItem('subjectId').nodeValue);
+
+                //TODO: Add ui elements to control allowing loading of other users offsets.
+                if(userId != myUserId)
+                    continue;
+
+                var subjectIndex = getSelectedImagesIndexById(subjectId);
+                if(!selectedImages[subjectIndex].storedTransformMatrixApplied || overwriteExisting)
+                {
+                    var referenceIndex = getSelectedImagesIndexById(referenceId);
+                    var m00 = Number(attr.getNamedItem('m00').nodeValue);
+                    var m01 = Number(attr.getNamedItem('m01').nodeValue);
+                    var m02 = Number(attr.getNamedItem('m02').nodeValue);
+                    var m10 = Number(attr.getNamedItem('m10').nodeValue);
+                    var m11 = Number(attr.getNamedItem('m11').nodeValue);
+                    var m12 = Number(attr.getNamedItem('m12').nodeValue);
+
+                    var loadMatrix = math.matrix([
+                        [m00, m01, m02],
+                        [m10, m11, m12],
+                        [0, 0, 1]
+                    ]);
+
+                    //TODO: There is a bug here if the two images are rotated relative to eachother.  Need to see where
+                    //this comes from and fix.
+                    //TODO: Make this action undoable.
+                    selectedImages[subjectIndex].transformMatrix = math.multiply(
+                        loadMatrix,
+                        selectedImages[referenceIndex].transformMatrix
+                    );
+
+                    selectedImages[subjectIndex].storedTransformMatrixApplied = true;
+                }
+            }
+
+        drawCanvas();
+        }
+    });
 };
 
 function saveTransforms()
@@ -300,12 +372,12 @@ function saveTransforms()
                 m12: math.subset(saveMatrix, math.index(1, 2))
             },
             success: function(){
-                alert('Image transforms saved successfully.' + '   refId: ' + referenceImage.id + '   sourceId: ' +
-                selectedImages[i].id);
+                //TODO: Need to set/clear a promise for each transform to be saved and then emit this alert only once
+                //at the end if all transforms were saved successfully.
+                alert('Image transform saved successfully.');
             },
             error: function(e, textStatus, errorThrown){
-                alert(textStatus + ': ' + errorThrown + '   refId: ' + referenceImage.id + '   sourceId: ' +
-                selectedImages[i].id);
+                alert(textStatus + ': ' + errorThrown);
             }
         });
     }
@@ -889,6 +961,7 @@ $(document).ready(function()
 </script>
 
 <input type=button class=button value="Save Offsets" onclick="saveTransforms()">
+<input type=button class=button value="Load Offsets" onclick="loadTransforms(true)">
 
 <p style="text-align: center">
 <a href="#">Desktop</a>
