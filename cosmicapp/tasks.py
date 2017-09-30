@@ -35,10 +35,10 @@ def storeImageLocation(image, w):
     decScale *= 3600.0
 
     image.centerRA = raCen
-    image.centerDEC = decCen
+    image.centerDec = decCen
     image.resolutionX = raScale
     image.resolutionY = decScale
-    #TODO: Store image.centerROT
+    #TODO: Store image.centerRot
     #TODO: Should also store the four corners of the image position on the sky.
     image.save()
 

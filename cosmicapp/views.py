@@ -15,6 +15,7 @@ from django.utils import timezone
 from django.conf import settings
 from django.db.models import Q, Max, Min, Avg, StdDev
 from django.db import transaction
+from django.views.decorators.http import require_http_methods
 
 from lxml import etree
 import ephem
@@ -514,8 +515,8 @@ def query(request):
             imageDict['bitDepth'] = str(result.bitDepth)
             imageDict['frameType'] = result.frameType
             imageDict['centerRA'] = str(result.centerRA)
-            imageDict['centerDEC'] = str(result.centerDEC)
-            imageDict['centerROT'] = str(result.centerROT)
+            imageDict['centerDec'] = str(result.centerDec)
+            imageDict['centerRot'] = str(result.centerRot)
             imageDict['resolutionX'] = str(result.resolutionX)
             imageDict['resolutionY'] = str(result.resolutionY)
             #TODO: These next lines can be replaced by a direct db query which is faster than calling this function which does more calculation than we need here.
@@ -894,6 +895,57 @@ def mosaic(request):
     context = {"user" : request.user}
 
     return render(request, "cosmicapp/mosaic.html", context)
+
+@login_required
+@require_http_methods(['POST'])
+def saveTransform(request):
+    referenceId = request.POST.get('referenceId', None)
+    subjectId = request.POST.get('subjectId', None)
+    m00 = request.POST.get('m00', None)
+    m01 = request.POST.get('m01', None)
+    m02 = request.POST.get('m02', None)
+    m10 = request.POST.get('m10', None)
+    m11 = request.POST.get('m11', None)
+    m12 = request.POST.get('m12', None)
+
+    for variable in [referenceId, subjectId, m00, m01, m02, m10, m11, m12]:
+        if variable == None:
+            return HttpResponse('', status=400, reason='Parameters missing.')
+
+    referenceId = int(referenceId)
+    subjectId = int(subjectId)
+    m00 = float(m00)
+    m01 = float(m01)
+    m02 = float(m02)
+    m10 = float(m10)
+    m11 = float(m11)
+    m12 = float(m12)
+
+    transform = ImageTransform.objects.filter(user=request.user.pk, referenceImage=referenceId, subjectImage=subjectId)
+    if len(transform) > 0:
+        record = transform[0]
+    else:
+        try:
+            referenceImage = Image.objects.get(pk=referenceId)
+            subjectImage = Image.objects.get(pk=subjectId)
+        except Image.DoesNotExist:
+            return HttpResponse('', status=400, reason='Image not found.')
+
+        record = ImageTransform(
+            user = request.user,
+            referenceImage = referenceImage,
+            subjectImage = subjectImage
+        )
+
+    record.m00 = m00
+    record.m01 = m01
+    record.m02 = m02
+    record.m10 = m10
+    record.m11 = m11
+    record.m12 = m12
+    record.save()
+
+    return HttpResponse('')
 
 def observing(request):
     context = {"user" : request.user}

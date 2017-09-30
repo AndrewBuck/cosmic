@@ -116,8 +116,8 @@ class Image(models.Model):
     bitDepth = models.IntegerField(null=True)
     frameType = models.CharField(max_length=32)
     centerRA = models.FloatField(null=True)
-    centerDEC = models.FloatField(null=True)
-    centerROT = models.FloatField(null=True)
+    centerDec = models.FloatField(null=True)
+    centerRot = models.FloatField(null=True)
     resolutionX = models.FloatField(null=True)
     resolutionY = models.FloatField(null=True)
     answers = GenericRelation('Answer')
@@ -222,6 +222,17 @@ class ImageProperty(models.Model):
     header = models.ForeignKey(ImageHeaderField, on_delete=models.CASCADE, null=True)
     key = models.TextField()
     value = models.TextField()
+
+class ImageTransform(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    referenceImage = models.ForeignKey(Image, on_delete=models.CASCADE, related_name='transformReferences')
+    subjectImage = models.ForeignKey(Image, on_delete=models.CASCADE, related_name='transformSubjects')
+    m00 = models.FloatField()
+    m01 = models.FloatField()
+    m02 = models.FloatField()
+    m10 = models.FloatField()
+    m11 = models.FloatField()
+    m12 = models.FloatField()
 
 class PlateSolution(models.Model):
     image = models.ForeignKey(Image, on_delete=models.CASCADE)

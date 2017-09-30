@@ -23,6 +23,29 @@ Image opacity: <input id="imageOpacitySlider" type=range min="0" max="100" value
 <script>
 var undoStack = [], redoStack = [];
 
+function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = jQuery.trim(cookies[i]);
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+var csrftoken = getCookie('csrftoken');
+
+function csrfSafeMethod(method) {
+    // these HTTP methods do not require CSRF protection
+    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+
 function UndoObject(uAction, rAction, uData, rData)
 {
     this.undoAction = uAction;
@@ -154,6 +177,12 @@ function addImageToDesktop(id)
 				Number(attr.getNamedItem('dimY').nodeValue) , 
 				1
 			]);
+
+            selectedImages[i].centerRA = attr.getNamedItem('centerRA').nodeValue;
+            selectedImages[i].centerDec = attr.getNamedItem('centerDec').nodeValue;
+            selectedImages[i].centerRot = attr.getNamedItem('centerRot').nodeValue;
+            selectedImages[i].resolutionX = attr.getNamedItem('resolutionX').nodeValue;
+            selectedImages[i].resolutionY = attr.getNamedItem('resolutionY').nodeValue;
         }
     });
 	var xdim = selectedImages[i].sizeVector.get([0]);
@@ -204,6 +233,7 @@ function addImageToDesktop(id)
 
     sizeString = document.getElementById("thumbnailSizeInput").value
 
+    //TODO: This call is un-necessary since the image query done in the earlier ajax call already returns the thumb urls.
     thumbUrl = $.ajax(
         {url: '/image/' + id + '/thumbnail/' + sizeString + '/',
         async: false}
@@ -221,6 +251,66 @@ function removeImageFromDesktop(id)
 
     selectedImages.splice(arrayIndex, 1);
     drawCanvas();
+};
+
+function saveTransforms()
+{
+    var i;
+    var saveMatrix;
+
+    if(selectedImages.length == 0)
+        return false;
+
+    // Loop over the selected images and choose the first one that has a plate solution as the reference image, if no
+    // image has a plate solution then the first image is taken to be the refence image by default.
+    //TODO: Should add extra logic to see if any of the images were already saved as a reference image and re-use that //if possible.
+    referenceImage = selectedImages[0]
+    for(i = 0; i < selectedImages.length; i++)
+    {
+        if(selectedImages[i].centerRA != 'None')
+        {
+            referenceImage = selectedImages[i];
+            break;
+        }
+    }
+
+    // Now loop over the images again and save the offset from each subjectImage to the referenceImage.
+    for(i = 0; i < selectedImages.length; i++)
+    {
+        //TODO: Decide whether to skip subject images which also have a plate solution.
+        if(selectedImages[i].id == referenceImage.id)
+            continue;
+
+        saveMatrix = math.multiply(
+            selectedImages[i].transformMatrix,
+            math.inv(referenceImage.transformMatrix)
+        );
+
+        $.ajax({
+            type: 'POST',
+            url: '/save/transform/',
+            data: {
+                referenceId: referenceImage.id,
+                subjectId: selectedImages[i].id,
+                m00: math.subset(saveMatrix, math.index(0, 0)),
+                m01: math.subset(saveMatrix, math.index(0, 1)),
+                m02: math.subset(saveMatrix, math.index(0, 2)),
+                m10: math.subset(saveMatrix, math.index(1, 0)),
+                m11: math.subset(saveMatrix, math.index(1, 1)),
+                m12: math.subset(saveMatrix, math.index(1, 2))
+            },
+            success: function(){
+                alert('Image transforms saved successfully.' + '   refId: ' + referenceImage.id + '   sourceId: ' +
+                selectedImages[i].id);
+            },
+            error: function(e, textStatus, errorThrown){
+                alert(textStatus + ': ' + errorThrown + '   refId: ' + referenceImage.id + '   sourceId: ' +
+                selectedImages[i].id);
+            }
+        });
+    }
+
+    return false;
 };
 
 function drawCanvas()
@@ -774,6 +864,14 @@ function onImageTableLoad()
 
 $(document).ready(function()
 {
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+
     $('body').on('contextmenu', 'canvas', function(e){ return false; });
     $('#desktop').mousedown(handleMouseButtonDown);
     /* NOTE: 'move' and 'up' are bound to window instead of #desktop to handle drags out of the canvas boundary. */
@@ -789,6 +887,8 @@ $(document).ready(function()
 });
 
 </script>
+
+<input type=button class=button value="Save Offsets" onclick="saveTransforms()">
 
 <p style="text-align: center">
 <a href="#">Desktop</a>
