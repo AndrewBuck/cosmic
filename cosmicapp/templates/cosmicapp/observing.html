@@ -56,6 +56,7 @@
 <p>Your current zenith is at:&emsp;{{zenithNowRA}}&emsp;{{zenithNowDec}}</p>
 
 <a href="#asteroidDiv">Jump to Asteroid Results</a><br>
+<a href="#exoplanetDiv">Jump to Exoplanet Results</a><br>
 <a href="#dsoDiv">Jump to Deep Sky Object Results</a><br>
 <a href="#variablesDiv">Jump to Variable Star Results</a><br>
 
@@ -70,6 +71,22 @@
             <td>{{asteroid.ephem.ra|floatformat:3}}</td>
             <td>{{asteroid.ephem.dec|floatformat:3}}</td>
             <td>{{asteroid.ephem.mag|floatformat:2}}</td>
+            <tr>
+        {% endfor %}
+    </table>
+</div>
+
+<div id=exoplanetDiv style="display: inline-block; margin: 2em;">
+    <p>There are {{exoplanets|length}} exoplanets within +/- {{windowSize}} degrees of your zenith.</p>
+
+    <table border=2px style="border-collapse: collapse; margin: 1em;">
+    <tr><th>Planet<br>Name</th> <th>RA</th> <th>Dec</th> <th>Star<br>Mag V</th></tr>
+        {% for exoplanet in exoplanets %}
+            <tr>
+            <td>{{exoplanet.identifier}}</td>
+            <td>{{exoplanet.ra|floatformat:3}}</td>
+            <td>{{exoplanet.dec|floatformat:3}}</td>
+            <td>{{exoplanet.magV|floatformat:2}}</td>
             <tr>
         {% endfor %}
     </table>

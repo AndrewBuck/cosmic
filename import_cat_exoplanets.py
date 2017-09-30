@@ -77,7 +77,7 @@ with transaction.atomic():
                 starIdentifier = row['STAR'],
                 component = row['COMP'],
                 numComponents = parseInt(row['NCOMP']),
-                ra = parseFloat(row['RA']),
+                ra = 15*parseFloat(row['RA']),
                 dec = parseFloat(row['DEC']),
                 dist = parseFloat(row['DIST']),
 

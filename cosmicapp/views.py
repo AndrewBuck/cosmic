@@ -1052,6 +1052,15 @@ def observing(request):
     context['variableStars'] = variableStars
 
     #TODO: Make this a spatial query when postgis is available.
+    exoplanets = ExoplanetRecord.objects.filter(
+        ra__range=[zenithNowRA-windowSize, zenithNowRA+windowSize],
+        dec__range=[zenithNowDec-windowSize, zenithNowDec+windowSize],
+        magV__lt=limitingMag
+        ).order_by('magV', 'identifier')[:250]
+
+    context['exoplanets'] = exoplanets
+
+    #TODO: Make this a spatial query when postgis is available.
     extendedSources = TwoMassXSCRecord.objects.filter(
         ra__range=[zenithNowRA-windowSize, zenithNowRA+windowSize],
         dec__range=[zenithNowDec-windowSize, zenithNowDec+windowSize],
