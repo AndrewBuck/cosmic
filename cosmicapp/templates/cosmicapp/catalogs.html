@@ -22,12 +22,16 @@ in our database and what sources it is gathered from.</p>
 
     <p><i>{{catalog.fullName}}</i></p>
 
-    <p>Contains {{catalog.numObjects|intcomma}} objects of type: {{catalog.objectTypes}} - down to a limiting magnitude of {{catalog.limMagnitude}}</p>
+    <p>Contains {{catalog.numObjects|intcomma}} objects of type: {{catalog.objectTypes}}
+    {% if catalog.limMagnitude %} - down to a limiting magnitude of {{catalog.limMagnitude}}{% endif %}</p>
 
-    <p>Link to catalog entry on VizieR: <a href="{{catalog.vizierUrl}}">{{catalog.vizierID}}</a>
-    {% if catalog.url %}&emsp;&emsp;<a href="{{catalog.url}}">Alternate link</a>{% endif %}</p>
+    <p>
+    {% if catalog.vizierUrl %}
+    Link to catalog entry on VizieR: <a href="{{catalog.vizierUrl}}">{{catalog.vizierID}}</a>&emsp;&emsp;
+    {% endif %}
+    {% if catalog.url %}<a href="{{catalog.url}}">Web link</a>{% endif %}</p>
 
-    <p>Attribution: "{{catalog.attributionShort}}"</p>
+    <p>Attribution: <i>{{catalog.attributionShort}}</i></p>
 
     {% if catalog.attributionLong %}<p><i>{{catalog.attributionLong}}</i></p>{% endif %}
 
