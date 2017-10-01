@@ -1016,6 +1016,13 @@ def observing(request):
         else:
             (lat, lon) = getLocationForIp(getClientIp(request))
 
+    limit = 10
+    if 'limit' in request.GET:
+        limit = int(request.GET['limit'])
+
+    if limit > 500:
+        limit = 500;
+
     if windowSize > 90:
         windowSize = 90
 
@@ -1024,6 +1031,7 @@ def observing(request):
     context['ele'] = ele
     context['limitingMag'] = limitingMag
     context['windowSize'] = windowSize
+    context['limit'] = limit
 
     currentTime = timezone.now()
 
@@ -1047,7 +1055,7 @@ def observing(request):
         ra__range=[zenithNowRA-windowSize, zenithNowRA+windowSize],
         dec__range=[zenithNowDec-windowSize, zenithNowDec+windowSize],
         magMin__lt=limitingMag
-        ).order_by('magMin')[:250]
+        ).order_by('magMin')[:limit]
 
     context['variableStars'] = variableStars
 
@@ -1056,16 +1064,25 @@ def observing(request):
         ra__range=[zenithNowRA-windowSize, zenithNowRA+windowSize],
         dec__range=[zenithNowDec-windowSize, zenithNowDec+windowSize],
         magV__lt=limitingMag
-        ).order_by('magV', 'identifier')[:250]
+        ).order_by('magV', 'identifier')[:limit]
 
     context['exoplanets'] = exoplanets
+
+    #TODO: Make this a spatial query when postgis is available.
+    messierObjects = MessierRecord.objects.filter(
+        ra__range=[zenithNowRA-windowSize, zenithNowRA+windowSize],
+        dec__range=[zenithNowDec-windowSize, zenithNowDec+windowSize],
+        magV__lt=limitingMag
+        ).order_by('magV')
+
+    context['messierObjects'] = messierObjects
 
     #TODO: Make this a spatial query when postgis is available.
     extendedSources = TwoMassXSCRecord.objects.filter(
         ra__range=[zenithNowRA-windowSize, zenithNowRA+windowSize],
         dec__range=[zenithNowDec-windowSize, zenithNowDec+windowSize],
         isophotalKMag__lt=limitingMag
-        ).order_by('isophotalKMag')[:250]
+        ).order_by('isophotalKMag')[:limit]
 
     context['extendedSources'] = extendedSources
 
@@ -1076,7 +1093,7 @@ def observing(request):
         dec__range=[zenithNowDec-windowSize, zenithNowDec+windowSize],
         dateTime__range=[currentTime-timeWindow, currentTime+timeWindow],
         mag__lt=limitingMag
-        ).distinct('astorbRecord_id')[:250]
+        ).distinct('astorbRecord_id')[:limit]
 
     asteroids = []
     for asteroid in asteroidsApprox:
