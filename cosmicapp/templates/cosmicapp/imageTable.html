@@ -191,12 +191,13 @@ function loadImageGalleryResults()
                 html += '<div class="gallery">'
 
                 if(includeLinks)
+				{
                     html += '<a href="/image/' + imageId + '/">'
-
-                html += '<img src="' + attr.getNamedItem('thumbUrl'+thumbnailSize).nodeValue + '">';
-
-                if(includeLinks)
+	                html += '<img src="' + attr.getNamedItem('thumbUrl'+thumbnailSize).nodeValue + '">';
                     html += '</a>';
+				} else {
+	                html += '<img onclick = "{{imageOnclickFunction}}" src="' + attr.getNamedItem('thumbUrl'+thumbnailSize).nodeValue + '">';
+				}
 
                 questionLink = '/image/' + imageId + '/question/';
                 html += '<div class="desc">'
