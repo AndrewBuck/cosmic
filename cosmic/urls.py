@@ -45,6 +45,7 @@ urlpatterns = [
     url(r'^equipment/$', views.equipment),
 
     url(r'^mosaic/$', views.mosaic),
+    url(r'^save/transform/$', views.saveTransform),
 
     url(r'^observing/$', views.observing),
 

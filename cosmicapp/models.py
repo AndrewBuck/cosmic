@@ -116,8 +116,8 @@ class Image(models.Model):
     bitDepth = models.IntegerField(null=True)
     frameType = models.CharField(max_length=32)
     centerRA = models.FloatField(null=True)
-    centerDEC = models.FloatField(null=True)
-    centerROT = models.FloatField(null=True)
+    centerDec = models.FloatField(null=True)
+    centerRot = models.FloatField(null=True)
     resolutionX = models.FloatField(null=True)
     resolutionY = models.FloatField(null=True)
     answers = GenericRelation('Answer')
@@ -222,6 +222,17 @@ class ImageProperty(models.Model):
     header = models.ForeignKey(ImageHeaderField, on_delete=models.CASCADE, null=True)
     key = models.TextField()
     value = models.TextField()
+
+class ImageTransform(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    referenceImage = models.ForeignKey(Image, on_delete=models.CASCADE, related_name='transformReferences')
+    subjectImage = models.ForeignKey(Image, on_delete=models.CASCADE, related_name='transformSubjects')
+    m00 = models.FloatField()
+    m01 = models.FloatField()
+    m02 = models.FloatField()
+    m10 = models.FloatField()
+    m11 = models.FloatField()
+    m12 = models.FloatField()
 
 class PlateSolution(models.Model):
     image = models.ForeignKey(Image, on_delete=models.CASCADE)
@@ -441,6 +452,63 @@ class AstorbEphemeris(models.Model):
     sunDist = models.FloatField()
     mag = models.FloatField(db_index=True)
     elong = models.FloatField()
+
+class ExoplanetRecord(models.Model):
+    identifier = models.CharField(max_length=32, null=True)
+    identifier2 = models.CharField(max_length=32, null=True)
+    starIdentifier = models.CharField(max_length=32, null=True)
+    component = models.CharField(max_length=2, null=True)
+    numComponents = models.IntegerField(null=True)
+    ra = models.FloatField(db_index=True)
+    dec = models.FloatField(db_index=True)
+    dist = models.FloatField(null=True)
+
+    magBMinusV = models.FloatField(null=True)
+    magV = models.FloatField(null=True)
+    magJ = models.FloatField(null=True)
+    magH = models.FloatField(null=True)
+    magKS = models.FloatField(null=True)
+
+    thisPlanetDiscoveryMethod = models.CharField(max_length=32, null=True)
+    firstPlanetDiscoveryMethod = models.CharField(max_length=32, null=True)
+    discoveryMicrolensing = models.BooleanField()
+    discoveryImaging = models.BooleanField()
+    discoveryTiming = models.BooleanField()
+    discoveryAstrometry = models.BooleanField()
+
+    vSinI = models.FloatField(null=True)
+    mSinI = models.FloatField(null=True)
+    mass = models.FloatField(null=True)
+
+    period = models.FloatField(null=True)
+    velocitySemiAplitude = models.FloatField(null=True)
+    velocitySlope = models.FloatField(null=True)
+
+    timePeriastron = models.DateTimeField(null=True)
+    eccentricity = models.FloatField(null=True)
+    argPeriastron = models.FloatField(null=True)
+    inclination = models.FloatField(null=True)
+    semiMajorAxis = models.FloatField(null=True)
+
+    transitDepth = models.FloatField(null=True)
+    transitDuration = models.FloatField(null=True)
+    transitEpoch = models.DateTimeField(null=True)
+
+    planetRadius = models.FloatField(null=True)
+    planetDensity = models.FloatField(null=True)
+    planetSurfaceGravity = models.FloatField(null=True)
+
+    firstPublicationDate = models.IntegerField(null=True)
+    firstReference = models.TextField(null=True)
+    orbitReference = models.TextField(null=True)
+
+    epeLink = models.TextField(null=True)
+    eaLink = models.TextField(null=True)
+    etdLink = models.TextField(null=True)
+    simbadLink = models.TextField(null=True)
+
+
+
 
 class GeoLiteLocation(models.Model):
     id = models.IntegerField(primary_key=True)

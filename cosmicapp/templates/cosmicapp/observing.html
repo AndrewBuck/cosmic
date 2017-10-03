@@ -1,5 +1,6 @@
 {% extends "cosmicapp/base.html" %}
 {% load static %}
+{% load cosmicapp_extras %}
 
 {% block extratitle %} - Observing list tool {% endblock %}
 
@@ -42,7 +43,13 @@
             <tr>
             <td>Window<br>size:</td>
             <td><input type=text name=windowSize value={{windowSize}}></td>
-            <td>(The maximum angle from zenith that an object can be)</td>
+            <td>(The maximum angle, in degrees, from zenith that an object can be: max 90)</td>
+            </tr>
+
+            <tr>
+            <td>Results<br>limit:</td>
+            <td><input type=text name=limit value={{limit}}></td>
+            <td>(The maximum number of objects to display in each table: max 500)</td>
             </tr>
             </table>
         <br>
@@ -56,38 +63,38 @@
 <p>Your current zenith is at:&emsp;{{zenithNowRA}}&emsp;{{zenithNowDec}}</p>
 
 <a href="#asteroidDiv">Jump to Asteroid Results</a><br>
-<a href="#dsoDiv">Jump to Deep Sky Object Results</a><br>
+<a href="#exoplanetDiv">Jump to Exoplanet Results</a><br>
 <a href="#variablesDiv">Jump to Variable Star Results</a><br>
+<a href="#messierDiv">Jump to Messier Object Results</a><br>
+<a href="#dsoDiv">Jump to Deep Sky Object Results</a><br>
 
 <div id=asteroidDiv style="display: inline-block; margin: 2em;">
     <p>There are {{asteroids|length}} asteroids within +/- {{windowSize}} degrees of your zenith.</p>
 
-    <table border=2px style="border-collapse: collapse; margin: 1em;">
+    <table cellpadding=5px border=2px style="border-collapse: collapse; margin: 1em;">
     <tr><th>Name</th> <th>RA</th> <th>Dec</th> <th>Mag</th></tr>
         {% for asteroid in asteroids %}
             <tr>
             <td>{{asteroid.record.name}}</td>
-            <td>{{asteroid.ephem.ra|floatformat:3}}</td>
-            <td>{{asteroid.ephem.dec|floatformat:3}}</td>
+            <td>{{asteroid.ephem.ra|formatRA}}</td>
+            <td>{{asteroid.ephem.dec|formatDec}}</td>
             <td>{{asteroid.ephem.mag|floatformat:2}}</td>
             <tr>
         {% endfor %}
     </table>
 </div>
 
-<div id=dsoDiv style="display: inline-block; margin: 2em;">
-    <p>There are {{extendedSources|length}} deep sky objects within +/- {{windowSize}} degrees of your zenith.</p>
+<div id=exoplanetDiv style="display: inline-block; margin: 2em;">
+    <p>There are {{exoplanets|length}} exoplanets within +/- {{windowSize}} degrees of your zenith.</p>
 
-    <table border=2px style="border-collapse: collapse; margin: 1em;">
-    <tr><th>Name</th> <th>RA</th> <th>Dec</th> <th>Mag</th> <th>Width</th> <th>W/H<br>ratio</th></tr>
-        {% for extendedSource in extendedSources %}
+    <table cellpadding=5px border=2px style="border-collapse: collapse; margin: 1em;">
+    <tr><th>Planet<br>Name</th> <th>RA</th> <th>Dec</th> <th>Star<br>Mag V</th></tr>
+        {% for exoplanet in exoplanets %}
             <tr>
-            <td>{{extendedSource.identifier}}</td>
-            <td>{{extendedSource.ra|floatformat:3}}</td>
-            <td>{{extendedSource.dec|floatformat:3}}</td>
-            <td>{{extendedSource.isophotalKMag|floatformat:2}}</td>
-            <td>{{extendedSource.isophotalKSemiMajor|floatformat:2}}</td>
-            <td>{{extendedSource.isophotalKMinorMajor|floatformat:2}}</td>
+            <td>{{exoplanet.identifier}}</td>
+            <td>{{exoplanet.ra|formatRA}}</td>
+            <td>{{exoplanet.dec|formatDec}}</td>
+            <td>{{exoplanet.magV|floatformat:2}}</td>
             <tr>
         {% endfor %}
     </table>
@@ -96,14 +103,14 @@
 <div id=variablesDiv style="display: inline-block; margin: 2em;">
 <p>There are {{variableStars|length}} variable stars within +/- {{windowSize}} degrees of your zenith.</p>
 
-    <table border=2px style="border-collapse: collapse; margin: 1em;">
+    <table cellpadding=5px border=2px style="border-collapse: collapse; margin: 1em;">
     <tr><th>Name</th> <th>RA</th> <th>Dec</th> <th>Mag<br>max</th> <th>Mag<br>min</th>
     <th>Period</th> <th>Type</th> <th>Type2</th> <th>Spectral<br>type</th></tr>
         {% for variableStar in variableStars %}
             <tr>
             <td>{{variableStar.identifier}}</td>
-            <td>{{variableStar.ra|floatformat:3}}</td>
-            <td>{{variableStar.dec|floatformat:3}}</td>
+            <td>{{variableStar.ra|formatRA}}</td>
+            <td>{{variableStar.dec|formatDec}}</td>
             <td>{{variableStar.magMax|floatformat:2}}</td>
             <td>{{variableStar.magMin|floatformat:2}}</td>
             <td>{{variableStar.period|floatformat:2}}</td>
@@ -111,6 +118,41 @@
             <td>{{variableStar.variableType2}}</td>
             <td>{{variableStar.spectralType}}</td>
             </tr>
+        {% endfor %}
+    </table>
+</div>
+
+<div id=messierDiv style="display: inline-block; margin: 2em;">
+    <p>There are {{messierObjects|length}} Messier objects within +/- {{windowSize}} degrees of your zenith.</p>
+
+    <table cellpadding=5px border=2px style="border-collapse: collapse; margin: 1em;">
+    <tr><th>Name</th> <th>RA</th> <th>Dec</th> <th>Object<br>type</th> <th>Mag V</th></tr>
+        {% for messierObject in messierObjects %}
+            <tr>
+            <td>{{messierObject.identifier}}</td>
+            <td>{{messierObject.ra|formatRA}}</td>
+            <td>{{messierObject.dec|formatDec}}</td>
+            <td>{{messierObject.objectType}}</td>
+            <td>{{messierObject.magV|floatformat:2}}</td>
+            <tr>
+        {% endfor %}
+    </table>
+</div>
+
+<div id=dsoDiv style="display: inline-block; margin: 2em;">
+    <p>There are {{extendedSources|length}} deep sky objects within +/- {{windowSize}} degrees of your zenith.</p>
+
+    <table cellpadding=5px border=2px style="border-collapse: collapse; margin: 1em;">
+    <tr><th>Name</th> <th>RA</th> <th>Dec</th> <th>Mag K</th> <th>Radius<br>(arcsec)</th> <th>W/H<br>ratio</th></tr>
+        {% for extendedSource in extendedSources %}
+            <tr>
+            <td>{{extendedSource.identifier}}</td>
+            <td>{{extendedSource.ra|formatRA}}</td>
+            <td>{{extendedSource.dec|formatDec}}</td>
+            <td>{{extendedSource.isophotalKMag|floatformat:2}}</td>
+            <td>{{extendedSource.isophotalKSemiMajor|floatformat:2}}</td>
+            <td>{{extendedSource.isophotalKMinorMajor|floatformat:2}}</td>
+            <tr>
         {% endfor %}
     </table>
 </div>
