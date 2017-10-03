@@ -1,0 +1,8 @@
+set term wxt
+
+set logscale y
+
+plot 'plot_db_histogram.plotdata' using 1:2 with histeps
+
+pause -1
+
