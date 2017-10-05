@@ -160,8 +160,6 @@ function loadImageGalleryResults()
         paramString = paramArray.join('&');
         if(paramString != lastParamString)
             offset = 0;
-        else
-            offset += numRows*numCols
 
         lastParamString = paramString;
 
@@ -208,6 +206,8 @@ function loadImageGalleryResults()
                 html += '</div>';
                 html += '</div>';
                 html += '</div>';
+
+                offset += 1;
             }
 
             $('#imageGalleryLoadingMessage').remove();
