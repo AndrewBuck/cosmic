@@ -30,7 +30,7 @@
 {% endif %}
 
 {% with "user="|concat:foruser as queryParams %}
-{% include "./imageTable.html" with includeLinks="true" thumbnailSize="Medium" %}
+{% include "./imageTable.html" with galleryName="userGallery" includeLinks="true" thumbnailSize="Medium" %}
 {% endwith %}
 
 {% endblock %}

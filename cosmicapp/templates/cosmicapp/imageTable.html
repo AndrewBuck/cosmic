@@ -1,8 +1,10 @@
 {% include "./jquery.html" %}
 
 <script>
-function ImageGallery()
+function ImageGallery(galleryName)
 {
+    this.name = galleryName;
+
     this.numRows = 2;
     this.numCols = 4;
     this.includeLinks = {{includeLinks}};
@@ -41,11 +43,11 @@ function ImageGallery()
 
             this.paramIdCounter++;
 
-            html += '<div id="paramDiv_' + this.paramIdCounter + '" class=imageGalleryParameter>';
+            html += '<div id="paramDiv_' + this.paramIdCounter + '" class="imageGalleryParameter ' + this.name + '">';
             if(this.paramIdCounter > 1)
                 html += '<i>AND</i>&nbsp;';
 
-            html += '<select class="paramSelect" id="paramSelect' + this.paramIdCounter + '">'
+            html += '<select class="paramSelect ' + this.name + '" id="paramSelect' + this.paramIdCounter + '">'
             html += '<option value="user">User</option>'
             html += '<option value="id">Image ID</option>'
             html += '<option value="imageProperty">Image Property</option>'
@@ -57,17 +59,17 @@ function ImageGallery()
             //NOTE: The slice and join here handles when the value portion contains an '=' sign in the original input.
             value = kv.slice(1, kv.length).join('=');
 
-            html += '<input class="paramTextbox" type=text id="paramTextbox' + this.paramIdCounter + '" value="' + value + '">';
+            html += '<input class="paramTextbox ' + this.name + '" type=text id="paramTextbox' + this.paramIdCounter + '" value="' + value + '">';
 
             if(this.paramIdCounter > 1)
-                html += '&nbsp;<input type=button class=button style="margin: 3px" value="Remove" id="removeButton' + this.paramIdCounter + '"><br>'
+                html += '&nbsp;<input type=button class="button ' + this.name + '" style="margin: 3px" value="Remove" id="removeButton' + this.paramIdCounter + '"><br>'
 
             html += '</div>'
 
-            $('#imageGalleryQueriesDiv').append(html);
+            $('#imageGalleryQueriesDiv.' + this.name).append(html);
 
-            $('#paramSelect' + this.paramIdCounter).val(key);
-            $('#removeButton' + this.paramIdCounter).click(function()
+            $('#paramSelect' + this.paramIdCounter + '.' + this.name).val(key);
+            $('#removeButton' + this.paramIdCounter + '.' + this.name).click(function()
             {
                 $(this).parent().remove();
             });
@@ -78,7 +80,7 @@ function ImageGallery()
     {
         var html = '';
 
-        html += '<div class="imageGalleryZoomWindow">';
+        html += '<div class="imageGalleryZoomWindow ' + this.name + '">';
         html += '<div style="padding: 2em; background: white; width: 70%; overflow-y: auto;">'
         html += '<h2>Query Help</h2>'
         html += `
@@ -121,7 +123,7 @@ function ImageGallery()
 
         $(document.body).append(html);
 
-        $('.imageGalleryZoomWindow').click(function()
+        $('.imageGalleryZoomWindow.' + this.name).click(function()
         {
             $(this).remove();
         });
@@ -136,13 +138,13 @@ function ImageGallery()
             async: false}
             ).responseText;
 
-        html += '<div class="imageGalleryZoomWindow">';
+        html += '<div class="imageGalleryZoomWindow ' + this.name + '">';
         html += '<img src="' + thumbUrl + '">';
         html += '</div>';
 
         $(document.body).append(html);
 
-        $('.imageGalleryZoomWindow').click(function()
+        $('.imageGalleryZoomWindow.' + this.name).click(function()
         {
             $(this).remove();
         });
@@ -156,9 +158,9 @@ function ImageGallery()
 
             var gallery = document.getElementById("imageGalleryDiv");
             var currentHTML = gallery.innerHTML;
-            $('#imageGalleryDiv').append('<div id="imageGalleryLoadingMessage"><p>Loading...</p><div>');
+            $('#imageGalleryDiv.' + this.name).append('<div id="imageGalleryLoadingMessage" class="' + this.name + '"><p>Loading...</p><div>');
 
-            var params = document.getElementsByClassName('imageGalleryParameter');
+            var params = document.getElementsByClassName('imageGalleryParameter ' + this.name);
             var paramArray = [];
             for(i = 0; i < params.length; i++)
             {
@@ -191,10 +193,10 @@ function ImageGallery()
 
         var results = xml.getElementsByTagName('Image')
 
-        $('#newResultsDivider').remove();
+        $('#newResultsDivider.' + this.name).remove();
         if(!this.firstLoadOfGallery)
         {
-            html += '<div id=newResultsDivider class=responsive style="text-align: center; width: 95%; border: 1em solid blue">'
+            html += '<div id=newResultsDivider class="responsive ' + this.name + '" style="text-align: center; width: 95%; border: 1em solid blue">'
             if(results.length > 0)
                 html += 'New Results:</div>'
             else
@@ -206,7 +208,7 @@ function ImageGallery()
             var attr = results[i].attributes;
             var imageId = attr.getNamedItem('id').nodeValue;
 
-            html += '<div class="responsive" id="' + imageId + '">'
+            html += '<div class="responsive ' + this.name + '" id="' + imageId + '">'
             html += '<div class="gallery">'
 
             if(this.includeLinks)
@@ -214,16 +216,18 @@ function ImageGallery()
                 html += '<a href="/image/' + imageId + '/">'
                 html += '<img src="' + attr.getNamedItem('thumbUrl'+this.thumbnailSize).nodeValue + '">';
                 html += '</a>';
-            } else {
-                html += '<img onclick = "{{imageOnclickFunction}}" src="' + attr.getNamedItem('thumbUrl'+this.thumbnailSize).nodeValue + '">';
+            }
+            else
+            {
+                html += '<img onclick="{{imageOnclickFunction}}" src="' + attr.getNamedItem('thumbUrl'+this.thumbnailSize).nodeValue + '">';
             }
 
             var questionLink = '/image/' + imageId + '/question/';
-            html += '<div class="desc">'
+            html += '<div class="desc ' + this.name + '">'
             //TODO: Make these <a> links an image icon instead of the placeholder text link that is here now.
-            html += '<a style="cursor: pointer" class="hideLink" id="hideButton' + imageId + '">Hide</a>&nbsp;'
-            html += '<a href="' + questionLink + '" class="questionLink">Ques</a>&nbsp;'
-            html += '<a style="cursor: pointer" onclick="zoomImage(' + imageId + ')">Zoom</a>'
+            html += '<a style="cursor: pointer" class="hideLink ' + this.name + '" id="hideButton' + imageId + '">Hide</a>&nbsp;';
+            html += '<a href="' + questionLink + '" class="questionLink ' + this.name + '">Ques</a>&nbsp;';
+            html += '<a style="cursor: pointer" class="zoomLink ' + this.name + '" onclick="gallery_{{galleryName}}.zoomImage(' + imageId + ')">Zoom</a>';
             html += '</div>';
             html += '</div>';
             html += '</div>';
@@ -231,18 +235,18 @@ function ImageGallery()
             this.offset += 1;
         }
 
-        $('#imageGalleryLoadingMessage').remove();
-        $('#imageGalleryDiv').append(html);
+        $('#imageGalleryLoadingMessage.' + this.name).remove();
+        $('#imageGalleryDiv.' + this.name).append(html);
         if(!this.firstLoadOfGallery)
-            $('#newResultsDivider')[0].scrollIntoView({block: 'start', inline: 'start'});
+            $('#newResultsDivider.' + this.name)[0].scrollIntoView({behaviour: 'smooth', block: 'start', inline: 'start'});
 
         //TODO: These are probably getting added multiple times.  Need to test this and fix if necessary, this method is kind of hacky anyway.
-        $(".hideLink").click(function()
+        $(".hideLink." + this.name).click(function()
         {
             $(this).parent().parent().parent().remove();
         });
 
-        $(document).trigger('imageTableLoadEvent');
+        $(document).trigger('imageTableLoadEvent_' + this.name);
 
         this.loadingInProgress = false;
         this.firstLoadOfGallery = false;
@@ -252,7 +256,7 @@ function ImageGallery()
     {
         this.offset = 0;
         this.lastParamString = '';
-        $('.responsive').remove();
+        $('.responsive.' + this.name).remove();
     };
 
     this.handleWindowResize = function()
@@ -269,8 +273,8 @@ function ImageGallery()
 
 $(document).ready(function()
 {
-    gallery = new ImageGallery();
-    gallery.initImageGallery();
+    gallery_{{galleryName}} = new ImageGallery('{{galleryName}}');
+    gallery_{{galleryName}}.initImageGallery();
 });
 
 </script>
@@ -278,21 +282,21 @@ $(document).ready(function()
 <div id=imageGalleryQueryDiv>
     <p>Query Parameters</p>
 
-    <div id=imageGalleryQueriesDiv></div>
+    <div id=imageGalleryQueriesDiv class="{{galleryName}}"></div>
 
     <!-- TODO: Add functionality to set the limit and order of the returned results. (and maybe offset?) -->
     <br>
-    <input type=button class=button value="Query Help" onclick="gallery.queryHelp()">
-    <input type=button class=button value="Add Query Filter" onclick="gallery.addQueryParameter()">
-    <input type=button class=button value="Load More" onclick="gallery.loadImageGalleryResults()">
-    <input type=button class=button value="Clear Results" onclick="gallery.clearImageGalleryResults()">
+    <input type=button class="button {{galleryName}}" value="Query Help" onclick="gallery_{{galleryName}}.queryHelp()">
+    <input type=button class="button {{galleryName}}" value="Add Query Filter" onclick="gallery_{{galleryName}}.addQueryParameter()">
+    <input type=button class="button {{galleryName}}" value="Load More" onclick="gallery_{{galleryName}}.loadImageGalleryResults()">
+    <input type=button class="button {{galleryName}}" value="Clear Results" onclick="gallery_{{galleryName}}.clearImageGalleryResults()">
 </div>
 
-<div id=imageGalleryDiv></div>
+<div id=imageGalleryDiv class="{{galleryName}}"></div>
 
 <div class="clearfix"></div>
 
 <div style="text-align:center;">
-    <input id=loadMoreButton type=button class=button value="Load more" onclick="gallery.loadImageGalleryResults()">
+    <input id=loadMoreButton type=button class="button {{galleryName}}" value="Load more" onclick="gallery_{{galleryName}}.loadImageGalleryResults()">
 </div>
 

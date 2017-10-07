@@ -907,6 +907,8 @@ function getMousePositionOnImage(i)
     );
 };
 
+//TODO: This function is no longer really needed, the click handler can be added to the onclick parameter now in the
+//gallery code and the questionLink hiding could be added as an option to the image table.
 function onImageTableLoad()
 {
     // Remove the question links from all the newly loaded elements to prevent the user from accidentally clicking one
@@ -953,7 +955,7 @@ $(document).ready(function()
     $(document).keydown(handleKeyDown);
     $(document).keyup(handleKeyUp);
 
-    $(document).on('imageTableLoadEvent', onImageTableLoad)
+    $(document).on('imageTableLoadEvent_mosaicGallery', onImageTableLoad)
     $(window).on('resize', drawCanvas)
 
 });
@@ -970,7 +972,7 @@ $(document).ready(function()
 <p>
 
 {% with "user="|concat:user as queryParams %}
-{% include "./imageTable.html" with includeLinks="false" thumbnailSize="Medium" %}
+{% include "./imageTable.html" with galleryName="mosaicGallery" includeLinks="false" thumbnailSize="Medium" %}
 {% endwith %}
 
 {% endblock %}
