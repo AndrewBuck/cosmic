@@ -1,14 +1,19 @@
 {% include "./jquery.html" %}
 
 <script>
-function ImageGallery(galleryName)
+//TODO: Need to finish refactoring this code to work for multiple galleries on a page.  This class declaration should
+//be moved to a separate file that is included only once and the gallery instantiation needs to be made into some kind
+//of a function call that takes an additional parameter which is the id of a div to fill in on the page.
+function ImageGallery(galleryName, paramString, includeLinks, imageOnclickFunction, thumbnailSize)
 {
     this.name = galleryName;
+    this.initParamString = paramString;
+    this.includeLinks = includeLinks;
+    this.imageOnclickFunction = imageOnclickFunction;
+    this.thumbnailSize = thumbnailSize;
 
     this.numRows = 2;
     this.numCols = 4;
-    this.includeLinks = {{includeLinks}};
-    this.thumbnailSize = "{{thumbnailSize}}"
 
     this.firstLoadOfGallery = true;
     this.loadingInProgress = false;
@@ -23,7 +28,7 @@ function ImageGallery(galleryName)
         $(window).on('resize', this.handleWindowResize)
         this.handleWindowResize();
 
-        this.addQueryParameter('{{queryParams}}');
+        this.addQueryParameter(this.initParamString);
         this.loadImageGalleryResults();
     };
 
@@ -219,7 +224,7 @@ function ImageGallery(galleryName)
             }
             else
             {
-                html += '<img onclick="{{imageOnclickFunction}}" src="' + attr.getNamedItem('thumbUrl'+this.thumbnailSize).nodeValue + '">';
+                html += '<img onclick="' + this.imageOnclickFunction + '(' + imageId + ')" src="' + attr.getNamedItem('thumbUrl'+this.thumbnailSize).nodeValue + '">';
             }
 
             var questionLink = '/image/' + imageId + '/question/';
@@ -227,7 +232,7 @@ function ImageGallery(galleryName)
             //TODO: Make these <a> links an image icon instead of the placeholder text link that is here now.
             html += '<a style="cursor: pointer" class="hideLink ' + this.name + '" id="hideButton' + imageId + '">Hide</a>&nbsp;';
             html += '<a href="' + questionLink + '" class="questionLink ' + this.name + '">Ques</a>&nbsp;';
-            html += '<a style="cursor: pointer" class="zoomLink ' + this.name + '" onclick="gallery_{{galleryName}}.zoomImage(' + imageId + ')">Zoom</a>';
+            html += '<a style="cursor: pointer" class="zoomLink ' + this.name + '" onclick="gallery_' + this.galleryName + '.zoomImage(' + imageId + ')">Zoom</a>';
             html += '</div>';
             html += '</div>';
             html += '</div>';
@@ -273,7 +278,8 @@ function ImageGallery(galleryName)
 
 $(document).ready(function()
 {
-    gallery_{{galleryName}} = new ImageGallery('{{galleryName}}');
+    gallery_{{galleryName}} = new ImageGallery('{{galleryName}}', '{{queryParams}}', '{{includeLinks}}',
+        '{{imageOnclickFunction}}', '{{thumbnailSize}}');
     gallery_{{galleryName}}.initImageGallery();
 });
 
