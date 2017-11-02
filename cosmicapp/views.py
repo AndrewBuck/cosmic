@@ -976,6 +976,12 @@ def saveTransform(request):
 
     return HttpResponse('')
 
+@login_required
+def calibration(request):
+    context = {"user" : request.user}
+
+    return render(request, "cosmicapp/calibration.html", context)
+
 def observing(request):
     context = {"user" : request.user}
 

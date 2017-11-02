@@ -1,0 +1,57 @@
+{% extends "cosmicapp/base.html" %}
+{% load static %}
+{% load cosmicapp_extras %}
+
+{% block extratitle %} - Calibration library tool {% endblock %}
+
+{% block extrahead %}
+<script>
+var biasIdList = [], darkIdList = [], flatIdList = [];
+
+function handleImageClick(idList, id)
+{
+    var i = idList.indexOf(id);
+    if(i == -1)
+        idList[idList.length] = id;
+    else
+        idList.splice(i, 1);
+
+    alert(idList.length);
+};
+
+function handleBiasImageClick(id) { alert('bias' + biasIdList.length); handleImageClick(biasIdList, id); };
+function handleDarkImageClick(id) { alert('dark' + darkIdList.length); handleImageClick(darkIdList, id); };
+function handleFlatImageClick(id) { handleImageClick(flatIdList, id); };
+
+</script>
+{% endblock extrahead %}
+
+{% block mainbody %}
+{% include "./jquery.html" %}
+
+<h2>Calibration library tool</h2>
+
+<p>This page shows calibration images uploaded from a particular user (defaulting to you), and filtered by a particular
+observing instrument.  You can then select multiple calibration frames to be combined into master calibration frames
+which can then be applied to a series of science frames to produced calibrated images suitable for scientific analysis.</p>
+
+<h3>Bias frames</h3>
+
+{% include "./imageTable.html" with queryParams="imageProperty=imageType=bias&user="|concat:user|safe imageOnclickFunction="handleBiasImageClick" galleryName="biasGallery" includeLinks="false" thumbnailSize="Medium" %}
+
+<h4>Master Bias frames</h4>
+
+{% include "./imageTable.html" with queryParams="imageProperty=imageType=masterBias&user="|concat:user|safe galleryName="masterBiasGallery" includeLinks="false" thumbnailSize="Medium" %}
+
+{% comment %}
+<h3>Dark frames</h3>
+
+{% with "imageProperty=imageType=dark&user="|concat:user|safe as queryParams %}
+{% include "./imageTable.html" with galleryName="darkGallery" includeLinks="false" imageOnclickFunction="handleDarkImageClick" thumbnailSize="Medium" %}
+{% endwith %}
+
+<h4>Master Dark frames</h4>
+{% endcomment %}
+
+{% endblock mainbody %}
+
