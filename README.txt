@@ -156,6 +156,18 @@ generate the graph, run the following manage.py command:
 
 python3 manage.py graph_models -a -g -o models.png
 
+Developers will also likely want to generate documentation for the codebase on
+their local system.  To do this easily a Doxygen configuration file is included
+in the doc/ directory which is set up for this project.  To build the html
+documentation run the following:
+
+cd doc
+doxygen Doxyfile
+
+The second command will create a doc/html directory.  You can browse the
+documentation there by directing your web browser to the index.html file under
+that directory.
+
 
 
 Finally, populate the database tables containing the catalog data.  See below
