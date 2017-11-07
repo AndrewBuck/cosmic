@@ -1,6 +1,6 @@
 Install Django:
 
-sudo pip3 install Django bokeh sqlparse
+sudo pip3 install Django django-extensions bokeh sqlparse
 
 
 
@@ -135,7 +135,7 @@ directory so it is accesible on the website (note: make sure you run this
 directly from the 'cosmic' root directory where the script is located so that
 the rendered image is put in the correct place in the static directory):
 
-sudo pip3 install graphviz
+sudo pip3 install graphviz pydot
 sudo apt-get install graphviz
 
 python3 createQuestions.py
@@ -147,6 +147,14 @@ for developers working with a local copy of the database on their own system.
 WARNING: ONLY FOR DEVELOPERS, DO NOT RUN ON A PRODUCTION SITE UNLESS YOU REALLY MEAN TO!
 
 python3 clearQuestionsAndAnswers.py
+
+Once dot is inslled it can optionally be used to generate a dependancy graph of
+all of the database models in the django system, showing the relationships
+between the tables.  This step is not necessary in production, but is useful to
+developers who want to get a clearer picture of the database structure.  To
+generate the graph, run the following manage.py command:
+
+python3 manage.py graph_models -a -g -o models.png
 
 
 
