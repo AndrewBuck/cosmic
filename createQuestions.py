@@ -16,6 +16,11 @@ image artefacts (meteor, cosmic ray, satellite, etc)
 noise characteristics (smooth, patchy, high/low noise, snr)
 
 questions about observing notes
+
+maybe also ask questions about the user themself, or about particular observing sessions, or something like that.  Need
+to think about the pros and cons of this.  Questions about the user themself should probably just be part of the
+profile, but leveraging the question system for asking details of observing sessions and things like that may be
+worthwhile.
 """
 
 #--------------------------------------------------------------------------------
