@@ -387,7 +387,7 @@ class ProcessInput(models.Model):
             pa = ProcessArgument(
                 processInput = self,
                 argIndex = i,
-                arg = arg
+                arg = str(arg)
                 )
 
             pa.save()
