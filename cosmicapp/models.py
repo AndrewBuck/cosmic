@@ -12,37 +12,37 @@ from django.contrib.contenttypes.models import ContentType
 
 #TODO:  Set a reated_name for all foreign keys and use that in the code where appropriate to make the code more readable.
 
-"""
-An Optical tube assembly that forms the core of the optical path of an instrument.
-"""
 class OTA(models.Model):
+    """
+    An Optical tube assembly that forms the core of the optical path of an instrument.
+    """
     make = models.CharField(max_length=64, null=True, blank=True)
     model = models.CharField(max_length=64, null=True, blank=True)
     focalLength = models.FloatField(null=True, blank=True)
     aperture = models.FloatField(null=True, blank=True)
     design = models.CharField(max_length=64, null=True, blank=True)
 
-"""
-A port for a camera or eyepiece to be attached to an OTA.
-"""
 class OTAPort(models.Model):
+    """
+    A port for a camera or eyepiece to be attached to an OTA.
+    """
     ota = models.ForeignKey(OTA, on_delete=models.CASCADE)
     diameter = models.FloatField(null=True, blank=True)
     location = models.CharField(max_length=64, null=True, blank=True)
     extraOptics = models.CharField(max_length=64, null=True, blank=True)
 
-"""
-An eyepiece to be inserted into a telescope for visual observations.
-"""
 class Eyepiece(models.Model):
+    """
+    An eyepiece to be inserted into a telescope for visual observations.
+    """
     diameter = models.FloatField(null=True, blank=True)
     focalLength = models.FloatField(null=True, blank=True)
     apparentFOV = models.FloatField(null=True, blank=True)
 
-"""
-A camera to be inserted into a telescope for recording observations.
-"""
 class Camera(models.Model):
+    """
+    A camera to be inserted into a telescope for recording observations.
+    """
     make = models.CharField(max_length=64, null=True, blank=True)
     model = models.CharField(max_length=64, null=True, blank=True)
     dimX = models.FloatField(null=True, blank=True)
@@ -55,20 +55,20 @@ class Camera(models.Model):
     exposureMax = models.FloatField(null=True, blank=True)
     coolingCapacity = models.FloatField(null=True, blank=True)
 
-"""
-The moving mount that a telescope OTA and all connected components ride on.
-"""
 class Mount(models.Model):
+    """
+    The moving mount that a telescope OTA and all connected components ride on.
+    """
     make = models.CharField(max_length=64, null=True, blank=True)
     model = models.CharField(max_length=64, null=True, blank=True)
     mountType = models.CharField(max_length=64, null=True, blank=True)
     mountedOn = models.CharField(max_length=64, null=True, blank=True)
 
-"""
-An entire assembled telescope optical path.  A single telescope may consist of multiple instruments which have common
-optical paths for some portion of the setup.
-"""
 class Instrument(models.Model):
+    """
+    An entire assembled telescope optical path.  A single telescope may consist of multiple instruments which have common
+    optical paths for some portion of the setup.
+    """
     mount = models.ForeignKey(Mount, on_delete=models.CASCADE)
     ota = models.ForeignKey(OTA, on_delete=models.CASCADE)
     #TODO: Camera and eyepiece should probably be subclassed and then turn this to a single foreign key
@@ -80,13 +80,13 @@ class Instrument(models.Model):
 #TODO: Add a class for an observing session storing details about equipment used, weather, seeing, goals, etc.
 
 
-"""
-Extra user profile information not stored by the default Django User record.  The two 'reciever' functions below hook
-into updates to the User table and automatically create/update the Profile table as needed.  Care needs to be taken to
-make sure User updates are done through the standard Django methods to ensure that these receiver functions get called
-and the tables are kept in sync.  I.E. no raw sql queries to the User table, etc.
-"""
 class Profile(models.Model):
+    """
+    Extra user profile information not stored by the default Django User record.  The two 'reciever' functions below hook
+    into updates to the User table and automatically create/update the Profile table as needed.  Care needs to be taken to
+    make sure User updates are done through the standard Django methods to ensure that these receiver functions get called
+    and the tables are kept in sync.  I.E. no raw sql queries to the User table, etc.
+    """
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     homeLat = models.FloatField(null=True, blank=True)
     homeLon = models.FloatField(null=True, blank=True)
@@ -105,12 +105,12 @@ def save_user_profile(sender, instance, **kwargs):
 
 
 
-"""
-A record storing information about any type of file uploaded by a user to the site.  The original file name, size,
-hash, etc are stored here as well as onDiskFileName which is the name django assigns to our copy of the file (to handle
-multiple uploads of the same file, etc).
-"""
 class UploadedFileRecord(models.Model):
+    """
+    A record storing information about any type of file uploaded by a user to the site.  The original file name, size,
+    hash, etc are stored here as well as onDiskFileName which is the name django assigns to our copy of the file (to handle
+    multiple uploads of the same file, etc).
+    """
     uploadingUser = models.ForeignKey(User, on_delete=models.CASCADE)
     unpackedFromFile = models.ForeignKey('self', null=True)
     originalFileName = models.CharField(max_length=256)
@@ -119,18 +119,18 @@ class UploadedFileRecord(models.Model):
     uploadDateTime = models.DateTimeField()
     uploadSize = models.IntegerField()
 
-"""
-A record storing details about an image on the site.  For images uploaded as a file directly, the fileRecord is a key
-to the UploadedFileRecord assosciated with that upload, for files generated by the site itself (like calibrated, or
-stacked images) this key will be null.  The dimX and dimY dimensions are assumed to be the same for all layers in the image
-and dimZ is the number of layers in the image (color channels, or planes in a data cube).  Similarly, the plate
-solution is assumed to be the same as well, again this may cause issues for complicated multi extension fits files.
-
-This cannot properly account for complicated multi extension fits files which have multiple data cubes in them.
-Currently we cannot claim to handle files like this in any reasonable fashion, other than simply warehousing the file
-and parsing the first HDU in the file.
-"""
 class Image(models.Model):
+    """
+    A record storing details about an image on the site.  For images uploaded as a file directly, the fileRecord is a key
+    to the UploadedFileRecord assosciated with that upload, for files generated by the site itself (like calibrated, or
+    stacked images) this key will be null.  The dimX and dimY dimensions are assumed to be the same for all layers in the image
+    and dimZ is the number of layers in the image (color channels, or planes in a data cube).  Similarly, the plate
+    solution is assumed to be the same as well, again this may cause issues for complicated multi extension fits files.
+
+    This cannot properly account for complicated multi extension fits files which have multiple data cubes in them.
+    Currently we cannot claim to handle files like this in any reasonable fashion, other than simply warehousing the file
+    and parsing the first HDU in the file.
+    """
     fileRecord = models.ForeignKey(UploadedFileRecord, on_delete=models.PROTECT, null=True)
     parentImages = models.ManyToManyField('self', symmetrical=False, related_name='childImages')
     instrument = models.ForeignKey(Instrument, on_delete=models.PROTECT, null=True)
@@ -241,11 +241,11 @@ class Image(models.Model):
     def getThumbnailLarge(self):
         return self.getThumbnail("large")
 
-"""
-A record containing details about an individual thumbnail for an image on the site.  Each uploaded image gets multiple
-size thumbnails made of it, each with its own ImageThumbnail record.
-"""
 class ImageThumbnail(models.Model):
+    """
+    A record containing details about an individual thumbnail for an image on the site.  Each uploaded image gets multiple
+    size thumbnails made of it, each with its own ImageThumbnail record.
+    """
     image = models.ForeignKey(Image, on_delete=models.CASCADE)
     size = models.CharField(max_length=10)
     width = models.IntegerField()
@@ -253,52 +253,52 @@ class ImageThumbnail(models.Model):
     channel = models.IntegerField()
     filename = models.CharField(max_length=256)
 
-"""
-A record storing a single header key value pair from an image on the site.  These KV pairs could be EXIF data entries,
-PNG metadata info, or most commonly FITS header entries.  No attempt by the system is made to sanitize or uniformize
-these ImageHeaderField records in any way, instead they are read in exactly as they are in the file in order to
-preserve as much information as possible about the setup of the user who created them (software versions, camera
-oddities, etc).
-
-For most uses on the site (queries, sorting, etc) you should not use thes records directly, but should instead use
-ImageProperty records, which are sanitized versions of these headers.  Each image property record links back to the
-ImageHeaderField it was derived from in case you need the exact data after you query.
-
-The 'index' field of the record stores a running number counting up from 0 in the order the header fields were read in.
-The idea here is that we may be able to identify particular software packages by the order in which the header fields
-are stored in the file.
-
-#TODO:  Some checking needs to be done on the index field.  I am storing them in the order that image magic spits them
-out, however the order it gives (at least for fits files) differs from other tools to list headers.  So this index
-number may not be trustworthy without changing to a different tool for the actual reading of the headers.
-"""
 class ImageHeaderField(models.Model):
+    """
+    A record storing a single header key value pair from an image on the site.  These KV pairs could be EXIF data entries,
+    PNG metadata info, or most commonly FITS header entries.  No attempt by the system is made to sanitize or uniformize
+    these ImageHeaderField records in any way, instead they are read in exactly as they are in the file in order to
+    preserve as much information as possible about the setup of the user who created them (software versions, camera
+    oddities, etc).
+
+    For most uses on the site (queries, sorting, etc) you should not use thes records directly, but should instead use
+    ImageProperty records, which are sanitized versions of these headers.  Each image property record links back to the
+    ImageHeaderField it was derived from in case you need the exact data after you query.
+
+    The 'index' field of the record stores a running number counting up from 0 in the order the header fields were read in.
+    The idea here is that we may be able to identify particular software packages by the order in which the header fields
+    are stored in the file.
+
+    #TODO:  Some checking needs to be done on the index field.  I am storing them in the order that image magic spits them
+    out, however the order it gives (at least for fits files) differs from other tools to list headers.  So this index
+    number may not be trustworthy without changing to a different tool for the actual reading of the headers.
+    """
     image = models.ForeignKey(Image, on_delete=models.CASCADE)
     index = models.IntegerField(null=True)
     key = models.TextField(null=True)
     value = models.TextField(null=True)
 
-"""
-A record storing sanitized and normalized image metadata key value pairs.  Most of these records will be derived from
-one or possibly several ImageHeaderField records and the 'header' field will link back to the source field.  For some,
-it may be the case that there is no source header field in which case this field will be null (for example in the case
-of metadata added by the site itself or by a user on the site for information that was not present in the uploaded
-file, e.g. frame type, seeing conditions, etc).
-"""
 class ImageProperty(models.Model):
+    """
+    A record storing sanitized and normalized image metadata key value pairs.  Most of these records will be derived from
+    one or possibly several ImageHeaderField records and the 'header' field will link back to the source field.  For some,
+    it may be the case that there is no source header field in which case this field will be null (for example in the case
+    of metadata added by the site itself or by a user on the site for information that was not present in the uploaded
+    file, e.g. frame type, seeing conditions, etc).
+    """
     image = models.ForeignKey(Image, on_delete=models.CASCADE, related_name='properties')
     header = models.ForeignKey(ImageHeaderField, on_delete=models.CASCADE, null=True)  #TODO: Make this many to many?
     key = models.TextField()
     value = models.TextField()
 
-"""
-A record representing the statistical measurements of a single channel of an image.  The channelType field represents
-what color channel the image represents (if it was taken from a color image with known red-green-blue channels, or will
-be grey for most other channels where the colorspace is not known.  Additionally we store the standard statistics
-(mean, median, and standard deviation) of the channel as well as the same statistics for just the background (i.e.
-after source removal by sigma clipping or other methods).
-"""
 class ImageChannelInfo(models.Model):
+    """
+    A record representing the statistical measurements of a single channel of an image.  The channelType field represents
+    what color channel the image represents (if it was taken from a color image with known red-green-blue channels, or will
+    be grey for most other channels where the colorspace is not known.  Additionally we store the standard statistics
+    (mean, median, and standard deviation) of the channel as well as the same statistics for just the background (i.e.
+    after source removal by sigma clipping or other methods).
+    """
     image = models.ForeignKey(Image, on_delete=models.CASCADE)
     index = models.IntegerField()
     channelType = models.CharField(max_length=16)
@@ -309,16 +309,16 @@ class ImageChannelInfo(models.Model):
     bgMedian = models.FloatField(null=True)
     bgStdDev = models.FloatField(null=True)
 
-"""
-A record for storing an image transform generated by the Image Mosaic Tool.  The storage format in the database is
-basically just a direct copy of the transform matrix used internally in the tool.  The elements stored are the first
-two rows in a 3x3 transform matrix (i.e. 6 of the 9 elements are stored with the last row being fixed at 0 0 1 and
-therefore not needing to be stored).  The referenceImage is the image in the starting coordinate system, and then if
-you multiply its transform matrix by the stored matrix you get the coordinate system for the subjectImage.  The user
-field is the user who created the transform in the mosaic tool, allowing multiple users to store their own transforms
-in case not every one agrees on the proper shift to be applied.
-"""
 class ImageTransform(models.Model):
+    """
+    A record for storing an image transform generated by the Image Mosaic Tool.  The storage format in the database is
+    basically just a direct copy of the transform matrix used internally in the tool.  The elements stored are the first
+    two rows in a 3x3 transform matrix (i.e. 6 of the 9 elements are stored with the last row being fixed at 0 0 1 and
+    therefore not needing to be stored).  The referenceImage is the image in the starting coordinate system, and then if
+    you multiply its transform matrix by the stored matrix you get the coordinate system for the subjectImage.  The user
+    field is the user who created the transform in the mosaic tool, allowing multiple users to store their own transforms
+    in case not every one agrees on the proper shift to be applied.
+    """
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     referenceImage = models.ForeignKey(Image, on_delete=models.CASCADE, related_name='transformReferences')
     subjectImage = models.ForeignKey(Image, on_delete=models.CASCADE, related_name='transformSubjects')
@@ -329,17 +329,17 @@ class ImageTransform(models.Model):
     m11 = models.FloatField()
     m12 = models.FloatField()
 
-"""
-A record for storing the WCS plate solution of an image to be stored in the database.  The WCS is stored as a text blob
-in the format output by astropy using the to_header_string() function which writes the WCS as if it were header fields
-for a fits file.  We store these WCS headers in the database so that we can easily store, query, and manage multiple
-WCS solutions for each image.  Many images will be uploaded with an existing WCS and whether or not
-they are accurate we want to store them along side the ones we compute ourselves so that we can offer downloads of the
-file with any or all of them included upon user request.  The source field is for storing a simple text string denoting
-where we got the specific WCS from, i.e. was it from the original image, or computed by our astrometry.net plate
-solver, or by some other method like mosaic approximation, etc.
-"""
 class PlateSolution(models.Model):
+    """
+    A record for storing the WCS plate solution of an image to be stored in the database.  The WCS is stored as a text blob
+    in the format output by astropy using the to_header_string() function which writes the WCS as if it were header fields
+    for a fits file.  We store these WCS headers in the database so that we can easily store, query, and manage multiple
+    WCS solutions for each image.  Many images will be uploaded with an existing WCS and whether or not
+    they are accurate we want to store them along side the ones we compute ourselves so that we can offer downloads of the
+    file with any or all of them included upon user request.  The source field is for storing a simple text string denoting
+    where we got the specific WCS from, i.e. was it from the original image, or computed by our astrometry.net plate
+    solver, or by some other method like mosaic approximation, etc.
+    """
     image = models.ForeignKey(Image, on_delete=models.CASCADE)
     wcsHeader = models.TextField()
     source = models.CharField(max_length=32)
@@ -347,23 +347,23 @@ class PlateSolution(models.Model):
 
 
 
-"""
-A record storing parameters for a queued process to be run at a later time by the website.  The 'process' field is a
-string naming the process to be executed, these strings are used by the dispatcher to know which function to dispatch
-to a celery worker and how to interpret the provided arguments.  The process may have one or more 'prerequisites' which
-are required to be run before it and all of which are required to return a success result before the given process is
-allowed to be dispatched.  We also store the user id of the person who requested the process be run and the time it was
-submitted and dispatched.  The user id will be null for jobs submitted by the site itself like maintenence tasks, etc.
-
-The remaining fields list the priority of the job as an unsigned integer (higher numbers executed first) as well as
-estimates of the resource usage required to complete the task.  The resource estimates can be used by the dispatcher to
-assign IO heavy tasks to certain workers, CPU heavy ones to others, etc.  These estimates are only expected to be
-'order of magnitude' estimates, only for task segregation, not for estimating exact runtimes beyond very rough
-estimates (again order of magnitude).
-
-#TODO: Document how negative priorities will be handled by the dispatcher, i.e. how do we want to use this.
-"""
 class ProcessInput(models.Model):
+    """
+    A record storing parameters for a queued process to be run at a later time by the website.  The 'process' field is a
+    string naming the process to be executed, these strings are used by the dispatcher to know which function to dispatch
+    to a celery worker and how to interpret the provided arguments.  The process may have one or more 'prerequisites' which
+    are required to be run before it and all of which are required to return a success result before the given process is
+    allowed to be dispatched.  We also store the user id of the person who requested the process be run and the time it was
+    submitted and dispatched.  The user id will be null for jobs submitted by the site itself like maintenence tasks, etc.
+
+    The remaining fields list the priority of the job as an unsigned integer (higher numbers executed first) as well as
+    estimates of the resource usage required to complete the task.  The resource estimates can be used by the dispatcher to
+    assign IO heavy tasks to certain workers, CPU heavy ones to others, etc.  These estimates are only expected to be
+    'order of magnitude' estimates, only for task segregation, not for estimating exact runtimes beyond very rough
+    estimates (again order of magnitude).
+
+    #TODO: Document how negative priorities will be handled by the dispatcher, i.e. how do we want to use this.
+    """
     prerequisites = models.ManyToManyField('self', symmetrical=False)
     process = models.CharField(max_length=32)
     requestor = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
@@ -404,15 +404,15 @@ class ProcessOutput(models.Model):
     outputErrorText = models.TextField(null=True)
     outputDBLogText = models.TextField(null=True)
 
-"""
-A record storing a single argument to be passed to a task to fulfill a queued job (represented by a ProcessInput).  The
-argument is a simple string, and the argIndex is an integer which is the position of this particular argument in the
-arguments list for the job.  The index can be anything you want it to be as long as the handler in the dispatcher
-routine knows where to look for it.  So for example, you could have arguments 1 and 3 provided but nothing for argument
-2, allowing the use of positional parameters which act more like named parameters.  I.E. a particular positional index
-always contains one specific argument for the task.
-"""
 class ProcessArgument(models.Model):
+    """
+    A record storing a single argument to be passed to a task to fulfill a queued job (represented by a ProcessInput).  The
+    argument is a simple string, and the argIndex is an integer which is the position of this particular argument in the
+    arguments list for the job.  The index can be anything you want it to be as long as the handler in the dispatcher
+    routine knows where to look for it.  So for example, you could have arguments 1 and 3 provided but nothing for argument
+    2, allowing the use of positional parameters which act more like named parameters.  I.E. a particular positional index
+    always contains one specific argument for the task.
+    """
     processInput = models.ForeignKey(ProcessInput, on_delete=models.CASCADE)
     argIndex = models.IntegerField()
     arg = models.CharField(max_length=256)
@@ -427,15 +427,15 @@ class ProcessOutputFile(models.Model):
 
 
 
-"""
-An abstract base class containing the fields common to all source finding methods, such as position and confidence.
-Records of this type cannot be created directly and there is no actual table for this type in the database.  Rather one
-of the child classes derived from this is actually created and stored in the corresponding table.  Having this base
-class avoids duplicating code for the common fields in each derived child record type, but it also allows code
-manipulating those results to have a guarantee that certain fields are present on any of the found sources, no matter
-the algorithm used to detect them.
-"""
 class SourceFindResult(models.Model):
+    """
+    An abstract base class containing the fields common to all source finding methods, such as position and confidence.
+    Records of this type cannot be created directly and there is no actual table for this type in the database.  Rather one
+    of the child classes derived from this is actually created and stored in the corresponding table.  Having this base
+    class avoids duplicating code for the common fields in each derived child record type, but it also allows code
+    manipulating those results to have a guarantee that certain fields are present on any of the found sources, no matter
+    the algorithm used to detect them.
+    """
     image = models.ForeignKey(Image, on_delete=models.CASCADE)
     pixelX = models.FloatField(null=True)
     pixelY = models.FloatField(null=True)
@@ -445,25 +445,25 @@ class SourceFindResult(models.Model):
     class Meta:
         abstract = True
 
-"""
-A record storing a single source detected in an image by the Source Extractor program.
-"""
 class SextractorResult(SourceFindResult):
+    """
+    A record storing a single source detected in an image by the Source Extractor program.
+    """
     fluxAuto = models.FloatField(null=True)
     fluxAutoErr = models.FloatField(null=True)
     flags = models.IntegerField(null=True)
 
-"""
-A record storing a single source detected in an image by the image2xy program.
-"""
 class Image2xyResult(SourceFindResult):
+    """
+    A record storing a single source detected in an image by the image2xy program.
+    """
     flux = models.FloatField(null=True)
     background = models.FloatField(null=True)
 
-"""
-A record storing a single source detected in an image by the daofind algorithm (part of astropy).
-"""
 class DaofindResult(SourceFindResult):
+    """
+    A record storing a single source detected in an image by the daofind algorithm (part of astropy).
+    """
     mag = models.FloatField(null=True)
     flux = models.FloatField(null=True)
     peak = models.FloatField(null=True)
@@ -471,10 +471,10 @@ class DaofindResult(SourceFindResult):
     sround = models.FloatField(null=True)
     ground = models.FloatField(null=True)
 
-"""
-A record storing a single source detected in an image by the starfind algorithm (part of astropy).
-"""
 class StarfindResult(SourceFindResult):
+    """
+    A record storing a single source detected in an image by the starfind algorithm (part of astropy).
+    """
     mag = models.FloatField(null=True)
     peak = models.FloatField(null=True)
     flux = models.FloatField(null=True)
@@ -483,12 +483,12 @@ class StarfindResult(SourceFindResult):
     pa = models.FloatField(null=True)
     sharpness = models.FloatField(null=True)
 
-"""
-A record storing links to the individual SourceFindResult records for sources which are found at the same location in
-an image by two or more individual source find methods.  The confidence of the match is taken to be the "geometric mean"
-of the confidence values of the individual matched results.
-"""
 class SourceFindMatch(SourceFindResult):
+    """
+    A record storing links to the individual SourceFindResult records for sources which are found at the same location in
+    an image by two or more individual source find methods.  The confidence of the match is taken to be the "geometric mean"
+    of the confidence values of the individual matched results.
+    """
     numMatches = models.IntegerField()
     sextractorResult = models.ForeignKey(SextractorResult, null=True, on_delete=models.CASCADE)
     image2xyResult = models.ForeignKey(Image2xyResult, null=True, on_delete=models.CASCADE)
@@ -498,13 +498,13 @@ class SourceFindMatch(SourceFindResult):
 
 
 #TODO: Create a base class for catalog object entries with some standard params in it to make querying more uniform.
-"""
-A record storing details about an individual astronomical catalog that has been imported into the database.  These
-records are not particularly necessary, as they don't really need to be used in the processing by the site, but having
-them as database entries makes keeping track of which catalogs are imported a bit easier.  It also makes it easier to
-display them on the /catalogs page.
-"""
 class Catalog(models.Model):
+    """
+    A record storing details about an individual astronomical catalog that has been imported into the database.  These
+    records are not particularly necessary, as they don't really need to be used in the processing by the site, but having
+    them as database entries makes keeping track of which catalogs are imported a bit easier.  It also makes it easier to
+    display them on the /catalogs page.
+    """
     name = models.CharField(max_length=64, null=True)
     fullName = models.CharField(max_length=256, null=True)
     objectTypes = models.TextField(null=True)
@@ -517,10 +517,10 @@ class Catalog(models.Model):
     url = models.TextField(null=True)
     cosmicNotes = models.TextField(null=True)
 
-"""
-A record storing a single entry from the UCAC4 catalog of stars.
-"""
 class UCAC4Record(models.Model):
+    """
+    A record storing a single entry from the UCAC4 catalog of stars.
+    """
     identifier = models.CharField(max_length=10, null=True)
     ra = models.FloatField(null=True)
     dec = models.FloatField(null=True)
@@ -531,10 +531,10 @@ class UCAC4Record(models.Model):
     magError = models.FloatField(null=True)
     id2mass = models.CharField(max_length=10, null=True)
 
-"""
-A record storing a single entry from the General Catalog of Variable Stars.
-"""
 class GCVSRecord(models.Model):
+    """
+    A record storing a single entry from the General Catalog of Variable Stars.
+    """
     constellationNumber = models.CharField(max_length=2, null=True)
     starNumber = models.CharField(max_length=5, null=True)
     identifier = models.CharField(max_length=10, null=True)
@@ -556,10 +556,10 @@ class GCVSRecord(models.Model):
     periodRisingPercentage = models.FloatField(null=True)
     spectralType = models.CharField(max_length=17, null=True)
 
-"""
-A record storing a single entry from the 2MASS Extended Source Catalog of "extended", i.e. non point source, objects.
-"""
 class TwoMassXSCRecord(models.Model):
+    """
+    A record storing a single entry from the 2MASS Extended Source Catalog of "extended", i.e. non point source, objects.
+    """
     identifier = models.CharField(max_length=24)
     ra = models.FloatField(db_index=True)
     dec = models.FloatField(db_index=True)
@@ -569,10 +569,10 @@ class TwoMassXSCRecord(models.Model):
     isophotalKMag = models.FloatField(null=True, db_index=True)
     isophotalKMagErr = models.FloatField(null=True)
 
-"""
-A record storing a single entry from the Messier Catalog.
-"""
 class MessierRecord(models.Model):
+    """
+    A record storing a single entry from the Messier Catalog.
+    """
     identifier = models.CharField(max_length=24)
     ra = models.FloatField()
     dec = models.FloatField()
@@ -585,10 +585,10 @@ class MessierRecord(models.Model):
     magI = models.FloatField(null=True)
     numReferences = models.IntegerField()
 
-"""
-A record storing a the Keplerian orbital elements and physical properties for a single asteroid from the astorb database.
-"""
 class AstorbRecord(models.Model):
+    """
+    A record storing a the Keplerian orbital elements and physical properties for a single asteroid from the astorb database.
+    """
     number = models.IntegerField(null=True)
     name = models.CharField(max_length=18)
     absMag = models.FloatField()
@@ -618,14 +618,14 @@ class AstorbRecord(models.Model):
     tenYearPEUIfObserved = models.FloatField()
     tenYearPEUDateIfObserved = models.DateField(null=True)
 
-"""
-A record containing a computed emphemeride for an asteroid in the astorb database.  The AstorbRecord is read in from
-the database for the given asteroid, and then pyephem is used to convert the Keplerian orbit into an RA-DEC ephemeride
-which is then stored as an AstorbEphemeris record.  In addition to the position on the sky, the apparent magnitude as
-well as distance to the sun and earth are stored, as well as the solar elongation angle (which makes it easy to query
-for asteroids near opposition).
-"""
 class AstorbEphemeris(models.Model):
+    """
+    A record containing a computed emphemeride for an asteroid in the astorb database.  The AstorbRecord is read in from
+    the database for the given asteroid, and then pyephem is used to convert the Keplerian orbit into an RA-DEC ephemeride
+    which is then stored as an AstorbEphemeris record.  In addition to the position on the sky, the apparent magnitude as
+    well as distance to the sun and earth are stored, as well as the solar elongation angle (which makes it easy to query
+    for asteroids near opposition).
+    """
     astorbRecord = models.ForeignKey(AstorbRecord, on_delete=models.CASCADE)
     dateTime = models.DateTimeField()
     ra = models.FloatField(db_index=True)
@@ -635,10 +635,10 @@ class AstorbEphemeris(models.Model):
     mag = models.FloatField(db_index=True)
     elong = models.FloatField()
 
-"""
-A record storing a single entry from the Exoplanets Data Explorer database of curated exoplanet results.
-"""
 class ExoplanetRecord(models.Model):
+    """
+    A record storing a single entry from the Exoplanets Data Explorer database of curated exoplanet results.
+    """
     identifier = models.CharField(max_length=32, null=True)
     identifier2 = models.CharField(max_length=32, null=True)
     starIdentifier = models.CharField(max_length=32, null=True)
@@ -695,13 +695,13 @@ class ExoplanetRecord(models.Model):
 
 
 
-"""
-A record storing a location (lat, lon, and city name) for an entry in the GeoLite Geolocation database.  The database
-is used for determining the approximate location of non-logged in users for things like the observation planning tool.
-The GeoLite database consists of two tables.  This one stores locations and city names, and then these entries are
-linked to from GeoLiteBlock records, which are IP block ranges.
-"""
 class GeoLiteLocation(models.Model):
+    """
+    A record storing a location (lat, lon, and city name) for an entry in the GeoLite Geolocation database.  The database
+    is used for determining the approximate location of non-logged in users for things like the observation planning tool.
+    The GeoLite database consists of two tables.  This one stores locations and city names, and then these entries are
+    linked to from GeoLiteBlock records, which are IP block ranges.
+    """
     id = models.IntegerField(primary_key=True)
     country = models.CharField(max_length=2)
     region = models.CharField(max_length=2)
@@ -712,11 +712,11 @@ class GeoLiteLocation(models.Model):
     metroCode = models.IntegerField(null=True)
     areaCode = models.CharField(max_length=3)
 
-"""
-A record storing a single IP block in the Geolite Geolocation database.  The block covers a range of IPs and contains a
-link to a GeoLiteLocation which contains the actual lat, lon, and city name info.
-"""
 class GeoLiteBlock(models.Model):
+    """
+    A record storing a single IP block in the Geolite Geolocation database.  The block covers a range of IPs and contains a
+    link to a GeoLiteLocation which contains the actual lat, lon, and city name info.
+    """
     location = models.ForeignKey(GeoLiteLocation, on_delete=models.CASCADE)
     startIp = models.BigIntegerField(db_index=True)
     endIp = models.BigIntegerField(db_index=True)
@@ -724,22 +724,22 @@ class GeoLiteBlock(models.Model):
 
 
 
-"""
-A record containing a question to be asked to users of the site about uploaded images, files, observer notes, etc.
-This question record, forms the backbone of the question-answer system.  A fully implemented question consists of the
-following:
-
-    * the text of the actual question itself
-    * a list of response options and the input type for these options (checkbox, radiobutton, etc)
-    * a short description of what the question is asking in more detail
-    * a short description of what each response means if chosen
-    * a list of questions that must be answered in a certain way for this question to be applicable
-
-Of all these different things, only some are stored in this record, with the others being stored in other record types.
-The question text and description are stored here, as well as the list of prerequisite questions.  See the record types
-below for more detailed descriptions of how the rest of the question system works.
-"""
 class Question(models.Model):
+    """
+    A record containing a question to be asked to users of the site about uploaded images, files, observer notes, etc.
+    This question record, forms the backbone of the question-answer system.  A fully implemented question consists of the
+    following:
+
+        * the text of the actual question itself
+        * a list of response options and the input type for these options (checkbox, radiobutton, etc)
+        * a short description of what the question is asking in more detail
+        * a short description of what each response means if chosen
+        * a list of questions that must be answered in a certain way for this question to be applicable
+
+    Of all these different things, only some are stored in this record, with the others being stored in other record types.
+    The question text and description are stored here, as well as the list of prerequisite questions.  See the record types
+    below for more detailed descriptions of how the rest of the question system works.
+    """
     #TODO: Should maybe include a FK to an image property or an image header entry to display to the user.  For example
     # 'frame type' could be displayed to check if it makes sense given the image.  I.E. does it look like a flat field, etc.
     text = models.TextField(null=True)
@@ -751,15 +751,15 @@ class Question(models.Model):
     prerequisites = models.ManyToManyField('self', symmetrical=False, through='AnswerPrecondition',
         through_fields=('firstQuestion', 'secondQuestion'))
 
-"""
-A record containing a single response option for a question.  The record contains the text to be shown for the response,
-as well as a short description of what the response means in more specific terms.  The index field is a running
-integer, counting up, which dictates the order in which the multiple responses for a given question will be displayed.
-The inputType field, which is a string interpreted by the question view, dictates what type of UI element to display
-with this response (checkbox, radiobutton, etc).  Lastly, the keyToSet and valueToSet fields describe the key-value
-components of an AnswerKV record which will be created and stored linking (indirectly) to the object the question was about.
-"""
 class QuestionResponse(models.Model):
+    """
+    A record containing a single response option for a question.  The record contains the text to be shown for the response,
+    as well as a short description of what the response means in more specific terms.  The index field is a running
+    integer, counting up, which dictates the order in which the multiple responses for a given question will be displayed.
+    The inputType field, which is a string interpreted by the question view, dictates what type of UI element to display
+    with this response (checkbox, radiobutton, etc).  Lastly, the keyToSet and valueToSet fields describe the key-value
+    components of an AnswerKV record which will be created and stored linking (indirectly) to the object the question was about.
+    """
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     index = models.IntegerField()
     inputType = models.TextField(null=True)
@@ -768,16 +768,17 @@ class QuestionResponse(models.Model):
     keyToSet = models.TextField(null=True)
     valueToSet = models.TextField(null=True)
 
-"""
-A record storing a submitted answer to a question in the question answer system.  The record links to the question that
-was asked, the user who answered it and the date and time it was answered.  A generic foreign key is used to link to the
-object the answer pertains to since the object could be any one of several types (image, observer notes, etc).  The
-three fields content_type, object_id, and content_object are all part of this generic foreign key.
-
-This record only stores the "metadata" that the question was answered and by who, the actual answer itself is stored as
-one or more AnswerKV records linking back to this answer.
-"""
 class Answer(models.Model):
+    """
+    A record storing a submitted answer to a question in the question answer system.  The record links to the question
+    that was asked, the user who answered it and the date and time it was answered.  A generic foreign key is used to
+    link to the object the answer pertains to since the object could be any one of several types (image, observer
+    notes, etc).  The three fields content_type, object_id, and content_object are all part of this generic foreign
+    key.
+
+    This record only stores the "metadata" that the question was answered and by who, the actual answer itself is
+    stored as one or more AnswerKV records linking back to this answer.
+    """
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     dateTime = models.DateTimeField()
@@ -788,48 +789,48 @@ class Answer(models.Model):
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
 
-"""
-A record storing a simple key-value pair containing the actual answer to a question submitted to the site by a user.
-The record links back to an Answer record containing the metadata for the answer.  Both the key and value fields are
-text fields of arbitrary length.
-"""
 class AnswerKV(models.Model):
+    """
+    A record storing a simple key-value pair containing the actual answer to a question submitted to the site by a user.
+    The record links back to an Answer record containing the metadata for the answer.  Both the key and value fields are
+    text fields of arbitrary length.
+    """
     answer = models.ForeignKey(Answer, on_delete=models.CASCADE, related_name='kvs')
     key = models.TextField(null=True)
     value = models.TextField(null=True)
 
-"""
-A record representing a prerequisite question to another question.  The question linked in the firstQuestion field must
-be answered before the question linked in the secondQuestion field will be asked.  In addition to simple ordering of
-questions, in order for the secondQuestion to be asked at all each one of the AnswerPreconditionCondition records
-linking to this record must evaluate to true or the secondQuestion is not considered to be relevant and will therefore
-be skipped.  For example, it does not make sense to ask a question about the structure of galaxies present in an image
-if there are not actually any galaxies visible in the image.
-"""
 class AnswerPrecondition(models.Model):
+    """
+    A record representing a prerequisite question to another question.  The question linked in the firstQuestion field must
+    be answered before the question linked in the secondQuestion field will be asked.  In addition to simple ordering of
+    questions, in order for the secondQuestion to be asked at all each one of the AnswerPreconditionCondition records
+    linking to this record must evaluate to true or the secondQuestion is not considered to be relevant and will therefore
+    be skipped.  For example, it does not make sense to ask a question about the structure of galaxies present in an image
+    if there are not actually any galaxies visible in the image.
+    """
     descriptionText = models.TextField(null=True)
     firstQuestion = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='dependantQuestions')
     secondQuestion = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='dependsOnQuestions')
 
-"""
-A record representing a true or false conditional test which must evaluate to true in order for a question to be
-considered relevant to be asked to a user.  The record links to an AnswerPrecondition which describes the firstQuestion
-these conditions are being applied to in order to determine if the secondQuestion should be asked.  If there are more
-than one conditions for a particular pair of questions then all of the conditions must be true (i.e. they are implicitely
-and'ed by the question system).  The pipe character "|" is used as the 'or' operator on the key and value fields and
-the number of items being or'ed together must be the same in both fields.  So for example it is wrong to write:
-
-    a = b|c             (incorrect)
-
-but you should instead write:
-
-    a|a = b|c           (correct)
-
-so that both fields have the same number of subentries.  The 'invert' field is used to invert the truth value of the
-condition so that a=b becomes a!=b.  Note that you need to properly apply De Morgan's Law yourself to make sure any
-preconditions utilizing the 'or' operator have the correct meaning when applied.
-"""
 class AnswerPreconditionCondition(models.Model):
+    """
+    A record representing a true or false conditional test which must evaluate to true in order for a question to be
+    considered relevant to be asked to a user.  The record links to an AnswerPrecondition which describes the firstQuestion
+    these conditions are being applied to in order to determine if the secondQuestion should be asked.  If there are more
+    than one conditions for a particular pair of questions then all of the conditions must be true (i.e. they are implicitely
+    and'ed by the question system).  The pipe character "|" is used as the 'or' operator on the key and value fields and
+    the number of items being or'ed together must be the same in both fields.  So for example it is wrong to write:
+
+        a = b|c             (incorrect)
+
+    but you should instead write:
+
+        a|a = b|c           (correct)
+
+    so that both fields have the same number of subentries.  The 'invert' field is used to invert the truth value of the
+    condition so that a=b becomes a!=b.  Note that you need to properly apply De Morgan's Law yourself to make sure any
+    preconditions utilizing the 'or' operator have the correct meaning when applied.
+    """
     answerPrecondition = models.ForeignKey(AnswerPrecondition, on_delete=models.CASCADE)
     invert = models.BooleanField()
     key = models.TextField()
