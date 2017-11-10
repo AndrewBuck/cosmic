@@ -281,7 +281,7 @@ function ImageGallery(galleryName, paramString, includeLinks, imageOnclickFuncti
 
 $(document).ready(function()
 {
-    gallery_{{galleryName}} = new ImageGallery('{{galleryName}}', '{{queryParams}}', '{{includeLinks}}',
+    gallery_{{galleryName}} = new ImageGallery('{{galleryName}}', '{{queryParams}}', {{includeLinks}},
         '{{imageOnclickFunction}}', '{{thumbnailSize}}');
     gallery_{{galleryName}}.initImageGallery();
 });
