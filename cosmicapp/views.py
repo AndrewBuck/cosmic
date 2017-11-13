@@ -45,6 +45,11 @@ def createuser(request):
 
     return render(request, "cosmicapp/createuser.html", context)
 
+def donate(request):
+    context = {"user" : request.user}
+
+    return render(request, "cosmicapp/donate.html", context)
+
 @login_required
 def upload(request):
     context = {"user" : request.user}

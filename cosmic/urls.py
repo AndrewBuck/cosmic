@@ -25,6 +25,8 @@ urlpatterns = [
     url('^', include('django.contrib.auth.urls')),
     url(r'^createuser/', views.createuser),
 
+    url(r'^donate/', views.donate),
+
     url(r'^$', views.index),
     url(r'^processqueue/', views.processQueue),
     url(r'^catalogs/', views.catalogs),
