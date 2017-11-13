@@ -13,7 +13,6 @@
 <h2>Observing suggestions for tonight</h2>
 
 <p>
-    <ul>
         <form method=get>
             <table cellpadding=5>
             <tr>
@@ -51,11 +50,26 @@
             <td><input type=text name=limit value={{limit}}></td>
             <td>(The maximum number of objects to display in each table: max 500)</td>
             </tr>
+
+            {% if user.is_authenticated and promptProfileEdit %}
+                <tr>
+                <td colspan=3 style="color: red;">
+                Note: Guesses were made about your observing location.  Consider updating the default observing
+                location in <a href="/user/{{user.username}}">your profile</a> so we can correctly set these values.
+                <br>
+                The following fields are missing from your profile:
+                <ul>
+                    {% for missingField in profileMissingFields %}
+                        <li>{{missingField}}</li>
+                    {% endfor %}
+                </ul>
+                </td>
+                </tr>
+            {% endif %}
             </table>
         <br>
         <td><input type=submit></td>
         </form>
-    </ul>
 </p>
 
 <h3>Now</h3>

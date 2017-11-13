@@ -989,6 +989,8 @@ def calibration(request):
 
 def observing(request):
     context = {"user" : request.user}
+    promptProfileEdit = False
+    profileMissingFields = []
 
     if 'ele' in request.GET:
         ele = float(request.GET['ele'])
@@ -1018,12 +1020,14 @@ def observing(request):
             #TODO: Set limiting mag from user profile.
 
             if lat == None or lon == None:
-                #TODO: Prompt user to edit profile.
                 (lat, lon) = getLocationForIp(getClientIp(request))
+                promptProfileEdit = True
+                profileMissingFields.append('Latitude and Longitude')
 
             if ele == None:
-                #TODO: Prompt user to edit profile.
                 ele = 0
+                promptProfileEdit = True
+                profileMissingFields.append('Elevation')
         else:
             (lat, lon) = getLocationForIp(getClientIp(request))
 
@@ -1043,6 +1047,9 @@ def observing(request):
     context['limitingMag'] = limitingMag
     context['windowSize'] = windowSize
     context['limit'] = limit
+
+    context['promptProfileEdit'] = promptProfileEdit
+    context['profileMissingFields'] = profileMissingFields
 
     currentTime = timezone.now()
 
