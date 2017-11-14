@@ -2,6 +2,32 @@ Install Django:
 
 sudo pip3 install Django django-extensions bokeh sqlparse
 
+============== IMPORTANT ==============
+
+On a production site you MUST, replace the django secret key that comes in the
+config files by default from Git.  The SECRET_KEY parameter is found in the file
+cosmic/settings.py and has the default value shown below when checked out from
+Git.  Choose a long, randomly generated string like something from /dev/random
+using the example command at the end of this section.
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = 'THIS_IS_NOT_SECRET____IN_GIT_REPO____MUST_CHANGE_FOR_PRODUCTION_SITE'
+
+A good key could be generated using the following method, although you can use
+whatever suits you as long as it is impossible to guess.  Note that the command
+below may take a while to run as 512 bytes might empty the kernel entropy pool
+and it will block until it refills.  You can use a lower value if you need, or
+just wait it out.  On a development system with a user at the keyboard, starting
+from a completely empty entropy pool this command took about 5 minutes to run.
+It will take a bit longer on a server with less entropy generation, however it
+is unlikely you will be starting from a completely empty entropy pool.
+
+head -c 512 /dev/random | sha256sum -b
+
+
+
+
+
 
 
 Install Celery and RabbitMQ to pass messages to it:
