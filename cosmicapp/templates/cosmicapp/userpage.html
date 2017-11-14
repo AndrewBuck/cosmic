@@ -20,6 +20,12 @@
         <li>Birth Date: {{foruser.profile.birthDate}}</li>
     </ul>
 
+    {% comment %}
+    TODO: Consider changing the initial edit url from a post like this to a simple get request, so it can easily be
+    linked to from other parts of the site with a simple 'a href' link.  Use a url something like /user/BLAH/edit.  The
+    actual form submission on the edit page should be left as a post request, just the request to load the form itself
+    should be changed.
+    {% endcomment %}
     {% if user.username == foruser.username %}
         <form action="/user/{{user.username}}/" method="POST">
             {% csrf_token %}

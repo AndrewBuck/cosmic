@@ -733,6 +733,7 @@ def equipment(request):
     #TODO: Store user who created this equipment.
         if request.POST['equipmentType'] == 'ota':
             missingFields = []
+            #TODO: Make a disctionary of the required fields for each type and then consolodate all checks into that to avoid code duplication.
             for field in ('make', 'model', 'aperture', 'focalLength', 'design'):
                 if not field in request.POST:
                     missingFields.append(field)
