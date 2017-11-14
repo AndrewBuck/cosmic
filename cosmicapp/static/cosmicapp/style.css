@@ -17,6 +17,8 @@ html * {
 
 p { 
    text-align: justify;
+   margin: auto;
+   padding: 0.5em;
 }
 
 body {
