@@ -35,6 +35,10 @@ def createuser(request):
     context = {"user" : request.user}
 
     #TODO: Need a lot more validation here.
+    #TODO: Also need to do something about people creating usernames as attempted SQL injection attacks.  The standard
+    # username validation should take care of a lot of this but some extra precautions maybe should be taken.  We are
+    # unlikely to actually be vulnerable to an SQL injection via this method, however we don't want the user table
+    # polluted with attempted attacks.
     if request.method == 'POST':
         p = request.POST
         if p['password'] != p['repeatpassword']:
