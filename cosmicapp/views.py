@@ -729,7 +729,8 @@ def questions(request):
 def equipment(request):
     context = {"user" : request.user}
 
-    if request.method == 'POST':
+    if request.method == 'POST' and request.user.is_authenticated:
+    #TODO: Store user who created this equipment.
         if request.POST['equipmentType'] == 'ota':
             missingFields = []
             for field in ('make', 'model', 'aperture', 'focalLength', 'design'):
