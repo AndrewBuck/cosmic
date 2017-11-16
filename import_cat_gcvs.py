@@ -74,6 +74,7 @@ with open(sys.argv[1], 'r') as f:
                     identifier = ' '.join(line[8:18].split()),
                     ra = raDeg,
                     dec = decDeg,
+                    geometry = 'POINT({} {})'.format(raDeg, decDeg),
                     pmRa = 1000.0 * parseFloat(line[179:185]),
                     pmDec = 1000.0 * parseFloat(line[186:192]),
                     variableType = line[41:51].strip(),

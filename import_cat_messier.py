@@ -52,6 +52,7 @@ with open('Catalogs/Messier_catalog.csv', 'r') as f:
                 objectType = fields[1],
                 ra = c.ra.deg,
                 dec = c.dec.deg,
+                geometry = 'POINT({} {})'.format(c.ra.deg, c.dec.deg),
                 magU = parseFloat(fields[4]),
                 magB = parseFloat(fields[5]),
                 magV = parseFloat(fields[6]),

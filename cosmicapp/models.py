@@ -1,4 +1,4 @@
-from django.db import models
+from django.contrib.gis.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -540,6 +540,7 @@ class GCVSRecord(models.Model):
     identifier = models.CharField(max_length=10, null=True)
     ra = models.FloatField(null=True, db_index=True)
     dec = models.FloatField(null=True, db_index=True)
+    geometry = models.PointField(srid=40000, geography=False, dim=2, null=True)
     pmRa = models.FloatField(null=True)
     pmDec = models.FloatField(null=True)
     variableType = models.CharField(max_length=10, null=True)
@@ -576,6 +577,7 @@ class MessierRecord(models.Model):
     identifier = models.CharField(max_length=24)
     ra = models.FloatField()
     dec = models.FloatField()
+    geometry = models.PointField(srid=40000, geography=False, dim=2, null=True)
     objectType = models.CharField(max_length=3)
     spectralType = models.CharField(max_length=10, null=True)
     magU = models.FloatField(null=True)
@@ -646,6 +648,7 @@ class ExoplanetRecord(models.Model):
     numComponents = models.IntegerField(null=True)
     ra = models.FloatField(db_index=True)
     dec = models.FloatField(db_index=True)
+    geometry = models.PointField(srid=40000, geography=False, dim=2, null=True)
     dist = models.FloatField(null=True)
 
     magBMinusV = models.FloatField(null=True)

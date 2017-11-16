@@ -1074,28 +1074,22 @@ def observing(request):
     zenithNowRA = zenithNowRA * 180/math.pi
     zenithNowDec = zenithNowDec * 180/math.pi
 
-    #TODO: Make this a spatial query when postgis is available.
     variableStars = GCVSRecord.objects.filter(
-        ra__range=[zenithNowRA-windowSize, zenithNowRA+windowSize],
-        dec__range=[zenithNowDec-windowSize, zenithNowDec+windowSize],
+        geometry__distance_lte=('POINT({} {})'.format(zenithNowRA, zenithNowDec), windowSize),
         magMin__lt=limitingMag
         ).order_by('magMin')[:limit]
 
     context['variableStars'] = variableStars
 
-    #TODO: Make this a spatial query when postgis is available.
     exoplanets = ExoplanetRecord.objects.filter(
-        ra__range=[zenithNowRA-windowSize, zenithNowRA+windowSize],
-        dec__range=[zenithNowDec-windowSize, zenithNowDec+windowSize],
+        geometry__distance_lte=('POINT({} {})'.format(zenithNowRA, zenithNowDec), windowSize),
         magV__lt=limitingMag
         ).order_by('magV', 'identifier')[:limit]
 
     context['exoplanets'] = exoplanets
 
-    #TODO: Make this a spatial query when postgis is available.
     messierObjects = MessierRecord.objects.filter(
-        ra__range=[zenithNowRA-windowSize, zenithNowRA+windowSize],
-        dec__range=[zenithNowDec-windowSize, zenithNowDec+windowSize],
+        geometry__distance_lte=('POINT({} {})'.format(zenithNowRA, zenithNowDec), windowSize),
         magV__lt=limitingMag
         ).order_by('magV')
 

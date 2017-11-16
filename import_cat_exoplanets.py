@@ -67,9 +67,11 @@ with transaction.atomic():
                     transitEpochJD += 2440000
 
             if row['RA'] == '':
-                print('Skipping entry with no Right Ascension.')
                 skipped += 1
                 continue
+
+            ra = 15*parseFloat(row['RA'])
+            dec = parseFloat(row['DEC'])
 
             exoplanet = ExoplanetRecord(
                 identifier = row['NAME'],
@@ -77,8 +79,9 @@ with transaction.atomic():
                 starIdentifier = row['STAR'],
                 component = row['COMP'],
                 numComponents = parseInt(row['NCOMP']),
-                ra = 15*parseFloat(row['RA']),
-                dec = parseFloat(row['DEC']),
+                ra = ra,
+                dec = dec,
+                geometry = 'POINT({} {})'.format(ra, dec),
                 dist = parseFloat(row['DIST']),
 
                 magBMinusV = parseFloat(row['BMV']),
