@@ -92,6 +92,51 @@ sudo apt-get install pgadmin3
 
 
 
+At this point the base Postgre system is installed.  The next step is to install
+and configure the PostGIS extensions and the GeoDjango framework which calls out
+to the PostGIS backend.
+
+We begin by installing the libraries needed for the system:
+
+sudo apt-get install binutils libproj-dev gdal-bin
+
+Next we install the base PostGIS system extensions into Postgre SQL (specific
+version numbers may be different but version 9.3 or greater of Postgre is
+required):
+
+sudo apt-get install postgresql-9.3 postgresql-9.3-postgis-2.1 postgresql-server-dev-9.3 python-psycopg2
+
+Finally we create the postgis extensions on the actual cosmic database:
+
+sudo su postgres
+psql cosmic
+CREATE EXTENSION postgis;
+
+Now that PostGIS is set up and ready to use, we need one final step to deal with
+the fact that we are storing astronomical data rather than data for objects on
+the surface of the Earth.  To do this we define our own "fake" Spatial Reference
+System using the method outlined here (do not need to read this link just
+included here for refernce) also note that we have modified the radius of the
+sphere used so 1 unit along its surface corresponds to 1 degree:
+
+https://gis.stackexchange.com/questions/2459/what-coordinate-system-should-be-used-to-store-geography-data-for-celestial-coor
+
+The steps to actually create the fake SRS are to simply execute the following
+SQL query to insert the fake SRS into the the spatial_ref_sys table.  The fake
+SRS is simply spherical coordinate system using degrees for "lat" and "lon"
+which will be our RA and DEC values, and it also uses a perfect sphere as its
+reference ellipsoid (i.e. the celestial sphere).  The command to insert the SRS
+is the following:
+
+sudo su postgres
+psql cosmic
+insert into spatial_ref_sys values(40000, 'ME', 1, 'GEOGCS["Normal Sphere (r=57.295779513)",DATUM["unknown",SPHEROID["sphere",57.295779513,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]', '+proj=longlat +a=57.295779513 +b=57.295779513 +no_defs');
+
+
+
+
+
+
 ========== SKIP THIS SECTION ==========
 As of now we the code has been refactored to no longer be dependant on IRAF.
 This may change in the future, however for now this part of the setup can be
