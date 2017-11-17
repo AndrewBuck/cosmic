@@ -59,10 +59,14 @@ for filename in sys.argv[1:]:
 
                 fields = line.split('|')
 
+                tempRA = parseFloat(fields[2])
+                tempDec = parseFloat(fields[3])
+
                 record = TwoMassXSCRecord(
                     identifier = '2MASX J' + fields[1].strip(),
-                    ra = parseFloat(fields[2]),
-                    dec = parseFloat(fields[3]),
+                    ra = tempRA,
+                    dec = tempDec,
+                    geometry = 'POINT({} {})'.format(tempRA, tempDec),
                     isophotalKSemiMajor = parseFloat(fields[9]),
                     isophotalKMinorMajor = parseFloat(fields[24]),
                     isophotalKAngle = parseFloat(fields[25]),

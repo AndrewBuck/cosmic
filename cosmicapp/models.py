@@ -564,6 +564,7 @@ class TwoMassXSCRecord(models.Model):
     identifier = models.CharField(max_length=24)
     ra = models.FloatField(db_index=True)
     dec = models.FloatField(db_index=True)
+    geometry = models.PointField(srid=40000, geography=False, dim=2, null=True)
     isophotalKSemiMajor = models.FloatField(null=True)
     isophotalKMinorMajor = models.FloatField(null=True)
     isophotalKAngle = models.FloatField(null=True)

@@ -1095,16 +1095,16 @@ def observing(request):
 
     context['messierObjects'] = messierObjects
 
-    #TODO: Make this a spatial query when postgis is available.
     extendedSources = TwoMassXSCRecord.objects.filter(
-        ra__range=[zenithNowRA-windowSize, zenithNowRA+windowSize],
-        dec__range=[zenithNowDec-windowSize, zenithNowDec+windowSize],
+        geometry__distance_lte=('POINT({} {})'.format(zenithNowRA, zenithNowDec), windowSize),
         isophotalKMag__lt=limitingMag
         ).order_by('isophotalKMag')[:limit]
 
     context['extendedSources'] = extendedSources
 
-    #TODO: Make this a spatial query when postgis is available.
+    #TODO: Redesign this query to use PostGIS.  I think the best way might be to actually include the epemeris path as
+    # a geometry line object, either in the AstorbRecord table itself, or a separate table linking to it.  Not sure on
+    # the exact design yet.
     timeWindow = timedelta(days=90)
     asteroidsApprox = AstorbEphemeris.objects.filter(
         ra__range=[zenithNowRA-windowSize, zenithNowRA+windowSize],
