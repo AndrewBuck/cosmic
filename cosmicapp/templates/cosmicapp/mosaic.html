@@ -179,11 +179,7 @@ function addImageToDesktop(id)
 				1
 			]);
 
-            selectedImages[i].centerRA = attr.getNamedItem('centerRA').nodeValue;
-            selectedImages[i].centerDec = attr.getNamedItem('centerDec').nodeValue;
-            selectedImages[i].centerRot = attr.getNamedItem('centerRot').nodeValue;
-            selectedImages[i].resolutionX = attr.getNamedItem('resolutionX').nodeValue;
-            selectedImages[i].resolutionY = attr.getNamedItem('resolutionY').nodeValue;
+            selectedImages[i].numPlateSolutions = Number(attr.getNamedItem('numPlateSolutions').nodeValue);
         }
     });
 	var xdim = selectedImages[i].sizeVector.get([0]);
@@ -348,7 +344,7 @@ function saveTransforms()
     referenceImage = selectedImages[0]
     for(i = 0; i < selectedImages.length; i++)
     {
-        if(selectedImages[i].centerRA != 'None')
+        if(selectedImages[i].numPlateSolutions > 0)
         {
             referenceImage = selectedImages[i];
             break;

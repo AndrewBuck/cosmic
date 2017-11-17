@@ -27,20 +27,29 @@ staticDirectory = os.path.dirname(os.path.realpath(__file__)) + "/static/cosmica
 def sigmoid(x):
     return 1 / (1 + math.exp(-x))
 
-def storeImageLocation(image, w):
+def storeImageLocation(image, w, sourceString):
     #TODO: should check w.lattyp and w.lontyp to make sure we are storing these world coordinates correctly.
     raCen, decCen = w.all_pix2world(image.dimX/2, image.dimY/2, 1)
     raScale, decScale = wcs.utils.proj_plane_pixel_scales(w)
     raScale *= 3600.0
     decScale *= 3600.0
 
-    image.centerRA = raCen
-    image.centerDec = decCen
-    image.resolutionX = raScale
-    image.resolutionY = decScale
     #TODO: Store image.centerRot
     #TODO: Should also store the four corners of the image position on the sky.
     image.save()
+
+    ps = PlateSolution(
+        image = image,
+        wcsHeader = w.to_header_string(True),
+        source = sourceString,
+        centerRA = raCen,
+        centerDec = decCen,
+        centerRot = None,
+        resolutionX = raScale,
+        resolutionY = decScale
+        )
+
+    ps.save()
 
 @shared_task
 def imagestats(filename):
@@ -159,15 +168,7 @@ def imagestats(filename):
         if w.has_celestial:
             print("WCS found in header")
 
-            storeImageLocation(image, w)
-
-            ps = PlateSolution(
-                image = image,
-                wcsHeader = w.to_header_string(True),
-                source = 'original'
-                )
-
-            ps.save()
+            storeImageLocation(image, w, 'original')
         else:
             print("WCS not found in header")
 
@@ -699,15 +700,7 @@ def astrometryNet(filename):
         print('\n\nPlate solved successfully.')
         w = wcs.WCS(settings.MEDIA_ROOT + filename + '.sources.wcs')
 
-        storeImageLocation(image, w)
-
-        ps = PlateSolution(
-            image = image,
-            wcsHeader = w.to_header_string(True),
-            source = 'astrometryNet'
-            )
-
-        ps.save()
+        storeImageLocation(image, w, 'astrometryNet')
     else:
         print('\n\nNo plate solution found.')
         #TODO: Add another job to the proess queue with lower priority and a deeper search.

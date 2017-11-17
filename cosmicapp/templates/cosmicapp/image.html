@@ -1,5 +1,6 @@
 {% extends "cosmicapp/base.html" %}
 {% load static %}
+{% load cosmicapp_extras %}
 
 {% block extratitle %} - Image {{id}} {% endblock %}
 
@@ -31,11 +32,6 @@ td.numMatchResults
         <th> Z Dim <br> (layers) </th>
         <th> Bit Depth <br> (bits / px) </th>
         <th> Frame Type <br> (light/flat/etc) </th>
-        <th> Center RA <br> (deg) </th>
-        <th> Center DEC <br> (deg) </th>
-        <th> Center Rot <br> (deg) </th>
-        <th> Resolution X <br> (arcsec / px) </th>
-        <th> Resolution Y <br> (arcsec / px) </th>
         </tr>
 
         <tr>
@@ -46,11 +42,6 @@ td.numMatchResults
         <td> {{image.dimZ}} </td>
         <td> {{image.bitDepth}} </td>
         <td> {{image.frameType}} </td>
-        <td> {{image.centerRA|floatformat:3}} </td>
-        <td> {{image.centerDec|floatformat:3}} </td>
-        <td> {{image.centerRot|floatformat:3}} </td>
-        <td> {{image.resolutionX|floatformat:3}} </td>
-        <td> {{image.resolutionY|floatformat:3}} </td>
         </tr>
     </table>
 
@@ -78,6 +69,31 @@ td.numMatchResults
 </tr>
 {% endfor %}
 </table>
+
+<p>This image has {{image.plateSolutions.count}} plate solutions assosciated with it.</p>
+
+{% if image.plateSolutions.count > 0 %}
+    <table border=2px style="border-collapse: collapse; margin: 1em;">
+        <th>Source</th>
+        <th>Center RA</th>
+        <th>Center Dec</th>
+        <th>Rotation</th>
+        <th>Resolution X</th>
+        <th>Resolution Y</th>
+
+    {% for ps in image.plateSolutions.all %}
+        <tr>
+        <td>{{ps.source}}</td>
+        <td>{{ps.centerRA|formatRA}}</td>
+        <td>{{ps.centerDec|formatDec}}</td>
+        <td>{{ps.rotation|floatformat:2}}</td>
+        <td>{{ps.resolutionX|floatformat:2}}</td>
+        <td>{{ps.resolutionY|floatformat:2}}</td>
+        </tr>
+    {% endfor %}
+
+    </table>
+{% endif %}
 
 <br>
     <table border=2px style="border-collapse: collapse; margin: 1em;">

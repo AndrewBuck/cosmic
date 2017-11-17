@@ -523,11 +523,8 @@ def query(request):
             imageDict['dimZ'] = str(result.dimZ)
             imageDict['bitDepth'] = str(result.bitDepth)
             imageDict['frameType'] = result.frameType
-            imageDict['centerRA'] = str(result.centerRA)
-            imageDict['centerDec'] = str(result.centerDec)
-            imageDict['centerRot'] = str(result.centerRot)
-            imageDict['resolutionX'] = str(result.resolutionX)
-            imageDict['resolutionY'] = str(result.resolutionY)
+            imageDict['numPlateSolutions'] = str(result.plateSolutions.count())
+
             #TODO: These next lines can be replaced by a direct db query which is faster than calling this function which does more calculation than we need here.
             imageDict['thumbUrlSmall'] = result.getThumbnailUrlSmall()
             imageDict['thumbUrlMedium'] = result.getThumbnailUrlMedium()

@@ -12,6 +12,8 @@ from django.contrib.contenttypes.models import ContentType
 
 #TODO:  Set a reated_name for all foreign keys and use that in the code where appropriate to make the code more readable.
 
+#TODO:  Need to review the null constraint for all fields and try to minimize use of null=True, this is best done after the database is in a more stable state.
+
 class OTA(models.Model):
     """
     An Optical tube assembly that forms the core of the optical path of an instrument.
@@ -139,11 +141,6 @@ class Image(models.Model):
     dimZ = models.IntegerField(null=True)
     bitDepth = models.IntegerField(null=True)
     frameType = models.CharField(max_length=32)
-    centerRA = models.FloatField(null=True)
-    centerDec = models.FloatField(null=True)
-    centerRot = models.FloatField(null=True)
-    resolutionX = models.FloatField(null=True)
-    resolutionY = models.FloatField(null=True)
     answers = GenericRelation('Answer')
 
     """
@@ -340,9 +337,14 @@ class PlateSolution(models.Model):
     where we got the specific WCS from, i.e. was it from the original image, or computed by our astrometry.net plate
     solver, or by some other method like mosaic approximation, etc.
     """
-    image = models.ForeignKey(Image, on_delete=models.CASCADE)
+    image = models.ForeignKey(Image, on_delete=models.CASCADE, related_name='plateSolutions')
     wcsHeader = models.TextField()
     source = models.CharField(max_length=32)
+    centerRA = models.FloatField(null=True)
+    centerDec = models.FloatField(null=True)
+    centerRot = models.FloatField(null=True)
+    resolutionX = models.FloatField(null=True)
+    resolutionY = models.FloatField(null=True)
 
 
 
