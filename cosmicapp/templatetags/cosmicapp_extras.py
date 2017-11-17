@@ -19,5 +19,11 @@ def formatRA(ra):
 def formatDec(dec):
     """Format the dec given in degrees into degrees, minutes, seconds."""
     angle = ephem.degrees((math.pi/180)*dec)
-    return str(angle)
+
+    if angle >= 0:
+        sign = '+'
+    else:
+        sign = ''
+
+    return sign + str(angle)
 
