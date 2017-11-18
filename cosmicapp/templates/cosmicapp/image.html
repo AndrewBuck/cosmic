@@ -1,5 +1,6 @@
 {% extends "cosmicapp/base.html" %}
 {% load static %}
+{% load humanize %}
 {% load cosmicapp_extras %}
 
 {% block extratitle %} - Image {{id}} {% endblock %}
@@ -74,12 +75,14 @@ td.numMatchResults
 
 {% if image.plateSolutions.count > 0 %}
     <table border=2px style="border-collapse: collapse; margin: 1em;">
-        <th>Source</th>
-        <th>Center RA</th>
-        <th>Center Dec</th>
-        <th>Rotation</th>
-        <th>Resolution X</th>
-        <th>Resolution Y</th>
+        <th>Source<br>of WCS</th>
+        <th>Center RA<br>(H:M:S)</th>
+        <th>Center Dec<br>(D:M:S)</th>
+        <th>Rotation<br>(deg)</th>
+        <th>Resolution X<br>(arcsec/px)</th>
+        <th>Resolution Y<br>(arcsec/px)</th>
+        <th>Area<br>(sq deg)</th>
+        <th>Fraction of<br>Whole Sky</th>
 
     {% for ps in image.plateSolutions.all %}
         <tr>
@@ -89,6 +92,8 @@ td.numMatchResults
         <td>{{ps.rotation|floatformat:2}}</td>
         <td>{{ps.resolutionX|floatformat:2}}</td>
         <td>{{ps.resolutionY|floatformat:2}}</td>
+        <td>{{ps.area|floatformat:4}}</td>
+        <td>1&nbsp;/&nbsp;{{ps.area|divide:41253|invert|floatformat:0|intcomma}}</td>
         </tr>
     {% endfor %}
 

@@ -345,6 +345,8 @@ class PlateSolution(models.Model):
     centerRot = models.FloatField(null=True)
     resolutionX = models.FloatField(null=True)
     resolutionY = models.FloatField(null=True)
+    geometry = models.PolygonField(srid=40000, geography=False, dim=2, null=True)
+    area = models.FloatField(null=True)
 
 
 

@@ -29,15 +29,33 @@ def sigmoid(x):
 
 def storeImageLocation(image, w, sourceString):
     #TODO: should check w.lattyp and w.lontyp to make sure we are storing these world coordinates correctly.
-    raCen, decCen = w.all_pix2world(image.dimX/2, image.dimY/2, 1)
+    raCen, decCen = w.all_pix2world(image.dimX/2, image.dimY/2, 1)    #TODO: Determine if this 1 should be a 0.
     raScale, decScale = wcs.utils.proj_plane_pixel_scales(w)
     raScale *= 3600.0
     decScale *= 3600.0
 
-    #TODO: Store image.centerRot
-    #TODO: Should also store the four corners of the image position on the sky.
-    image.save()
+    polygonPixelsList = [
+        (1, 1),
+        (image.dimX, 1),
+        (image.dimX, image.dimY),
+        (1, image.dimY),
+        (1, 1)
+        ]
 
+    polygonCoordsList = []
+    geometryString = 'POLYGON(('
+    commaString = ''
+
+    for x, y in polygonPixelsList:
+        ra, dec = w.all_pix2world(x, y, 1)    #TODO: Determine if this 1 should be a 0.
+        geometryString += commaString + str(ra) + ' ' + str(dec)
+        commaString = ', '
+
+    geometryString += '))'
+
+    print(geometryString)
+
+    #TODO: Store image.centerRot
     ps = PlateSolution(
         image = image,
         wcsHeader = w.to_header_string(True),
@@ -46,9 +64,11 @@ def storeImageLocation(image, w, sourceString):
         centerDec = decCen,
         centerRot = None,
         resolutionX = raScale,
-        resolutionY = decScale
+        resolutionY = decScale,
+        geometry = geometryString
         )
 
+    ps.area = ps.geometry.area
     ps.save()
 
 @shared_task
@@ -700,7 +720,7 @@ def astrometryNet(filename):
         print('\n\nPlate solved successfully.')
         w = wcs.WCS(settings.MEDIA_ROOT + filename + '.sources.wcs')
 
-        storeImageLocation(image, w, 'astrometryNet')
+        storeImageLocation(image, w, 'astrometry.net')
     else:
         print('\n\nNo plate solution found.')
         #TODO: Add another job to the proess queue with lower priority and a deeper search.
