@@ -27,3 +27,15 @@ def formatDec(dec):
 
     return sign + str(angle)
 
+@register.filter
+def multiply(value, arg):
+    return value*arg
+
+@register.filter
+def divide(value, arg):
+    return value/arg
+
+@register.filter
+def invert(value):
+    return 1.0/value
+
