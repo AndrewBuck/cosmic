@@ -19,6 +19,7 @@ from django.views.decorators.http import require_http_methods
 
 from lxml import etree
 import ephem
+from astropy import wcs
 
 from .models import *
 from .forms import *
@@ -703,6 +704,111 @@ def query(request):
                 sourceFindMatchDict['starfindResult'] = str(result.starfindResult.pk)
 
             etree.SubElement(root, "SourceFindMatch", sourceFindMatchDict)
+
+    elif request.GET['queryfor'] == 'objectsInImage':
+        #TODO: Need to consider adding order by and limit statements to the queries for the actual objects, and need to
+        # figure out decent values for these limits.
+        images = None
+        if 'imageId' in request.GET:
+            for valueString in request.GET.getlist('imageId'):
+                values = cleanupQueryValues(valueString, 'int')
+                if len(values) > 0:
+                    images = Image.objects.filter(pk__in=values)
+
+        bufferDistance = 0.00000001
+        if 'bufferDistance' in request.GET:
+            bufferDistance = float(request.GET['bufferDistance'])
+
+        if bufferDistance > 3:
+            bufferDistance = 3
+
+        for image in images:
+            imageSubElement = etree.SubElement(root, "Image_" + str(image.pk))
+
+            #TODO: Add code to make a more informed choice about which plate solution to use if there is more than 1.
+            plateSolution = image.plateSolutions.first()
+            if plateSolution == None:
+                continue
+
+            w = wcs.WCS(header=plateSolution.wcsHeader)
+
+            #TODO: Consider adding the details of the plate solution to the queryresult.
+
+            twoMassXSCResults = TwoMassXSCRecord.objects.filter(geometry__dwithin=(plateSolution.geometry, bufferDistance))
+
+            for result in twoMassXSCResults:
+                x, y = w.all_world2pix(result.ra, result.dec, 1)    #TODO: Determine if this 1 should be a 0.
+                twoMassXSCDict = {}
+                twoMassXSCDict['id'] = str(result.pk)
+                twoMassXSCDict['identifier'] = str(result.identifier)
+                twoMassXSCDict['ra'] = str(result.ra)
+                twoMassXSCDict['dec'] = str(result.dec)
+                twoMassXSCDict['pixelX'] = str(x)
+                twoMassXSCDict['pixelY'] = str(y)
+                twoMassXSCDict['isophotalKSemiMajor'] = str(result.isophotalKSemiMajor)
+                twoMassXSCDict['isophotalKMinorMajor'] = str(result.isophotalKMinorMajor)
+                twoMassXSCDict['isophotalKAngle'] = str(result.isophotalKAngle)
+                twoMassXSCDict['isophotalKMag'] = str(result.isophotalKMag)
+                twoMassXSCDict['isophotalKMagErr'] = str(result.isophotalKMagErr)
+
+                etree.SubElement(imageSubElement, "TwoMassXSCRecord", twoMassXSCDict)
+
+            messierResults = MessierRecord.objects.filter(geometry__dwithin=(plateSolution.geometry, bufferDistance))
+
+            for result in messierResults:
+                x, y = w.all_world2pix(result.ra, result.dec, 1)    #TODO: Determine if this 1 should be a 0.
+                messierDict = {}
+                messierDict['id'] = str(result.pk)
+                messierDict['identifier'] = str(result.identifier)
+                messierDict['ra'] = str(result.ra)
+                messierDict['dec'] = str(result.dec)
+                messierDict['pixelX'] = str(x)
+                messierDict['pixelY'] = str(y)
+                messierDict['objectType'] = str(result.objectType)
+                messierDict['spectralType'] = str(result.spectralType)
+                messierDict['magU'] = str(result.magU)
+                messierDict['magB'] = str(result.magB)
+                messierDict['magV'] = str(result.magV)
+                messierDict['magR'] = str(result.magR)
+                messierDict['magI'] = str(result.magI)
+                messierDict['numReferences'] = str(result.numReferences)
+
+                etree.SubElement(imageSubElement, "MessierRecord", messierDict)
+
+            gcvsResults = GCVSRecord.objects.filter(geometry__dwithin=(plateSolution.geometry, bufferDistance))
+
+            for result in gcvsResults:
+                x, y = w.all_world2pix(result.ra, result.dec, 1)    #TODO: Determine if this 1 should be a 0.
+                gcvsDict = {}
+                gcvsDict['id'] = str(result.pk)
+                gcvsDict['identifier'] = str(result.identifier)
+                gcvsDict['ra'] = str(result.ra)
+                gcvsDict['dec'] = str(result.dec)
+                gcvsDict['pixelX'] = str(x)
+                gcvsDict['pixelY'] = str(y)
+                gcvsDict['constellationNumber'] = str(result.constellationNumber)
+                gcvsDict['starNumber'] = str(result.starNumber)
+                gcvsDict['pmRA'] = str(result.pmRA)
+                gcvsDict['pmDec'] = str(result.pmDec)
+                gcvsDict['variableType'] = str(result.variableType)
+                gcvsDict['variableType2'] = str(result.variableType2)
+                gcvsDict['magMax'] = str(result.magMax)
+                gcvsDict['magMaxFlag'] = str(result.magMaxFlag)
+                gcvsDict['magMin'] = str(result.magMin)
+                gcvsDict['magMinFlag'] = str(result.magMinFlag)
+                gcvsDict['magMin2'] = str(result.magMin2)
+                gcvsDict['magMin2Flag'] = str(result.magMin2Flag)
+                gcvsDict['epochMaxMag'] = str(result.epochMaxMag)
+                gcvsDict['outburstYear'] = str(result.outburstYear)
+                gcvsDict['period'] = str(result.period)
+                gcvsDict['periodRisingPercentage'] = str(result.periodRisingPercentage)
+                gcvsDict['spectralType'] = str(result.spectralType)
+
+                etree.SubElement(imageSubElement, "GCVSRecord", gcvsDict)
+
+            #TODO: Implement the same as above for Asteroids.
+            #TODO: Implement the same as above for Exoplanets.
+            #TODO: Implement the same as above for UCAC4.
 
     elif request.GET['queryfor'] == 'ota':
         results = OTA.objects
