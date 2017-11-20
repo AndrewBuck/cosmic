@@ -528,6 +528,7 @@ class UCAC4Record(models.Model):
     identifier = models.CharField(max_length=10, null=True)
     ra = models.FloatField(null=True)
     dec = models.FloatField(null=True)
+    geometry = models.PointField(srid=40000, geography=False, dim=2, null=True)
     pmra = models.FloatField(null=True)
     pmdec = models.FloatField(null=True)
     magFit = models.FloatField(null=True)

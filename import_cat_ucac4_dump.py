@@ -73,10 +73,14 @@ for filename in sys.argv[1:]:
                 pmra = int(fields[14])
                 pmdec = int(fields[15])
 
+                tempRA = int(fields[0]) / 3600000.0
+                tempDec = (int(fields[1]) - 324000000) / 3600000.0
+
                 record = UCAC4Record(
                     identifier = "%03i-%06i" % (idZone, idCounter),
-                    ra = int(fields[0]) / 3600000.0,
-                    dec = (int(fields[1]) - 324000000) / 3600000.0,
+                    ra = tempRA,
+                    dec = tempDec,
+                    geometry = 'POINT({} {})'.format(tempRA, tempDec),
                     magFit = magFit / 1000.0 if magFit != 20000 else None,
                     magAperture = magAperture / 1000.0 if magAperture != 20000 else None,
                     magError = magError / 100.0 if magError != 99 else None,
