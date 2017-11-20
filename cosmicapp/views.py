@@ -1072,28 +1072,28 @@ def observing(request):
     zenithNowDec = zenithNowDec * 180/math.pi
 
     variableStars = GCVSRecord.objects.filter(
-        geometry__distance_lte=('POINT({} {})'.format(zenithNowRA, zenithNowDec), windowSize),
+        geometry__dwithin=('POINT({} {})'.format(zenithNowRA, zenithNowDec), windowSize),
         magMin__lt=limitingMag
         ).order_by('magMin')[:limit]
 
     context['variableStars'] = variableStars
 
     exoplanets = ExoplanetRecord.objects.filter(
-        geometry__distance_lte=('POINT({} {})'.format(zenithNowRA, zenithNowDec), windowSize),
+        geometry__dwithin=('POINT({} {})'.format(zenithNowRA, zenithNowDec), windowSize),
         magV__lt=limitingMag
         ).order_by('magV', 'identifier')[:limit]
 
     context['exoplanets'] = exoplanets
 
     messierObjects = MessierRecord.objects.filter(
-        geometry__distance_lte=('POINT({} {})'.format(zenithNowRA, zenithNowDec), windowSize),
+        geometry__dwithin=('POINT({} {})'.format(zenithNowRA, zenithNowDec), windowSize),
         magV__lt=limitingMag
         ).order_by('magV')
 
     context['messierObjects'] = messierObjects
 
     extendedSources = TwoMassXSCRecord.objects.filter(
-        geometry__distance_lte=('POINT({} {})'.format(zenithNowRA, zenithNowDec), windowSize),
+        geometry__dwithin=('POINT({} {})'.format(zenithNowRA, zenithNowDec), windowSize),
         isophotalKMag__lt=limitingMag
         ).order_by('isophotalKMag')[:limit]
 
