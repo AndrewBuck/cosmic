@@ -545,7 +545,7 @@ class GCVSRecord(models.Model):
     ra = models.FloatField(null=True, db_index=True)
     dec = models.FloatField(null=True, db_index=True)
     geometry = models.PointField(srid=40000, geography=False, dim=2, null=True)
-    pmRa = models.FloatField(null=True)
+    pmRA = models.FloatField(null=True)
     pmDec = models.FloatField(null=True)
     variableType = models.CharField(max_length=10, null=True)
     variableType2 = models.CharField(max_length=10, null=True)
