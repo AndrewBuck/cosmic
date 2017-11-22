@@ -629,20 +629,18 @@ class AstorbRecord(models.Model):
 
 class AstorbEphemeris(models.Model):
     """
-    A record containing a computed emphemeride for an asteroid in the astorb database.  The AstorbRecord is read in from
-    the database for the given asteroid, and then pyephem is used to convert the Keplerian orbit into an RA-DEC ephemeride
-    which is then stored as an AstorbEphemeris record.  In addition to the position on the sky, the apparent magnitude as
-    well as distance to the sun and earth are stored, as well as the solar elongation angle (which makes it easy to query
-    for asteroids near opposition).
+    A record containing a computed emphemeride path for an asteroid in the astorb database.  The AstorbRecord is read
+    in from the database for the given asteroid, and pyephem is used to convert the Keplerian orbit into a series of
+    RA-DEC ephemerides which is then stored in the AstorbEphemeris record.  In addition to the position on the sky
+    (stored as a line geometry over the given time span), the min and max apparent magnitude over the interval is
+    stored.
     """
     astorbRecord = models.ForeignKey(AstorbRecord, on_delete=models.CASCADE)
-    dateTime = models.DateTimeField()
-    ra = models.FloatField(db_index=True)
-    dec = models.FloatField(db_index=True)
-    earthDist = models.FloatField()
-    sunDist = models.FloatField()
-    mag = models.FloatField(db_index=True)
-    elong = models.FloatField()
+    startTime = models.DateTimeField(null=True)
+    endTime = models.DateTimeField(null=True)
+    dimMag = models.FloatField(db_index=True, null=True)
+    brightMag = models.FloatField(db_index=True, null=True)
+    geometry = models.LineStringField(srid=40000, geography=False, dim=2, null=True)
 
 class ExoplanetRecord(models.Model):
     """

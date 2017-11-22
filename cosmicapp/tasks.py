@@ -880,43 +880,28 @@ def computeSingleEphemeris(asteroid, ephemTime):
     #TODO: The computed RA/DEC are off slightly, fix this.  I think it is due the +0.5 day issue in the epoch time in the import script.
     body.compute(ephemTimeObject)
 
-    ephemeris = AstorbEphemeris(
-        astorbRecord = asteroid,
-        dateTime = ephemTime,
-        ra = body.ra * 180/math.pi,
-        dec = body.dec * 180/math.pi,
-        earthDist = body.earth_distance,
-        sunDist = body.sun_distance,
-        mag = body.mag,
-        elong = body.elong * 180/math.pi
-        )
-
-    return ephemeris
+    return body
 
 def computeSingleEphemerisRange(asteroid, ephemTimeStart, ephemTimeEnd, tolerance, timeTolerance, startEphemeris, endEphemeris):
-    #print('Start time: {}    End time: {}'.format(ephemTimeStart, ephemTimeEnd))
+    if startEphemeris == None and endEphemeris == None:
+        firstCall = True
+    else:
+        firstCall = False
+
+    ephemerideList = []
+
     if startEphemeris == None:
         startEphemeris = computeSingleEphemeris(asteroid, ephemTimeStart)
-        startEphemeris.save()
-
-        #print('sTime: {}    RA: {:f}    DEC: {:+f}    Name: {}'.format(startEphemeris.dateTime, startEphemeris.ra, startEphemeris.dec, startEphemeris.astorbRecord.name))
 
     if endEphemeris == None:
         endEphemeris = computeSingleEphemeris(asteroid, ephemTimeEnd)
-        endEphemeris.save()
 
-        #print('eTime: {}    RA: {:f}    DEC: {:+f}    Name: {}'.format(endEphemeris.dateTime, endEphemeris.ra, endEphemeris.dec, endEphemeris.astorbRecord.name))
+    if firstCall:
+        ephemerideList.append( (ephemTimeStart, startEphemeris) )
 
-    positionDelta = (180/math.pi)*ephem.separation(
-        (startEphemeris.ra*math.pi/180, startEphemeris.dec*math.pi/180),
-        (endEphemeris.ra*math.pi/180, endEphemeris.dec*math.pi/180)
-        )
-    #print('   Delta: {}'.format(positionDelta))
-
+    positionDelta = (180/math.pi)*ephem.separation(startEphemeris, endEphemeris)
     if positionDelta > tolerance:
         steps = math.ceil(positionDelta/tolerance)
-        #print('   Delta: {}     Steps: {}'.format(positionDelta, steps))
-
         timeDelta = (ephemTimeEnd - ephemTimeStart) / steps
 
         if timeDelta > timeTolerance:
@@ -926,7 +911,7 @@ def computeSingleEphemerisRange(asteroid, ephemTimeStart, ephemTimeEnd, toleranc
         s = startEphemeris
         for i in range(steps-1):
             ephemTimeMid = ephemTimeStart + timeDelta
-            (s, m) = computeSingleEphemerisRange(asteroid, ephemTimeStart, ephemTimeMid, tolerance, timeTolerance, s, None)
+            tempList = computeSingleEphemerisRange(asteroid, ephemTimeStart, ephemTimeMid, tolerance, timeTolerance, s, None)
 
             #TODO: Add a check here and perform a linear interpolation between the s and m ephemeride positions.  If
             # the interpolated position differs by more than some smaller tolerance, then compute an extra step in the
@@ -934,10 +919,13 @@ def computeSingleEphemerisRange(asteroid, ephemTimeStart, ephemTimeEnd, toleranc
             # moves back to nearly the same spot, even though it was quite a bit farther away in between those two
             # points.  This will not be a perfect solution but should be so close to perfect as to not matter.
 
+            ephemerideList.extend(tempList)
             ephemTimeStart = ephemTimeMid
-            s = m
+            s = tempList[-1][1]
 
-    return (startEphemeris, endEphemeris)
+    ephemerideList.append( (ephemTimeEnd, endEphemeris) )
+
+    return ephemerideList
 
 def computeAsteroidEphemerides(ephemTimeStart, ephemTimeEnd, tolerance, timeTolerance, clearFirst):
     offset = 0
@@ -955,13 +943,69 @@ def computeAsteroidEphemerides(ephemTimeStart, ephemTimeEnd, tolerance, timeTole
             asteroids = AstorbRecord.objects.all()[offset : offset+pagesize]
 
             for asteroid in asteroids:
-                #print('--------------------------------------------------------------------------------')
                 #TODO: Add a check to see if there is already an ephemeris calculated near the start/end time and if so
                 # pass it along to this function (remember to change the time to match the ephemeris we are passing).
-                computeSingleEphemerisRange(asteroid, ephemTimeStart, ephemTimeEnd, tolerance, timeTolerance, None, None)
+                ephemerideList = computeSingleEphemerisRange(asteroid, ephemTimeStart, ephemTimeEnd, tolerance, timeTolerance, None, None)
+
+                startingElement = ephemerideList[0]
+                previousElement = ephemerideList[0]
+                brightMag = startingElement[1].mag
+                dimMag = startingElement[1].mag
+                geometryString = 'LINESTRING(' + str(startingElement[1].ra*180/math.pi) + " " + str(startingElement[1].dec*180/math.pi)
+                angularDistance = 0.0
+                resultsWritten = False
+                for element in ephemerideList[1:]:
+                    resultsWritten = False
+                    #print(element[0], element[1].ra*180/math.pi, element[1].dec*180/math.pi, element[1].mag)
+                    if element[1].mag < brightMag:
+                        brightMag = element[1].mag
+
+                    if element[1].mag > dimMag:
+                        dimMag = element[1].mag
+
+                    #TODO: We may need a check here for lines which cross the anti-meridian (360 degrees), not sure if
+                    # postgre handles this correctly.
+
+                    geometryString += "," + str(element[1].ra*180/math.pi) + " " + str(element[1].dec*180/math.pi)
+
+                    # TODO: Consider adding a constraint that dimMag-brightMag must be less than some value to handle highly
+                    # eccentric objects whose brightness might change rapidly as it moves radially inward.  It also
+                    # would handle objects passing very close to the earth as well.  Not sure if this would make sense or not.
+                    # The only code change required to implement this is adding an 'or' statement to the 'if' statement below.
+                    angularDistance += (180/math.pi)*ephem.separation(previousElement[1], element[1])
+                    if angularDistance > 60:
+                        geometryString += ')'
+
+                        def writeAstorbEphemerisToDB(astorbRecord, startTime, endTime, dimMag, brightMag, geometry):
+                            #print("saving " + str(startTime) + "       " + str(endTime) + "     " + geometry)
+                            record = AstorbEphemeris(
+                                astorbRecord = asteroid,
+                                startTime = startTime,
+                                endTime = endTime,
+                                dimMag = dimMag,
+                                brightMag = brightMag,
+                                geometry = geometry
+                                )
+
+                            record.save()
+
+                        writeAstorbEphemerisToDB(asteroid, startingElement[0], element[0], dimMag, brightMag, geometryString)
+                        startingElement = element
+                        geometryString = 'LINESTRING(' + str(startingElement[1].ra*180/math.pi) + " " + str(startingElement[1].dec*180/math.pi)
+                        commaString = ''
+                        brightMag = startingElement[1].mag
+                        dimMag = startingElement[1].mag
+                        angularDistance = 0.0
+                        resultsWritten = True
+
+                    previousElement = element
+
+                if not resultsWritten:
+                    geometryString += ")"
+                    writeAstorbEphemerisToDB(asteroid, startingElement[0], element[0], dimMag, brightMag, geometryString)
 
             offset += pagesize
-            print('Processed {} astroids - {}% complete.'.format(offset, round(100*offset/numAsteroids,0)))
+            print('Processed {} asteroids - {}% complete.'.format(offset, round(100*offset/numAsteroids,0)))
             sys.stdout.flush()
 
     return True

@@ -1205,6 +1205,7 @@ def observing(request):
 
     context['extendedSources'] = extendedSources
 
+    """
     #TODO: Redesign this query to use PostGIS.  I think the best way might be to actually include the epemeris path as
     # a geometry line object, either in the AstorbRecord table itself, or a separate table linking to it.  Not sure on
     # the exact design yet.
@@ -1226,6 +1227,7 @@ def observing(request):
     asteroids = sorted(asteroids, key = lambda x: x['ephem'].mag)
 
     context['asteroids'] = asteroids
+    """
 
     return render(request, "cosmicapp/observing.html", context)
 
