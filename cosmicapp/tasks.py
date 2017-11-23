@@ -3,6 +3,7 @@ from celery import shared_task
 from django.db import transaction
 from django.conf import settings
 from django.db.models import Avg, StdDev
+from django.contrib.gis.geos import GEOSGeometry
 
 import subprocess
 import json
@@ -976,27 +977,66 @@ def computeAsteroidEphemerides(ephemTimeStart, ephemTimeEnd, tolerance, timeTole
                     if element[1].mag > dimMag:
                         dimMag = element[1].mag
 
-                    #TODO: We may need a check here for lines which cross the anti-meridian (360 degrees), not sure if
-                    # postgre handles this correctly.
+                    # Check to see if the asteroid crosses the meridian
+                    dRA = element[1].ra - previousElement[1].ra
+                    dDec = element[1].dec - previousElement[1].dec
+                    meridianCrossDistance = (180/math.pi)*math.sqrt(dRA*dRA + dDec*dDec)
+                    if meridianCrossDistance < 180:    # Does not cross the meridian, handle normally.
+                        meridianCross = False
+                        geometryString += "," + str(element[1].ra*180/math.pi) + " " + str(element[1].dec*180/math.pi)
+                    else:    # Does cross the meridian, end the line 1 segment early and start a new segment
+                        meridianCross = True
 
-                    geometryString += "," + str(element[1].ra*180/math.pi) + " " + str(element[1].dec*180/math.pi)
+                        # Check to see which direction we are crossing the meridian in and set up variables for later use.
+                        if element[1].ra > math.pi and previousElement[1].ra < math.pi:
+                            highRAElement = element
+                            lowRAElement = previousElement
+                            firstEdgeRA = 0
+                            secondEdgeRA = 360
+                        elif element[1].ra < math.pi and previousElement[1].ra > math.pi:
+                            highRAElement = previousElement
+                            lowRAElement = element
+                            firstEdgeRA = 360
+                            secondEdgeRA = 0
+                        else:
+                            print("ERROR: Got confused in meridian cross of asteroid.")
+                            print("asteroid:", asteroid.number, "\t", asteroid.name, "\telement: ",
+                                element[1].ra*(180/math.pi), element[1].dec*(180/math.pi),
+                                "\tprev element: ", previousElement[1].ra*(180/math.pi), previousElement[1].dec*(180/math.pi))
+
+                        # Calculate the edgeDec which is the declination at which the line segment crosses the
+                        # meridian.  We do this by simple linear interpolation.
+                        deltaRA = (180/math.pi)*(lowRAElement[1].ra + (2*math.pi-highRAElement[1].ra))
+                        deltaDec =  (180/math.pi)*(lowRAElement[1].dec - highRAElement[1].dec)
+                        deltaRAToEdge = (180/math.pi)*((2*math.pi-highRAElement[1].ra))
+                        edgeDec = highRAElement[1].dec*(180/math.pi) + deltaDec*(deltaRAToEdge/deltaRA)
+
+                        geometryString += "," + str(firstEdgeRA) + " " + str(edgeDec)
 
                     # TODO: Consider adding a constraint that dimMag-brightMag must be less than some value to handle highly
                     # eccentric objects whose brightness might change rapidly as it moves radially inward.  It also
                     # would handle objects passing very close to the earth as well.  Not sure if this would make sense or not.
                     # The only code change required to implement this is adding an 'or' statement to the 'if' statement below.
                     angularDistance += (180/math.pi)*ephem.separation(previousElement[1], element[1])
-                    if angularDistance > 60:
+                    if angularDistance > 60 or meridianCross:
                         geometryString += ')'
 
+                        #TODO: When there is a meridian cross the start and end times of the two line segments are
+                        # slightly different than what is recorded.  We can probably just ignore this but there may be
+                        # some minor issues with doing so.
                         writeAstorbEphemerisToDB(asteroid, startingElement[0], element[0], dimMag, brightMag, geometryString)
                         startingElement = element
-                        geometryString = 'LINESTRING(' + str(startingElement[1].ra*180/math.pi) + " " + str(startingElement[1].dec*180/math.pi)
-                        commaString = ''
                         brightMag = startingElement[1].mag
                         dimMag = startingElement[1].mag
                         angularDistance = 0.0
                         resultsWritten = True
+
+                        if meridianCross:
+                            geometryString = 'LINESTRING(' + str(secondEdgeRA) + " " + str(edgeDec) + ","
+                        else:
+                            geometryString = 'LINESTRING('
+
+                        geometryString += str(startingElement[1].ra*180/math.pi) + " " + str(startingElement[1].dec*180/math.pi)
 
                     previousElement = element
 
