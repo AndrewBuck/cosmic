@@ -1205,17 +1205,12 @@ def observing(request):
 
     context['extendedSources'] = extendedSources
 
-    """
-    #TODO: Redesign this query to use PostGIS.  I think the best way might be to actually include the epemeris path as
-    # a geometry line object, either in the AstorbRecord table itself, or a separate table linking to it.  Not sure on
-    # the exact design yet.
-    timeWindow = timedelta(days=90)
     asteroidsApprox = AstorbEphemeris.objects.filter(
-        ra__range=[zenithNowRA-windowSize, zenithNowRA+windowSize],
-        dec__range=[zenithNowDec-windowSize, zenithNowDec+windowSize],
-        dateTime__range=[currentTime-timeWindow, currentTime+timeWindow],
-        mag__lt=limitingMag
-        ).distinct('astorbRecord_id')[:limit]
+        geometry__dwithin=('POINT({} {})'.format(zenithNowRA, zenithNowDec), windowSize),
+        startTime__lte=currentTime,
+        endTime__gte=currentTime,
+        brightMag__lt=limitingMag
+        ).distinct('astorbRecord_id')[:limit*10]   # We use a larger limit here since some will be discarded.
 
     asteroids = []
     for asteroid in asteroidsApprox:
