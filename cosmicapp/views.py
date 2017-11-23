@@ -1205,25 +1205,8 @@ def observing(request):
 
     context['extendedSources'] = extendedSources
 
-    asteroidsApprox = AstorbEphemeris.objects.filter(
-        geometry__dwithin=('POINT({} {})'.format(zenithNowRA, zenithNowDec), windowSize),
-        startTime__lte=currentTime,
-        endTime__gte=currentTime,
-        brightMag__lt=limitingMag
-        ).distinct('astorbRecord_id')[:limit*10]   # We use a larger limit here since some will be discarded.
-
-    asteroids = []
-    for asteroid in asteroidsApprox:
-        ephemeris = computeSingleEphemeris(asteroid.astorbRecord, currentTime)
-
-        separation = ephem.separation(ephemeris, (zenithNowRA*(math.pi/180), zenithNowDec*(math.pi/180)) )
-        if separation > windowSize*(math.pi/180):
-            continue
-
-        asteroids.append({
-            'record': asteroid.astorbRecord,
-            'ephem': ephemeris
-            })
+    asteroids = getAsteroidsAroundGeometry('POINT({} {})'.format(zenithNowRA, zenithNowDec),
+        windowSize, currentTime, limitingMag, limit)
 
     asteroids = sorted(asteroids, key = lambda x: x['ephem'].mag)[:limit]   # Sort by actual magnitude and reimpose the limit
 

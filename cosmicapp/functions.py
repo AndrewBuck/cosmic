@@ -1,6 +1,8 @@
+from django.contrib.gis.geos import GEOSGeometry, Point
 import sqlparse
 
 from .models import *
+from .tasks import *
 
 def formatSqlQuery(query):
     s = query.query.__str__()
@@ -28,3 +30,39 @@ def getLocationForIp(ip):
     except GeoLiteBlock.DoesNotExist:
         return (0, 0)
 
+def getAsteroidsAroundGeometry(geometry, bufferSize, targetTime, limitingMag, limit):
+    geometry = GEOSGeometry(geometry)
+
+    #TODO: Move this '10' into a global variable or something to force it to be the same as what is used in the compute ephemerides routines.
+    if bufferSize < 10:
+        largeBufferSize = 10
+    else:
+        largeBufferSize = bufferSize
+
+    # Start by performing a query which returns all asteroids that pass within the bufferDistance within a few months
+    # of the targetTime
+    asteroidsApprox = AstorbEphemeris.objects.filter(
+        geometry__dwithin=(geometry, largeBufferSize),
+        startTime__lte=targetTime,
+        endTime__gte=targetTime,
+        brightMag__lt=limitingMag
+        ).distinct('astorbRecord_id')[:limit*10]   # We use a larger limit here since some will be discarded.
+
+    # Now that we have narrowed it down to a list of candidates, check through that list and calculate the exact
+    # ephemeris at the desired targetTime for each candidate and discard any which don't actually fall within the
+    # desired distance.
+    asteroids = []
+    for asteroid in asteroidsApprox:
+        ephemeris = computeSingleEphemeris(asteroid.astorbRecord, targetTime)
+
+        ephemPoint = Point(ephemeris.ra*(180/math.pi), ephemeris.dec*(180/math.pi))
+        separation = geometry.distance(ephemPoint)
+        if separation > bufferSize:
+            continue
+
+        asteroids.append({
+            'record': asteroid.astorbRecord,
+            'ephem': ephemeris
+            })
+
+    return asteroids
