@@ -90,8 +90,8 @@
         {% for asteroid in asteroids %}
             <tr>
             <td>{{asteroid.record.name}}</td>
-            <td>{{asteroid.ephem.ra|formatRA}}</td>
-            <td>{{asteroid.ephem.dec|formatDec}}</td>
+            <td>{{asteroid.ephem.ra}}</td>
+            <td>{{asteroid.ephem.dec}}</td>
             <td>{{asteroid.ephem.mag|floatformat:2}}</td>
             <tr>
         {% endfor %}
