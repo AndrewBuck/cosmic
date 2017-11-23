@@ -928,6 +928,19 @@ def computeSingleEphemerisRange(asteroid, ephemTimeStart, ephemTimeEnd, toleranc
     return ephemerideList
 
 def computeAsteroidEphemerides(ephemTimeStart, ephemTimeEnd, tolerance, timeTolerance, clearFirst):
+    def writeAstorbEphemerisToDB(astorbRecord, startTime, endTime, dimMag, brightMag, geometry):
+        #print("saving " + str(startTime) + "       " + str(endTime) + "     " + geometry)
+        record = AstorbEphemeris(
+            astorbRecord = asteroid,
+            startTime = startTime,
+            endTime = endTime,
+            dimMag = dimMag,
+            brightMag = brightMag,
+            geometry = geometry
+            )
+
+        record.save()
+
     offset = 0
     pagesize = 25000
 
@@ -975,19 +988,6 @@ def computeAsteroidEphemerides(ephemTimeStart, ephemTimeEnd, tolerance, timeTole
                     angularDistance += (180/math.pi)*ephem.separation(previousElement[1], element[1])
                     if angularDistance > 60:
                         geometryString += ')'
-
-                        def writeAstorbEphemerisToDB(astorbRecord, startTime, endTime, dimMag, brightMag, geometry):
-                            #print("saving " + str(startTime) + "       " + str(endTime) + "     " + geometry)
-                            record = AstorbEphemeris(
-                                astorbRecord = asteroid,
-                                startTime = startTime,
-                                endTime = endTime,
-                                dimMag = dimMag,
-                                brightMag = brightMag,
-                                geometry = geometry
-                                )
-
-                            record.save()
 
                         writeAstorbEphemerisToDB(asteroid, startingElement[0], element[0], dimMag, brightMag, geometryString)
                         startingElement = element
