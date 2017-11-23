@@ -1214,15 +1214,20 @@ def observing(request):
 
     asteroids = []
     for asteroid in asteroidsApprox:
+        ephemeris = computeSingleEphemeris(asteroid.astorbRecord, currentTime)
+
+        separation = ephem.separation(ephemeris, (zenithNowRA*(math.pi/180), zenithNowDec*(math.pi/180)) )
+        if separation > windowSize*(math.pi/180):
+            continue
+
         asteroids.append({
             'record': asteroid.astorbRecord,
-            'ephem': computeSingleEphemeris(asteroid.astorbRecord, currentTime)
+            'ephem': ephemeris
             })
 
-    asteroids = sorted(asteroids, key = lambda x: x['ephem'].mag)
+    asteroids = sorted(asteroids, key = lambda x: x['ephem'].mag)[:limit]   # Sort by actual magnitude and reimpose the limit
 
     context['asteroids'] = asteroids
-    """
 
     return render(request, "cosmicapp/observing.html", context)
 
