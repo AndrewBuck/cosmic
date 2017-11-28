@@ -238,6 +238,10 @@ class Image(models.Model):
     def getThumbnailLarge(self):
         return self.getThumbnail("large")
 
+    def getBestPlateSolution(self):
+        #TODO: Add code to make a more informed choice about which plate solution to use if there is more than 1.
+        return self.plateSolutions.first()
+
 class ImageThumbnail(models.Model):
     """
     A record containing details about an individual thumbnail for an image on the site.  Each uploaded image gets multiple

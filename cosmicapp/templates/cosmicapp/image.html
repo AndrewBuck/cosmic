@@ -96,7 +96,42 @@ td.numMatchResults
         <td>1&nbsp;/&nbsp;{{ps.area|divide:41253|invert|floatformat:0|intcomma}}</td>
         </tr>
     {% endfor %}
+    </table>
 
+    <p>This image overlaps with {{overlappingPlates|length}} other images.</p>
+
+    <table border=2px style="border-collapse: collapse; margin: 1em;">
+        <tr>
+        <th>Image</th>
+        <th>Resolution X<br>(arcsec/px)</th>
+        <th>Resolution Y<br>(arcsec/px)</th>
+        <th>Image Area<br>(sq deg)</th>
+        <th>Overlapping Area<br>(sq deg)</th>
+        <th>Thumbnail</th>
+        </tr>
+        <tr>
+        <td>This<br>image</td>
+        <td>{{image.getBestPlateSolution.resolutionX|floatformat:2}}</td>
+        <td>{{image.getBestPlateSolution.resolutionY|floatformat:2}}</td>
+        <td>{{imagePlateArea|floatformat:2}}</td>
+        <td>{{imagePlateArea|floatformat:2}}</td>
+        <td>{{image.getThumbnailSmall|safe}}</td>
+        </tr>
+
+        <tr>
+        <td colspan=4 height=30></td>
+        </tr>
+
+        {% for ps in overlappingPlates %}
+            <tr>
+            <td><a href="/image/{{ps.plate.image.pk}}/">Image<br>{{ps.plate.image.pk}}</a></td>
+            <td>{{ps.plate.resolutionX|floatformat:2}}</td>
+            <td>{{ps.plate.resolutionY|floatformat:2}}</td>
+            <td>{{ps.plateArea|floatformat:4}}</td>
+            <td>{{ps.overlapArea|floatformat:4}}</td>
+            <td>{{ps.plate.image.getThumbnailSmall|safe}}</td>
+            </tr>
+        {% endfor %}
     </table>
 {% endif %}
 
@@ -161,7 +196,7 @@ td.numMatchResults
 <p>Original uploaded filename: <b>{{image.fileRecord.originalFileName}}</b></p>
 <p>SHA 256 hash of original file: <b>{{image.fileRecord.fileSha256}}</b></p>
 
-<h3>Processing<h3>
+<!-- <h3>Processing<h3> -->
 <!-- TODO: Add processing queue jobs for this image. -->
 
 <h3>Image thumbnail</h3>

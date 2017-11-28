@@ -61,6 +61,7 @@ def upload(request):
     context['supportedImageTypes'] = settings.SUPPORTED_IMAGE_TYPES
 
     if request.method == 'POST' and 'myfiles' in request.FILES:
+        #TODO: Create a record for this upload session and link all the UploadedFileRecords to it.
         records = []
         for myfile in request.FILES.getlist('myfiles'):
             fs = FileSystemStorage()
@@ -300,6 +301,23 @@ def image(request, id):
         return render(request, "cosmicapp/imagenotfound.html", context)
 
     context['image'] = image
+
+    overlappingPlates = []
+    plateSolution = image.getBestPlateSolution()
+    imagePlateArea = None
+    if plateSolution != None:
+        imagePlateArea = plateSolution.geometry.area
+        overlappingPlatesObjects = PlateSolution.objects.filter(geometry__overlaps=plateSolution.geometry)
+        for plate in overlappingPlatesObjects:
+            overlappingRegion = plateSolution.geometry.intersection(plate.geometry)
+            overlappingPlates.append({
+                'plate': plate,
+                'plateArea': plate.geometry.area,
+                'overlapArea': overlappingRegion.area
+                })
+
+    context['overlappingPlates'] = overlappingPlates
+    context['imagePlateArea'] = imagePlateArea
 
     numSextractorSources = SextractorResult.objects.filter(image_id=image.pk).count()
     context['numSextractorSources'] = numSextractorSources
@@ -725,8 +743,7 @@ def query(request):
         for image in images:
             imageSubElement = etree.SubElement(root, "Image_" + str(image.pk))
 
-            #TODO: Add code to make a more informed choice about which plate solution to use if there is more than 1.
-            plateSolution = image.plateSolutions.first()
+            plateSolution = image.getBestPlateSolution()
             if plateSolution == None:
                 continue
 
