@@ -1,6 +1,8 @@
 Install Django:
 
-sudo pip3 install Django django-extensions bokeh sqlparse
+sudo apt-get install python3-dev
+
+sudo pip3 install Django django-extensions bokeh sqlparse dateparser
 
 ============== IMPORTANT ==============
 
@@ -242,8 +244,10 @@ that directory.
 
 
 Finally, populate the database tables containing the catalog data.  See below
-for instructions on how to do that and then return here before launching the
-server.
+for instructions on how to do that for individual catalogs if you only want specific
+ones.  If you want to install all of the catalogs you can run the helper script:
+
+./import_all.sh
 
 
 
@@ -259,6 +263,8 @@ python3 dispatcher.py
 Commands that need to be installed on the system and in the path:
 (Note these are mainly needed on the worker nodes running celery workers, not
 necessarily on the webserver itself)
+
+sudo apt-get install sextractor astrometry.net
 
 identify - part of imagemagick.  Calculates image statistics for an image.
 	(width, height, bit depth, etc)

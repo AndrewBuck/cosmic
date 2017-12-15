@@ -1,5 +1,11 @@
 #!/bin/bash
 
+if [ $# -ne 1 ]
+then
+    echo -en "\n\n\tUSAGE: ./import_all.sh <path_to_catalog_directory>/\n\n"
+    exit
+fi
+
 catalogPath="${1%/}"
 
 time python3 createQuestions.py
