@@ -114,7 +114,7 @@ class UploadedFileRecord(models.Model):
     multiple uploads of the same file, etc).
     """
     uploadingUser = models.ForeignKey(User, on_delete=models.CASCADE)
-    unpackedFromFile = models.ForeignKey('self', null=True)
+    unpackedFromFile = models.ForeignKey('self', null=True, on_delete=models.CASCADE)
     originalFileName = models.CharField(max_length=256)
     onDiskFileName = models.CharField(max_length=256)
     fileSha256 = models.CharField(max_length=64)
