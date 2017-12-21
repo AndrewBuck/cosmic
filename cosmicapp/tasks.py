@@ -707,7 +707,7 @@ def astrometryNet(filename):
     print('\n', table)
 
     proc = subprocess.Popen(['solve-field', '--depth', '12,22,30',
-            '--no-plots', '--overwrite', '--timestamp',
+            '--no-plots', '--overwrite', '--timestamp', '--no-fits2fits',
             '--x-column', 'XIMAGE', '--y-column', 'YIMAGE', '--sort-column', 'CONFIDENCE',
             '--width', str(image.dimX), '--height', str(image.dimY),
             '--cpulimit', '30',
