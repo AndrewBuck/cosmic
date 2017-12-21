@@ -27,6 +27,7 @@ td.numMatchResults
     <table border=2px style="border-collapse: collapse; margin: 1em;">
         <tr>
         <th> Uploaded By <br> (username) </th>
+        <th> Date / Time </th>
         <th> Instrument <br> (telescope) </th>
         <th> X Dim <br> (pixels) </th>
         <th> Y Dim <br> (pixels) </th>
@@ -37,6 +38,7 @@ td.numMatchResults
 
         <tr>
         <td> <a href="/user/{{image.fileRecord.uploadingUser}}">{{image.fileRecord.uploadingUser}}</a> </td>
+        <td> {{image.dateTime}} </td>
         <td> {{image.instrument}} </td>
         <td> {{image.dimX}} </td>
         <td> {{image.dimY}} </td>

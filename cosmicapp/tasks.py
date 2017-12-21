@@ -12,6 +12,7 @@ import os
 import re
 import itertools
 import math
+import dateparser
 
 from astropy import wcs
 from astropy.io import fits
@@ -761,6 +762,11 @@ def parseHeaders(imageId):
             elif header.key in ['fits:date_obs', 'fits:date-obs']:
                 key = 'dateObs'
                 value = header.value.split('/')[0].strip().strip("'")
+                try:
+                    image.dateTime = dateparser.parse(value)
+                    image.save()
+                except ValueError:
+                    print("ERROR: Could not parse dateObs: " + value)
 
             elif header.key in ['fits:exptime', 'fits:exposure']:
                 key = 'exposureTime'
@@ -859,6 +865,8 @@ def parseHeaders(imageId):
                 )
 
             prop.save()
+
+        #TODO: Need to handle data split across multiple header fields like dateObs and timeObs.
 
     return True
 

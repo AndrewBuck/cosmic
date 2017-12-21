@@ -141,6 +141,7 @@ class Image(models.Model):
     dimZ = models.IntegerField(null=True)
     bitDepth = models.IntegerField(null=True)
     frameType = models.CharField(max_length=32)
+    dateTime = models.DateTimeField(null=True)
     answers = GenericRelation('Answer')
 
     """
