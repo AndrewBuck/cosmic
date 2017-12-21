@@ -823,7 +823,21 @@ def query(request):
 
                 etree.SubElement(imageSubElement, "GCVSRecord", gcvsDict)
 
-            #TODO: Implement the same as above for Asteroids.
+            asteroidResults = getAsteroidsAroundGeometry(plateSolution.geometry, bufferDistance, image.dateTime, 999, 1000)
+
+            for result in asteroidResults:
+                x, y = w.all_world2pix(result['ephem'].ra*(180/math.pi), result['ephem'].dec*(180/math.pi), 1)    #TODO: Determine if this 1 should be a 0.
+                asteroidDict = {}
+                asteroidDict['id'] = str(result['record'].pk)
+                asteroidDict['number'] = str(result['record'].number)
+                asteroidDict['name'] = str(result['record'].name)
+                asteroidDict['ra'] = str(result['ephem'].ra*(180/math.pi))
+                asteroidDict['dec'] = str(result['ephem'].dec*(180/math.pi))
+                asteroidDict['pixelX'] = str(x)
+                asteroidDict['pixelY'] = str(y)
+
+                etree.SubElement(imageSubElement, "AsteroidEphemerisShortRecord", asteroidDict)
+
             #TODO: Implement the same as above for Exoplanets.
             #TODO: Implement the same as above for UCAC4.
 

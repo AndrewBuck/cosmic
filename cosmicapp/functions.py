@@ -31,6 +31,9 @@ def getLocationForIp(ip):
         return (0, 0)
 
 def getAsteroidsAroundGeometry(geometry, bufferSize, targetTime, limitingMag, limit):
+    if targetTime == None:
+        return []
+
     geometry = GEOSGeometry(geometry)
 
     #TODO: Move this '10' into a global variable or something to force it to be the same as what is used in the compute ephemerides routines.
