@@ -50,3 +50,11 @@ Here is a paper on neural nets and more advanced methods of source detection:
 Mining pixels: The Extraction and Classification of Astronomical Sources
 http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.464.1598&rep=rep1&type=pdf
 
+
+
+The DAMIT database contains asteroid shape models and lightcurve data from
+lightcurve inversion.  This would be good to import to calculate scores for
+target asteroids based on how well studied they already are, etc.  Also could
+be used to show 3d models of asteroids on the site if we wanted to since the 3d
+model files are also included in the database dump.
+http://astro.troja.mff.cuni.cz/projects/asteroids3D/web.php?page=project_main_page
