@@ -20,6 +20,7 @@ from django.views.decorators.http import require_http_methods
 from lxml import etree
 import ephem
 from astropy import wcs
+from astropy.io import fits
 
 from .models import *
 from .forms import *
@@ -373,6 +374,17 @@ def imageProperties(request, id):
 
     properties = ImageProperty.objects.filter(image_id=image.pk)
     context['properties'] = properties
+
+    hduList = fits.open(settings.MEDIA_ROOT + image.fileRecord.onDiskFileName)
+
+    fitsHeaderString = ''
+    i = 0
+    for hdu in hduList:
+        fitsHeaderString += '=== HDU {} ===\n\n'.format(i)
+        fitsHeaderString += hdu.header.tostring(sep='\n', endcard=False, padding=False)
+        i += 1
+
+    context['fitsHeaderString'] = fitsHeaderString
 
     return render(request, "cosmicapp/imageProperties.html", context)
 
