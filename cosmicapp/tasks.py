@@ -768,6 +768,10 @@ def parseHeaders(imageId):
                 except ValueError:
                     print("ERROR: Could not parse dateObs: " + value)
 
+            elif header.key in ['fits:time_obs', 'fits:time-obs']:
+                key = 'timeObs'
+                value = header.value.split('/')[0].strip().strip("'")
+
             elif header.key in ['fits:exptime', 'fits:exposure']:
                 key = 'exposureTime'
                 value = header.value.split()[0]
@@ -866,7 +870,15 @@ def parseHeaders(imageId):
 
             prop.save()
 
-        #TODO: Need to handle data split across multiple header fields like dateObs and timeObs.
+        # Handle data split across multiple header fields like dateObs and timeObs.
+        dateObsResult = ImageProperty.objects.filter(image=image, key='dateObs').first()
+        timeObsResult = ImageProperty.objects.filter(image=image, key='timeObs').first()
+        if dateObsResult != None and timeObsResult != None:
+            try:
+                image.dateTime = dateparser.parse(dateObsResult.value + ' ' + timeObsResult.value)
+                image.save()
+            except ValueError:
+                print("ERROR: Could not parse dateObs: " + value)
 
     return True
 
