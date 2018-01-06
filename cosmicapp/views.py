@@ -845,6 +845,7 @@ def query(request):
                 asteroidDict['name'] = str(result['record'].name)
                 asteroidDict['ra'] = str(result['ephem'].ra*(180/math.pi))
                 asteroidDict['dec'] = str(result['ephem'].dec*(180/math.pi))
+                asteroidDict['mag'] = str(result['ephem'].mag)
                 asteroidDict['pixelX'] = str(x)
                 asteroidDict['pixelY'] = str(y)
 
