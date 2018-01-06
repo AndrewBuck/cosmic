@@ -851,8 +851,48 @@ def query(request):
 
                 etree.SubElement(imageSubElement, "AsteroidEphemerisShortRecord", asteroidDict)
 
-            #TODO: Implement the same as above for Exoplanets.
-            #TODO: Implement the same as above for UCAC4.
+            exoplanetResults = ExoplanetRecord.objects.filter(geometry__dwithin=(plateSolution.geometry, bufferDistance))
+
+            for result in exoplanetResults:
+                x, y = w.all_world2pix(result.ra, result.dec, 1)    #TODO: Determine if this 1 should be a 0.
+                exoplanetDict = {}
+                exoplanetDict['id'] = str(result.pk)
+                exoplanetDict['identifier'] = str(result.identifier)
+                exoplanetDict['identifier2'] = str(result.identifier2)
+                exoplanetDict['starIdentifier'] = str(result.starIdentifier)
+                exoplanetDict['component'] = str(result.component)
+                exoplanetDict['numComponents'] = str(result.numComponents)
+                exoplanetDict['ra'] = str(result.ra)
+                exoplanetDict['dec'] = str(result.dec)
+                exoplanetDict['pixelX'] = str(x)
+                exoplanetDict['pixelY'] = str(y)
+                exoplanetDict['magV'] = str(result.magV)
+                exoplanetDict['period'] = str(result.period)
+                exoplanetDict['transitEpoch'] = str(result.transitEpoch)
+                exoplanetDict['transitDuration'] = str(result.transitDuration)
+                exoplanetDict['transitDepth'] = str(result.transitDepth)
+
+                etree.SubElement(imageSubElement, "ExoplanetRecord", exoplanetDict)
+
+            ucac4Results = UCAC4Record.objects.filter(geometry__dwithin=(plateSolution.geometry, bufferDistance))
+
+            for result in ucac4Results:
+                x, y = w.all_world2pix(result.ra, result.dec, 1)    #TODO: Determine if this 1 should be a 0.
+                ucac4Dict = {}
+                ucac4Dict['id'] = str(result.pk)
+                ucac4Dict['identifier'] = str(result.identifier)
+                ucac4Dict['ra'] = str(result.ra)
+                ucac4Dict['dec'] = str(result.dec)
+                ucac4Dict['pmra'] = str(result.pmra)
+                ucac4Dict['pmdec'] = str(result.pmdec)
+                ucac4Dict['pixelX'] = str(x)
+                ucac4Dict['pixelY'] = str(y)
+                ucac4Dict['magFit'] = str(result.magFit)
+                ucac4Dict['magAperture'] = str(result.magAperture)
+                ucac4Dict['magError'] = str(result.magError)
+                ucac4Dict['id2mass'] = str(result.id2mass)
+
+                etree.SubElement(imageSubElement, "UCAC4Record", ucac4Dict)
 
     elif request.GET['queryfor'] == 'ota':
         results = OTA.objects
