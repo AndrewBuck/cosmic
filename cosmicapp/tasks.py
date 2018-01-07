@@ -363,17 +363,7 @@ def sextractor(filename):
 
             records = SextractorResult.objects.filter(image=image)
             meanFluxAuto = records.aggregate(Avg('fluxAuto'))['fluxAuto__avg']
-
-            #TODO: Switch to this commented out line when we convert to postgre-sql.
-            #stdDevFluxAuto = records.aggregate(StdDev('fluxAuto'))
-            stdDevFluxAuto = 0
-            if len(records) >= 2:
-                for record in records:
-                    stdDevFluxAuto += math.pow(record.fluxAuto - meanFluxAuto, 2)
-                stdDevFluxAuto /= len(records) - 1
-                stdDevFluxAuto = math.sqrt(stdDevFluxAuto)
-            else:
-                stdDevFluxAuto = 1
+            stdDevFluxAuto = records.aggregate(StdDev('fluxAuto'))['fluxAuto__stddev']
 
             for record in records:
                 record.confidence = sigmoid((record.fluxAuto-meanFluxAuto)/stdDevFluxAuto)
@@ -430,17 +420,7 @@ def image2xy(filename):
 
         records = Image2xyResult.objects.filter(image=image)
         meanFlux = records.aggregate(Avg('flux'))['flux__avg']
-
-        #TODO: Switch to this commented out line when we convert to postgre-sql.
-        #stdDevFlux = records.aggregate(StdDev('flux'))
-        stdDevFlux = 0
-        if len(records) >= 2:
-            for record in records:
-                stdDevFlux += math.pow(record.flux - meanFlux, 2)
-            stdDevFlux /= len(records) - 1
-            stdDevFlux = math.sqrt(stdDevFlux)
-        else:
-            stdDevFlux = 1
+        stdDevFlux = records.aggregate(StdDev('flux'))['flux__stddev']
 
         for record in records:
             record.confidence = sigmoid((record.flux-meanFlux)/stdDevFlux)
@@ -488,20 +468,10 @@ def daofind(filename):
 
         records = DaofindResult.objects.filter(image=image)
         meanMag = records.aggregate(Avg('mag'))['mag__avg']
-
-        #TODO: Switch to this commented out line when we convert to postgre-sql.
-        #TODO: Also incorporate sharpness, sround, and ground into the calculation.
-        #stdDevMag = records.aggregate(StdDev('mag'))
-        stdDevMag = 0
-        if len(records) >= 2:
-            for record in records:
-                stdDevMag += math.pow(record.mag - meanMag, 2)
-            stdDevMag /= len(records) - 1
-            stdDevMag = math.sqrt(stdDevMag)
-        else:
-            stdDevMag = 1
+        stdDevMag = records.aggregate(StdDev('mag'))['mag__stddev']
 
         for record in records:
+            #TODO: Incorporate sharpness, sround, and ground into the calculation.
             record.confidence = sigmoid((meanMag-record.mag)/stdDevMag)
             record.save()
 
@@ -543,20 +513,10 @@ def starfind(filename):
 
         records = StarfindResult.objects.filter(image=image)
         meanMag = records.aggregate(Avg('mag'))['mag__avg']
-
-        #TODO: Switch to this commented out line when we convert to postgre-sql.
-        #TODO: Also incorporate sharpness, roundness, etc, into the calculation.
-        #stdDevMag = records.aggregate(StdDev('mag'))
-        stdDevMag = 0
-        if len(records) >= 2:
-            for record in records:
-                stdDevMag += math.pow(record.mag - meanMag, 2)
-            stdDevMag /= len(records) - 1
-            stdDevMag = math.sqrt(stdDevMag)
-        else:
-            stdDevMag = 1
+        stdDevMag = records.aggregate(StdDev('mag'))['mag__stddev']
 
         for record in records:
+            #TODO: Incorporate sharpness, roundness, etc, into the calculation.
             record.confidence = sigmoid((meanMag-record.mag)/stdDevMag)
             record.save()
 
