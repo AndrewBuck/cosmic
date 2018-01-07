@@ -1,3 +1,6 @@
+Currently the 'zoom' button in the image galleries is not working, need to fix this.
+
+
 solve-field - potentially useful commandline options:
 --depth      try just 10 or so objects first then if it fails re-queue later with a deeper depth.
 --cpulimit
@@ -10,6 +13,20 @@ Login usernames should not be case sensitive.
 
 allow users to upload a text file containing md5 or sha hashes of filenames to be checked against uploaded files to
 ensure they uploaded correctly.
+
+
+
+Have a system where a user can "log in" as an avalaible observer when they actually have their scope set up and ready to
+use and are out observing.  Then if something like an alert notice comes in, or other similar types of needed
+observations, they can be offered out to "active" users at the current time and they can respond with a yes/no on whether
+they will switch to that offered target.  This way we can get very reliable response on selected targets.
+
+
+
+When users donate to the site have it so their donation covers themself and another user to encourage people to donate.
+On the donation form there should be an option to either choose a specific username as the other user, an email address
+of someone who doesn't use the site with to email a redeem code to, or a choice to let the other user be chosen by us
+or the site itself.
 
 
 
@@ -26,6 +43,9 @@ imcore  - standalone program for source extraction (automatically handles multi-
           http://casu.ast.cam.ac.uk/surveys-projects/software-release/imcore
 
 fitsverify - a fits file utility to verify a fits file does not contain errors.
+
+fpack / funpack - a fits compression utility that leaves the fits headers uncompressed but compresses the image data.
+                  http://archive.noao.edu/tutorials/fpack
 
 
 
@@ -58,3 +78,12 @@ target asteroids based on how well studied they already are, etc.  Also could
 be used to show 3d models of asteroids on the site if we wanted to since the 3d
 model files are also included in the database dump.
 http://astro.troja.mff.cuni.cz/projects/asteroids3D/web.php?page=project_main_page
+
+
+
+The Las Cumbres Observatory is a nonprofit group with a robotic telescope
+network with global coverage.  We should look into collaboration with the,
+either processing data produced by their scopes, and/or submitting observation
+requests to them as we would with individual observers.
+https://lco.global/
+
