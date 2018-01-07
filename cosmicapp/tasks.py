@@ -209,7 +209,11 @@ def imagestats(filename):
                         frames.append(hdu.data[channelIndex+i])
 
                 for frame in frames:
-                    channelInfo = ImageChannelInfo.objects.get(image=image, index=channelIndex)
+                    try:
+                        channelInfo = ImageChannelInfo.objects.get(image=image, index=channelIndex)
+                    except:
+                        continue
+
                     mean, median, stdDev = sigma_clipped_stats(frame, sigma=10, iters=0)
 
                     #mask = make_source_mask(frame, snr=10, npixels=5, dilate_size=11)
