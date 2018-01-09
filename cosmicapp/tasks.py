@@ -254,7 +254,7 @@ def generateThumbnails(filename):
         # For bad lines use low/negative values along the middle row/col in the kernel.
         proc = subprocess.Popen(['convert', "-gamma", "0.8", "-convolve", "1,2,4,2,1,2,4,6,4,2,3,5,10,5,3,2,4,6,4,2,1,2,4,2,1",
                 "-contrast-stretch", ".1%x.1%", "-strip", "-filter", "spline", "-resize",
-                sizeArg, "-verbose", settings.MEDIA_ROOT + filename, staticDirectory + "images/" + tempFilename],
+                sizeArg, "-verbose", settings.MEDIA_ROOT + filename, "-depth", "8", staticDirectory + "images/" + tempFilename],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE)
 
