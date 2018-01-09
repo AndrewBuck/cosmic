@@ -1,0 +1,29 @@
+{% extends "cosmicapp/base.html" %}
+{% load cosmicapp_extras %}
+
+{% block extratitle %} - Create new observatory {% endblock %}
+
+{% block mainbody %}
+<h2>New Observatory</h2>
+
+<p style="color: red">
+PRIVACY NOTICE: Please be aware that people viewing your profile on this website will be able to see the locations you
+set for your observatories.
+</p>
+
+<p>
+<form action="/observatory/new/" method="POST">
+{% csrf_token %}
+Name: <input type="text" name="name" value="{{defaultName}}"> (optional) A name identify this location in case you observe from multiple locations.<br>
+Lat: <input type="text" name="lat" value="{{defaultLat}}"> (required) Latitude in decimal degrees (negative number for southern hemisphere)<br>
+Lon: <input type="text" name="lon" value="{{defaultLon}}"> (required) Longitude in decimal degrees (poitive for 'east' and negative for 'west')<br>
+Elevation: <input type="text" name="ele" value="{{defaultEle}}"> (recommeded) Elevation of the site in meters above sea level.<br>
+Make Default: <input type="checkbox" name="makedefault" value="checked" {{defaultChecked}}> (optional) If checked, set this as your default observing location.<br><br>
+{% if error %}<p style="color: red">{{error}}<br><br></p>{% endif %}
+<input type="submit" value="Save Profile">
+</form>
+</p>
+
+{% endblock mainbody %}
+
+

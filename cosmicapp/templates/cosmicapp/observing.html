@@ -54,6 +54,7 @@
             {% if user.is_authenticated and promptProfileEdit %}
                 <tr>
                 <td colspan=3 style="color: red;">
+                <!-- TODO: Update the text of this warning message to reflect the new observatory system. -->
                 Note: Guesses were made about your observing location.  Consider updating the default observing
                 location in <a href="/user/{{user.username}}">your profile</a> so we can correctly set these values.
                 <br>

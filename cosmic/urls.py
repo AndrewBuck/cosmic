@@ -32,6 +32,7 @@ urlpatterns = [
     url(r'^catalogs/', views.catalogs),
 
     url(r'^user/(?P<username>.+)/', views.userpage),
+    url(r'^observatory/(?P<id>.+)/', views.observatory),
 
     url(r'^image/(?P<id>[0-9]+)/$', views.image),
     url(r'^image/(?P<id>[0-9]+)/thumbnail/(?P<size>[a-zA-Z]+)/$', views.imageThumbnailUrl),

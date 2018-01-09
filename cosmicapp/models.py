@@ -10,7 +10,7 @@ from django.contrib.contenttypes.models import ContentType
 
 #TODO:  Need to review the on_delete behaviour of all foreign keys to guarantee references remain intact as needed.
 
-#TODO:  Set a reated_name for all foreign keys and use that in the code where appropriate to make the code more readable.
+#TODO:  Set a related_name for all foreign keys and use that in the code where appropriate to make the code more readable.
 
 #TODO:  Need to review the null constraint for all fields and try to minimize use of null=True, this is best done after the database is in a more stable state.
 
@@ -90,9 +90,7 @@ class Profile(models.Model):
     and the tables are kept in sync.  I.E. no raw sql queries to the User table, etc.
     """
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    homeLat = models.FloatField(null=True, blank=True)
-    homeLon = models.FloatField(null=True, blank=True)
-    elevation = models.FloatField(null=True, blank=True)
+    defaultObservatory = models.ForeignKey('Observatory', on_delete=models.CASCADE, null=True)
     birthDate = models.DateField(null=True, blank=True)
 
 @receiver(post_save, sender=User)
@@ -104,6 +102,15 @@ def create_user_profile(sender, instance, created, **kwargs):
 def save_user_profile(sender, instance, **kwargs):
     instance.profile.save()
 
+class Observatory(models.Model):
+    """
+    A record storing the location and other basic information for an observing location.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    name = models.CharField(max_length=256, null=True)
+    lat = models.FloatField(null=True, blank=True)
+    lon = models.FloatField(null=True, blank=True)
+    elevation = models.FloatField(null=True, blank=True)
 
 
 

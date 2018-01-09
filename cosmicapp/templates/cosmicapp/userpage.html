@@ -14,10 +14,47 @@
     </form>
 {% else %}
     <ul>
-        <li>Home Lat: {{foruser.profile.homeLat}}</li>
-        <li>Home Lon: {{foruser.profile.homeLon}}</li>
-        <li>Elevation (m): {{foruser.profile.elevation}}</li>
-        <li>Birth Date: {{foruser.profile.birthDate}}</li>
+        <p>Birth Date: {{foruser.profile.birthDate}}</p>
+
+        {% if foruser.profile.defaultObservatory %}
+            <p>
+            Default Observatory:
+            <a href="/observatory/{{foruser.profile.defaultObservatory.pk}}">
+            {{foruser.profile.defaultObservatory.name}}
+            (Lat: {{foruser.profile.defaultObservatory.lat}}
+            Lon: {{foruser.profile.defaultObservatory.lon}}
+            Elevation: {{foruser.profile.defaultObservatory.elevation}} m)
+            </a>
+            {% if user.username == foruser.username %}
+                &emsp;&emsp;
+                <form action="/observatory/{{foruser.profile.defaultObservatory.pk}}/" method="POST">
+                {% csrf_token %}
+                <input type=hidden name=makedefault value=clear>
+                <input type=submit class=button value="Unset as default">
+                </form>
+            {% endif %}
+            </p>
+        {% else %}
+            <p>
+            Default Observatory: None set
+            {% if user.username == foruser.username %}, create one below and go to its page to choose it as a default{% endif %}
+            </p>
+        {% endif %}
+
+        <p>
+        Other Observatories:
+        {% if user.username == foruser.username %}(<a href="/observatory/new">add observatory</a>){% endif %}
+        <br>
+        {% for otherObservatory in otherObservatories %}
+            <a href="/observatory/{{otherObservatory.pk}}">
+            {{otherObservatory.name}}
+            (Lat: {{otherObservatory.lat}}
+            Lon: {{otherObservatory.lon}}
+            Elevation: {{otherObservatory.elevation}} m)
+            </a>
+            <br>
+        {% endfor %}
+        </p>
     </ul>
 
     {% comment %}

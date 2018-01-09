@@ -252,6 +252,10 @@ def userpage(request, username):
 
     context['foruser'] = foruser
     context['foruserForm'] = foruserForm
+    context['otherObservatories'] = Observatory.objects.filter(user=foruser).order_by('-pk')
+    if foruser.profile.defaultObservatory != None:
+        context['otherObservatories'] = context['otherObservatories'].exclude(pk=foruser.profile.defaultObservatory.pk)
+
     if request.method == 'POST':
         if 'edit' in request.POST:
             context['edit'] = request.POST['edit']
@@ -259,10 +263,7 @@ def userpage(request, username):
             profileForm = ProfileForm(request.POST)
 
             if request.user.username == foruser.username and profileForm.is_valid():
-                foruser.profile.homeLat = profileForm.cleaned_data['homeLat']
-                foruser.profile.homeLon = profileForm.cleaned_data['homeLon']
                 foruser.profile.birthDate = profileForm.cleaned_data['birthDate']
-                foruser.profile.elevation = profileForm.cleaned_data['elevation']
                 foruser.profile.save()
 
                 return HttpResponseRedirect('/user/' + foruser.username + '/')
@@ -275,6 +276,66 @@ def userpage(request, username):
 
 
     return render(request, "cosmicapp/userpage.html", context)
+
+def observatory(request, id):
+    context = {"user" : request.user}
+
+    if id.lower() == 'new':
+        if request.method == 'POST' and request.user.is_authenticated:
+            if not (request.POST['lat'] != "" and request.POST['lon'] != ""):
+                context['defaultName'] = request.POST['name']
+                context['defaultLat'] = request.POST['lat']
+                context['defaultLon'] = request.POST['lon']
+                context['defaultEle'] = request.POST['ele']
+                context['defaultChecked'] = request.POST['makedefault']
+                context['error'] = 'Error: Missing required fields'
+                return render(request, "cosmicapp/observatorynew.html", context)
+
+            lat = float(request.POST.get('lat', ''))
+            lon = float(request.POST.get('lon', ''))
+            name = request.POST.get('name', None)
+            ele = float(request.POST.get('ele', ''))
+
+            observatory = Observatory(
+                user = request.user,
+                name = name,
+                lat = lat,
+                lon = lon,
+                elevation = ele
+                )
+
+            observatory.save()
+
+            if request.POST.get('makedefault', '') == "checked":
+                request.user.profile.defaultObservatory = observatory
+                request.user.profile.save()
+
+            return HttpResponseRedirect('/user/' + request.user.username + '/')
+        else:
+            context['error'] = 'Error: You must be logged in to create an observatory.'
+            return render(request, "cosmicapp/observatorynew.html", context)
+
+    try:
+        observatory = Observatory.objects.get(pk=id)
+    except Observatory.DoesNotExist:
+        context['id'] = id
+        return render(request, "cosmicapp/observatorynotfound.html", context)
+
+    context['observatory'] = observatory
+
+    #TODO: For code clarity reasons, it might make sense to refactor this section to work it into the section up above.
+    # Not sure about this yet.
+    if request.method == 'POST' and request.user.is_authenticated and request.user == observatory.user:
+        if request.POST['makedefault'] == 'true':
+            request.user.profile.defaultObservatory = observatory
+
+        if request.POST['makedefault'] == 'clear':
+            request.user.profile.defaultObservatory = None
+
+        request.user.profile.save()
+        return HttpResponseRedirect('/user/' + request.user.username + '/')
+
+    return render(request, "cosmicapp/observatory.html", context)
 
 def processQueue(request):
     context = {"user" : request.user}
@@ -1202,14 +1263,18 @@ def observing(request):
 
     #TODO: Provide a input field like the ones for lat/lon/etc to set the observation date and then use position to calculate evening/midnight/morning for that location.
 
+    lat = None
+    lon = None
+    ele = None
     if 'lat' in request.GET and 'lon' in request.GET:
         lat = float(request.GET['lat'])
         lon = float(request.GET['lon'])
     else:
         if request.user.is_authenticated:
-            lat = request.user.profile.homeLat
-            lon = request.user.profile.homeLon
-            ele = request.user.profile.elevation
+            if request.user.profile.defaultObservatory != None:
+                lat = request.user.profile.defaultObservatory.lat
+                lon = request.user.profile.defaultObservatory.lon
+                ele = request.user.profile.defaultObservatory.elevation
             #TODO: Set limiting mag from user profile.
 
             if lat == None or lon == None:
