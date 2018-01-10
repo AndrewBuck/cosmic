@@ -96,6 +96,8 @@
             <td>(The maximum number of objects to display in each table: max 500)</td>
             </tr>
 
+            {% comment %} TODO: Add options for VSP plots and other similar options for other external links? {% endcomment %}
+
             {% if user.is_authenticated and promptProfileEdit %}
                 <tr>
                 <td colspan=3 style="color: red;">
@@ -114,31 +116,44 @@
             {% endif %}
             </table>
         <br>
-        <td><input type=submit></td>
+        <td><input type=submit class=button></td>
         </form>
 </p>
 
 <h3>Now</h3>
 
-<p>Your current zenith is at:&emsp;{{zenithNowRA}}&emsp;{{zenithNowDec}}</p>
+<p>Your current zenith is at:&emsp;{{zenithNowRA|formatRA}}&emsp;{{zenithNowDec|formatDec}}</p>
 
+<p>
 <a href="#asteroidDiv">Jump to Asteroid Results</a><br>
 <a href="#exoplanetDiv">Jump to Exoplanet Results</a><br>
 <a href="#variablesDiv">Jump to Variable Star Results</a><br>
 <a href="#messierDiv">Jump to Messier Object Results</a><br>
 <a href="#dsoDiv">Jump to Deep Sky Object Results</a><br>
+</p>
 
 <div id=asteroidDiv style="display: inline-block; margin: 2em;">
     <p>There are {{asteroids|length}} asteroids within {{windowSize}} degrees of your zenith.</p>
 
     <table cellpadding=5px border=2px style="border-collapse: collapse; margin: 1em;">
-    <tr><th>Name</th> <th>RA</th> <th>Dec</th> <th>Mag</th></tr>
+    <tr><th>Name</th> <th>RA</th> <th>Dec</th> <th>Mag</th> <th>CEU</th> <th>Priority</th> <th>Links</th></tr>
         {% for asteroid in asteroids %}
             <tr>
             <td>{{asteroid.record.name}}</td>
             <td>{{asteroid.ephem.ra|formatRA}}</td>
             <td>{{asteroid.ephem.dec|formatDec}}</td>
             <td>{{asteroid.ephem.mag|floatformat:2}}</td>
+            <td>{{asteroid.record.ceu|floatformat:3}}</td>
+            <td>{{asteroid.record.astrometryNeededCode}}</td>
+            <td>
+            <a href="https://www.minorplanetcenter.net/db_search/show_object?utf8=✓&object_id={{asteroid.record.name}}">MPC</a>
+            <a href="https://ssd.jpl.nasa.gov/sbdb.cgi?sstr={{asteroid.record.name}}">JPL</a>
+            <!-- TODO: Link to (post only)   http://alcdef.org/alcdef_GenerateALCDEFPage.php -->
+            <!-- TODO: Link to (post only)   http://www.minorplanet.info/PHP/GenerateLCDBHTMLPages.php -->
+            {% if asteroid.record.number %}
+            <a href="http://astro.troja.mff.cuni.cz/projects/asteroids3D/web.php?page=db_asteroid_detail&asteroid_id={{asteroid.record.number}}">DAMIT</a>
+            {% endif %}
+            </td>
             <tr>
         {% endfor %}
     </table>
@@ -148,13 +163,22 @@
     <p>There are {{exoplanets|length}} exoplanets within {{windowSize}} degrees of your zenith.</p>
 
     <table cellpadding=5px border=2px style="border-collapse: collapse; margin: 1em;">
-    <tr><th>Planet<br>Name</th> <th>RA</th> <th>Dec</th> <th>Star<br>Mag V</th></tr>
+    <tr><th>Planet<br>Name</th> <th>RA</th> <th>Dec</th> <th>Star<br>Mag V</th> <th>Links</th></tr>
         {% for exoplanet in exoplanets %}
             <tr>
             <td>{{exoplanet.identifier}}</td>
             <td>{{exoplanet.ra|formatRA}}</td>
             <td>{{exoplanet.dec|formatDec}}</td>
             <td>{{exoplanet.magV|floatformat:2}}</td>
+            <td>
+            {% if exoplanet.transitDepth %}
+            <a href="http://var2.astro.cz/ETD/etd.php?STARNAME={{exoplanet.starIdentifier}}&PLANET={{exoplanet.component}}">Transit</a>
+            {% endif %}
+            <a href="http://exoplanets.org/detail/{{exoplanet.identifier}}">Exoplanet.org</a>
+            <a href="https://exoplanetarchive.ipac.caltech.edu/cgi-bin/DisplayOverview/nph-DisplayOverview?objname={{exoplanet.identifier}}">NASA</a>
+            <a href="http://exoplanet.eu/catalog/{{exoplanet.identifier}}">Exoplanet.eu</a>
+            <a href="http://simbad.u-strasbg.fr/simbad/sim-id?Ident={{exoplanet.identifier}}">SIMBAD</a>
+            </td>
             <tr>
         {% endfor %}
     </table>
@@ -165,7 +189,7 @@
 
     <table cellpadding=5px border=2px style="border-collapse: collapse; margin: 1em;">
     <tr><th>Name</th> <th>RA</th> <th>Dec</th> <th>Mag<br>max</th> <th>Mag<br>min</th>
-    <th>Period</th> <th>Type</th> <th>Type2</th> <th>Spectral<br>type</th></tr>
+    <th>Period</th> <th>Type</th> <th>Type2</th> <th>Spectral<br>type</th> <th>Links</th></tr>
         {% for variableStar in variableStars %}
             <tr>
             <td>{{variableStar.identifier}}</td>
@@ -177,6 +201,11 @@
             <td>{{variableStar.variableType}}</td>
             <td>{{variableStar.variableType2}}</td>
             <td>{{variableStar.spectralType}}</td>
+            <td>
+            <a href="https://www.aavso.org/apps/webobs/results/?star={{variableStar.identifier}}&num_results=50">AAVSO</a>
+            <a href="https://www.aavso.org/apps/vsp/chart/?star={{variableStar.identifier}}&fov=60&maglimit=14.5&resolution=150&north=up&east=left">VSP</a>
+            <a href="http://simbad.u-strasbg.fr/simbad/sim-id?Ident={{variableStar.identifier}}">SIMBAD</a>
+            </td>
             </tr>
         {% endfor %}
     </table>
@@ -186,7 +215,7 @@
     <p>There are {{messierObjects|length}} Messier objects within {{windowSize}} degrees of your zenith.</p>
 
     <table cellpadding=5px border=2px style="border-collapse: collapse; margin: 1em;">
-    <tr><th>Name</th> <th>RA</th> <th>Dec</th> <th>Object<br>type</th> <th>Mag V</th></tr>
+    <tr><th>Name</th> <th>RA</th> <th>Dec</th> <th>Object<br>type</th> <th>Mag V</th> <th>Links</th></tr>
         {% for messierObject in messierObjects %}
             <tr>
             <td>{{messierObject.identifier}}</td>
@@ -194,6 +223,9 @@
             <td>{{messierObject.dec|formatDec}}</td>
             <td>{{messierObject.objectType}}</td>
             <td>{{messierObject.magV|floatformat:2}}</td>
+            <td>
+            <a href="http://simbad.u-strasbg.fr/simbad/sim-id?Ident={{messierObject.identifier}}">SIMBAD</a>
+            </td>
             <tr>
         {% endfor %}
     </table>
@@ -203,7 +235,7 @@
     <p>There are {{extendedSources|length}} deep sky objects within {{windowSize}} degrees of your zenith.</p>
 
     <table cellpadding=5px border=2px style="border-collapse: collapse; margin: 1em;">
-    <tr><th>Name</th> <th>RA</th> <th>Dec</th> <th>Mag K</th> <th>Radius<br>(arcsec)</th> <th>W/H<br>ratio</th></tr>
+    <tr><th>Name</th> <th>RA</th> <th>Dec</th> <th>Mag K</th> <th>Radius<br>(arcsec)</th> <th>W/H<br>ratio</th> <th>Links</th></tr>
         {% for extendedSource in extendedSources %}
             <tr>
             <td>{{extendedSource.identifier}}</td>
@@ -212,6 +244,9 @@
             <td>{{extendedSource.isophotalKMag|floatformat:2}}</td>
             <td>{{extendedSource.isophotalKSemiMajor|floatformat:2}}</td>
             <td>{{extendedSource.isophotalKMinorMajor|floatformat:2}}</td>
+            <td>
+            <a href="http://simbad.u-strasbg.fr/simbad/sim-basic?Ident={{extendedSource.identifier}}&submit=SIMBAD+search">SIMBAD</a>
+            </td>
             <tr>
         {% endfor %}
     </table>
