@@ -143,6 +143,7 @@ class Image(models.Model):
     fileRecord = models.ForeignKey(UploadedFileRecord, on_delete=models.PROTECT, null=True)
     parentImages = models.ManyToManyField('self', symmetrical=False, related_name='childImages')
     instrument = models.ForeignKey(Instrument, on_delete=models.PROTECT, null=True)
+    observatory = models.ForeignKey(Observatory, on_delete=models.PROTECT, null=True)
     dimX = models.IntegerField(null=True)
     dimY = models.IntegerField(null=True)
     dimZ = models.IntegerField(null=True)

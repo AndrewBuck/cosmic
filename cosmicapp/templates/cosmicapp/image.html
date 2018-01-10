@@ -29,6 +29,7 @@ td.numMatchResults
         <th> Uploaded By <br> (username) </th>
         <th> Date / Time </th>
         <th> Instrument <br> (telescope) </th>
+        <th> Observatory <br> (location) </th>
         <th> X Dim <br> (pixels) </th>
         <th> Y Dim <br> (pixels) </th>
         <th> Z Dim <br> (layers) </th>
@@ -40,6 +41,7 @@ td.numMatchResults
         <td> <a href="/user/{{image.fileRecord.uploadingUser}}">{{image.fileRecord.uploadingUser}}</a> </td>
         <td> {{image.dateTime}} </td>
         <td> {{image.instrument}} </td>
+        <td> {{image.observatory.name}} </td>
         <td> {{image.dimX}} </td>
         <td> {{image.dimY}} </td>
         <td> {{image.dimZ}} </td>
