@@ -12,6 +12,51 @@
 
 <h2>Observing suggestions for tonight</h2>
 
+{% if user.is_authenticated %}
+    <p>
+    Choose Observing Location:
+    <table cellpadding=10px>
+        <tr>
+            <td>
+            Default Location:
+            </td>
+
+            <td>
+            {% if user.profile.defaultObservatory %}
+                <a href="/observing/?lat={{user.profile.defaultObservatory.lat}}&lon={{user.profile.defaultObservatory.lon}}&ele={{user.profile.defaultObservatory.elevation}}">
+                {{user.profile.defaultObservatory.name}}
+                (Lat: {{user.profile.defaultObservatory.lat}}
+                Lon: {{user.profile.defaultObservatory.lon}}
+                Elevation: {{user.profile.defaultObservatory.elevation}} m)
+                </a>
+            {% else %}
+                None set
+            {% endif %}
+
+            </td>
+        </tr>
+
+        <tr>
+            <td valign="top">
+            Other Locations:
+            </td>
+
+            <td>
+            {% for otherObservatory in otherObservatories %}
+                <a href="/observing/?lat={{otherObservatory.lat}}&lon={{otherObservatory.lon}}&ele={{otherObservatory.elevation}}">
+                {{otherObservatory.name}}
+                (Lat: {{otherObservatory.lat}}
+                Lon: {{otherObservatory.lon}}
+                Elevation: {{otherObservatory.elevation}} m)
+                </a>
+                <br>
+            {% endfor %}
+            </td>
+        </tr>
+    </table>
+    </p>
+{% endif %}
+
 <p>
         <form method=get>
             <table cellpadding=5>

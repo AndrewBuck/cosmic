@@ -1239,6 +1239,11 @@ def observing(request):
     promptProfileEdit = False
     profileMissingFields = []
 
+    if request.user.is_authenticated:
+        context['otherObservatories'] = Observatory.objects.filter(user=request.user).order_by('-pk')
+        if request.user.profile.defaultObservatory != None:
+            context['otherObservatories'] = context['otherObservatories'].exclude(pk=request.user.profile.defaultObservatory.pk)
+
     if 'ele' in request.GET:
         ele = float(request.GET['ele'])
     else:
@@ -1258,7 +1263,6 @@ def observing(request):
 
     lat = None
     lon = None
-    ele = None
     if 'lat' in request.GET and 'lon' in request.GET:
         lat = float(request.GET['lat'])
         lon = float(request.GET['lon'])
@@ -1350,7 +1354,7 @@ def observing(request):
     asteroids = getAsteroidsAroundGeometry('POINT({} {})'.format(zenithNowRA, zenithNowDec),
         windowSize, currentTime, limitingMag, limit)
 
-    asteroids = sorted(asteroids, key = lambda x: x['ephem'].mag)[:limit]   # Sort by actual magnitude and reimpose the limit
+    asteroids = sorted(asteroids, key = lambda x: x['record'].ceu, reverse=True)[:limit]
 
     context['asteroids'] = asteroids
 
