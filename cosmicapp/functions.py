@@ -42,6 +42,9 @@ def getAsteroidsAroundGeometry(geometry, bufferSize, targetTime, limitingMag, li
     else:
         largeBufferSize = bufferSize
 
+    # We use a larger limit here since some will be discarded.
+    fakeLimit = min(limit*10, 100)
+
     # Start by performing a query which returns all asteroids that pass within the bufferDistance within a few months
     # of the targetTime
     asteroidsApprox = AstorbEphemeris.objects.filter(
@@ -49,7 +52,7 @@ def getAsteroidsAroundGeometry(geometry, bufferSize, targetTime, limitingMag, li
         startTime__lte=targetTime,
         endTime__gte=targetTime,
         brightMag__lt=limitingMag
-        ).distinct('astorbRecord_id')[:limit*10]   # We use a larger limit here since some will be discarded.
+        ).order_by('-astorbRecord__ceu', 'astorbRecord_id').distinct('astorbRecord__ceu', 'astorbRecord_id')[:fakeLimit]
 
     # Now that we have narrowed it down to a list of candidates, check through that list and calculate the exact
     # ephemeris at the desired targetTime for each candidate and discard any which don't actually fall within the
@@ -60,7 +63,7 @@ def getAsteroidsAroundGeometry(geometry, bufferSize, targetTime, limitingMag, li
 
         ephemPoint = Point(ephemeris.ra*(180/math.pi), ephemeris.dec*(180/math.pi))
         separation = geometry.distance(ephemPoint)
-        if separation > bufferSize:
+        if separation > bufferSize or ephemeris.mag > limitingMag:
             continue
 
         asteroids.append({
