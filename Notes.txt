@@ -30,6 +30,45 @@ or the site itself.
 
 
 
+For determining the usefulness of additional astrometric measurements taken now, a decent metric is the ratio of the CEU
+to the tenYearPEU, i.e. the current positional uncertainty compared to its peak value over the next 10 years.  If the
+CEU is high or higher than the tenYearPEU this means the uncertainty now is greater than it will be in the next 10
+years, therefore now is a great time to image it.  A better one might be the tenYearPEUIfObserved to the current
+tenYearPEU: note that this ratio assumes that two measurements are made near the time of the next PEU, not necessarily
+if made now.  Also the astrometryNeededCode column in our dataset is probably a much more reliable figure, how to use it
+beyond just displaying it to the user is not completely clear.
+
+select
+     "number", "name", "orbitCode", "criticalCode", "astrometryNeededCode", "observationArc", "numObservations", "ceu",
+     "ceuRate", "ceuDate", "nextPEU", "nextPEUDate", "tenYearPEU", "tenYearPEUIfObserved", "tenYearPEUDateIfObserved",
+     "tenYearPEU" / ("tenYearPEUIfObserved"+.000001) as "ratio", |/ ("tenYearPEU" / ("tenYearPEUIfObserved"+.000001)) as "sqrt"
+
+     from cosmicapp_astorbrecord
+
+     order by ratio desc
+
+     limit 300000;
+
+
+
+The DASCH project is a collection of the harvard photo plates from the last century which have been digitized an
+processed photomotetrically.  We should look into possibly indexing or storing a copy of this archive.
+
+
+
+Imagemagick seems to have trouble making thumbnails of fits images where most of the data are negative.  This is likely
+a bug in their code, or some issue with how the program is being called from our code.  More investigation is needed.
+
+
+
+There appears to be a bug in pyephem relating to the calculation of astroid magnitudes; some are calculated way too
+bright compared to the values quoted by MPC.  Another user reported this bug and there is an open issue on github, the
+problem seems to go away if no observer location is provided (i.e. a geocentric position rather than an earth surface
+one).  We may want to consider switching to geocentric calculations in the mean time until this bug is fixed as the
+magnitude is much more important than the very minor change in position due to geocentric calculations vs surface ones.
+
+
+
 imhisto - iraf task that computes and prints a histogram of an image.  Should
           probably do this in 2 stages, first with bins across the whole range,
           then a second pass across the range that captures 95% of pixels.
