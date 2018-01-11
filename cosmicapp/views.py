@@ -16,6 +16,7 @@ from django.conf import settings
 from django.db.models import Q, Max, Min, Avg, StdDev
 from django.db import transaction
 from django.views.decorators.http import require_http_methods
+from django.contrib.gis.geos import GEOSGeometry, Point
 
 from lxml import etree
 import ephem
@@ -1322,37 +1323,37 @@ def observing(request):
 
     zenithNowRA = zenithNowRA * 180/math.pi
     zenithNowDec = zenithNowDec * 180/math.pi
+    zenithGeometry = GEOSGeometry('POINT({} {})'.format(zenithNowRA, zenithNowDec))
 
     variableStars = GCVSRecord.objects.filter(
-        geometry__dwithin=('POINT({} {})'.format(zenithNowRA, zenithNowDec), windowSize),
+        geometry__dwithin=(zenithGeometry, windowSize),
         magMin__lt=limitingMag
         ).order_by('magMin')[:limit]
 
     context['variableStars'] = variableStars
 
     exoplanets = ExoplanetRecord.objects.filter(
-        geometry__dwithin=('POINT({} {})'.format(zenithNowRA, zenithNowDec), windowSize),
+        geometry__dwithin=(zenithGeometry, windowSize),
         magV__lt=limitingMag
         ).order_by('magV', 'identifier')[:limit]
 
     context['exoplanets'] = exoplanets
 
     messierObjects = MessierRecord.objects.filter(
-        geometry__dwithin=('POINT({} {})'.format(zenithNowRA, zenithNowDec), windowSize),
+        geometry__dwithin=(zenithGeometry, windowSize),
         magV__lt=limitingMag
         ).order_by('magV')
 
     context['messierObjects'] = messierObjects
 
     extendedSources = TwoMassXSCRecord.objects.filter(
-        geometry__dwithin=('POINT({} {})'.format(zenithNowRA, zenithNowDec), windowSize),
+        geometry__dwithin=(zenithGeometry, windowSize),
         isophotalKMag__lt=limitingMag
         ).order_by('isophotalKMag')[:limit]
 
     context['extendedSources'] = extendedSources
 
-    asteroids = getAsteroidsAroundGeometry('POINT({} {})'.format(zenithNowRA, zenithNowDec),
-        windowSize, currentTime, limitingMag, limit)
+    asteroids = getAsteroidsAroundGeometry(zenithGeometry, windowSize, currentTime, limitingMag, limit)
 
     asteroids = sorted(asteroids, key = lambda x: x['record'].ceu, reverse=True)[:limit]
 
