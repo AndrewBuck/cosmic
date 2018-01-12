@@ -23,29 +23,6 @@ Image opacity: <input id="imageOpacitySlider" type=range min="0" max="100" value
 <script>
 var undoStack = [], redoStack = [];
 
-function getCookie(name) {
-    var cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        var cookies = document.cookie.split(';');
-        for (var i = 0; i < cookies.length; i++) {
-            var cookie = jQuery.trim(cookies[i]);
-            // Does this cookie string begin with the name we want?
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-
-var csrftoken = getCookie('csrftoken');
-
-function csrfSafeMethod(method) {
-    // these HTTP methods do not require CSRF protection
-    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-}
-
 function UndoObject(uAction, rAction, uData, rData)
 {
     this.undoAction = uAction;
@@ -945,14 +922,6 @@ function onImageTableLoad()
 
 $(document).ready(function()
 {
-    $.ajaxSetup({
-        beforeSend: function(xhr, settings) {
-            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
-                xhr.setRequestHeader("X-CSRFToken", csrftoken);
-            }
-        }
-    });
-
     $('body').on('contextmenu', 'canvas', function(e){ return false; });
     $('#desktop').mousedown(handleMouseButtonDown);
     /* NOTE: 'move' and 'up' are bound to window instead of #desktop to handle drags out of the canvas boundary. */
