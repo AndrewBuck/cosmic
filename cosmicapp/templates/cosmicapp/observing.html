@@ -5,10 +5,11 @@
 {% block extratitle %} - Observing list tool {% endblock %}
 
 {% block extrahead %}
+{% include "./jquery.html" %}
+{% if user.is_authenticated %}<script src="/static/cosmicapp/bookmark.js"></script>{% endif %}
 {% endblock extrahead %}
 
 {% block mainbody %}
-{% include "./jquery.html" %}
 
 <h2>Observing suggestions for tonight</h2>
 
@@ -136,9 +137,13 @@
     <p>There are {{asteroids|length}} asteroids within {{windowSize}} degrees of your zenith.</p>
 
     <table cellpadding=5px border=2px style="border-collapse: collapse; margin: 1em;">
-    <tr><th>Name</th> <th>RA</th> <th>Dec</th> <th>Mag</th> <th>CEU</th> <th>Priority</th> <th>Links</th></tr>
+    <tr>
+    {% if user.is_authenticated %}<th><font color=gold>★</font></th>{% endif %}
+    <th>Name</th> <th>RA</th> <th>Dec</th> <th>Mag</th> <th>CEU</th> <th>Priority</th> <th>Links</th>
+    </tr>
         {% for asteroid in asteroids %}
             <tr>
+            {% bookmark "asteroid" asteroid.record.pk "<td>" "</td>" %}
             <td>{{asteroid.record.name}}</td>
             <td>{{asteroid.ephem.ra|formatRA}}</td>
             <td>{{asteroid.ephem.dec|formatDec}}</td>
@@ -148,8 +153,8 @@
             <td>
             <a href="https://www.minorplanetcenter.net/db_search/show_object?utf8=✓&object_id={{asteroid.record.name}}">MPC</a>
             <a href="https://ssd.jpl.nasa.gov/sbdb.cgi?sstr={{asteroid.record.name}}">JPL</a>
-            <!-- TODO: Link to (post only)   http://alcdef.org/alcdef_GenerateALCDEFPage.php -->
-            <!-- TODO: Link to (post only)   http://www.minorplanet.info/PHP/GenerateLCDBHTMLPages.php -->
+            {% comment %} TODO: Link to (post only)   http://alcdef.org/alcdef_GenerateALCDEFPage.php {% endcomment %}
+            {% comment %} TODO: Link to (post only)   http://www.minorplanet.info/PHP/GenerateLCDBHTMLPages.php {% endcomment %}
             {% if asteroid.record.number %}
             <a href="http://astro.troja.mff.cuni.cz/projects/asteroids3D/web.php?page=db_asteroid_detail&asteroid_id={{asteroid.record.number}}">DAMIT</a>
             {% endif %}
@@ -163,9 +168,13 @@
     <p>There are {{exoplanets|length}} exoplanets within {{windowSize}} degrees of your zenith.</p>
 
     <table cellpadding=5px border=2px style="border-collapse: collapse; margin: 1em;">
-    <tr><th>Planet<br>Name</th> <th>RA</th> <th>Dec</th> <th>Star<br>Mag V</th> <th>Links</th></tr>
+    <tr>
+    {% if user.is_authenticated %}<th><font color=gold>★</font></th>{% endif %}
+    <th>Planet<br>Name</th> <th>RA</th> <th>Dec</th> <th>Star<br>Mag V</th> <th>Links</th>
+    </tr>
         {% for exoplanet in exoplanets %}
             <tr>
+            {% bookmark "exoplanet" exoplanet.pk "<td>" "</td>" %}
             <td>{{exoplanet.identifier}}</td>
             <td>{{exoplanet.ra|formatRA}}</td>
             <td>{{exoplanet.dec|formatDec}}</td>
@@ -188,10 +197,14 @@
 <p>There are {{variableStars|length}} variable stars within {{windowSize}} degrees of your zenith.</p>
 
     <table cellpadding=5px border=2px style="border-collapse: collapse; margin: 1em;">
-    <tr><th>Name</th> <th>RA</th> <th>Dec</th> <th>Mag<br>max</th> <th>Mag<br>min</th>
-    <th>Period</th> <th>Type</th> <th>Type2</th> <th>Spectral<br>type</th> <th>Links</th></tr>
+    <tr>
+    {% if user.is_authenticated %}<th><font color=gold>★</font></th>{% endif %}
+    <th>Name</th> <th>RA</th> <th>Dec</th> <th>Mag<br>max</th> <th>Mag<br>min</th>
+    <th>Period</th> <th>Type</th> <th>Type2</th> <th>Spectral<br>type</th> <th>Links</th>
+    </tr>
         {% for variableStar in variableStars %}
             <tr>
+            {% bookmark "variableStar" variableStar.pk "<td>" "</td>" %}
             <td>{{variableStar.identifier}}</td>
             <td>{{variableStar.ra|formatRA}}</td>
             <td>{{variableStar.dec|formatDec}}</td>
@@ -215,9 +228,13 @@
     <p>There are {{messierObjects|length}} Messier objects within {{windowSize}} degrees of your zenith.</p>
 
     <table cellpadding=5px border=2px style="border-collapse: collapse; margin: 1em;">
-    <tr><th>Name</th> <th>RA</th> <th>Dec</th> <th>Object<br>type</th> <th>Mag V</th> <th>Links</th></tr>
+    <tr>
+    {% if user.is_authenticated %}<th><font color=gold>★</font></th>{% endif %}
+    <th>Name</th> <th>RA</th> <th>Dec</th> <th>Object<br>type</th> <th>Mag V</th> <th>Links</th>
+    </tr>
         {% for messierObject in messierObjects %}
             <tr>
+            {% bookmark "messierObject" messierObject.pk "<td>" "</td>" %}
             <td>{{messierObject.identifier}}</td>
             <td>{{messierObject.ra|formatRA}}</td>
             <td>{{messierObject.dec|formatDec}}</td>
@@ -235,9 +252,13 @@
     <p>There are {{extendedSources|length}} deep sky objects within {{windowSize}} degrees of your zenith.</p>
 
     <table cellpadding=5px border=2px style="border-collapse: collapse; margin: 1em;">
-    <tr><th>Name</th> <th>RA</th> <th>Dec</th> <th>Mag K</th> <th>Radius<br>(arcsec)</th> <th>W/H<br>ratio</th> <th>Links</th></tr>
+    <tr>
+    {% if user.is_authenticated %}<th><font color=gold>★</font></th>{% endif %}
+    <th>Name</th> <th>RA</th> <th>Dec</th> <th>Mag K</th> <th>Radius<br>(arcsec)</th> <th>W/H<br>ratio</th> <th>Links</th>
+    </tr>
         {% for extendedSource in extendedSources %}
             <tr>
+            {% bookmark "2MassXSC" extendedSource.pk "<td>" "</td>" %}
             <td>{{extendedSource.identifier}}</td>
             <td>{{extendedSource.ra|formatRA}}</td>
             <td>{{extendedSource.dec|formatDec}}</td>

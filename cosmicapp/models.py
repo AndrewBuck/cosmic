@@ -102,6 +102,26 @@ def create_user_profile(sender, instance, created, **kwargs):
 def save_user_profile(sender, instance, **kwargs):
     instance.profile.save()
 
+class Bookmark(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    folders = models.ManyToManyField('BookmarkFolder', symmetrical=False, related_name='folderItems', through='BookmarkFolderLink')
+
+    #Generic FK to image or object or whatever the bookmark is linking to.
+    #TODO: Add a reverse generic relation to the relevant classes this will link to (image, asteroid, star, etc).
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+
+class BookmarkFolder(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    name = models.CharField(max_length=256, null=True)
+    dateTime = models.DateTimeField(auto_now=True)
+
+class BookmarkFolderLink(models.Model):
+    bookmark = models.ForeignKey(Bookmark, on_delete=models.CASCADE)
+    bookmarkFolder = models.ForeignKey(BookmarkFolder, on_delete=models.CASCADE)
+    dateTime = models.DateTimeField(auto_now=True)
+
 class Observatory(models.Model):
     """
     A record storing the location and other basic information for an observing location.
@@ -574,6 +594,7 @@ class GCVSRecord(models.Model):
     period = models.FloatField(null=True)
     periodRisingPercentage = models.FloatField(null=True)
     spectralType = models.CharField(max_length=17, null=True)
+    bookmarks = GenericRelation('Bookmark')
 
 class TwoMassXSCRecord(models.Model):
     """
@@ -589,6 +610,7 @@ class TwoMassXSCRecord(models.Model):
     isophotalKAngle = models.FloatField(null=True)
     isophotalKMag = models.FloatField(null=True, db_index=True)
     isophotalKMagErr = models.FloatField(null=True)
+    bookmarks = GenericRelation('Bookmark')
 
 class MessierRecord(models.Model):
     """
@@ -606,6 +628,7 @@ class MessierRecord(models.Model):
     magR = models.FloatField(null=True)
     magI = models.FloatField(null=True)
     numReferences = models.IntegerField()
+    bookmarks = GenericRelation('Bookmark')
 
 class AstorbRecord(models.Model):
     """
@@ -639,6 +662,7 @@ class AstorbRecord(models.Model):
     tenYearPEUDate = models.DateField(null=True)
     tenYearPEUIfObserved = models.FloatField()
     tenYearPEUDateIfObserved = models.DateField(null=True)
+    bookmarks = GenericRelation('Bookmark')
 
 class AstorbEphemeris(models.Model):
     """
@@ -713,6 +737,7 @@ class ExoplanetRecord(models.Model):
     etdLink = models.TextField(null=True)
     simbadLink = models.TextField(null=True)
 
+    bookmarks = GenericRelation('Bookmark')
 
 
 

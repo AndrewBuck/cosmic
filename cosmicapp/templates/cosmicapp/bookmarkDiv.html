@@ -1,0 +1,5 @@
+{% if user.is_authenticated %}
+    {{prefix|default_if_none:""}}
+    <div class="bookmark" id="{{targetType}}_{{targetID}}"></div>
+    {{postfix|default_if_none:""}}
+{% endif %}

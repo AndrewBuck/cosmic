@@ -1230,6 +1230,103 @@ def saveTransform(request):
     return HttpResponse('')
 
 @login_required
+@require_http_methods(['POST'])
+def bookmark(request):
+    action = request.POST.get('action', None)
+    targetType = request.POST.get('targetType', None)
+    targetID = request.POST.get('targetID', None)
+    folderName = request.POST.get('folderName', None)
+
+    typeDict = {
+        'asteroid': AstorbRecord,
+        'exoplanet': ExoplanetRecord,
+        'variableStar': GCVSRecord,
+        'messierObject': MessierRecord,
+        '2MassXSC': TwoMassXSCRecord
+        }
+
+    if action == 'query':
+        idDict = {}
+        for item in request.POST.get('queryString').strip(' ').split(' '):
+            obj = item.split('_')
+            if obj[0] in idDict:
+                if obj[1] not in idDict[obj[0]]:
+                    idDict[obj[0]].append(obj[1])
+            else:
+                idDict[obj[0]] = [ obj[1] ]
+
+        resultDict = {}
+        for targetType in idDict:
+            if targetType in typeDict:
+                targetObjects = typeDict[targetType].objects.filter(pk__in=idDict[targetType])
+
+                for targetObject in targetObjects:
+                    #TODO: Duplicated code, consider refactor.
+                    bookmarks = targetObject.bookmarks.filter(user=request.user)
+                    tempDict = {}
+                    tempDict['count'] = bookmarks.count()
+                    tempDict['folders'] = []
+
+                    resultDict[targetType + '_' + str(targetObject.pk)] = tempDict
+            else:
+                return HttpResponse(json.dumps({'error': 'unknown object type: ' + targetType}), status=400)
+
+        #print(json.dumps(resultDict, sort_keys=True, indent=4, separators=(',', ': ')))
+        return HttpResponse(json.dumps(resultDict))
+
+    elif action == 'add':
+        if targetType not in typeDict:
+            return HttpResponse(json.dumps({'error': 'unknown object type: ' + targetType}), status=400)
+
+        targetObject = typeDict[targetType].objects.get(pk=targetID)
+        content_type = ContentType.objects.get_for_model(targetObject)
+
+        bookmark, created = Bookmark.objects.get_or_create(
+            user = request.user,
+            content_type = content_type,
+            object_id = targetObject.pk
+            )
+
+        #TODO: Duplicated code, consider refactor.
+        bookmarks = targetObject.bookmarks.filter(user=request.user)
+        tempDict = {}
+        tempDict['count'] = bookmarks.count()
+        tempDict['folders'] = []
+
+        responseDict = {}
+        responseDict['code'] = 'added'
+        responseDict['info'] = tempDict
+
+        return HttpResponse(json.dumps(responseDict))
+
+    elif action == 'remove':
+        if targetType not in typeDict:
+            return HttpResponse(json.dumps({'error': 'unknown object type: ' + targetType}), status=400)
+
+        targetObject = typeDict[targetType].objects.get(pk=targetID)
+
+        #TODO: Need to filter on folder, etc.
+        bookmarks = targetObject.bookmarks.filter(user=request.user)
+        bookmarks.delete()
+
+        #TODO: Duplicated code, consider refactor.
+        bookmarks = targetObject.bookmarks.filter(user=request.user)
+        tempDict = {}
+        tempDict['count'] = bookmarks.count()
+        tempDict['folders'] = []
+
+        responseDict = {}
+        responseDict['code'] = 'removed'
+        responseDict['info'] = tempDict
+
+        return HttpResponse(json.dumps(responseDict))
+
+    else:
+        return HttpResponse(json.dumps({'error' : 'unknown action: ' + action}), status=400)
+
+    return HttpResponse(json.dumps({'error' : "reached end of function and shouldn't have."}), status=400)
+
+@login_required
 def calibration(request):
     context = {"user" : request.user}
 
