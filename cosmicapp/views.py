@@ -1439,7 +1439,7 @@ def observing(request):
     messierObjects = MessierRecord.objects.filter(
         geometry__dwithin=(zenithGeometry, windowSize),
         magV__lt=limitingMag
-        ).order_by('magV')
+        ).order_by('magV')[:limit]
 
     context['messierObjects'] = messierObjects
 
