@@ -1,5 +1,6 @@
 {% if user.is_authenticated %}
     {{prefix|default_if_none:""}}
-    <div class="bookmark" id="{{targetType}}_{{targetID}}"></div>
+    <div class="bookmark" id="{{targetType}}_{{targetID}}" data-targetType="{{targetType}}"
+    data-targetID="{{targetID}}" data-folderName="{{folderName}}"></div>
     {{postfix|default_if_none:""}}
 {% endif %}

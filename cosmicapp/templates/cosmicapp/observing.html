@@ -143,7 +143,7 @@
     </tr>
         {% for asteroid in asteroids %}
             <tr>
-            {% bookmark "asteroid" asteroid.record.pk "<td>" "</td>" %}
+            {% bookmark "asteroid" asteroid.record.pk "Observing Targets" "<td>" "</td>" %}
             <td>{{asteroid.record.name}}</td>
             <td>{{asteroid.ephem.ra|formatRA}}</td>
             <td>{{asteroid.ephem.dec|formatDec}}</td>
@@ -174,7 +174,7 @@
     </tr>
         {% for exoplanet in exoplanets %}
             <tr>
-            {% bookmark "exoplanet" exoplanet.pk "<td>" "</td>" %}
+            {% bookmark "exoplanet" exoplanet.pk "Observing Targets" "<td>" "</td>" %}
             <td>{{exoplanet.identifier}}</td>
             <td>{{exoplanet.ra|formatRA}}</td>
             <td>{{exoplanet.dec|formatDec}}</td>
@@ -204,7 +204,7 @@
     </tr>
         {% for variableStar in variableStars %}
             <tr>
-            {% bookmark "variableStar" variableStar.pk "<td>" "</td>" %}
+            {% bookmark "variableStar" variableStar.pk "Observing Targets" "<td>" "</td>" %}
             <td>{{variableStar.identifier}}</td>
             <td>{{variableStar.ra|formatRA}}</td>
             <td>{{variableStar.dec|formatDec}}</td>
@@ -234,7 +234,7 @@
     </tr>
         {% for messierObject in messierObjects %}
             <tr>
-            {% bookmark "messierObject" messierObject.pk "<td>" "</td>" %}
+            {% bookmark "messierObject" messierObject.pk "Observing Targets" "<td>" "</td>" %}
             <td>{{messierObject.identifier}}</td>
             <td>{{messierObject.ra|formatRA}}</td>
             <td>{{messierObject.dec|formatDec}}</td>
@@ -258,7 +258,7 @@
     </tr>
         {% for extendedSource in extendedSources %}
             <tr>
-            {% bookmark "2MassXSC" extendedSource.pk "<td>" "</td>" %}
+            {% bookmark "2MassXSC" extendedSource.pk "Observing Targets" "<td>" "</td>" %}
             <td>{{extendedSource.identifier}}</td>
             <td>{{extendedSource.ra|formatRA}}</td>
             <td>{{extendedSource.dec|formatDec}}</td>

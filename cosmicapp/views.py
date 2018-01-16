@@ -1246,6 +1246,8 @@ def bookmark(request):
         }
 
     if action == 'query':
+        #TODO: Consider splitting the query targets into types on the client side and sending an array of id's for each
+        # object type to both minimize bandwidth and also reduce load on the server.
         idDict = {}
         for item in request.POST.get('queryString').strip(' ').split(' '):
             obj = item.split('_')
@@ -1266,6 +1268,9 @@ def bookmark(request):
                     tempDict = {}
                     tempDict['count'] = bookmarks.count()
                     tempDict['folders'] = []
+                    for bookmark in bookmarks:
+                        for folder in bookmark.folders.all():
+                            tempDict['folders'].append(folder.name)
 
                     resultDict[targetType + '_' + str(targetObject.pk)] = tempDict
             else:
@@ -1287,11 +1292,33 @@ def bookmark(request):
             object_id = targetObject.pk
             )
 
+        if folderName != None:
+            folder = BookmarkFolder.objects.filter(user=request.user, name=folderName).first()
+
+            if folder == None:
+                #TODO: Sanitize folder name.
+                folder = BookmarkFolder(
+                    user = request.user,
+                    name = folderName
+                    )
+
+                folder.save()
+
+            link = BookmarkFolderLink(
+                bookmark = bookmark,
+                folder = folder
+                )
+
+            link.save()
+
         #TODO: Duplicated code, consider refactor.
         bookmarks = targetObject.bookmarks.filter(user=request.user)
         tempDict = {}
         tempDict['count'] = bookmarks.count()
         tempDict['folders'] = []
+        for bookmark in bookmarks:
+            for folder in bookmark.folders.all():
+                tempDict['folders'].append(folder.name)
 
         responseDict = {}
         responseDict['code'] = 'added'
@@ -1305,15 +1332,26 @@ def bookmark(request):
 
         targetObject = typeDict[targetType].objects.get(pk=targetID)
 
-        #TODO: Need to filter on folder, etc.
         bookmarks = targetObject.bookmarks.filter(user=request.user)
-        bookmarks.delete()
+        for bookmark in bookmarks:
+            linkRemoved = False
+            if folderName != None:
+                for folder in bookmark.folders.all():
+                    if folder.name == folderName:
+                        BookmarkFolderLink.objects.get(bookmark=bookmark, folder=folder).delete()
+                        linkRemoved = True
+
+            if (linkRemoved and bookmark.folders.count() == 0) or (folderName == None and bookmarks.folders.count() == 0):
+                bookmark.delete()
 
         #TODO: Duplicated code, consider refactor.
         bookmarks = targetObject.bookmarks.filter(user=request.user)
         tempDict = {}
         tempDict['count'] = bookmarks.count()
         tempDict['folders'] = []
+        for bookmark in bookmarks:
+            for folder in bookmark.folders.all():
+                tempDict['folders'].append(folder.name)
 
         responseDict = {}
         responseDict['code'] = 'removed'

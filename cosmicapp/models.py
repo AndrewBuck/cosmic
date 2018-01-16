@@ -119,7 +119,7 @@ class BookmarkFolder(models.Model):
 
 class BookmarkFolderLink(models.Model):
     bookmark = models.ForeignKey(Bookmark, on_delete=models.CASCADE)
-    bookmarkFolder = models.ForeignKey(BookmarkFolder, on_delete=models.CASCADE)
+    folder = models.ForeignKey(BookmarkFolder, on_delete=models.CASCADE)
     dateTime = models.DateTimeField(auto_now=True)
 
 class Observatory(models.Model):

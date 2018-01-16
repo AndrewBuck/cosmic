@@ -40,10 +40,11 @@ def invert(value):
     return 1.0/value
 
 @register.inclusion_tag('cosmicapp/bookmarkDiv.html', takes_context=True)
-def bookmark(context, targetType, targetID, prefix=None, postfix=None):
+def bookmark(context, targetType, targetID, folderName, prefix=None, postfix=None):
     tempDict = context
     tempDict['targetType'] = targetType
     tempDict['targetID'] = targetID
+    tempDict['folderName'] = folderName
     tempDict['prefix'] = prefix
     tempDict['postfix'] = postfix
     return tempDict

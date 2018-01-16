@@ -6,12 +6,39 @@ var bookmarkInfo = {};
  */
 function setBookmarkSymbol(divID)
 {
+    div = document.getElementById(divID);
+    folderName = div.getAttribute("data-folderName");
+
     if(bookmarkInfo[divID].count > 0)
-        symbol = '<font color=gold>★</font>';
+    {
+        if(bookmarkIsInFolder(divID, folderName))
+            symbol = '<font color=gold>★</font>';
+        else
+            symbol = '<font color=orange>✢</font>';
+    }
     else
         symbol = '☆';
 
     $('#' + divID).html(symbol);
+};
+
+/*
+ * Checks to see if the bookmark for the given divID is in the specified folder,
+ * returning true if it is and false if it is not.
+ */
+function bookmarkIsInFolder(divID, folderName)
+{
+    var folderFound = false;
+    for(var i = 0; i < bookmarkInfo[divID].folders.length; i++)
+    {
+        if(bookmarkInfo[divID].folders[i] == folderName)
+        {
+            folderFound = true;
+            break;
+        }
+    }
+
+    return folderFound;
 };
 
 /*
@@ -20,19 +47,20 @@ function setBookmarkSymbol(divID)
  */
 function bookmarkClickHandler()
 {
-    // Get the id of the container div for the bookmark, this id will also tell us what object the bookmark is for.
-    divID = $(this).get(0).id;
+    // Get the id of the container div for the bookmark.
+    var divID = $(this).get(0).id;
+    var div = $(this).get(0);
 
     // Disable the click handler to prevent extra requests until the first request is complete and change to a loading symbol.
     $('#' + divID).off();
     $('#' + divID).html("◌");
 
-    // Parse the divID to get the type and id of the object this bookmark is for.
-    targetType = divID.split('_')[0];
-    targetID = divID.split('_')[1];
-    folderName = '';
+    // Get the type and id of the object this bookmark is for.
+    targetType = div.getAttribute("data-targetType");
+    targetID = div.getAttribute("data-targetID");
+    folderName = div.getAttribute("data-folderName");
 
-    if(bookmarkInfo[divID].count > 0)
+    if(bookmarkIsInFolder(divID, folderName))
         action = 'remove';
     else
         action = 'add';
@@ -43,11 +71,8 @@ function bookmarkClickHandler()
         url: "/bookmark/",
         data: { action: action, targetType: targetType, targetID: targetID, folderName: folderName },
         dataType: 'json',
-        pageElement: $(this),
         success: function(response, textStatus, jqXHR)
             {
-                divID = this.pageElement.get(0).id;
-
                 if(response.code == 'added' || response.code == 'removed')
                 {
                     bookmarkInfo[divID] = response.info;
