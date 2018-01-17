@@ -1342,10 +1342,47 @@ def bookmark(request):
 
         return HttpResponse(json.dumps(responseDict))
 
+    elif action == 'removeFolder':
+        try:
+            targetFolder = BookmarkFolder.objects.get(user=request.user, name=folderName)
+        except BookmarkFolder.DoesNotExist:
+            return HttpResponse(json.dumps({'error' : 'folder does not exist: ' + folderName}), status=400)
+
+        links = BookmarkFolderLink.objects.filter(folder=targetFolder)
+        for link in links:
+            bookmark = link.bookmark
+            link.delete()
+            if bookmark.folders.count() == 0:
+                bookmark.delete()
+
+        targetFolder.delete()
+
+        responseDict = {}
+        responseDict['code'] = 'removedFolder'
+
+        return HttpResponse(json.dumps(responseDict))
+
     else:
         return HttpResponse(json.dumps({'error' : 'unknown action: ' + action}), status=400)
 
     return HttpResponse(json.dumps({'error' : "reached end of function and shouldn't have."}), status=400)
+
+@login_required
+def bookmarkPage(request, username):
+    context = {"user" : request.user}
+
+    try:
+        foruser = User.objects.get(username = username)
+    except User.DoesNotExist:
+        context['foruser'] = username
+        return render(request, "cosmicapp/usernotfound.html", context)
+
+    context['foruser'] = foruser
+
+    folders = BookmarkFolder.objects.filter(user=foruser).order_by('-dateTime')
+    context['folders'] = folders
+
+    return render(request, "cosmicapp/bookmark.html", context)
 
 @login_required
 def calibration(request):

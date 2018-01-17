@@ -31,6 +31,7 @@ urlpatterns = [
     url(r'^processqueue/', views.processQueue),
     url(r'^catalogs/', views.catalogs),
 
+    url(r'^user/(?P<username>.+)/bookmarks/$', views.bookmarkPage),
     url(r'^user/(?P<username>.+)/', views.userpage),
     url(r'^observatory/(?P<id>.+)/', views.observatory),
 

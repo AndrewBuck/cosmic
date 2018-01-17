@@ -92,6 +92,48 @@ function bookmarkClickHandler()
 };
 
 /*
+ * Sends an ajax request to the server to delete a bookmark folder and remove all the bookmark links to it.  The
+ * function also searches the page for a div corresponding to the contents of the folder and if it finds one, it uses
+ * jquery to remove the div and its contents from the page (assuming the ajax query was successful).
+ */
+function deleteBookmarkFolder(folderName)
+{
+    //TODO: We should use some other kind of dialog here, if the user clicks the "prevent additional dialogs..." option
+    //future dialogs will not pop up without a page reload first.  jquery has a dialog system we can use.
+    if(!window.confirm("Are you sure you want to delete this folder and the bookmarks in it?\n\n(individual bookmarks which also exist in other folders will remain in those other folders)"))
+        return;
+
+    var divs = document.getElementsByClassName('bookmarkFolder');
+    var divToDelete = null;
+    for(var i = 0; i < divs.length; i++)
+    {
+        if(divs[i].getAttribute('data-folderName') == folderName)
+        {
+            divToDelete = divs[i];
+            break;
+        }
+    }
+
+    // Send the request to add or remove the bookamrk to the server and update the div when the result comes back.
+    $.ajax({
+        type: "POST",
+        url: "/bookmark/",
+        data: { action: "removeFolder", folderName: folderName },
+        dataType: 'json',
+        success: function(response, textStatus, jqXHR)
+            {
+                if(response.code == 'removedFolder')
+                    if(divToDelete != null)
+                        $('#' + divToDelete.id).remove();
+            },
+        error: function(response, textStatus, jqXHR)
+            {
+                alert(response.responseJSON.error);
+            }
+    });
+};
+
+/*
  * Loops over all of the items on the page with a class of 'bookmark' and, using their id's, builds and executes an ajax
  * request to get the current bookmark status of each one.  After executing the ajax query, the div is filled in with an
  * appropriate symbol, indicating whether or not the item is bookmarked.  Finally, a click handler is assigned to

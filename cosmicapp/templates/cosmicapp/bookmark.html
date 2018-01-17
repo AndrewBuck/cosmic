@@ -1,0 +1,46 @@
+{% extends "cosmicapp/base.html" %}
+{% load static %}
+{% load cosmicapp_extras %}
+
+{% block extratitle %} - Bookmarks {% endblock %}
+
+{% block extrahead %}
+{% include "./jquery.html" %}
+<script src="/static/cosmicapp/bookmark.js"></script>
+{% endblock extrahead %}
+
+{% block mainbody %}
+
+<h2>Bookmarks for user {{foruser}}</h2>
+
+{% for folder in folders %}
+    <div id="bookmarkFolder_{{folder.name.split|join:"_"}}" class="bookmarkFolder" data-folderName="{{folder.name}}">
+    <h3>{{folder.name}}</h3>
+    <p>
+    <input type=button class=button value="Delete folder" onclick="deleteBookmarkFolder('{{folder.name}}')">
+    {% if folder.folderItems.count %}
+        <table cellpadding=5px border=2px style="border-collapse: collapse; margin: 1em;">
+            <tr>
+            <th><font color=gold>★</font></th>
+            <th>Type</th>
+            <th>Identifier</th>
+            </tr>
+            {% for bookmark in folder.folderItems.all %}
+                <tr>
+                <td>{% bookmark bookmark.getObjectTypeString bookmark.object_id folder.name %}</td>
+                <td>{{bookmark.getObjectTypeCommonName}}</td>
+                <td>{{bookmark.content_object.getDisplayName}}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <i>Empty folder</i>
+    {% endif %}
+    {% comment %}TODO: Instead of using <br> here we should use css and padding.{% endcomment %}
+    <br><br><br><br>
+    </p>
+    </div>
+{% endfor %}
+
+{% endblock mainbody %}
+

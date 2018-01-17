@@ -103,6 +103,9 @@ def save_user_profile(sender, instance, **kwargs):
     instance.profile.save()
 
 class Bookmark(models.Model):
+    """
+    A class storing a GenericForeignKey relation to an object to act as a bookmark.
+    """
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     folders = models.ManyToManyField('BookmarkFolder', symmetrical=False, related_name='folderItems', through='BookmarkFolderLink')
 
@@ -111,6 +114,34 @@ class Bookmark(models.Model):
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
+
+    @property
+    def getObjectTypeString(self):
+        stringDict = {
+            'astorbrecord': 'asteroid',
+            'exoplanetrecord': 'exoplanet',
+            'gcvsrecord': 'variableStar',
+            'messierrecord': 'messierObject',
+            'twomassxscrecord': '2MassXSC'
+            }
+
+        t = ContentType.objects.get(pk=self.content_type.pk)
+
+        return stringDict[t.model]
+
+    @property
+    def getObjectTypeCommonName(self):
+        stringDict = {
+            'astorbrecord': 'Asteroid',
+            'exoplanetrecord': 'Exoplanet',
+            'gcvsrecord': 'Variable Star',
+            'messierrecord': 'Messier Object',
+            'twomassxscrecord': 'Deep Sky Object'
+            }
+
+        t = ContentType.objects.get(pk=self.content_type.pk)
+
+        return stringDict[t.model]
 
 class BookmarkFolder(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -121,6 +152,16 @@ class BookmarkFolderLink(models.Model):
     bookmark = models.ForeignKey(Bookmark, on_delete=models.CASCADE)
     folder = models.ForeignKey(BookmarkFolder, on_delete=models.CASCADE)
     dateTime = models.DateTimeField(auto_now=True)
+
+class BookmarkableItem:
+    """
+    A base class that any models defined from on this page should also inherit from (in addition to models.Model).
+    This contains common base functionality required for displaying lists of bookmarks when the items in the list are
+    of differing types.  I.E. it normalizes the display so that differing types can be displayed in a common format.
+    """
+    @property
+    def getDisplayName(self):
+        return "getDisplayName uniplemented"
 
 class Observatory(models.Model):
     """
@@ -569,7 +610,7 @@ class UCAC4Record(models.Model):
     magError = models.FloatField(null=True)
     id2mass = models.CharField(max_length=10, null=True)
 
-class GCVSRecord(models.Model):
+class GCVSRecord(models.Model, BookmarkableItem):
     """
     A record storing a single entry from the General Catalog of Variable Stars.
     """
@@ -596,7 +637,10 @@ class GCVSRecord(models.Model):
     spectralType = models.CharField(max_length=17, null=True)
     bookmarks = GenericRelation('Bookmark')
 
-class TwoMassXSCRecord(models.Model):
+    def getDisplayName(self):
+        return self.identifier
+
+class TwoMassXSCRecord(models.Model, BookmarkableItem):
     """
     A record storing a single entry from the 2MASS Extended Source Catalog of "extended", i.e. non point source, objects.
     """
@@ -612,7 +656,10 @@ class TwoMassXSCRecord(models.Model):
     isophotalKMagErr = models.FloatField(null=True)
     bookmarks = GenericRelation('Bookmark')
 
-class MessierRecord(models.Model):
+    def getDisplayName(self):
+        return self.identifier
+
+class MessierRecord(models.Model, BookmarkableItem):
     """
     A record storing a single entry from the Messier Catalog.
     """
@@ -630,7 +677,10 @@ class MessierRecord(models.Model):
     numReferences = models.IntegerField()
     bookmarks = GenericRelation('Bookmark')
 
-class AstorbRecord(models.Model):
+    def getDisplayName(self):
+        return self.identifier
+
+class AstorbRecord(models.Model, BookmarkableItem):
     """
     A record storing a the Keplerian orbital elements and physical properties for a single asteroid from the astorb database.
     """
@@ -664,6 +714,14 @@ class AstorbRecord(models.Model):
     tenYearPEUDateIfObserved = models.DateField(null=True)
     bookmarks = GenericRelation('Bookmark')
 
+    def getDisplayName(self):
+        if self.number != None:
+            ret = str(self.number) + ' - ' + self.name
+        else:
+            ret = self.name
+
+        return ret
+
 class AstorbEphemeris(models.Model):
     """
     A record containing a computed emphemeride path for an asteroid in the astorb database.  The AstorbRecord is read
@@ -679,7 +737,7 @@ class AstorbEphemeris(models.Model):
     brightMag = models.FloatField(db_index=True, null=True)
     geometry = models.LineStringField(srid=40000, geography=False, dim=2, null=True)
 
-class ExoplanetRecord(models.Model):
+class ExoplanetRecord(models.Model, BookmarkableItem):
     """
     A record storing a single entry from the Exoplanets Data Explorer database of curated exoplanet results.
     """
@@ -738,6 +796,9 @@ class ExoplanetRecord(models.Model):
     simbadLink = models.TextField(null=True)
 
     bookmarks = GenericRelation('Bookmark')
+
+    def getDisplayName(self):
+        return self.identifier
 
 
 
