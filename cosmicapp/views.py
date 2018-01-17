@@ -1245,6 +1245,10 @@ def bookmark(request):
         '2MassXSC': TwoMassXSCRecord
         }
 
+    if targetType != None:
+        if targetType not in typeDict:
+            return HttpResponse(json.dumps({'error': 'unknown object type: ' + targetType}), status=400)
+
     if action == 'query':
         #TODO: Consider splitting the query targets into types on the client side and sending an array of id's for each
         # object type to both minimize bandwidth and also reduce load on the server.
@@ -1280,9 +1284,6 @@ def bookmark(request):
         return HttpResponse(json.dumps(resultDict))
 
     elif action == 'add':
-        if targetType not in typeDict:
-            return HttpResponse(json.dumps({'error': 'unknown object type: ' + targetType}), status=400)
-
         targetObject = typeDict[targetType].objects.get(pk=targetID)
         content_type = ContentType.objects.get_for_model(targetObject)
 
@@ -1327,9 +1328,6 @@ def bookmark(request):
         return HttpResponse(json.dumps(responseDict))
 
     elif action == 'remove':
-        if targetType not in typeDict:
-            return HttpResponse(json.dumps({'error': 'unknown object type: ' + targetType}), status=400)
-
         targetObject = typeDict[targetType].objects.get(pk=targetID)
 
         bookmarks = targetObject.bookmarks.filter(user=request.user)
