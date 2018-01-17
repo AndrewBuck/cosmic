@@ -1232,6 +1232,18 @@ def saveTransform(request):
 @login_required
 @require_http_methods(['POST'])
 def bookmark(request):
+
+    def getResultDictForBookmarkObject(targetObject, user):
+        bookmarks = targetObject.bookmarks.filter(user=user)
+        tempDict = {}
+        tempDict['count'] = bookmarks.count()
+        tempDict['folders'] = []
+        for bookmark in bookmarks:
+            for folder in bookmark.folders.all():
+                tempDict['folders'].append(folder.name)
+
+        return tempDict
+
     action = request.POST.get('action', None)
     targetType = request.POST.get('targetType', None)
     targetID = request.POST.get('targetID', None)
@@ -1267,16 +1279,7 @@ def bookmark(request):
                 targetObjects = typeDict[targetType].objects.filter(pk__in=idDict[targetType])
 
                 for targetObject in targetObjects:
-                    #TODO: Duplicated code, consider refactor.
-                    bookmarks = targetObject.bookmarks.filter(user=request.user)
-                    tempDict = {}
-                    tempDict['count'] = bookmarks.count()
-                    tempDict['folders'] = []
-                    for bookmark in bookmarks:
-                        for folder in bookmark.folders.all():
-                            tempDict['folders'].append(folder.name)
-
-                    resultDict[targetType + '_' + str(targetObject.pk)] = tempDict
+                    resultDict[targetType + '_' + str(targetObject.pk)] = getResultDictForBookmarkObject(targetObject, request.user)
             else:
                 return HttpResponse(json.dumps({'error': 'unknown object type: ' + targetType}), status=400)
 
@@ -1312,18 +1315,9 @@ def bookmark(request):
 
             link.save()
 
-        #TODO: Duplicated code, consider refactor.
-        bookmarks = targetObject.bookmarks.filter(user=request.user)
-        tempDict = {}
-        tempDict['count'] = bookmarks.count()
-        tempDict['folders'] = []
-        for bookmark in bookmarks:
-            for folder in bookmark.folders.all():
-                tempDict['folders'].append(folder.name)
-
         responseDict = {}
         responseDict['code'] = 'added'
-        responseDict['info'] = tempDict
+        responseDict['info'] = getResultDictForBookmarkObject(targetObject, request.user)
 
         return HttpResponse(json.dumps(responseDict))
 
@@ -1342,18 +1336,9 @@ def bookmark(request):
             if (linkRemoved and bookmark.folders.count() == 0) or (folderName == None and bookmarks.folders.count() == 0):
                 bookmark.delete()
 
-        #TODO: Duplicated code, consider refactor.
-        bookmarks = targetObject.bookmarks.filter(user=request.user)
-        tempDict = {}
-        tempDict['count'] = bookmarks.count()
-        tempDict['folders'] = []
-        for bookmark in bookmarks:
-            for folder in bookmark.folders.all():
-                tempDict['folders'].append(folder.name)
-
         responseDict = {}
         responseDict['code'] = 'removed'
-        responseDict['info'] = tempDict
+        responseDict['info'] = getResultDictForBookmarkObject(targetObject, request.user)
 
         return HttpResponse(json.dumps(responseDict))
 
