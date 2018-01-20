@@ -1,0 +1,208 @@
+{% extends "cosmicapp/base.html" %}
+{% load static %}
+{% load cosmicapp_extras %}
+
+{% block extratitle %} - Export bookmarks {% endblock %}
+
+{% block extrahead %}
+{% include "./jquery.html" %}
+<script src="/static/cosmicapp/bookmark.js"></script>
+{% endblock extrahead %}
+
+{% block mainbody %}
+
+<script>
+var responseArray;
+
+function getCurrentDate()
+{
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+};
+
+function getCurrentTime()
+{
+    var d = new Date();
+    return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+};
+
+function refreshBookmarkTable()
+{
+    //TODO: Implement this if statement.
+    //if(tableModified)
+    updateBookmarkTable();
+};
+
+function updateBookmarkTable()
+{
+    var folderName = document.getElementsByName("folderName")[0].value;
+    var includeOtherTargets = document.getElementsByName("includeOtherTargets")[0].value;
+    var dateTime = document.getElementById("dateEntry").value + " " + document.getElementById("timeEntry").value;
+    var minTimeBetween = document.getElementsByName("minTimeBetween")[0].value;
+    var maxTimeBetween = document.getElementsByName("maxTimeBetween")[0].value;
+    var observatoryID = document.getElementsByName("observatoryID")[0].value;
+
+    var tableHTML = "<tr>\
+                     <th>Include</th>\
+                     <th>Type</th>\
+                     <th>Identifier</th>\
+                     <th>RA</th>\
+                     <th>Dec</th>\
+                     <th>Rising Time<br>Transit Time<br>Setting Time</th>\
+                     <th>Start time</th>\
+                     <th>Num<br>exposures</th>\
+                     <th>Exposure<br>time<br>(seconds)</th>\
+                     </tr>";
+
+    // Send the request to get all the bookmark items in the selected folder.
+    $.ajax({
+        type: "POST",
+        url: "/bookmark/",
+        data: { action: "queryFolderForObserving", folderName: folderName, includeOtherTargets: includeOtherTargets,
+            dateTime: dateTime, minTimeBetween: minTimeBetween, maxTimeBetween: maxTimeBetween, observatoryID: observatoryID },
+        dataType: 'json',
+        success: function(response, textStatus, jqXHR)
+            {
+                responseArray = response;
+
+                for(var i = 0; i < response.length; i++)
+                {
+                    var r = response[i];
+
+                    //TODO: Include a check to see if the object is never visible and if so, don't check the include checkbox by default.
+                    tableHTML += '\n<tr>';
+                    tableHTML += '\n<td><input type=checkbox class=includeForObservation id="' + r['divID'] + '_includeCheckbox" checked></td>';
+                    tableHTML += '\n<td>' + r['type'] + '</td>';
+                    tableHTML += '\n<td>' + r['identifier'] + '</td>';
+                    tableHTML += '\n<td>' + r['ra'] + '</td>';
+                    tableHTML += '\n<td>' + r['dec'] + '</td>';
+                    tableHTML += '\n<td>' + r['nextRising'] + '<br>' + r['nextTransit'] + '<br>' + r['nextSetting'] + '</td>';
+
+                    tableHTML += '\n<td>';
+                    tableHTML += '<input type=text id="' + r['divID'] + '_startTimeText" value="' + r['startTime'] + '">';
+                    tableHTML += '</td>';
+
+                    tableHTML += '\n<td><input type=text id="' + r['divID'] + '_numExposuresText" value="' + r['numExposures'] + '"></td>';
+                    tableHTML += '\n<td><input type=text id="' + r['divID'] + '_exposureTimeText" value="' + r['exposureTime'] + '"></td>';
+                    tableHTML += '\n</tr>';
+                }
+
+                $('#bookmarkTable').html(tableHTML);
+            },
+        error: function(response, textStatus, jqXHR)
+            {
+                alert(response.responseText);
+            }
+    });
+};
+
+function submitObservingPlan()
+{
+    var observingPlan = [];
+
+    for(var i = 0; i < responseArray.length; i++)
+    {
+        var r = responseArray[i];
+
+        var checkbox = document.getElementById(r['divID'] + '_includeCheckbox');
+        if(checkbox.checked)
+        {
+            temp = Object();
+            temp['type'] = r['type'];
+            temp['typeInternal'] = r['typeInternal'];
+            temp['id'] = r['id'];
+            temp['identifier'] = r['identifier'];
+            temp['ra'] = r['ra'];
+            temp['dec'] = r['dec'];
+            temp['nextRising'] = r['nextRising'];
+            temp['nextTransit'] = r['nextTransit'];
+            temp['nextSetting'] = r['nextSetting'];
+            temp['startTime'] = document.getElementById(r['divID'] + '_startTimeText').value
+            temp['numExposures'] = document.getElementById(r['divID'] + '_numExposuresText').value
+            temp['exposureTime'] = document.getElementById(r['divID'] + '_exposureTimeText').value
+
+            observingPlan[observingPlan.length] = temp;
+        }
+    }
+
+    var observingPlanInput = document.createElement("input");
+    observingPlanInput.setAttribute("type", "hidden");
+    observingPlanInput.setAttribute("name", "observingPlan");
+    observingPlanInput.setAttribute("value", JSON.stringify(observingPlan));
+    document.getElementById("exportForm").appendChild(observingPlanInput);
+
+    $('#exportForm').submit();
+};
+
+$(document).ready(function()
+{
+    $('#dateEntry').val(getCurrentDate());
+    $('#timeEntry').val(getCurrentTime());
+
+    updateBookmarkTable();
+});
+</script>
+
+<h2>Export bookmarks</h2>
+
+<p>
+<form id='exportForm' method=POST action="/export/bookmarks/">
+{% csrf_token %}
+
+Bookmark folder to export:
+<select name=folderName onchange="updateBookmarkTable()">
+{% for folder in folders %}
+    <option value="{{folder.name}}">{{folder.name}}</option>
+{% endfor %}
+</select>
+
+<br><br>
+
+File format for export:
+<select name=fileFormat>
+    <option value="human">Human Readable Textfile</option>
+    <option value="oal">Open Astronomy Log (KStars)</option>
+</select>
+
+<br><br>
+
+Include other suggested observing targets in plan:
+<input type=checkbox name=includeOtherTargets checked>
+
+<br><br>
+
+Date/time of observing session start:
+<input type="date" name=date id=dateEntry>
+<input type="time" name=time id=timeEntry>
+
+<br><br>
+
+Minimum time between obervations (minutes):
+<input type="number" name=minTimeBetween value=1>
+
+<br><br>
+
+Maximum time between obervations (minutes):
+<input type="number" name=maxTimeBetween value=1>
+
+<br><br>
+
+Observatory:
+<select name=observatoryID>
+{% for observatory in observatories %}
+    <option value="{{observatory.pk}}">{{observatory.name}}</option>
+{% endfor %}
+</select>
+
+<br><br>
+
+<input type=button class=button value="Refresh Table" onclick="refreshBookmarkTable()">
+<input type=button class=button value="Export Bookmarks" onclick="submitObservingPlan()">
+</form>
+</p>
+
+<table id="bookmarkTable" cellpadding=5px border=2px style="border-collapse: collapse; margin: 1em;">
+</table>
+
+{% endblock mainbody %}
+

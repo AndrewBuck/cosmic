@@ -2,6 +2,7 @@ import hashlib
 import os
 import math
 from datetime import timedelta
+import dateparser
 
 from django.middleware import csrf
 from django.http import HttpResponse
@@ -1286,6 +1287,23 @@ def bookmark(request):
         #print(json.dumps(resultDict, sort_keys=True, indent=4, separators=(',', ': ')))
         return HttpResponse(json.dumps(resultDict))
 
+    elif action == 'queryFolderForObserving':
+        if folderName == None:
+            return HttpResponse(json.dumps({'error': 'no folder name specified'}), status=400)
+
+        includeOtherTargets = True if request.POST.get('includeOtherTargets', 'false').lower == 'true' else False
+        dateTime = dateparser.parse(request.POST.get('dateTime', str(timezone.now())))
+        minTimeBetween = float(request.POST.get('minTimeBetween', 0))
+        maxTimeBetween = float(request.POST.get('maxTimeBetween', 120))
+        observatoryID = int(request.POST.get('observatoryID', -1))
+
+        folder = BookmarkFolder.objects.filter(user=request.user, name=folderName).first()
+        bookmarks = Bookmark.objects.filter(folders=folder)  #TODO: This probably fails for bookmarks which are in more than one folder.
+        observatory = Observatory.objects.filter(pk=observatoryID).first()
+        observingPlan = formulateObservingPlan(request.user, observatory, bookmarks, includeOtherTargets, dateTime, minTimeBetween, maxTimeBetween)
+
+        return HttpResponse(json.dumps(observingPlan))
+
     elif action == 'add':
         targetObject = typeDict[targetType].objects.get(pk=targetID)
         content_type = ContentType.objects.get_for_model(targetObject)
@@ -1515,4 +1533,91 @@ def observing(request):
     context['asteroids'] = asteroids
 
     return render(request, "cosmicapp/observing.html", context)
+
+@login_required
+def exportBookmarks(request):
+    context = {"user" : request.user}
+
+    if request.method == "POST":
+        fileName = 'export.txt'
+        fileContent = ''
+
+        folderName = request.POST.get('folderName', None)
+        fileFormat = request.POST.get('fileFormat', None)
+        observingPlan = json.loads(request.POST.get('observingPlan', None))
+        observingPlan.sort(key=lambda x: x['startTime'])
+
+        if folderName == None or fileFormat == None:
+            return HttpResponse('bad request: parameters missing', status=400, reason='Parameters missing.')
+
+        #TODO: Add file format: ekos scheduler list / ekos sequence queue.
+        #TODO: Add file format: itelescope.net 'image' plan file.
+        if fileFormat == 'oal':
+            fileName = 'Observing_List.xml'   #TODO: Set a date on the filename or something.
+            root = etree.Element("observations")
+            targets = etree.SubElement(root, "targets")
+
+            for t in observingPlan:
+                targetDict = {}
+                targetDict['id'] = t['identifier']
+                targetDict['type'] = t['type']
+                target = etree.SubElement(targets, "target", targetDict)
+
+                datasource = etree.SubElement(target, "datasource")
+                datasource.text = "Cosmic.science"
+
+                name = etree.SubElement(target, "name")
+                name.text = t['identifier']
+
+                position = etree.SubElement(target, "position")
+                ra = etree.SubElement(position, "ra", {'unit': 'rad'})
+                dec = etree.SubElement(position, "dec", {'unit': 'rad'})
+                #TODO: Need to properly set these.
+                ra.text = str(0)
+                dec.text = str(0)
+
+            fileContent = etree.tostring(root, pretty_print=True)
+
+        elif fileFormat == 'human':
+            fileName = 'Observing_List.txt'   #TODO: Set a date on the filename or something.
+            #TODO: Include details about date/location/etc/user and maybe a unique ID.
+            fileContent += 'Observing plan:\n\n\n'
+            for t in observingPlan:
+                #TODO: Include magnitude.
+                fileContent += (
+                    '========== {} ==========\n'
+                    'Object Type: {}\n'
+                    'RA: {}    Dec: {}\n'
+                    '\n'
+                    'Observation Start Time: {}\n'
+                    'Rise: {}    Transit: {}    Set: {}\n'
+                    '\n'
+                    'Scheduled for {} exposures of {} seconds each.\n'
+                    '\n'
+                    'Observing Notes: \n\n\n\n\n' #TODO: Add Fields for seeing, weather, etc.
+                    '\n'
+                    ).format(t['identifier'], t['type'], t['ra'], t['dec'], t['startTime'], t['nextRising'], t['nextTransit'],
+                             t['nextSetting'], t['numExposures'], t['exposureTime'])
+
+        else:
+            return HttpResponse('bad request: unknown file format', status=400)
+
+        response = HttpResponse(fileContent, content_type='application/force-download')
+        response['Content-Disposition'] = 'attachment; filename=' + fileName
+        #TODO: It's usually a good idea to set the 'Content-Length' header too.
+        #TODO: You can also set any other required headers: Cache-Control, etc.
+        return response
+
+    # If we got here the method is not POST so just build and render the export form.
+    folders = BookmarkFolder.objects.filter(user=request.user).order_by('name')
+    context['folders'] = folders
+
+    defaultObservatory = request.user.profile.defaultObservatory
+    observatories = [ defaultObservatory ] if defaultObservatory != None else []
+    for observatory in Observatory.objects.filter(user=request.user).exclude(pk=defaultObservatory.pk).order_by('-pk'):
+        observatories.append(observatory)
+
+    context['observatories'] = observatories
+
+    return render(request, "cosmicapp/exportBookmarks.html", context)
 

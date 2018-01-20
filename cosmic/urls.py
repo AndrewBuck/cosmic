@@ -56,5 +56,7 @@ urlpatterns = [
 
     url(r'^observing/$', views.observing),
 
+    url(r'^export/bookmarks/$', views.exportBookmarks),
+
     url(r'^upload/$', views.upload)
 ]

@@ -1,8 +1,10 @@
 from django.contrib.gis.geos import GEOSGeometry, Point
 import sqlparse
+import ephem
 
 from .models import *
 from .tasks import *
+from .templatetags.cosmicapp_extras import formatRA, formatDec
 
 def formatSqlQuery(query):
     s = query.query.__str__()
@@ -72,3 +74,54 @@ def getAsteroidsAroundGeometry(geometry, bufferSize, targetTime, limitingMag, li
             })
 
     return asteroids
+
+def formulateObservingPlan(user, observatory, targets, includeOtherTargets, dateTime, minTimeBetween, maxTimeBetween):
+    observingPlan = []
+    for target in targets:
+        d = {}
+        ra, dec = (None, None)
+        if isinstance(target, Bookmark):
+            d['divID'] = target.getObjectTypeString + '_' + str(target.object_id)
+            d['type'] = target.getObjectTypeCommonName
+            d['typeInternal'] = target.getObjectTypeString
+            d['id'] = str(target.object_id)
+            d['identifier'] = target.content_object.getDisplayName
+
+            if isinstance(target.content_object, SkyObject):
+                ra, dec = target.content_object.getSkyCoords(dateTime)
+
+        d['ra'] = formatRA(ra)
+        d['dec'] = formatDec(dec)
+
+        if ra != None and dec != None:
+            body = ephem.FixedBody()
+            body._ra = ra
+            body._dec = dec
+            body._epoch = '2000'   #TODO: Set epoch properly based on which catalog we are reading.
+
+            observer = ephem.Observer()
+            observer.lat = observatory.lat
+            observer.lon = observatory.lon
+            observer.elevation = observatory.elevation
+            observer.date = dateTime
+
+            d['startTime'] = str(observer.next_transit(body))
+            d['nextTransit'] = str(observer.next_transit(body))
+            try:
+                d['nextRising'] = str(observer.next_rising(body))
+                d['nextSetting'] = str(observer.next_setting(body))
+            except ephem.AlwaysUpError:
+                d['nextRising'] = "Circumpolar"
+                d['nextSetting'] = "Circumpolar"
+            except ephem.NeverUpError:
+                d['nextRising'] = "Never visible"
+                d['nextSetting'] = "Never visible"
+
+        d['numExposures'] = 1
+        d['exposureTime'] = 30
+
+        observingPlan.append(d)
+
+    observingPlan.sort(key=lambda x: x['startTime'])
+    return observingPlan
+

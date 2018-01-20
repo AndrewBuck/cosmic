@@ -1,3 +1,5 @@
+import math
+
 from django.contrib.gis.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
@@ -743,7 +745,7 @@ class AstorbRecord(models.Model, BookmarkableItem, SkyObject):
 
     def getSkyCoords(self, dateTime):
         ephemeris = computeSingleEphemeris(self, dateTime)
-        return (body.ra*180/math.pi, body.dec*180/math.pi)
+        return (ephemeris.ra*180/math.pi, ephemeris.dec*180/math.pi)
 
     @property
     def getDisplayName(self):
