@@ -307,7 +307,9 @@ def observatory(request, id):
 
             return HttpResponseRedirect('/user/' + request.user.username + '/')
         else:
-            context['error'] = 'Error: You must be logged in to create an observatory.'
+            if not request.user.is_authenticated:
+                context['error'] = 'Error: You must be logged in to create an observatory.'
+
             return render(request, "cosmicapp/observatorynew.html", context)
 
     try:
