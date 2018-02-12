@@ -1,0 +1,37 @@
+{% extends "cosmicapp/base.html" %}
+
+{% load static %}
+{% load cosmicapp_extras %}
+
+{% block extratitle %} - About {% endblock extratitle %}
+
+{% block extrahead %}
+{% include "./jquery.html" %}
+{% endblock extrahead %}
+
+{% block mainbody %}
+
+<h2>Cosmos</h2>
+<figure>
+<blockquote>
+The Cosmos is all that is or was or ever will be. Our feeblest contemplations of the Cosmos stir us -- there is a tingling in the spine, a catch in the voice, a faint sensation, as if a distant memory, of falling from a height. We know we are approaching the greatest of mysteries.
+</blockquote>
+<figcaption>Dr. Carl Sagan</figcaption>
+</figure>
+<h3>Cosmic</h3>
+<p>
+Cosmic is a citizen-science project for Astronomy.
+The primary goal of the Cosmic project is to make the scientific tools of astronomy easy enough to access and use that someone without formal training may become a citizen of Cosmic, and make a meaningful contribution to humanity's scientific understanding of the Cosmos.
+</p>
+<h3>Citizens</h3>
+<p>
+The citizens of Cosmic are generators, analysers, and users of scientifically valuable astronomical data.
+Cosmic is built to simplify this process as much as possible.
+</p>
+<h3>Science</h3>
+<p>
+Cosmic citizens are scientists: professional, hobbyist, student, expert, and neophyte. 
+Cosmic provides for a person interested in science, space, astronomy or a love of looking at the night sky a way to directly contribute to advancing humanity's understanding of the Cosmos.
+</p>
+
+{% endblock mainbody %}
