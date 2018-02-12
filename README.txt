@@ -496,16 +496,3 @@ Exoplanets Data Explorer Database
     Attribution: This research has made use of the Exoplanet Orbit Database and
         the Exoplanet Data Explorer at exoplanets.org.
 
-
-
-NOTES:
-
-The imwcs command line program does plate solving similar to atrometry.net
-
-
-
-
-When the database is more complete it would be good to allow API access using:
-
-http://www.ivoa.net/index.html
-

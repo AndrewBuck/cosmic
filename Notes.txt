@@ -8,6 +8,9 @@ solve-field - potentially useful commandline options:
 -ra, --dec, --radius
 
 
+The imwcs command line program does plate solving similar to atrometry.net
+
+
 Login usernames should not be case sensitive.
 
 
@@ -125,4 +128,9 @@ network with global coverage.  We should look into collaboration with the,
 either processing data produced by their scopes, and/or submitting observation
 requests to them as we would with individual observers.
 https://lco.global/
+
+
+
+When the database is more complete it would be good to allow API access using:
+http://www.ivoa.net/index.html
 
