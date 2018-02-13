@@ -967,6 +967,27 @@ def query(request):
 
             etree.SubElement(root, "OTA", otaDict)
 
+    elif request.GET['queryfor'] == 'camera':
+        results = Camera.objects
+        results = results.order_by('make', 'model')
+
+        for result in results:
+            cameraDict = {}
+            cameraDict['id'] = str(result.pk)
+            cameraDict['make'] = str(result.make)
+            cameraDict['model'] = str(result.model)
+            cameraDict['dimX'] = str(result.dimX)
+            cameraDict['dimY'] = str(result.dimY)
+            cameraDict['pixelDimX'] = str(result.pixelDimX)
+            cameraDict['pixelDimY'] = str(result.pixelDimY)
+            cameraDict['readNoise'] = str(result.readNoise)
+            cameraDict['ePerADU'] = str(result.ePerADU)
+            cameraDict['exposureMin'] = str(result.exposureMin)
+            cameraDict['exposureMax'] = str(result.exposureMax)
+            cameraDict['coolingCapacity'] = str(result.coolingCapacity)
+
+            etree.SubElement(root, "Camera", cameraDict)
+
     #TODO: Also write the values used in the query into the result, so the client can check if the limit they set was reduced, etc.
     return HttpResponse(etree.tostring(root, pretty_print=False), content_type='application/xml')
 
@@ -982,7 +1003,7 @@ def equipment(request):
     #TODO: Store user who created this equipment.
         if request.POST['equipmentType'] == 'ota':
             missingFields = []
-            #TODO: Make a disctionary of the required fields for each type and then consolodate all checks into that to avoid code duplication.
+            #TODO: Make a dictionary of the required fields for each type and then consolodate all checks into that to avoid code duplication.
             for field in ('make', 'model', 'aperture', 'focalLength', 'design'):
                 if not field in request.POST:
                     missingFields.append(field)
@@ -1006,6 +1027,39 @@ def equipment(request):
                     context['otaMessage'] = 'New OTA Created'
                 else:
                     context['otaMessage'] = 'OTA was identical to an existing OTA, no duplicate created.'
+
+        elif request.POST['equipmentType'] == 'Camera':
+            missingFields = []
+            #TODO: Make a dictionary of the required fields for each type and then consolodate all checks into that to avoid code duplication.
+            for field in ('make', 'model', 'dimX', 'dimY'):
+                if not field in request.POST:
+                    missingFields.append(field)
+                    continue
+
+                if request.POST[field].strip() == '':
+                    missingFields.append(field)
+
+            if len(missingFields) > 0:
+                context['cameraMessage'] = 'ERROR: Missing fields: ' + ', '.join(missingFields)
+            else:
+                newCamera, created = Camera.objects.get_or_create(
+                    make = request.POST['make'].strip(),
+                    model = request.POST['model'].strip(),
+                    dimX = request.POST['dimX'].strip(),
+                    dimY = request.POST['dimY'].strip(),
+                    pixelDimX = request.POST['pixelDimX'].strip(),
+                    pixelDimY = request.POST['pixelDimY'].strip(),
+                    readNoise = request.POST['readNoise'].strip(),
+                    ePerADU = request.POST['ePerADU'].strip(),
+                    exposureMin = request.POST['exposureMin'].strip(),
+                    exposureMax = request.POST['exposureMax'].strip(),
+                    coolingCapacity = request.POST['coolingCapacity'].strip()
+                    )
+
+                if created:
+                    context['cameraMessage'] = 'New Camera Created'
+                else:
+                    context['cameraMessage'] = 'Camera was identical to an existing Camera, no duplicate created.'
 
     return render(request, "cosmicapp/equipment.html", context)
 
