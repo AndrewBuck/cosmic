@@ -1670,7 +1670,13 @@ def exportBookmarks(request):
 
     defaultObservatory = request.user.profile.defaultObservatory
     observatories = [ defaultObservatory ] if defaultObservatory != None else []
-    for observatory in Observatory.objects.filter(user=request.user).exclude(pk=defaultObservatory.pk).order_by('-pk'):
+
+    otherObservatories = Observatory.objects.filter(user=request.user)
+    if defaultObservatory != None:
+        otherObservatories = otherObservatories.exclude(pk=defaultObservatory.pk)
+    otherObservatories = otherObservatories.order_by('-pk')
+
+    for observatory in otherObservatories:
         observatories.append(observatory)
 
     context['observatories'] = observatories

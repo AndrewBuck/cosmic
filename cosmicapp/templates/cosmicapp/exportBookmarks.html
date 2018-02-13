@@ -188,11 +188,16 @@ Maximum time between obervations (minutes):
 <br><br>
 
 Observatory:
-<select name=observatoryID>
-{% for observatory in observatories %}
-    <option value="{{observatory.pk}}">{{observatory.name}}</option>
-{% endfor %}
-</select>
+{% if observatories %}
+    <select name=observatoryID>
+        {% for observatory in observatories %}
+            <option value="{{observatory.pk}}">{{observatory.name}}</option>
+        {% endfor %}
+    </select>
+{% else %}
+    <font color=red>ERROR: You need to set an observing location by creating one or more observatories on your profile
+    page.</font>
+{% endif %}
 
 <br><br>
 
