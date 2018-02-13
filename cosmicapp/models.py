@@ -18,12 +18,43 @@ from .tasks import computeSingleEphemeris
 
 #TODO:  Need to review the null constraint for all fields and try to minimize use of null=True, this is best done after the database is in a more stable state.
 
-class OTA(models.Model):
+class InstrumentComponent(models.Model):
     """
-    An Optical tube assembly that forms the core of the optical path of an instrument.
+    An abstract base class containing the fields common to all hardware that makes up an instrument.  I.E. a mounting
+    pier, a mount, and OTA, a camera, etc.
+
+    Records of this type cannot be created directly and there is no actual table for this type in the database.  Rather one
+    of the child classes derived from this is actually created and stored in the corresponding table.  Having this base
+    class avoids duplicating code for the common fields in each derived child record type, but it also allows code
+    manipulating those results to have a guarantee that certain fields are present on any of the found sources.
     """
     make = models.CharField(max_length=64, null=True, blank=True)
     model = models.CharField(max_length=64, null=True, blank=True)
+
+    class Meta:
+        abstract = True
+
+class ComponentInstance(models.Model):
+    """
+    A specific peice of equipment owned by a specific user.  A given ComponentInstance links to another
+    ComponentInstance which it is physically attached to in a given instrument configuration.
+    """
+    #Generic FK to the InstrumentComponent that this component is attached to (or None if this component is a pier).
+    #TODO: Add a reverse generic relation to the relevant classes this will link to (Camera, Mount, OTA, etc).
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True)
+    object_id = models.PositiveIntegerField(null=True)
+    instrumentComponent = GenericForeignKey('content_type', 'object_id')
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    attachedTo = models.ForeignKey("ComponentInstance", on_delete=models.CASCADE)
+    serialNumber = models.TextField(null=True)
+    dateOnline = models.DateField(null=True, blank=True)
+    dateOffline = models.DateField(null=True, blank=True)
+
+class OTA(InstrumentComponent):
+    """
+    An Optical tube assembly that forms the core of the optical path of an instrument.
+    """
     focalLength = models.FloatField(null=True, blank=True)
     aperture = models.FloatField(null=True, blank=True)
     design = models.CharField(max_length=64, null=True, blank=True)
@@ -45,12 +76,10 @@ class Eyepiece(models.Model):
     focalLength = models.FloatField(null=True, blank=True)
     apparentFOV = models.FloatField(null=True, blank=True)
 
-class Camera(models.Model):
+class Camera(InstrumentComponent):
     """
     A camera to be inserted into a telescope for recording observations.
     """
-    make = models.CharField(max_length=64, null=True, blank=True)
-    model = models.CharField(max_length=64, null=True, blank=True)
     dimX = models.FloatField(null=True, blank=True)
     dimY = models.FloatField(null=True, blank=True)
     pixelDimX = models.FloatField(null=True, blank=True)
@@ -70,6 +99,7 @@ class Mount(models.Model):
     mountType = models.CharField(max_length=64, null=True, blank=True)
     mountedOn = models.CharField(max_length=64, null=True, blank=True)
 
+#TODO: Delete this class.
 class Instrument(models.Model):
     """
     An entire assembled telescope optical path.  A single telescope may consist of multiple instruments which have common

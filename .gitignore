@@ -2,6 +2,7 @@ log_import.txt
 db.sqlite3
 plot_db_histogram.plotdata
 .*.swp
+.*.swo
 
 file
 models.png

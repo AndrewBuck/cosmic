@@ -34,12 +34,53 @@ function refreshOTA()
     });
 };
 
+function refreshCamera()
+{
+    $.ajax({
+        url : "/query/?queryfor=camera",
+        type : "get",
+        async: true,
+        success : function(xml)
+        {
+            html = ''
+            html += '<tr>'
+            html += '<th>Make</th> <th>Model</th> <th>Dim X<br>(pixels)</th> <th>Dim Y<br>(pixels)</th>'
+            html += '<th>Pixel Dim X<br>(um/pix)</th> <th>Pixel Dim Y<br>(um/pix)</th>'
+            html += '<th>Read Noise</th> <th>E per ADU</th> <th>Exposure Min<br>(s)</th> <th>Exposure Max<br>(s)</th>'
+            html += '<th>Cooling Capacity<br>(C)</th>'
+            html += '</tr>'
+
+            results = xml.getElementsByTagName('Camera')
+            for(i = 0; i < results.length; i++)
+            {
+                html += '<tr>'
+                html += '<td>' + results[i].attributes.getNamedItem('make').nodeValue + '</td>'
+                html += '<td>' + results[i].attributes.getNamedItem('model').nodeValue + '</td>'
+                html += '<td>' + results[i].attributes.getNamedItem('dimX').nodeValue + '</td>'
+                html += '<td>' + results[i].attributes.getNamedItem('dimY').nodeValue + '</td>'
+                html += '<td>' + results[i].attributes.getNamedItem('pixelDimX').nodeValue + '</td>'
+                html += '<td>' + results[i].attributes.getNamedItem('pixelDimY').nodeValue + '</td>'
+                html += '<td>' + results[i].attributes.getNamedItem('readNoise').nodeValue + '</td>'
+                html += '<td>' + results[i].attributes.getNamedItem('ePerADU').nodeValue + '</td>'
+                html += '<td>' + results[i].attributes.getNamedItem('exposureMin').nodeValue + '</td>'
+                html += '<td>' + results[i].attributes.getNamedItem('exposureMax').nodeValue + '</td>'
+                html += '<td>' + results[i].attributes.getNamedItem('coolingCapacity').nodeValue + '</td>'
+                html += '</tr>'
+            };
+
+            $('#cameraTable').html(html);
+        }
+    });
+};
+
 function init()
 {
     refreshOTA();
+    refreshCamera();
 };
 
 function showNewOTA() { $('#newOTADiv').show(); };
+function showNewCamera() { $('#newCameraDiv').show(); };
 
 $(document).ready(init);
 </script>
@@ -83,6 +124,34 @@ tag your images, it is these complete instruments that you will associate with e
 <h3>Eyepieces</h3>
 
 <h3>Cameras</h3>
+    <table id=cameraTable border=2px>
+    </table>
+
+    <p>{{cameraMessage}}</p>
+
+    <div id=newCameraDiv hidden>
+        <br>
+        <form method=post action='/equipment/'>
+            {% csrf_token %}
+            <input type=hidden name=equipmentType value=Camera>
+            <table>
+            <tr><td>Make (company name)</td><td><input type=text name=make></td><td>(required)</td></tr>
+            <tr><td>Model (name)</td><td><input type=text name=model></td><td>(required)</td></tr>
+            <tr><td>Dim X</td><td><input type=text name=dimX></td><td>(required)</td></tr>
+            <tr><td>Dim Y</td><td><input type=text name=dimY></td><td>(required)</td></tr>
+            <tr><td>Pixel Dim X</td><td><input type=text name=pixelDimX></td><td></td></tr>
+            <tr><td>Pixel Dim Y</td><td><input type=text name=pixelDimY></td><td></td></tr>
+            <tr><td>Read Noise</td><td><input type=text name=readNoise></td><td></td></tr>
+            <tr><td>E Per ADU</td><td><input type=text name=ePerADU></td><td></td></tr>
+            <tr><td>Exposure Min</td><td><input type=text name=exposureMin></td><td></td></tr>
+            <tr><td>Exposure Max</td><td><input type=text name=exposureMax></td><td></td></tr>
+            <tr><td>Cooling Capacity</td><td><input type=text name=coolingCapacity></td><td></td></tr>
+            </table>
+            <input type=submit value=Submit><br>
+        </form>
+    </div>
+    <br>
+    <input type=button class=button value="New Camera" onclick="showNewCamera()">
 
 <h3>Mounts</h3>
 
