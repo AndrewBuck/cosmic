@@ -20,13 +20,7 @@ from .tasks import computeSingleEphemeris
 
 class InstrumentComponent(models.Model):
     """
-    An abstract base class containing the fields common to all hardware that makes up an instrument.  I.E. a mounting
-    pier, a mount, and OTA, a camera, etc.
-
-    Records of this type cannot be created directly and there is no actual table for this type in the database.  Rather one
-    of the child classes derived from this is actually created and stored in the corresponding table.  Having this base
-    class avoids duplicating code for the common fields in each derived child record type, but it also allows code
-    manipulating those results to have a guarantee that certain fields are present on any of the found sources.
+    An Optical tube assembly that forms the core of the optical path of an instrument.
     """
     make = models.CharField(max_length=64, null=True, blank=True)
     model = models.CharField(max_length=64, null=True, blank=True)
