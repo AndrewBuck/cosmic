@@ -49,3 +49,15 @@ def bookmark(context, targetType, targetID, folderName, prefix=None, postfix=Non
     tempDict['postfix'] = postfix
     return tempDict
 
+@register.inclusion_tag('cosmicapp/scoreForObject.html', takes_context=False)
+def scoreForObject(obj, dateTime, user):
+    tempDict = {}
+    value = obj.getValueForTime(dateTime)
+    difficulty = obj.getDifficultyForTime(dateTime)
+    userDifficulty = obj.getUserDifficultyForTime(dateTime, user)
+    tempDict['score'] = obj.getScoreForTime(dateTime, user)
+    tempDict['value'] = value
+    tempDict['difficulty'] = difficulty
+    tempDict['userDifficulty'] = userDifficulty
+    return tempDict
+

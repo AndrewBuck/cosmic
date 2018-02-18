@@ -1001,21 +1001,24 @@ def questions(request):
     return render(request, "cosmicapp/questions.html", context)
 
 def equipment(request):
+    def validateRequiredFields(reqFields):
+        missingFields = []
+        for field in reqFields:
+            if not field in request.POST:
+                missingFields.append(field)
+                continue
+
+            if request.POST[field].strip() == '':
+                missingFields.append(field)
+
+        return missingFields
+
     context = {"user" : request.user}
 
     if request.method == 'POST' and request.user.is_authenticated:
     #TODO: Store user who created this equipment.
         if request.POST['equipmentType'] == 'ota':
-            missingFields = []
-            #TODO: Make a dictionary of the required fields for each type and then consolodate all checks into that to avoid code duplication.
-            for field in ('make', 'model', 'aperture', 'focalLength', 'design'):
-                if not field in request.POST:
-                    missingFields.append(field)
-                    continue
-
-                if request.POST[field].strip() == '':
-                    missingFields.append(field)
-
+            missingFields = validateRequiredFields( ('make', 'model', 'aperture', 'focalLength', 'design') )
             if len(missingFields) > 0:
                 context['otaMessage'] = 'ERROR: Missing fields: ' + ', '.join(missingFields)
             else:
@@ -1033,16 +1036,7 @@ def equipment(request):
                     context['otaMessage'] = 'OTA was identical to an existing OTA, no duplicate created.'
 
         elif request.POST['equipmentType'] == 'Camera':
-            missingFields = []
-            #TODO: Make a dictionary of the required fields for each type and then consolodate all checks into that to avoid code duplication.
-            for field in ('make', 'model', 'dimX', 'dimY'):
-                if not field in request.POST:
-                    missingFields.append(field)
-                    continue
-
-                if request.POST[field].strip() == '':
-                    missingFields.append(field)
-
+            missingFields = validateRequiredFields( ('make', 'model', 'dimX', 'dimY') )
             if len(missingFields) > 0:
                 context['cameraMessage'] = 'ERROR: Missing fields: ' + ', '.join(missingFields)
             else:
@@ -1355,12 +1349,15 @@ def bookmark(request):
         dateTime = dateparser.parse(request.POST.get('dateTime', str(timezone.now())))
         minTimeBetween = float(request.POST.get('minTimeBetween', 0))
         maxTimeBetween = float(request.POST.get('maxTimeBetween', 120))
+        limitingMag = float(request.POST.get('limitingMag', 16))
+        minimumScore = float(request.POST.get('minimumScore', 0))
         observatoryID = int(request.POST.get('observatoryID', -1))
 
         folder = BookmarkFolder.objects.filter(user=request.user, name=folderName).first()
         bookmarks = Bookmark.objects.filter(folders=folder)  #TODO: This probably fails for bookmarks which are in more than one folder.
         observatory = Observatory.objects.filter(pk=observatoryID).first()
-        observingPlan = formulateObservingPlan(request.user, observatory, bookmarks, includeOtherTargets, dateTime, minTimeBetween, maxTimeBetween)
+        observingPlan = formulateObservingPlan(request.user, observatory, bookmarks, includeOtherTargets, dateTime,
+                                               minTimeBetween, maxTimeBetween, limitingMag, minimumScore)
 
         return HttpResponse(json.dumps(observingPlan))
 
@@ -1487,6 +1484,9 @@ def observing(request):
         limitingMag = float(request.GET['limitingMag'])
     else:
         limitingMag = 16
+        if request.user.is_authenticated:
+            if request.user.profile.limitingMag != None:
+                limitingMag = request.user.profile.limitingMag
 
     if 'windowSize' in request.GET:
         windowSize = float(request.GET['windowSize'])
@@ -1541,6 +1541,7 @@ def observing(request):
     context['profileMissingFields'] = profileMissingFields
 
     currentTime = timezone.now()
+    context['currentTime'] = currentTime
 
     observerNow = ephem.Observer()
     observerNow.lat = lat*(math.pi/180)
