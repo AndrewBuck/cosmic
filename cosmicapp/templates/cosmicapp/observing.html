@@ -271,7 +271,7 @@
             <td>{{extendedSource.isophotalKSemiMajor|floatformat:2}}</td>
             <td>{{extendedSource.isophotalKMinorMajor|floatformat:2}}</td>
             <td>
-            <a href="http://simbad.u-strasbg.fr/simbad/sim-basic?Ident={{extendedSource.identifier}}&submit=SIMBAD+search">SIMBAD</a>
+            <a href="http://simbad.u-strasbg.fr/simbad/sim-basic?Ident={{extendedSource.identifier|urlencode}}&submit=SIMBAD+search">SIMBAD</a>
             </td>
             <tr>
         {% endfor %}
