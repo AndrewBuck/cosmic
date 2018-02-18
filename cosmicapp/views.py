@@ -997,21 +997,24 @@ def questions(request):
     return render(request, "cosmicapp/questions.html", context)
 
 def equipment(request):
+    def validateRequiredFields(reqFields):
+        missingFields = []
+        for field in reqFields:
+            if not field in request.POST:
+                missingFields.append(field)
+                continue
+
+            if request.POST[field].strip() == '':
+                missingFields.append(field)
+
+        return missingFields
+
     context = {"user" : request.user}
 
     if request.method == 'POST' and request.user.is_authenticated:
     #TODO: Store user who created this equipment.
         if request.POST['equipmentType'] == 'ota':
-            missingFields = []
-            #TODO: Make a dictionary of the required fields for each type and then consolodate all checks into that to avoid code duplication.
-            for field in ('make', 'model', 'aperture', 'focalLength', 'design'):
-                if not field in request.POST:
-                    missingFields.append(field)
-                    continue
-
-                if request.POST[field].strip() == '':
-                    missingFields.append(field)
-
+            missingFields = validateRequiredFields( ('make', 'model', 'aperture', 'focalLength', 'design') )
             if len(missingFields) > 0:
                 context['otaMessage'] = 'ERROR: Missing fields: ' + ', '.join(missingFields)
             else:
@@ -1029,16 +1032,7 @@ def equipment(request):
                     context['otaMessage'] = 'OTA was identical to an existing OTA, no duplicate created.'
 
         elif request.POST['equipmentType'] == 'Camera':
-            missingFields = []
-            #TODO: Make a dictionary of the required fields for each type and then consolodate all checks into that to avoid code duplication.
-            for field in ('make', 'model', 'dimX', 'dimY'):
-                if not field in request.POST:
-                    missingFields.append(field)
-                    continue
-
-                if request.POST[field].strip() == '':
-                    missingFields.append(field)
-
+            missingFields = validateRequiredFields( ('make', 'model', 'dimX', 'dimY') )
             if len(missingFields) > 0:
                 context['cameraMessage'] = 'ERROR: Missing fields: ' + ', '.join(missingFields)
             else:
@@ -1537,6 +1531,7 @@ def observing(request):
     context['profileMissingFields'] = profileMissingFields
 
     currentTime = timezone.now()
+    context['currentTime'] = currentTime
 
     observerNow = ephem.Observer()
     observerNow.lat = lat*(math.pi/180)
