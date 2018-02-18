@@ -1345,12 +1345,15 @@ def bookmark(request):
         dateTime = dateparser.parse(request.POST.get('dateTime', str(timezone.now())))
         minTimeBetween = float(request.POST.get('minTimeBetween', 0))
         maxTimeBetween = float(request.POST.get('maxTimeBetween', 120))
+        limitingMag = float(request.POST.get('limitingMag', 16))
+        minimumScore = float(request.POST.get('minimumScore', 0))
         observatoryID = int(request.POST.get('observatoryID', -1))
 
         folder = BookmarkFolder.objects.filter(user=request.user, name=folderName).first()
         bookmarks = Bookmark.objects.filter(folders=folder)  #TODO: This probably fails for bookmarks which are in more than one folder.
         observatory = Observatory.objects.filter(pk=observatoryID).first()
-        observingPlan = formulateObservingPlan(request.user, observatory, bookmarks, includeOtherTargets, dateTime, minTimeBetween, maxTimeBetween)
+        observingPlan = formulateObservingPlan(request.user, observatory, bookmarks, includeOtherTargets, dateTime,
+                                               minTimeBetween, maxTimeBetween, limitingMag, minimumScore)
 
         return HttpResponse(json.dumps(observingPlan))
 
@@ -1477,6 +1480,9 @@ def observing(request):
         limitingMag = float(request.GET['limitingMag'])
     else:
         limitingMag = 16
+        if request.user.is_authenticated:
+            if request.user.profile.limitingMag != None:
+                limitingMag = request.user.profile.limitingMag
 
     if 'windowSize' in request.GET:
         windowSize = float(request.GET['windowSize'])

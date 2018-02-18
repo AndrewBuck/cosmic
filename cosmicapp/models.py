@@ -1,4 +1,5 @@
 import math
+from datetime import timedelta
 
 from django.contrib.gis.db import models
 from django.contrib.auth.models import User
@@ -126,6 +127,7 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     defaultObservatory = models.ForeignKey('Observatory', on_delete=models.CASCADE, null=True)
     birthDate = models.DateField(null=True, blank=True)
+    limitingMag = models.FloatField(null=True, blank=True)
 
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
@@ -205,6 +207,9 @@ class SkyObject:
     """
     def getSkyCoords(self, dateTime):
         return (None, None)
+
+    def getMag(self, dateTime):
+        return None
 
 class Observatory(models.Model):
     """
@@ -642,7 +647,87 @@ class Catalog(models.Model):
     url = models.TextField(null=True)
     cosmicNotes = models.TextField(null=True)
 
-class UCAC4Record(models.Model):
+class ScorableObject:
+    """
+    This is a base class to provide a set common access functions to compute a "score" for an object indicating how
+    valuable an observation of that target is at a given time, by a given user.  The score is made up of three components:
+
+        Value - How scientifically useful an observation would be at a given time.
+
+        Difficulty - The intrinsic difficulty in observing the target that any user would experience (like uncertainty
+        in position, etc).
+
+        User Difficulty - The difficulty in observing a target based on properties specific to the user (how dim the
+        object is in comparison to their instrument, how high it is above their horizon, etc).
+
+    A score of 0 should be assigned for objects which are impossible to observe due to equipment, location, time, etc.
+    This is done to prevent the score routines from ranking this a high scoring object due to its enormous difficulty
+    if it was very low, or below the horizon, or way too dim for the observer to detect, etc.  Since we want to
+    discourage, rather than encourage, such observations we just return 0 to indicate it is impossible and therefore
+    not worth any points so don't even try observing it in the first place.
+    """
+    def getScoreForTime(self, t, user):
+        return self.getValueForTime(t) * self.getDifficultyForTime(t) * self.getUserDifficultyForTime(t, user)
+
+    def getValueForTime(self, t):
+        return 1.0
+
+    def getDifficultyForTime(self, t):
+        return 1.0
+
+    def getUserDifficultyForTime(self, t, user):
+        return 1.0
+
+    @staticmethod
+    def limitingStellarMagnitudeDifficulty(mag, limitingMag):
+        """
+        Compute and return a difficulty score for how difficult this (stellar, or point like) object is to observe
+        given a specific limiting magnitude or the dimmest point source the observer can meaningfully detect.
+        """
+        if mag < (limitingMag - 4):
+            return max(mag/(limitingMag - 4), 0)
+        elif mag <= limitingMag:
+            #TODO: Implement this as a function of magnitude.
+            return 3.0
+        elif mag > limitingMag:
+            return 0.0
+
+    @staticmethod
+    def limitingDSOMagnitudeDifficulty(mag, limitingMag):
+        """
+        Compute and return a difficulty score for how difficult this (extended or DSO) object is to observe
+        given a specific limiting magnitude or the dimmest point source the observer can meaningfully detect.
+        """
+        #This dsoFactor is used to roughly indicate the relative difficulty of detecting an extended object vs
+        # detecting a point source.  A better approximation should be used than just a dumb constant.
+        #TODO: Make this better.
+        dsoFactor = 1.5
+
+        if mag >= 0 and mag < limitingMag/dsoFactor:
+            return 5.0 * mag / (limitingMag/dsoFactor)
+        else:
+            return 0.0
+
+    @staticmethod
+    #TODO: Need to implement this function and then call it from all the user difficulty calculations.
+    def zenithDifficulty(observingLocation):
+        """
+        Compute and return a difficulty score for how difficult this object is to observe based on its distance from the
+        observer's zenith.  The function returns 0.0 for objects impossible to observe due to airmass or being below the horizon.
+        """
+        return 1.0
+
+class DataTimePoint(models.Model):
+    #Generic FK to image or whatever the question is about.
+    #TODO: Add a reverse generic relation to the relevant classes this will link to (image, observer notes, etc).
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    scoreableObject = GenericForeignKey('content_type', 'object_id')
+
+    dateTime = models.DateTimeField()
+    score = models.FloatField(null=True)
+
+class UCAC4Record(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     """
     A record storing a single entry from the UCAC4 catalog of stars.
     """
@@ -657,7 +742,28 @@ class UCAC4Record(models.Model):
     magError = models.FloatField(null=True)
     id2mass = models.CharField(max_length=10, null=True)
 
-class GCVSRecord(models.Model, BookmarkableItem, SkyObject):
+    def getSkyCoords(self, dateTime):
+        return (self.ra, self.dec)
+
+    def getMag(self, dateTime):
+        #TODO: Properly implement this function.
+        return self.magFit
+
+    @property
+    def getDisplayName(self):
+        return self.identifier
+
+    def getValueForTime(self, t):
+        return 0.1
+
+    def getDifficultyForTime(self, t):
+        return 1.0
+
+    def getUserDifficultyForTime(self, t, user):
+        #TODO: Properly implement this function.
+        return ScorableObject.limitingStellarMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
+
+class GCVSRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     """
     A record storing a single entry from the General Catalog of Variable Stars.
     """
@@ -687,11 +793,28 @@ class GCVSRecord(models.Model, BookmarkableItem, SkyObject):
     def getSkyCoords(self, dateTime):
         return (self.ra, self.dec)
 
+    def getMag(self, dateTime):
+        #TODO: Properly implement this function.
+        return self.magMax
+
     @property
     def getDisplayName(self):
         return self.identifier
 
-class TwoMassXSCRecord(models.Model, BookmarkableItem, SkyObject):
+    def getValueForTime(self, t):
+        #TODO: Properly implement this function.
+        return 10.0
+
+    def getDifficultyForTime(self, t):
+        #TODO: Properly implement this function.
+        # Should be proprotional to the uncertainty in the brightness of the object at the given time.
+        return 1.0
+
+    def getUserDifficultyForTime(self, t, user):
+        #TODO: Properly implement this function.
+        return ScorableObject.limitingStellarMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
+
+class TwoMassXSCRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     """
     A record storing a single entry from the 2MASS Extended Source Catalog of "extended", i.e. non point source, objects.
     """
@@ -710,11 +833,26 @@ class TwoMassXSCRecord(models.Model, BookmarkableItem, SkyObject):
     def getSkyCoords(self, dateTime):
         return (self.ra, self.dec)
 
+    def getMag(self, dateTime):
+        return self.isophotalKMag
+
     @property
     def getDisplayName(self):
         return self.identifier
 
-class MessierRecord(models.Model, BookmarkableItem, SkyObject):
+    def getValueForTime(self, t):
+        #TODO: Properly implement this function.
+        return pow(self.isophotalKSemiMajor/60.0, 2) * self.isophotalKMinorMajor
+
+    def getDifficultyForTime(self, t):
+        #TODO: Properly implement this function.
+        return 1.0
+
+    def getUserDifficultyForTime(self, t, user):
+        #TODO: Properly implement this function.
+        return ScorableObject.limitingDSOMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
+
+class MessierRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     """
     A record storing a single entry from the Messier Catalog.
     """
@@ -735,11 +873,76 @@ class MessierRecord(models.Model, BookmarkableItem, SkyObject):
     def getSkyCoords(self, dateTime):
         return (self.ra, self.dec)
 
+    def getMag(self, dateTime):
+        return self.magV
+
     @property
     def getDisplayName(self):
         return self.identifier
 
-class AstorbRecord(models.Model, BookmarkableItem, SkyObject):
+    def getValueForTime(self, t):
+        typeValueDict = {
+            'GlC': (40.0, 'cluster'),           # Globular Cluster
+            'GiP': (6.0, 'galaxy'),             # Galaxy in Pair of Galaxies
+            'HII': (2.0, 'nebula'),             # HII (ionized) region
+            'AGN': (3.0, 'galaxy'),             # Active Galaxy Nucleus
+            'Cl*': (7.0, 'cluster'),            # Cluster of Stars
+            'As*': (3.0, 'cluster'),            # Association of Stars
+            'Sy2': (3.0, 'galaxy'),             # Seyfert 2 Galaxy
+            'OpC': (15.0, 'cluster'),           # Open (galactic) Cluster
+            'PN': (3.0, 'stellarRemnant'),      # Planetary Nebula
+            'H2G': (3.0, 'galaxy'),             # HII Galaxy
+            'RNe': (2.0, 'nebula'),             # Reflection Nebula
+            '**': (3.0, 'cluster'),             # Double or multiple star
+            'IG': (5.0, 'galaxy'),              # Interacting Galaxies
+            'SyG': (3.0, 'galaxy'),             # Seyfert Galaxy
+            'SNR': (5.0, 'stellarRemnant'),     # SuperNova Remnant
+            'GiG': (5.0, 'galaxy'),             # Galaxy in Group of Galaxies
+            'LIN': (3.0, 'galaxy'),             # LINER-type Active Galaxy Nucleus
+            'SBG': (10.0, 'galaxy'),            # Starburst Galaxy
+            'G': (3.0, 'galaxy')                # Galaxy
+            }
+
+        valueList = typeValueDict[self.objectType]
+        value = valueList[0]
+        category = valueList[1]
+
+        return value
+
+    def getDifficultyForTime(self, t):
+        typeDifficultyDict = {
+            'GlC': (0.8, 'cluster'),            # Globular Cluster
+            'GiP': (1.3, 'galaxy'),             # Galaxy in Pair of Galaxies
+            'HII': (2.0, 'nebula'),             # HII (ionized) region
+            'AGN': (1.3, 'galaxy'),             # Active Galaxy Nucleus
+            'Cl*': (0.9, 'cluster'),            # Cluster of Stars
+            'As*': (1.1, 'cluster'),            # Association of Stars
+            'Sy2': (1.3, 'galaxy'),             # Seyfert 2 Galaxy
+            'OpC': (1.0, 'cluster'),            # Open (galactic) Cluster
+            'PN': (2.0, 'stellarRemnant'),      # Planetary Nebula
+            'H2G': (1.3, 'galaxy'),             # HII Galaxy
+            'RNe': (1.5, 'nebula'),             # Reflection Nebula
+            '**': (0.8, 'cluster'),             # Double or multiple star
+            'IG': (1.3, 'galaxy'),              # Interacting Galaxies
+            'SyG': (1.3, 'galaxy'),             # Seyfert Galaxy
+            'SNR': (2.0, 'stellarRemnant'),     # SuperNova Remnant
+            'GiG': (1.3, 'galaxy'),             # Galaxy in Group of Galaxies
+            'LIN': (1.3, 'galaxy'),             # LINER-type Active Galaxy Nucleus
+            'SBG': (1.3, 'galaxy'),             # Starburst Galaxy
+            'G': (1.3, 'galaxy')                # Galaxy
+            }
+
+        difficultyList = typeDifficultyDict[self.objectType]
+        difficulty = difficultyList[0]
+        category = difficultyList[1]
+
+        return difficulty
+
+    def getUserDifficultyForTime(self, t, user):
+        #TODO: Properly implement this function.
+        return ScorableObject.limitingDSOMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
+
+class AstorbRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     """
     A record storing a the Keplerian orbital elements and physical properties for a single asteroid from the astorb database.
     """
@@ -777,6 +980,10 @@ class AstorbRecord(models.Model, BookmarkableItem, SkyObject):
         ephemeris = computeSingleEphemeris(self, dateTime)
         return (ephemeris.ra*180/math.pi, ephemeris.dec*180/math.pi)
 
+    def getMag(self, dateTime):
+        body = computeSingleEphemeris(self, dateTime)
+        return body.mag
+
     @property
     def getDisplayName(self):
         if self.number != None:
@@ -785,6 +992,20 @@ class AstorbRecord(models.Model, BookmarkableItem, SkyObject):
             ret = self.name
 
         return ret
+
+    def getValueForTime(self, t):
+        #TODO: Properly implement this function.
+        #TODO: Take into account the orbitCode, astrometryNeeded code, and criticalCode field.
+        #TODO: Calculate an ephemeris and use angle from opposition as part of the score.
+        return 10 + 100*log(self.ceu + 1)
+
+    def getDifficultyForTime(self, t):
+        #TODO: Properly implement this function.
+        return 2.0
+
+    def getUserDifficultyForTime(self, t, user):
+        #TODO: Properly implement this function.
+        return math.pow(log(self.ceu + 1), 2) * ScorableObject.limitingStellarMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
 
 #TODO: This should probably inherit from SkyObject as well, need to add that and implement the function if it is deemed appropriate.
 class AstorbEphemeris(models.Model):
@@ -802,7 +1023,7 @@ class AstorbEphemeris(models.Model):
     brightMag = models.FloatField(db_index=True, null=True)
     geometry = models.LineStringField(srid=40000, geography=False, dim=2, null=True)
 
-class ExoplanetRecord(models.Model, BookmarkableItem, SkyObject):
+class ExoplanetRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     """
     A record storing a single entry from the Exoplanets Data Explorer database of curated exoplanet results.
     """
@@ -865,9 +1086,60 @@ class ExoplanetRecord(models.Model, BookmarkableItem, SkyObject):
     def getSkyCoords(self, dateTime):
         return (self.ra, self.dec)
 
+    def getMag(self, dateTime):
+        return self.magV
+
     @property
     def getDisplayName(self):
         return self.identifier
+
+    def getValueForTime(self, t):
+        #TODO: Properly implement this function.
+        if self.transitEpoch != None and self.transitDuration != None and self.period != None:
+            deltaT = t - self.transitEpoch
+            periods = deltaT.total_seconds() / (86400*self.period)
+            periodFraction = periods - math.floor(periods)
+            periodFloor = math.floor(periods)
+            periodCeiling = math.ceil(periods)
+            durationHalfFraction = (self.transitDuration / self.period) / 2.0
+            durationHalfTimedelta = timedelta(days=self.transitDuration/2.0)
+            windowSizeHours = 0.5
+            windowSizeTimedelta = timedelta(hours=windowSizeHours)
+
+            #print(deltaT, "\t", periods, "\t", periodFraction, "\t", durationHalfFraction)
+
+            if periodFraction <= durationHalfFraction or periodFraction >= (1.0 - durationHalfFraction):
+                # The exoplanet is currently in a transit.
+                return 100
+            else:
+                # The exoplanet is not in a transit.
+                transit1 = timedelta(days=periodFloor * self.period) + self.transitEpoch
+                transit2 = timedelta(days=periodCeiling * self.period) + self.transitEpoch
+                t1c1 = transit1 - durationHalfTimedelta
+                t1c4 = transit1 + durationHalfTimedelta
+                t2c1 = transit2 - durationHalfTimedelta
+                t2c4 = transit2 + durationHalfTimedelta
+                dt1c1 = abs((t - t1c1).total_seconds())
+                dt1c4 = abs((t - t1c4).total_seconds())
+                dt2c1 = abs((t - t2c1).total_seconds())
+                dt2c4 = abs((t - t2c4).total_seconds())
+                if dt1c1 < windowSizeTimedelta.total_seconds() or dt1c4 < windowSizeTimedelta.total_seconds() or \
+                   dt2c1 < windowSizeTimedelta.total_seconds() or dt2c4 < windowSizeTimedelta.total_seconds():
+                    # The exoplanet is ingressing or egressing from a transit, or near enough that we should be getting data.
+                    return 200
+                else:
+                    # The exoplanet is not in a transit.
+                    return 15
+
+        return 10
+
+    def getDifficultyForTime(self, t):
+        #TODO: Properly implement this function.
+        return 1.0
+
+    def getUserDifficultyForTime(self, t, user):
+        #TODO: Properly implement this function.
+        return ScorableObject.limitingStellarMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
 
 
 

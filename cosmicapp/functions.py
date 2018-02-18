@@ -75,11 +75,14 @@ def getAsteroidsAroundGeometry(geometry, bufferSize, targetTime, limitingMag, li
 
     return asteroids
 
-def formulateObservingPlan(user, observatory, targets, includeOtherTargets, dateTime, minTimeBetween, maxTimeBetween):
+def formulateObservingPlan(user, observatory, targets, includeOtherTargets, dateTime, minTimeBetween, maxTimeBetween, limitingMag, minimumScore):
     observingPlan = []
     for target in targets:
         d = {}
         ra, dec = (None, None)
+        mag = 0.0
+        defaultSelected = True
+
         if isinstance(target, Bookmark):
             d['divID'] = target.getObjectTypeString + '_' + str(target.object_id)
             d['type'] = target.getObjectTypeCommonName
@@ -89,9 +92,24 @@ def formulateObservingPlan(user, observatory, targets, includeOtherTargets, date
 
             if isinstance(target.content_object, SkyObject):
                 ra, dec = target.content_object.getSkyCoords(dateTime)
+                mag = target.content_object.getMag(dateTime)
+                if mag != None:
+                    if mag > limitingMag:
+                        defaultSelected = False
+
+            if isinstance(target.content_object, ScorableObject):
+                score = target.content_object.getScoreForTime(dateTime, user)
+                d['score'] = round(score, 2)
+
+                if score < minimumScore:
+                    defaultSelected = False
+            else:
+                d['score'] = "None"
+                defaultSelected = False
 
         d['ra'] = formatRA(ra)
         d['dec'] = formatDec(dec)
+        d['mag'] = str(mag)
 
         if ra != None and dec != None:
             body = ephem.FixedBody()
@@ -116,9 +134,15 @@ def formulateObservingPlan(user, observatory, targets, includeOtherTargets, date
             except ephem.NeverUpError:
                 d['nextRising'] = "Never visible"
                 d['nextSetting'] = "Never visible"
+                defaultSelected = False
 
         d['numExposures'] = 1
         d['exposureTime'] = 30
+
+        if defaultSelected:
+            d['defaultSelected'] = "checked"
+        else:
+            d['defaultSelected'] = ""
 
         observingPlan.append(d)
 

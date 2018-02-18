@@ -40,12 +40,16 @@ function updateBookmarkTable()
     var dateTime = document.getElementById("dateEntry").value + " " + document.getElementById("timeEntry").value;
     var minTimeBetween = document.getElementsByName("minTimeBetween")[0].value;
     var maxTimeBetween = document.getElementsByName("maxTimeBetween")[0].value;
+    var limitingMag = document.getElementsByName("limitingMag")[0].value;
+    var minimumScore = document.getElementsByName("minimumScore")[0].value;
     var observatoryID = document.getElementsByName("observatoryID")[0].value;
 
     var tableHTML = "<tr>\
                      <th>Include</th>\
+                     <th>Score</th>\
                      <th>Type</th>\
                      <th>Identifier</th>\
+                     <th>Mag</th>\
                      <th>RA</th>\
                      <th>Dec</th>\
                      <th>Rising Time<br>Transit Time<br>Setting Time</th>\
@@ -59,7 +63,8 @@ function updateBookmarkTable()
         type: "POST",
         url: "/bookmark/",
         data: { action: "queryFolderForObserving", folderName: folderName, includeOtherTargets: includeOtherTargets,
-            dateTime: dateTime, minTimeBetween: minTimeBetween, maxTimeBetween: maxTimeBetween, observatoryID: observatoryID },
+            dateTime: dateTime, minTimeBetween: minTimeBetween, maxTimeBetween: maxTimeBetween,
+            limitingMag: limitingMag, minimumScore: minimumScore, observatoryID: observatoryID },
         dataType: 'json',
         success: function(response, textStatus, jqXHR)
             {
@@ -71,9 +76,12 @@ function updateBookmarkTable()
 
                     //TODO: Include a check to see if the object is never visible and if so, don't check the include checkbox by default.
                     tableHTML += '\n<tr>';
-                    tableHTML += '\n<td><input type=checkbox class=includeForObservation id="' + r['divID'] + '_includeCheckbox" checked></td>';
+                    tableHTML += '\n<td><input type=checkbox class=includeForObservation id="' + r['divID'] +
+                                 '_includeCheckbox" ' + r['defaultSelected'] + '></td>';
+                    tableHTML += '\n<td>' + r['score'] + '</td>';
                     tableHTML += '\n<td>' + r['type'] + '</td>';
                     tableHTML += '\n<td>' + r['identifier'] + '</td>';
+                    tableHTML += '\n<td>' + r['mag'] + '</td>';
                     tableHTML += '\n<td>' + r['ra'] + '</td>';
                     tableHTML += '\n<td>' + r['dec'] + '</td>';
                     tableHTML += '\n<td>' + r['nextRising'] + '<br>' + r['nextTransit'] + '<br>' + r['nextSetting'] + '</td>';
@@ -177,13 +185,23 @@ Date/time of observing session start:
 
 <br><br>
 
-Minimum time between obervations (minutes):
+Minimum time between observations (minutes):
 <input type="number" name=minTimeBetween value=1>
 
 <br><br>
 
-Maximum time between obervations (minutes):
+Maximum time between observations (minutes):
 <input type="number" name=maxTimeBetween value=1>
+
+<br><br>
+
+Limiting magnitude:
+<input type="number" name=limitingMag value={{user.profile.limitingMag}}>
+
+<br><br>
+
+Minimum score:
+<input type="number" name=minimumScore value=0>
 
 <br><br>
 
