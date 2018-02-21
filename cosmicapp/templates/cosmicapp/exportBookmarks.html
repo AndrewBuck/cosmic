@@ -179,6 +179,20 @@ Include other suggested observing targets in plan:
 
 <br><br>
 
+Observatory:
+{% if observatories %}
+    <select name=observatoryID>
+        {% for observatory in observatories %}
+            <option value="{{observatory.pk}}">{{observatory.name}}</option>
+        {% endfor %}
+    </select>
+{% else %}
+    <font color=red>ERROR: You need to set an observing location by creating one or more observatories on your profile
+    page.</font>
+{% endif %}
+
+<br><br>
+
 Date/time of observing session start:
 <input type="date" name=date id=dateEntry>
 <input type="time" name=time id=timeEntry>
@@ -202,20 +216,6 @@ Limiting magnitude:
 
 Minimum score:
 <input type="number" name=minimumScore value=0>
-
-<br><br>
-
-Observatory:
-{% if observatories %}
-    <select name=observatoryID>
-        {% for observatory in observatories %}
-            <option value="{{observatory.pk}}">{{observatory.name}}</option>
-        {% endfor %}
-    </select>
-{% else %}
-    <font color=red>ERROR: You need to set an observing location by creating one or more observatories on your profile
-    page.</font>
-{% endif %}
 
 <br><br>
 
