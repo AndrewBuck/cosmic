@@ -37,7 +37,8 @@ function updateBookmarkTable()
 {
     var folderName = document.getElementsByName("folderName")[0].value;
     var includeOtherTargets = document.getElementsByName("includeOtherTargets")[0].value;
-    var dateTime = document.getElementById("dateEntry").value + " " + document.getElementById("timeEntry").value;
+    var startTime = document.getElementById("startTimeDateEntry").value + " " + document.getElementById("startTimeTimeEntry").value;
+    var endTime = document.getElementById("endTimeDateEntry").value + " " + document.getElementById("endTimeTimeEntry").value;
     var minTimeBetween = document.getElementsByName("minTimeBetween")[0].value;
     var maxTimeBetween = document.getElementsByName("maxTimeBetween")[0].value;
     var limitingMag = document.getElementsByName("limitingMag")[0].value;
@@ -63,7 +64,7 @@ function updateBookmarkTable()
         type: "POST",
         url: "/bookmark/",
         data: { action: "queryFolderForObserving", folderName: folderName, includeOtherTargets: includeOtherTargets,
-            dateTime: dateTime, minTimeBetween: minTimeBetween, maxTimeBetween: maxTimeBetween,
+            startTime: startTime, endTime: endTime, minTimeBetween: minTimeBetween, maxTimeBetween: maxTimeBetween,
             limitingMag: limitingMag, minimumScore: minimumScore, observatoryID: observatoryID },
         dataType: 'json',
         success: function(response, textStatus, jqXHR)
@@ -144,8 +145,11 @@ function submitObservingPlan()
 
 $(document).ready(function()
 {
-    $('#dateEntry').val(getCurrentDate());
-    $('#timeEntry').val(getCurrentTime());
+    $('#startTimeDateEntry').val(getCurrentDate());
+    $('#startTimeTimeEntry').val(getCurrentTime());
+
+    $('#endTimeDateEntry').val(getCurrentDate());
+    $('#endTimeTimeEntry').val(getCurrentTime());
 
     updateBookmarkTable();
 });
@@ -193,9 +197,14 @@ Observatory:
 
 <br><br>
 
-Date/time of observing session start:
-<input type="date" name=date id=dateEntry>
-<input type="time" name=time id=timeEntry>
+Date/time of observing session start (UTC):
+<input type="date" name=date id=startTimeDateEntry>
+<input type="time" name=time id=startTimeTimeEntry>
+<br><br>
+
+Date/time of observing session end (UTC):
+<input type="date" name=date id=endTimeDateEntry>
+<input type="time" name=time id=endTimeTimeEntry>
 
 <br><br>
 

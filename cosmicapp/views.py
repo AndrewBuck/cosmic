@@ -1342,7 +1342,10 @@ def bookmark(request):
             return HttpResponse(json.dumps({'error': 'no folder name specified'}), status=400)
 
         includeOtherTargets = True if request.POST.get('includeOtherTargets', 'false').lower == 'true' else False
-        dateTime = dateparser.parse(request.POST.get('dateTime', str(timezone.now())))
+        startTime = dateparser.parse(request.POST.get('startTime', str(timezone.now())),
+                                     settings={'TIMEZONE': 'UTC', 'RETURN_AS_TIMEZONE_AWARE': True})
+        endTime = dateparser.parse(request.POST.get('endTime', str(timezone.now() + timedelta(hours=4))),
+                                     settings={'TIMEZONE': 'UTC', 'RETURN_AS_TIMEZONE_AWARE': True})
         minTimeBetween = float(request.POST.get('minTimeBetween', 0))
         maxTimeBetween = float(request.POST.get('maxTimeBetween', 120))
         limitingMag = float(request.POST.get('limitingMag', 16))
@@ -1352,7 +1355,7 @@ def bookmark(request):
         folder = BookmarkFolder.objects.filter(user=request.user, name=folderName).first()
         bookmarks = Bookmark.objects.filter(folders=folder)  #TODO: This probably fails for bookmarks which are in more than one folder.
         observatory = Observatory.objects.filter(pk=observatoryID).first()
-        observingPlan = formulateObservingPlan(request.user, observatory, bookmarks, includeOtherTargets, dateTime,
+        observingPlan = formulateObservingPlan(request.user, observatory, bookmarks, includeOtherTargets, startTime, endTime,
                                                minTimeBetween, maxTimeBetween, limitingMag, minimumScore)
 
         return HttpResponse(json.dumps(observingPlan))
