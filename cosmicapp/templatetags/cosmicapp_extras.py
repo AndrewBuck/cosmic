@@ -1,6 +1,7 @@
 from django import template
 import math
 import ephem
+from datetime import timedelta
 
 register = template.Library()
 
@@ -56,6 +57,7 @@ def scoreForObject(obj, dateTime, user):
     difficulty = obj.getDifficultyForTime(dateTime)
     userDifficulty = obj.getUserDifficultyForTime(dateTime, user)
     tempDict['score'] = obj.getScoreForTime(dateTime, user)
+    tempDict['peakScore'] = obj.getPeakScoreForInterval(dateTime, dateTime+timedelta(hours=24), user)
     tempDict['value'] = value
     tempDict['difficulty'] = difficulty
     tempDict['userDifficulty'] = userDifficulty

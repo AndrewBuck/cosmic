@@ -670,6 +670,21 @@ class ScorableObject:
     def getScoreForTime(self, t, user):
         return self.getValueForTime(t) * self.getDifficultyForTime(t) * self.getUserDifficultyForTime(t, user)
 
+    def getPeakScoreForInterval(self, startTime, endTime, user):
+        timeSkip = timedelta(minutes=30)
+        currentTime = startTime
+        maxScore = 0
+        maxTime = startTime
+        while currentTime < endTime:
+            currentScore = self.getScoreForTime(currentTime, user)
+            if currentScore > maxScore:
+                maxScore = currentScore
+                maxTime = currentTime
+
+            currentTime = currentTime + timeSkip
+
+        return (maxScore, maxTime)
+
     def getValueForTime(self, t):
         return 1.0
 
@@ -1085,9 +1100,9 @@ class ExoplanetRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject)
     bookmarks = GenericRelation('Bookmark')
 
     def getTransitTime(self, transit, t=timezone.now()):
-    """
-    Returns a datetime object for the time of the 'next' or 'prev' transit starting from the given time t.
-    """
+        """
+        Returns a datetime object for the time of the 'next' or 'prev' transit starting from the given time t.
+        """
         deltaT = t - self.transitEpoch
         periods = deltaT.total_seconds() / (86400*self.period)
         if transit == 'next':

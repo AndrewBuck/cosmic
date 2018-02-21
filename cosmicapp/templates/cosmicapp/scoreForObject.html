@@ -1,2 +1,2 @@
 {{score|floatformat:1}} = {{value|floatformat:1}} &times; {{difficulty|floatformat:1}} &times;
-{{userDifficulty|floatformat:1}}
+{{userDifficulty|floatformat:1}}{% if score != peakScore.0 %}<br>({{peakScore.0|floatformat:1}} @{{peakScore.1}}){% endif %}
