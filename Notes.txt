@@ -1,3 +1,11 @@
+The website should have an INDI interface where the user can create a "virtual observatory" that auto generates a
+username and password randomly.  They can then open an INDI interface to the outside world on their own computer (the
+user would have to do this themselves with instructions from us) using the username and password we give them.  Once
+they open up INDI we should be able to log in and read all their connected hardware through INDI and we can then create
+a custom javascript page for them that controls exactly this setup.  We should also be able to log the INDI identifier
+strings for all of the connected equipment and if we see people re-using particular identifiers we can remember the
+hardware profiles they create for that equipment and automatically create them for future users with the same hardware.
+
 Currently the 'zoom' button in the image galleries is not working, need to fix this.
 
 
