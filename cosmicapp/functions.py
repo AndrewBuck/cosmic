@@ -75,7 +75,7 @@ def getAsteroidsAroundGeometry(geometry, bufferSize, targetTime, limitingMag, li
 
     return asteroids
 
-def formulateObservingPlan(user, observatory, targets, includeOtherTargets, dateTime, minTimeBetween, maxTimeBetween, limitingMag, minimumScore):
+def formulateObservingPlan(user, observatory, targets, includeOtherTargets, startTime, endTime, minTimeBetween, maxTimeBetween, limitingMag, minimumScore):
     observingPlan = []
     for target in targets:
         d = {}
@@ -90,15 +90,12 @@ def formulateObservingPlan(user, observatory, targets, includeOtherTargets, date
             d['id'] = str(target.object_id)
             d['identifier'] = target.content_object.getDisplayName
 
-            if isinstance(target.content_object, SkyObject):
-                ra, dec = target.content_object.getSkyCoords(dateTime)
-                mag = target.content_object.getMag(dateTime)
-                if mag != None:
-                    if mag > limitingMag:
-                        defaultSelected = False
-
             if isinstance(target.content_object, ScorableObject):
-                score = target.content_object.getScoreForTime(dateTime, user)
+                peakScoreTuple = target.content_object.getPeakScoreForInterval(startTime, endTime, user)
+                d['peakScore'] = round(peakScoreTuple[0], 2)
+                d['peakScoreTime'] = str(peakScoreTuple[1])
+
+                score = peakScoreTuple[0]
                 d['score'] = round(score, 2)
 
                 if score < minimumScore:
@@ -106,24 +103,50 @@ def formulateObservingPlan(user, observatory, targets, includeOtherTargets, date
             else:
                 d['score'] = "None"
                 defaultSelected = False
+                d['peakScore'] = 'None'
+                d['peakScoreTime'] = str(startTime)
+
+            if isinstance(target.content_object, SkyObject):
+                if d['peakScore'] != 'None':
+                    ra, dec = target.content_object.getSkyCoords(peakScoreTuple[1])
+                    mag = target.content_object.getMag(peakScoreTuple[1])
+                else:
+                    ra, dec = target.content_object.getSkyCoords(startTime)
+                    mag = target.content_object.getMag(startTime)
+
+                if mag != None:
+                    if mag > limitingMag:
+                        defaultSelected = False
 
         d['ra'] = formatRA(ra)
         d['dec'] = formatDec(dec)
         d['mag'] = str(mag)
+
+        d['startTime'] = d['peakScoreTime']
 
         if ra != None and dec != None:
             body = ephem.FixedBody()
             body._ra = ra
             body._dec = dec
             body._epoch = '2000'   #TODO: Set epoch properly based on which catalog we are reading.
+                                   # Do this by adding a 'getEpoch' method to each class that comes from a catalog and return a suitable value.
 
             observer = ephem.Observer()
             observer.lat = observatory.lat
             observer.lon = observatory.lon
             observer.elevation = observatory.elevation
-            observer.date = dateTime
+            if d['peakScore'] != 'None':
+                observer.date = peakScoreTuple[1]
+            else:
+                observer.date = startTime
 
-            d['startTime'] = str(observer.next_transit(body))
+            #TODO: There should be a UI interface to disable this day/night check or set a specific behaviour, etc.
+            # If the sun is above -6 degrees from the horizon (twighlight) then do not select it by default.
+            v = ephem.Sun(observer)
+            if v.alt >= 1:
+                defaultSelected = False
+
+            # Compute the next transit and determine if it happens at a specfic time or if it never happens (and if so, why)
             d['nextTransit'] = str(observer.next_transit(body))
             try:
                 d['nextRising'] = str(observer.next_rising(body))

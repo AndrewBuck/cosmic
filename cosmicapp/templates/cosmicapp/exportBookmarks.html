@@ -26,6 +26,120 @@ function getCurrentTime()
     return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
 };
 
+function handleStartTimeDropdown(updateStartEndTimes)
+{
+    var timeString = document.getElementById("startTimeDropdown").value;
+    var observingDuration = document.getElementById("observingDurationDropdown").value;
+    var explanation
+
+    switch(observingDuration)
+    {
+        case "0":
+            observingDurationString = "0 seconds";
+            break;
+
+        case "600":
+            observingDurationString = "10 minutes";
+            break;
+
+        case "1800":
+            observingDurationString = "30 minutes";
+            break;
+
+        case "3600":
+            observingDurationString = "1 hour";
+            break;
+
+        default:
+            observingDurationString = (Number(observingDuration)/3600) + " hours";
+            break;
+    }
+
+    switch(timeString)
+    {
+        case "rightNow":
+            explanation = "Start immediately and observe for " + observingDurationString + ".";
+            break;
+
+        case "evening":
+            explanation = "Start just after sunset and observe for " + observingDurationString + ".";
+            break;
+
+        case "midnight":
+            explanation = "Observing at night for " + observingDurationString + " centered around solar midnight.";
+            break;
+
+        case "morning":
+            explanation = "Observing late in the night for " + observingDurationString + " ending at sunrise.";
+            break;
+
+        case "daytimeMorning":
+            explanation = "Daytime observing for " + observingDurationString + " starting at sunrise.";
+            break;
+
+        case "noon":
+            explanation = "Daytime observing for " + observingDurationString + " centered around solar noon.";
+            break;
+
+        case "daytimeEvening":
+            explanation = "Daytime observing for " + observingDurationString + " starting in the afternoon and ending at sunset.";
+            break;
+
+        default:
+            explanation = "ERROR: Unknown time string: " + timeString;
+            break;
+    }
+
+    $('#startTimeExplanation').html("<i>" + explanation + "</i>");
+    if(updateStartEndTimes)
+    {
+        $('#setTimesButtonDiv').hide(200);
+        $('#otherOptionsDiv').show(200);
+
+        var inputDate = document.getElementById("inputDateEntry").value;
+        var startTime = document.getElementById("startTimeDropdown").value;
+        var observingDuration = document.getElementById("observingDurationDropdown").value;
+        var observatoryID = document.getElementsByName("observatoryID")[0].value;
+
+        $.ajax({
+            type: "POST",
+            url: "/bookmark/",
+            data: { action: "queryStartEndTime", inputDate: inputDate, startTime: startTime, observingDuration: observingDuration,
+                    observatoryID: observatoryID },
+            dataType: 'json',
+            async: false,
+            success: function(responseDict, textStatus, jqXHR)
+                {
+                    startDate = responseDict.startTime.split(' ')[0];
+                    startTime = responseDict.startTime.split(' ')[1];
+                    endDate = responseDict.endTime.split(' ')[0];
+                    endTime = responseDict.endTime.split(' ')[1];
+                    if(startTime.includes('.'))
+                        startTime = startTime.substring(0, startTime.indexOf('.'));
+                    if(endTime.includes('.'))
+                        endTime = endTime.substring(0, endTime.indexOf('.'));
+                    $('#startTimeDateEntry').val(startDate)
+                    $('#startTimeTimeEntry').val(startTime)
+                    $('#endTimeDateEntry').val(endDate)
+                    $('#endTimeTimeEntry').val(endTime)
+                },
+            error: function(response, textStatus, jqXHR)
+                {
+                    alert(response.responseText);
+                }
+        });
+
+        updateBookmarkTable();
+    }
+};
+
+function showSetTimesButton()
+{
+    $('#setTimesButtonDiv').show(200);
+    $('#otherOptionsDiv').hide(200);
+    handleStartTimeDropdown(false);
+};
+
 function refreshBookmarkTable()
 {
     //TODO: Implement this if statement.
@@ -37,7 +151,8 @@ function updateBookmarkTable()
 {
     var folderName = document.getElementsByName("folderName")[0].value;
     var includeOtherTargets = document.getElementsByName("includeOtherTargets")[0].value;
-    var dateTime = document.getElementById("dateEntry").value + " " + document.getElementById("timeEntry").value;
+    var startTime = document.getElementById("startTimeDateEntry").value + " " + document.getElementById("startTimeTimeEntry").value;
+    var endTime = document.getElementById("endTimeDateEntry").value + " " + document.getElementById("endTimeTimeEntry").value;
     var minTimeBetween = document.getElementsByName("minTimeBetween")[0].value;
     var maxTimeBetween = document.getElementsByName("maxTimeBetween")[0].value;
     var limitingMag = document.getElementsByName("limitingMag")[0].value;
@@ -63,7 +178,7 @@ function updateBookmarkTable()
         type: "POST",
         url: "/bookmark/",
         data: { action: "queryFolderForObserving", folderName: folderName, includeOtherTargets: includeOtherTargets,
-            dateTime: dateTime, minTimeBetween: minTimeBetween, maxTimeBetween: maxTimeBetween,
+            startTime: startTime, endTime: endTime, minTimeBetween: minTimeBetween, maxTimeBetween: maxTimeBetween,
             limitingMag: limitingMag, minimumScore: minimumScore, observatoryID: observatoryID },
         dataType: 'json',
         success: function(response, textStatus, jqXHR)
@@ -144,10 +259,9 @@ function submitObservingPlan()
 
 $(document).ready(function()
 {
-    $('#dateEntry').val(getCurrentDate());
-    $('#timeEntry').val(getCurrentTime());
+    $('#inputDateEntry').val(getCurrentDate());
 
-    updateBookmarkTable();
+    handleStartTimeDropdown(false);
 });
 </script>
 
@@ -179,9 +293,62 @@ Include other suggested observing targets in plan:
 
 <br><br>
 
-Date/time of observing session start:
-<input type="date" name=date id=dateEntry>
-<input type="time" name=time id=timeEntry>
+Observatory:
+{% if observatories %}
+    <select name=observatoryID onchange="showSetTimesButton()">
+        {% for observatory in observatories %}
+            <option value="{{observatory.pk}}">{{observatory.name}}</option>
+        {% endfor %}
+    </select>
+{% else %}
+    <font color=red>ERROR: You need to set an observing location by creating one or more observatories on your profile
+    page.</font>
+{% endif %}
+
+<br><br>
+
+<input type="date" name=inputDate id=inputDateEntry onchange="showSetTimesButton()">
+(UTC)
+<select id="startTimeDropdown" name="startTimeDropdown" onchange="showSetTimesButton()">
+    <option value="rightNow">Right Now</option>
+    <option value="evening" selected="selected">After Sunset</option>
+    <option value="midnight">Midnight</option>
+    <option value="morning">Before Sunrise</option>
+    <option value="daytimeMorning">Daytime Morning</option>
+    <option value="noon">Noon</option>
+    <option value="daytimeEvening">Daytime Evening</option>
+</select>
+
+<select id="observingDurationDropdown" name="observingDurationDropdown" onchange="showSetTimesButton()">
+    <option value="0">0 Seconds</option>
+    <option value="600">10 Minutes</option>
+    <option value="1800">30 Minutes</option>
+    <option value="3600">1 Hour</option>
+    <option value="7200" selected="selected">2 Hours</option>
+    <option value="14400">4 Hours</option>
+    <option value="28800">8 Hours</option>
+</select>
+
+<div id="startTimeExplanation" style="display: inline-block"></div>
+
+<br><br>
+
+<div id=setTimesButtonDiv>
+<input type=button class=button value="Set Observation Start/End Times" onclick="handleStartTimeDropdown(true)">
+Click this button to update the times below to your current choices.
+<br><br>
+</div>
+
+<div id=otherOptionsDiv hidden>
+Date/time of observing session start (UTC):
+<input type="date" name=date id=startTimeDateEntry>
+<input type="time" name=time id=startTimeTimeEntry>
+
+<br><br>
+
+Date/time of observing session end (UTC):
+<input type="date" name=date id=endTimeDateEntry>
+<input type="time" name=time id=endTimeTimeEntry>
 
 <br><br>
 
@@ -205,20 +372,6 @@ Minimum score:
 
 <br><br>
 
-Observatory:
-{% if observatories %}
-    <select name=observatoryID>
-        {% for observatory in observatories %}
-            <option value="{{observatory.pk}}">{{observatory.name}}</option>
-        {% endfor %}
-    </select>
-{% else %}
-    <font color=red>ERROR: You need to set an observing location by creating one or more observatories on your profile
-    page.</font>
-{% endif %}
-
-<br><br>
-
 <input type=button class=button value="Refresh Table" onclick="refreshBookmarkTable()">
 <input type=button class=button value="Export Bookmarks" onclick="submitObservingPlan()">
 </form>
@@ -226,6 +379,7 @@ Observatory:
 
 <table id="bookmarkTable" cellpadding=5px border=2px style="border-collapse: collapse; margin: 1em;">
 </table>
+</div>
 
 {% endblock mainbody %}
 

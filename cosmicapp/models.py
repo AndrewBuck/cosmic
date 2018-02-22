@@ -10,6 +10,7 @@ from django.contrib.staticfiles import finders
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
+from django.utils import timezone
 
 from .tasks import computeSingleEphemeris
 
@@ -663,6 +664,21 @@ class ScorableObject:
     def getScoreForTime(self, t, user):
         return self.getValueForTime(t) * self.getDifficultyForTime(t) * self.getUserDifficultyForTime(t, user)
 
+    def getPeakScoreForInterval(self, startTime, endTime, user):
+        timeSkip = timedelta(minutes=30)
+        currentTime = startTime
+        maxScore = self.getScoreForTime(startTime, user)
+        maxTime = startTime
+        while currentTime < endTime:
+            currentScore = self.getScoreForTime(currentTime, user)
+            if currentScore > maxScore:
+                maxScore = currentScore
+                maxTime = currentTime
+
+            currentTime = currentTime + timeSkip
+
+        return (maxScore, maxTime)
+
     def getValueForTime(self, t):
         """
         Returns the scientific value of this ScorableObject for the given time t.
@@ -1099,6 +1115,22 @@ class ExoplanetRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject)
 
     bookmarks = GenericRelation('Bookmark')
 
+    def getTransitTime(self, transit, t=timezone.now()):
+        """
+        Returns a datetime object for the time of the 'next' or 'prev' transit starting from the given time t.
+        """
+        deltaT = t - self.transitEpoch
+        periods = deltaT.total_seconds() / (86400*self.period)
+        if transit == 'next':
+            periodNumber = math.ceil(periods)
+        elif transit == 'prev':
+            periodNumber = math.floor(periods)
+        else:
+            return None
+
+        transitTime = timedelta(days=periodNumber * self.period) + self.transitEpoch
+        return transitTime
+
     def getSkyCoords(self, dateTime):
         return (self.ra, self.dec)
 
@@ -1129,8 +1161,8 @@ class ExoplanetRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject)
                 return 100
             else:
                 # The exoplanet is not in a transit.
-                transit1 = timedelta(days=periodFloor * self.period) + self.transitEpoch
-                transit2 = timedelta(days=periodCeiling * self.period) + self.transitEpoch
+                transit1 = self.getTransitTime('next', t)
+                transit2 = self.getTransitTime('prev', t)
                 t1c1 = transit1 - durationHalfTimedelta
                 t1c4 = transit1 + durationHalfTimedelta
                 t2c1 = transit2 - durationHalfTimedelta

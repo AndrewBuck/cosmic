@@ -1,4 +1,6 @@
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+{% comment %}On the production site we should switch back the google for jquery to allow better user caching.{% endcomment %}
+{% comment %}<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>{% endcomment %}
+<script src="/static/cosmicapp/jquery.min.js"></script>
 
 {% comment %} TODO: Move this into its own .js file to allow for caching. {% endcomment %}
 <script>

@@ -1,7 +1,7 @@
 import hashlib
 import os
 import math
-from datetime import timedelta
+from datetime import datetime, timedelta
 import dateparser
 
 from django.middleware import csrf
@@ -547,7 +547,7 @@ def query(request):
         #TODO: Convert this to xml.
         return HttpResponse("bad request: missing 'queryfor'")
 
-    limit = 10    # Set a default limit in cast the query did not specify one at all.
+    limit = 10    # Set a default limit in case the query did not specify one at all.
     if 'limit' in request.GET:
         try:
             limit = int(request.GET['limit'])
@@ -1346,7 +1346,10 @@ def bookmark(request):
             return HttpResponse(json.dumps({'error': 'no folder name specified'}), status=400)
 
         includeOtherTargets = True if request.POST.get('includeOtherTargets', 'false').lower == 'true' else False
-        dateTime = dateparser.parse(request.POST.get('dateTime', str(timezone.now())))
+        startTime = dateparser.parse(request.POST.get('startTime', str(timezone.now())),
+                                     settings={'TIMEZONE': 'UTC', 'RETURN_AS_TIMEZONE_AWARE': True})
+        endTime = dateparser.parse(request.POST.get('endTime', str(timezone.now() + timedelta(hours=4))),
+                                     settings={'TIMEZONE': 'UTC', 'RETURN_AS_TIMEZONE_AWARE': True})
         minTimeBetween = float(request.POST.get('minTimeBetween', 0))
         maxTimeBetween = float(request.POST.get('maxTimeBetween', 120))
         limitingMag = float(request.POST.get('limitingMag', 16))
@@ -1356,7 +1359,7 @@ def bookmark(request):
         folder = BookmarkFolder.objects.filter(user=request.user, name=folderName).first()
         bookmarks = Bookmark.objects.filter(folders=folder)  #TODO: This probably fails for bookmarks which are in more than one folder.
         observatory = Observatory.objects.filter(pk=observatoryID).first()
-        observingPlan = formulateObservingPlan(request.user, observatory, bookmarks, includeOtherTargets, dateTime,
+        observingPlan = formulateObservingPlan(request.user, observatory, bookmarks, includeOtherTargets, startTime, endTime,
                                                minTimeBetween, maxTimeBetween, limitingMag, minimumScore)
 
         return HttpResponse(json.dumps(observingPlan))
@@ -1436,6 +1439,57 @@ def bookmark(request):
         responseDict['code'] = 'removedFolder'
 
         return HttpResponse(json.dumps(responseDict))
+
+    elif action == 'queryStartEndTime':
+        inputDate = dateparser.parse(request.POST.get('inputDate', None))
+        startTime = request.POST.get('startTime', None)
+        observingDuration = float(request.POST.get('observingDuration', None))
+        observatoryID = int(request.POST.get('observatoryID', None))
+
+        observatory = Observatory.objects.filter(pk=observatoryID).first()
+
+        if observatory == None:
+            return HttpResponse(json.dumps({'error' : 'Observatory not found with id: ' + observatoryID}), status=400)
+
+        observer = ephem.Observer()
+        observer.lat, observer.lon = observatory.lat*math.pi/180.0, observatory.lon*math.pi/180.0
+        observer.date = inputDate
+
+        observingDurationDelta = timedelta(seconds=observingDuration)
+
+        #TODO: Make next_setting, etc, optionally run a while loop if it throws a circumpolar or never_rises error.
+        if startTime == 'rightNow':
+            startTime = datetime.now()
+            endTime = startTime + observingDurationDelta
+
+        elif startTime == 'evening':
+            startTime = dateparser.parse(str(observer.next_setting(ephem.Sun())))
+            endTime = startTime + observingDurationDelta
+
+        elif startTime == 'midnight':
+            startTime = dateparser.parse(str(observer.next_antitransit(ephem.Sun()))) - (observingDurationDelta/2)
+            endTime = startTime + (observingDurationDelta/2)
+
+        elif startTime == 'morning':
+            endTime = dateparser.parse(str(observer.next_rising(ephem.Sun())))
+            startTime = endTime - observingDurationDelta
+
+        elif startTime == 'daytimeMorning':
+            startTime = dateparser.parse(str(observer.next_rising(ephem.Sun())))
+            endTime = startTime + observingDurationDelta
+
+        elif startTime == 'noon':
+            startTime = dateparser.parse(str(observer.next_transit(ephem.Sun()))) - (observingDurationDelta/2)
+            endTime = startTime + (observingDurationDelta/2)
+
+        elif startTime == 'daytimeEvening':
+            endTime = dateparser.parse(str(observer.next_setting(ephem.Sun())))
+            startTime = endTime - observingDurationDelta
+
+        else:
+            return HttpResponse(json.dumps({'error' : 'unknown startTime: ' + str(startTime)}), status=400)
+
+        return HttpResponse(json.dumps({'startTime' : str(startTime), 'endTime' : str(endTime)}))
 
     else:
         return HttpResponse(json.dumps({'error' : 'unknown action: ' + action}), status=400)
