@@ -1,7 +1,7 @@
 import hashlib
 import os
 import math
-from datetime import timedelta
+from datetime import datetime, timedelta
 import dateparser
 
 from django.middleware import csrf
@@ -1435,6 +1435,57 @@ def bookmark(request):
         responseDict['code'] = 'removedFolder'
 
         return HttpResponse(json.dumps(responseDict))
+
+    elif action == 'queryStartEndTime':
+        inputDate = dateparser.parse(request.POST.get('inputDate', None))
+        startTime = request.POST.get('startTime', None)
+        observingDuration = float(request.POST.get('observingDuration', None))
+        observatoryID = int(request.POST.get('observatoryID', None))
+
+        observatory = Observatory.objects.filter(pk=observatoryID).first()
+
+        if observatory == None:
+            return HttpResponse(json.dumps({'error' : 'Observatory not found with id: ' + observatoryID}), status=400)
+
+        observer = ephem.Observer()
+        observer.lat, observer.lon = observatory.lat*math.pi/180.0, observatory.lon*math.pi/180.0
+        observer.date = inputDate
+
+        observingDurationDelta = timedelta(seconds=observingDuration)
+
+        #TODO: Make next_setting, etc, optionally run a while loop if it throws a circumpolar or never_rises error.
+        if startTime == 'rightNow':
+            startTime = datetime.now()
+            endTime = startTime + observingDurationDelta
+
+        elif startTime == 'evening':
+            startTime = dateparser.parse(str(observer.next_setting(ephem.Sun())))
+            endTime = startTime + observingDurationDelta
+
+        elif startTime == 'midnight':
+            startTime = dateparser.parse(str(observer.next_antitransit(ephem.Sun()))) - (observingDurationDelta/2)
+            endTime = startTime + (observingDurationDelta/2)
+
+        elif startTime == 'morning':
+            endTime = dateparser.parse(str(observer.next_rising(ephem.Sun())))
+            startTime = endTime - observingDurationDelta
+
+        elif startTime == 'daytimeMorning':
+            startTime = dateparser.parse(str(observer.next_rising(ephem.Sun())))
+            endTime = startTime + observingDurationDelta
+
+        elif startTime == 'noon':
+            startTime = dateparser.parse(str(observer.next_transit(ephem.Sun()))) - (observingDurationDelta/2)
+            endTime = startTime + (observingDurationDelta/2)
+
+        elif startTime == 'daytimeEvening':
+            endTime = dateparser.parse(str(observer.next_setting(ephem.Sun())))
+            startTime = endTime - observingDurationDelta
+
+        else:
+            return HttpResponse(json.dumps({'error' : 'unknown startTime: ' + str(startTime)}), status=400)
+
+        return HttpResponse(json.dumps({'startTime' : str(startTime), 'endTime' : str(endTime)}))
 
     else:
         return HttpResponse(json.dumps({'error' : 'unknown action: ' + action}), status=400)
