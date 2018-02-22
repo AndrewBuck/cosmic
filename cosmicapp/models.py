@@ -664,12 +664,34 @@ class ScorableObject:
         return self.getValueForTime(t) * self.getDifficultyForTime(t) * self.getUserDifficultyForTime(t, user)
 
     def getValueForTime(self, t):
+        """
+        Returns the scientific value of this ScorableObject for the given time t.
+
+        Reflects an estimation of the relative scientific value if an observation of a ScorableObject were to be performed
+        at that time.  For example, an image of an asteroid with high ceu (current ephemeris uncertainty) is favorable to
+        one with a low ceu, etc.
+        """
         return 1.0
 
     def getDifficultyForTime(self, t):
+        """
+        Returns the intrinsic observing difficulty score for difficulty common to all observers for this ScorableObject forven time t.
+        the given time t.
+
+        Reflects an estimation of the relative difficulty of observing different kinds of objects.  For example, stars and
+        clusters are easier to observe than extended objects, etc.  Also includes sources of difficulty such as uncertainty
+        in the objects position or brightness, etc.
+        """
         return 1.0
 
     def getUserDifficultyForTime(self, t, user):
+        """
+        Returns the difficulty score for this ScorableObject for the given time t for difficulties assosciated with
+        observing from a given user's observatory.
+
+        Reflects the difficulty related to observing the ScorableObject from a specific observatory at a given time. For
+        example: off-zenith observing, light-gathering limitations, below horizion, etc.
+        """
         return 1.0
 
     @staticmethod
@@ -729,12 +751,12 @@ class UCAC4Record(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     ra = models.FloatField(null=True)
     dec = models.FloatField(null=True)
     geometry = models.PointField(srid=40000, geography=False, dim=2, null=True)
-    pmra = models.FloatField(null=True)
-    pmdec = models.FloatField(null=True)
-    magFit = models.FloatField(null=True)
-    magAperture = models.FloatField(null=True)
+    pmra = models.FloatField(null=True)     # proper motion in ra (mas/yr)      #TODO: Units
+    pmdec = models.FloatField(null=True)    # proper motion in dec (mas/yr)     #TODO: Units
+    magFit = models.FloatField(null=True)   # magnitude by fitting a psf 
+    magAperture = models.FloatField(null=True) # magnitude by aperture photometry
     magError = models.FloatField(null=True)
-    id2mass = models.CharField(max_length=10, null=True)
+    id2mass = models.CharField(max_length=10, null=True) # 2MASS identifier if present in 2MASS
 
     def getSkyCoords(self, dateTime):
         return (self.ra, self.dec)
