@@ -140,6 +140,13 @@ def formulateObservingPlan(user, observatory, targets, includeOtherTargets, star
             else:
                 observer.date = startTime
 
+            #TODO: There should be a UI interface to disable this day/night check or set a specific behaviour, etc.
+            # If the sun is above -6 degrees from the horizon (twighlight) then do not select it by default.
+            v = ephem.Sun(observer)
+            if v.alt >= 1:
+                defaultSelected = False
+
+            # Compute the next transit and determine if it happens at a specfic time or if it never happens (and if so, why)
             d['nextTransit'] = str(observer.next_transit(body))
             try:
                 d['nextRising'] = str(observer.next_rising(body))
