@@ -543,7 +543,7 @@ def query(request):
         #TODO: Convert this to xml.
         return HttpResponse("bad request: missing 'queryfor'")
 
-    limit = 10    # Set a default limit in cast the query did not specify one at all.
+    limit = 10    # Set a default limit in case the query did not specify one at all.
     if 'limit' in request.GET:
         try:
             limit = int(request.GET['limit'])

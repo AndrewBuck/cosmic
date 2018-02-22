@@ -673,7 +673,7 @@ class ScorableObject:
     def getPeakScoreForInterval(self, startTime, endTime, user):
         timeSkip = timedelta(minutes=30)
         currentTime = startTime
-        maxScore = 0
+        maxScore = self.getScoreForTime(startTime, user)
         maxTime = startTime
         while currentTime < endTime:
             currentScore = self.getScoreForTime(currentTime, user)
