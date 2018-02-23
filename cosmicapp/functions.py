@@ -76,9 +76,13 @@ def getAsteroidsAroundGeometry(geometry, bufferSize, targetTime, limitingMag, li
     return asteroids
 
 def formulateObservingPlan(user, observatory, targets, includeOtherTargets, startTime, endTime, minTimeBetween, maxTimeBetween, limitingMag, minimumScore):
+    minTimeBetweenTimedelta = timedelta(minutes=minTimeBetween)
+    maxTimeBetweenTimedelta = timedelta(minutes=maxTimeBetween)
+
     observingPlan = []
     for target in targets:
         d = {}
+        d['target'] = target
         ra, dec = (None, None)
         mag = 0.0
         defaultSelected = True
@@ -95,7 +99,7 @@ def formulateObservingPlan(user, observatory, targets, includeOtherTargets, star
                 d['peakScore'] = round(peakScoreTuple[0], 2)
                 d['peakScoreTime'] = str(peakScoreTuple[1])
 
-                score = peakScoreTuple[0]
+                score = d['peakScore']
                 d['score'] = round(score, 2)
 
                 if score < minimumScore:
@@ -123,6 +127,7 @@ def formulateObservingPlan(user, observatory, targets, includeOtherTargets, star
         d['mag'] = str(mag)
 
         d['startTime'] = d['peakScoreTime']
+        d['startTimeDatetime'] = dateparser.parse(d['startTime'])
 
         if ra != None and dec != None:
             body = ephem.FixedBody()
@@ -159,6 +164,7 @@ def formulateObservingPlan(user, observatory, targets, includeOtherTargets, star
                 d['nextSetting'] = "Never visible"
                 defaultSelected = False
 
+        #TODO: Add a function to models.py to compute an observing program for each object.
         d['numExposures'] = 1
         d['exposureTime'] = 30
 
@@ -170,5 +176,75 @@ def formulateObservingPlan(user, observatory, targets, includeOtherTargets, star
         observingPlan.append(d)
 
     observingPlan.sort(key=lambda x: x['startTime'])
+
+    observationsToRemove = []
+    for observation in observingPlan:
+        observingTime = timedelta(seconds=observation['numExposures'] * observation['exposureTime'])
+
+        #TODO: This whole loop can be gotten rid of and replaced by a one liner that does the same thing.
+        skip = True
+        for otherObservation in observingPlan:
+            # Skip over all the ones until we get 1 past the 'observation' from the outer loop and then start the
+            # actual loop proceessing on the remaining items.
+            if skip:
+                if observation == otherObservation:
+                    skip = False
+                    continue
+                continue
+
+            otherObservingTime = timedelta(seconds=otherObservation['numExposures'] * otherObservation['exposureTime'])
+            deltaT = dateparser.parse(observation['startTime']) - dateparser.parse(otherObservation['startTime'])
+            #TODO: Need to take into account the order of the two observations and compare deltaT to the correct observing time.
+            if deltaT < otherObservingTime or deltaT < observingTime:
+                if observation['score'] < otherObservation['score']:
+                    observationsToRemove.append(observation)
+                else:
+                    observationsToRemove.append(otherObservation)
+
+    removedObservations = []
+    for observation in observationsToRemove:
+        if observation in observingPlan:
+            observingPlan.remove(observation)
+            removedObservations.append(observation)
+
+    removedObservations.sort(key=lambda x: x['score'], reverse=True)
+
+    # If there are 0 or 1 entries in the observingPlan the next loop will exit without doing anything so we pad out the
+    # list before we start that loop to ensure this does not happen.
+    obs = {}
+    obs['identifier'] = "Start of Observing"
+    obs['startTime'] = str(startTime)
+    obs['startTimeDatetime'] = dateparser.parse(obs['startTime'])
+    observingPlan.append(obs)
+    obs = {}
+    obs['identifier'] = "End of Observing"
+    obs['startTime'] = str(endTime)
+    obs['startTimeDatetime'] = dateparser.parse(obs['startTime'])
+    observingPlan.append(obs)
+    observingPlan.sort(key=lambda x: x['startTime'])
+
+    for observation in removedObservations:
+        observingTime = observation['numExposures'] * observation['exposureTime']
+        observingTimeTimedelta = timedelta(seconds=observingTime) + minTimeBetweenTimedelta
+
+        for i1, i2 in zip(observingPlan[0:], observingPlan[1:]):
+            i1ObservingTime = timedelta(seconds=observation['numExposures'] * observation['exposureTime'])
+            openTimeWindow = i2['startTimeDatetime'] - i1['startTimeDatetime']
+
+            if openTimeWindow > observingTimeTimedelta:
+                observation['startTime'] = str(i1['startTimeDatetime'] + i1ObservingTime + minTimeBetweenTimedelta)
+                observation['startTimeDatetime'] = dateparser.parse(observation['startTime'])
+
+                if isinstance(target.content_object, ScorableObject):
+                    observation['score'] = observation['target'].content_object.getScoreForTime(observation['startTimeDatetime'], user)
+
+                observingPlan.append(observation)
+                observingPlan.sort(key=lambda x: x['startTime'])
+                break
+
+    for observation in observingPlan:
+        observation.pop('target', None)
+        observation.pop('startTimeDatetime', None)
+
     return observingPlan
 
