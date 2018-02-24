@@ -865,6 +865,7 @@ class TwoMassXSCRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject
         return 1.0
 
     def getUserDifficultyForTime(self, t, user):
+        #TODO: Allow fainter magnitudes for galaxies since the goal of observing them is mainly to check for supernovas which might be quite bright.
         #TODO: Properly implement this function.
         return ScorableObject.limitingDSOMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
 
