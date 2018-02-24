@@ -209,18 +209,24 @@ def formulateObservingPlan(user, observatory, targets, includeOtherTargets, star
             observingPlan.remove(observation)
             removedObservations.append(observation)
 
-    removedObservations.sort(key=lambda x: x['score'], reverse=True)
+    def observationSortKey(x):
+        if x['defaultSelected'] == 'checked':
+            return x['score']
+        else:
+            return 0
+
+    removedObservations.sort(key=lambda x: observationSortKey(x), reverse=True)
 
     # If there are 0 or 1 entries in the observingPlan the next loop will exit without doing anything so we pad out the
     # list before we start that loop to ensure this does not happen.
     obs = {}
     obs['identifier'] = "Start of Observing"
-    obs['startTime'] = str(startTime)
+    obs['startTime'] = str(startTime-timedelta(seconds=1))
     obs['startTimeDatetime'] = dateparser.parse(obs['startTime'])
     observingPlan.append(obs)
     obs = {}
     obs['identifier'] = "End of Observing"
-    obs['startTime'] = str(endTime)
+    obs['startTime'] = str(endTime+timedelta(seconds=1))
     obs['startTimeDatetime'] = dateparser.parse(obs['startTime'])
     observingPlan.append(obs)
     observingPlan.sort(key=lambda x: x['startTime'])
