@@ -1,5 +1,6 @@
 import math
-from datetime import timedelta
+from datetime import date, datetime, timedelta, tzinfo
+import pytz
 import ephem
 
 from django.contrib.gis.db import models
@@ -1041,19 +1042,74 @@ class AstorbRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
 
         return ret
 
+    def getCeuForTime(self, t):
+        d = datetime(self.ceuDate.year, self.ceuDate.month, self.ceuDate.day, tzinfo=pytz.timezone('UTC'))
+        deltaT = t - d
+        value = self.ceu + self.ceuRate * (deltaT.total_seconds()/86400)
+        return max(value, 0.0)
+
     def getValueForTime(self, t):
         #TODO: Properly implement this function.
         #TODO: Take into account the orbitCode, astrometryNeeded code, and criticalCode field.
+        orbitCodeDict = {
+            0: 1,      # 
+            1: 100,    # Earth-crossing asteroid (ECA).
+            2: 15,     # Orbit comes inside Earth's orbit but not specifically an ECA.
+            4: 5,      # Amor type asteroids.
+            8: 20,     # Mars crossers.
+            16: 2      # Outer planet crossers.
+            }
+
+        criticalCodeDict = {
+            0: 1,      # 
+            1: 0.2,  # Lost asteroid.
+            2: 100,    # Asteroids observed at only two apparitions.
+            3: 50,     # Asteroids observed at only three apparitions.
+            4: 50,     # Asteroids observed at four or more apparitions with the last more than 10 years ago.
+            5: 50,     # Asteroids observed at four or more apparitions only one night in last 10 years.
+            6: 20,     # Asteroids observed at four or more apparitions still poor data.
+            7: 50      # Not critical asteroid, however absolute magnitude poorly known.
+            }
+
+        astrometryNeededCode = {
+            10: 500,   # Space mission targets and occultation candidates.
+            9: 20,     # Asteroids useful for mass determination.
+            8: 50,     # Asteroids for which a few observations would upgrade the orbital uncertainty.
+            7: 5,      # MPC Critical list asteroids with future low uncertainties.
+            6: 10,     # Planet crossers of type 6:5.
+            5: 50      # Asteroids for which a few more observations would lead to numbering them.
+            4: 20      # 
+            3: 5       # 
+            2: 3       # 
+            1: 2       # 
+            0: 1       # 
+            }
+
+        #TODO: Some of these importance codes are bitwise anded together and need to be properly parsed that way.
+        ocMultiplier = orbitCodeDict[self.orbitCode] if self.orbitCode in orbitCodeDict else 1.0
+        ccMultiplier = criticalCodeDict[self.criticalCode] if self.criticalCode in criticalCodeDict else 1.0
+        anMultiplier = astrometryNeededCodeDict[self.astrometryNeededCode] if self.astrometryNeededCode in astrometryNeededCodeDict else 1.0
+        multiplier = ocMultiplier * ccMultiplier * anMultiplier
+
         #TODO: Calculate an ephemeris and use angle from opposition as part of the score.
-        return 10 + 100*log(self.ceu + 1)
+        #body = computeSingleEphemeris(self, dateTime)
+
+        return 10 * multiplier
 
     def getDifficultyForTime(self, t):
         #TODO: Properly implement this function.
-        return 2.0
+        # Score increases with increasing error up until errorInDeg is reached and then it drops down from the peak
+        # value for errors larger than this.
+        errorInDeg = 2
+        ceu = self.getCeuForTime(t)
+        if ceu < 3600*errorInDeg:
+            2.0 * math.pow(ceu/3600.0, 2)
+        else:
+            max(0.1, 2.0 * math.pow(errorInDeg, 2) - 2.0 * math.pow(ceu/3600.0, 2))
 
     def getUserDifficultyForTime(self, t, user, observatory=None):
         #TODO: Properly implement this function.
-        return math.pow(log(self.ceu + 1), 2) * ScorableObject.limitingStellarMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
+        return ScorableObject.limitingStellarMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
 
 #TODO: This should probably inherit from SkyObject as well, need to add that and implement the function if it is deemed appropriate.
 class AstorbEphemeris(models.Model):
