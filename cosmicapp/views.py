@@ -1720,6 +1720,7 @@ def exportBookmarks(request):
                     '========== {} ==========\n'
                     'Object Type: {}\n'
                     'RA: {}    Dec: {}\n'
+                    'Score: {}\n'
                     '\n'
                     'Observation Start Time: {}\n'
                     'Rise: {}    Transit: {}    Set: {}\n'
@@ -1728,7 +1729,7 @@ def exportBookmarks(request):
                     '\n'
                     'Observing Notes: \n\n\n\n\n' #TODO: Add Fields for seeing, weather, etc.
                     '\n'
-                    ).format(t['identifier'], t['type'], t['ra'], t['dec'], t['startTime'], t['nextRising'], t['nextTransit'],
+                    ).format(t['identifier'], t['type'], t['ra'], t['dec'], t['score'], t['startTime'], t['nextRising'], t['nextTransit'],
                              t['nextSetting'], t['numExposures'], t['exposureTime'])
 
         else:
