@@ -1093,11 +1093,11 @@ class AstorbRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
             8: 50,     # Asteroids for which a few observations would upgrade the orbital uncertainty.
             7: 5,      # MPC Critical list asteroids with future low uncertainties.
             6: 10,     # Planet crossers of type 6:5.
-            5: 50      # Asteroids for which a few more observations would lead to numbering them.
-            4: 20      # 
-            3: 5       # 
-            2: 3       # 
-            1: 2       # 
+            5: 50,     # Asteroids for which a few more observations would lead to numbering them.
+            4: 20,     # 
+            3: 5,      # 
+            2: 3,      # 
+            1: 2,      # 
             0: 1       # 
             }
 
