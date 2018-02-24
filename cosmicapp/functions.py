@@ -193,7 +193,9 @@ def formulateObservingPlan(user, observatory, targets, includeOtherTargets, star
                 continue
 
             otherObservingTime = timedelta(seconds=otherObservation['numExposures'] * otherObservation['exposureTime'])
-            deltaT = dateparser.parse(observation['startTime']) - dateparser.parse(otherObservation['startTime'])
+            t1 = dateparser.parse(observation['startTime'])
+            t2 = dateparser.parse(otherObservation['startTime'])
+            deltaT = t2 - t1
             #TODO: Need to take into account the order of the two observations and compare deltaT to the correct observing time.
             if deltaT < otherObservingTime or deltaT < observingTime:
                 if observation['score'] < otherObservation['score']:
