@@ -1,5 +1,6 @@
 import math
 from datetime import timedelta
+import ephem
 
 from django.contrib.gis.db import models
 from django.contrib.auth.models import User
@@ -699,6 +700,9 @@ class ScorableObject:
     def getUserDifficultyForTime(self, t, user, observatory=None):
         return 1.0
 
+    def observatoryCorrections(self, t, user, observatory):
+        return self.zenithDifficulty(t, observatory)
+
     @staticmethod
     def limitingStellarMagnitudeDifficulty(mag, limitingMag):
         """
@@ -729,13 +733,34 @@ class ScorableObject:
         else:
             return 0.0
 
-    @staticmethod
     #TODO: Need to implement this function and then call it from all the user difficulty calculations.
-    def zenithDifficulty(observingLocation):
+    def zenithDifficulty(self, t, observatory):
         """
         Compute and return a difficulty score for how difficult this object is to observe based on its distance from the
         observer's zenith.  The function returns 0.0 for objects impossible to observe due to airmass or being below the horizon.
         """
+        observer = ephem.Observer()
+        observer.lat = observatory.lat
+        observer.lon = observatory.lon
+        observer.elevation = observatory.elevation
+        observer.date = t
+
+        if isinstance(self, SkyObject):
+            ra, dec = self.getSkyCoords(t)
+            body = ephem.FixedBody()
+            body._ra = ra*math.pi/180.0
+            body._dec = dec*math.pi/180.0
+            body._epoch = '2000'  #TODO: Set this properly as elsewhere.
+
+            body.compute(observer)
+            if body.alt < 20*math.pi/180.0:
+                factor = 0
+            else:
+                factor = math.pow(math.sin(body.alt), 2)
+            return factor
+        else:
+            return 1.0
+
         return 1.0
 
 class DataTimePoint(models.Model):
