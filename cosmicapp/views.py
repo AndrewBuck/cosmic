@@ -1416,6 +1416,27 @@ def bookmark(request):
 
         return HttpResponse(json.dumps(responseDict))
 
+    elif action == 'newFolder':
+        newFolderName = request.POST.get('newFolderName', None)
+        redirectUrl = request.POST.get('redirectUrl', None)
+
+        newFolder, created = BookmarkFolder.objects.get_or_create(
+            user = request.user,
+            name = newFolderName
+            )
+
+        responseDict = {}
+        if created:
+            newFolder.save()
+            responseDict['code'] = 'createdFolder'
+        else:
+            responseDict['code'] = 'folderAlreadyExisted'
+
+        if redirectUrl != None:
+            return HttpResponseRedirect(redirectUrl)
+
+        return HttpResponse(json.dumps(responseDict))
+
     elif action == 'removeFolder':
         try:
             targetFolder = BookmarkFolder.objects.get(user=request.user, name=folderName)
