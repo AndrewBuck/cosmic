@@ -27,11 +27,11 @@ if os.path.basename(sys.argv[1]) != "gcvs5.txt":
 
 def parseInt(s):
     s = s.strip()
-    return int(s) if s else 0
+    return int(s) if s else None
 
 def parseFloat(s):
     s = s.strip()
-    return float(s) if s else 0
+    return float(s) if s else None
 
 print("Deleting all existing stars in GCVSRecord table from DB...")
 sys.stdout.flush()
@@ -65,8 +65,14 @@ with open(sys.argv[1], 'r') as f:
                 decD = parseFloat(line[30:33])
                 decM = parseFloat(line[33:35])
                 decS = parseFloat(line[35:39])
-                raDeg = 15*raHours + raMin/4.0 + raSec/240.0
-                decDeg = decD + decM/60.0 + decS/3600.0
+                if raHours != None and raMin != None and raSec != None and decD != None and decM != None and decS != None:
+                    raDeg = 15*raHours + raMin/4.0 + raSec/240.0
+                    decDeg = decD + decM/60.0 + decS/3600.0
+                    geometryString = 'POINT({} {})'.format(raDeg, decDeg)
+                else:
+                    raDeg = None
+                    decDeg = None
+                    geometryString = None
 
                 catalogEntry = GCVSRecord(
                     constellationNumber = line[0:2],
@@ -74,9 +80,9 @@ with open(sys.argv[1], 'r') as f:
                     identifier = ' '.join(line[8:18].split()),
                     ra = raDeg,
                     dec = decDeg,
-                    geometry = 'POINT({} {})'.format(raDeg, decDeg),
-                    pmRA = 1000.0 * parseFloat(line[179:185]),
-                    pmDec = 1000.0 * parseFloat(line[186:192]),
+                    geometry = geometryString,
+                    pmRA = 1000.0 * parseFloat(line[179:185]) if parseFloat(line[179:185]) != None else None,
+                    pmDec = 1000.0 * parseFloat(line[186:192]) if parseFloat(line[186:192]) != None else None,
                     variableType = line[41:51].strip(),
                     variableType2 = line[214:224].strip(),
                     magMax = parseFloat(line[53:58]),

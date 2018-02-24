@@ -24,13 +24,7 @@ from .tasks import computeSingleEphemeris
 
 class InstrumentComponent(models.Model):
     """
-    An abstract base class containing the fields common to all hardware that makes up an instrument.  I.E. a mounting
-    pier, a mount, and OTA, a camera, etc.
-
-    Records of this type cannot be created directly and there is no actual table for this type in the database.  Rather one
-    of the child classes derived from this is actually created and stored in the corresponding table.  Having this base
-    class avoids duplicating code for the common fields in each derived child record type, but it also allows code
-    manipulating those results to have a guarantee that certain fields are present on any of the found sources.
+    An Optical tube assembly that forms the core of the optical path of an instrument.
     """
     make = models.CharField(max_length=64, null=True, blank=True)
     model = models.CharField(max_length=64, null=True, blank=True)
@@ -693,12 +687,34 @@ class ScorableObject:
         return (maxScore, maxTime)
 
     def getValueForTime(self, t):
+        """
+        Returns the scientific value of this ScorableObject for the given time t.
+
+        Reflects an estimation of the relative scientific value if an observation of a ScorableObject were to be performed
+        at that time.  For example, an image of an asteroid with high ceu (current ephemeris uncertainty) is favorable to
+        one with a low ceu, etc.
+        """
         return 1.0
 
     def getDifficultyForTime(self, t):
+        """
+        Returns the intrinsic observing difficulty score for difficulty common to all observers for this ScorableObject forven time t.
+        the given time t.
+
+        Reflects an estimation of the relative difficulty of observing different kinds of objects.  For example, stars and
+        clusters are easier to observe than extended objects, etc.  Also includes sources of difficulty such as uncertainty
+        in the objects position or brightness, etc.
+        """
         return 1.0
 
     def getUserDifficultyForTime(self, t, user, observatory=None):
+        """
+        Returns the difficulty score for this ScorableObject for the given time t for difficulties assosciated with
+        observing from a given user's observatory.
+
+        Reflects the difficulty related to observing the ScorableObject from a specific observatory at a given time. For
+        example: off-zenith observing, light-gathering limitations, below horizion, etc.
+        """
         return 1.0
 
     def observatoryCorrections(self, t, user, observatory):
@@ -782,12 +798,12 @@ class UCAC4Record(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     ra = models.FloatField(null=True)
     dec = models.FloatField(null=True)
     geometry = models.PointField(srid=40000, geography=False, dim=2, null=True)
-    pmra = models.FloatField(null=True)
-    pmdec = models.FloatField(null=True)
-    magFit = models.FloatField(null=True)
-    magAperture = models.FloatField(null=True)
+    pmra = models.FloatField(null=True)     # proper motion in ra (mas/yr)      #TODO: Units
+    pmdec = models.FloatField(null=True)    # proper motion in dec (mas/yr)     #TODO: Units
+    magFit = models.FloatField(null=True)   # magnitude by fitting a psf 
+    magAperture = models.FloatField(null=True) # magnitude by aperture photometry
     magError = models.FloatField(null=True)
-    id2mass = models.CharField(max_length=10, null=True)
+    id2mass = models.CharField(max_length=10, null=True) # 2MASS identifier if present in 2MASS
 
     def getSkyCoords(self, dateTime):
         return (self.ra, self.dec)

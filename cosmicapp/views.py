@@ -35,6 +35,10 @@ def index(request):
     context = {"user" : request.user}
     return render(request, "cosmicapp/index.html", context)
 
+def about(request):
+    context = {"user" : request.user}
+    return render(request, "cosmicapp/about.html", context)
+
 def createuser(request):
     context = {"user" : request.user}
 
