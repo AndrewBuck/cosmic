@@ -667,16 +667,21 @@ class ScorableObject:
     discourage, rather than encourage, such observations we just return 0 to indicate it is impossible and therefore
     not worth any points so don't even try observing it in the first place.
     """
-    def getScoreForTime(self, t, user):
-        return self.getValueForTime(t) * self.getDifficultyForTime(t) * self.getUserDifficultyForTime(t, user)
+    def getScoreForTime(self, t, user, observatory=None):
+        baseScore = self.getValueForTime(t) * self.getDifficultyForTime(t) * self.getUserDifficultyForTime(t, user, observatory)
 
-    def getPeakScoreForInterval(self, startTime, endTime, user):
-        timeSkip = timedelta(minutes=30)
+        if observatory != None:
+            baseScore *= self.observatoryCorrections(t, user, observatory)
+
+        return baseScore
+
+    def getPeakScoreForInterval(self, startTime, endTime, user, observatory=None):
+        timeSkip = timedelta(minutes=5)
         currentTime = startTime
-        maxScore = self.getScoreForTime(startTime, user)
+        maxScore = self.getScoreForTime(startTime, user, observatory)
         maxTime = startTime
         while currentTime < endTime:
-            currentScore = self.getScoreForTime(currentTime, user)
+            currentScore = self.getScoreForTime(currentTime, user, observatory)
             if currentScore > maxScore:
                 maxScore = currentScore
                 maxTime = currentTime
@@ -691,7 +696,7 @@ class ScorableObject:
     def getDifficultyForTime(self, t):
         return 1.0
 
-    def getUserDifficultyForTime(self, t, user):
+    def getUserDifficultyForTime(self, t, user, observatory=None):
         return 1.0
 
     @staticmethod

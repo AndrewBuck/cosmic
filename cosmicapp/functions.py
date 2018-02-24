@@ -95,7 +95,7 @@ def formulateObservingPlan(user, observatory, targets, includeOtherTargets, star
             d['identifier'] = target.content_object.getDisplayName
 
             if isinstance(target.content_object, ScorableObject):
-                peakScoreTuple = target.content_object.getPeakScoreForInterval(startTime, endTime, user)
+                peakScoreTuple = target.content_object.getPeakScoreForInterval(startTime, endTime, user, observatory)
                 d['peakScore'] = round(peakScoreTuple[0], 2)
                 d['peakScoreTime'] = str(peakScoreTuple[1])
 
@@ -236,7 +236,7 @@ def formulateObservingPlan(user, observatory, targets, includeOtherTargets, star
                 observation['startTimeDatetime'] = dateparser.parse(observation['startTime'])
 
                 if isinstance(target.content_object, ScorableObject):
-                    observation['score'] = observation['target'].content_object.getScoreForTime(observation['startTimeDatetime'], user)
+                    observation['score'] = observation['target'].content_object.getScoreForTime(observation['startTimeDatetime'], user, observatory)
 
                 observingPlan.append(observation)
                 observingPlan.sort(key=lambda x: x['startTime'])
