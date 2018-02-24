@@ -13,6 +13,16 @@
 
 <h2>Bookmarks for user {{foruser}}</h2>
 
+<form method="POST" action="/bookmark/">
+Create new folder:
+{% csrf_token %}
+<input type=hidden name=action value=newFolder>
+<input type=hidden name=redirectUrl value="/user/{{foruser}}/bookmarks/">
+<input type=text name=newFolderName>
+<input type=submit value="Create New Folder">
+</form>
+
+<h3>Folders</h3>
 {% for folder in folders %}
     <div id="bookmarkFolder_{{folder.name.split|join:"_"}}" class="bookmarkFolder" data-folderName="{{folder.name}}">
     <h3>{{folder.name}}</h3>

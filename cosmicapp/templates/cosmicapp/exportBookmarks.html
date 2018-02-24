@@ -195,6 +195,7 @@ function updateBookmarkTable()
                                  '_includeCheckbox" ' + r['defaultSelected'] + '></td>';
                     tableHTML += '\n<td>' + r['score'] + '</td>';
                     tableHTML += '\n<td>' + r['type'] + '</td>';
+                    //TODO: Should include a bookmark link here when we have a way to do so with a javascript function.
                     tableHTML += '\n<td>' + r['identifier'] + '</td>';
                     tableHTML += '\n<td>' + r['mag'] + '</td>';
                     tableHTML += '\n<td>' + r['ra'] + '</td>';
@@ -231,6 +232,7 @@ function submitObservingPlan()
         if(checkbox.checked)
         {
             temp = Object();
+            temp['score'] = r['score'];
             temp['type'] = r['type'];
             temp['typeInternal'] = r['typeInternal'];
             temp['id'] = r['id'];
@@ -368,7 +370,7 @@ Limiting magnitude:
 <br><br>
 
 Minimum score:
-<input type="number" name=minimumScore value=0>
+<input type="number" name=minimumScore value=0.3>
 
 <br><br>
 

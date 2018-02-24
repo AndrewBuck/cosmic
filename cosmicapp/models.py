@@ -1,5 +1,6 @@
 import math
 from datetime import timedelta
+import ephem
 
 from django.contrib.gis.db import models
 from django.contrib.auth.models import User
@@ -661,16 +662,21 @@ class ScorableObject:
     discourage, rather than encourage, such observations we just return 0 to indicate it is impossible and therefore
     not worth any points so don't even try observing it in the first place.
     """
-    def getScoreForTime(self, t, user):
-        return self.getValueForTime(t) * self.getDifficultyForTime(t) * self.getUserDifficultyForTime(t, user)
+    def getScoreForTime(self, t, user, observatory=None):
+        baseScore = self.getValueForTime(t) * self.getDifficultyForTime(t) * self.getUserDifficultyForTime(t, user, observatory)
 
-    def getPeakScoreForInterval(self, startTime, endTime, user):
-        timeSkip = timedelta(minutes=30)
+        if observatory != None:
+            baseScore *= self.observatoryCorrections(t, user, observatory)
+
+        return baseScore
+
+    def getPeakScoreForInterval(self, startTime, endTime, user, observatory=None):
+        timeSkip = timedelta(minutes=5)
         currentTime = startTime
-        maxScore = self.getScoreForTime(startTime, user)
+        maxScore = self.getScoreForTime(startTime, user, observatory)
         maxTime = startTime
         while currentTime < endTime:
-            currentScore = self.getScoreForTime(currentTime, user)
+            currentScore = self.getScoreForTime(currentTime, user, observatory)
             if currentScore > maxScore:
                 maxScore = currentScore
                 maxTime = currentTime
@@ -700,7 +706,7 @@ class ScorableObject:
         """
         return 1.0
 
-    def getUserDifficultyForTime(self, t, user):
+    def getUserDifficultyForTime(self, t, user, observatory=None):
         """
         Returns the difficulty score for this ScorableObject for the given time t for difficulties assosciated with
         observing from a given user's observatory.
@@ -709,6 +715,9 @@ class ScorableObject:
         example: off-zenith observing, light-gathering limitations, below horizion, etc.
         """
         return 1.0
+
+    def observatoryCorrections(self, t, user, observatory):
+        return self.zenithDifficulty(t, observatory)
 
     @staticmethod
     def limitingStellarMagnitudeDifficulty(mag, limitingMag):
@@ -740,13 +749,34 @@ class ScorableObject:
         else:
             return 0.0
 
-    @staticmethod
     #TODO: Need to implement this function and then call it from all the user difficulty calculations.
-    def zenithDifficulty(observingLocation):
+    def zenithDifficulty(self, t, observatory):
         """
         Compute and return a difficulty score for how difficult this object is to observe based on its distance from the
         observer's zenith.  The function returns 0.0 for objects impossible to observe due to airmass or being below the horizon.
         """
+        observer = ephem.Observer()
+        observer.lat = observatory.lat
+        observer.lon = observatory.lon
+        observer.elevation = observatory.elevation
+        observer.date = t
+
+        if isinstance(self, SkyObject):
+            ra, dec = self.getSkyCoords(t)
+            body = ephem.FixedBody()
+            body._ra = ra*math.pi/180.0
+            body._dec = dec*math.pi/180.0
+            body._epoch = '2000'  #TODO: Set this properly as elsewhere.
+
+            body.compute(observer)
+            if body.alt < 20*math.pi/180.0:
+                factor = 0
+            else:
+                factor = math.pow(math.sin(body.alt), 2)
+            return factor
+        else:
+            return 1.0
+
         return 1.0
 
 class DataTimePoint(models.Model):
@@ -881,6 +911,7 @@ class TwoMassXSCRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject
         return 1.0
 
     def getUserDifficultyForTime(self, t, user):
+        #TODO: Allow fainter magnitudes for galaxies since the goal of observing them is mainly to check for supernovas which might be quite bright.
         #TODO: Properly implement this function.
         return ScorableObject.limitingDSOMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
 
