@@ -805,7 +805,7 @@ class UCAC4Record(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     def getDifficultyForTime(self, t):
         return 1.0
 
-    def getUserDifficultyForTime(self, t, user):
+    def getUserDifficultyForTime(self, t, user, observatory=None):
         #TODO: Properly implement this function.
         return ScorableObject.limitingStellarMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
 
@@ -856,7 +856,7 @@ class GCVSRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
         # Should be proprotional to the uncertainty in the brightness of the object at the given time.
         return 1.0
 
-    def getUserDifficultyForTime(self, t, user):
+    def getUserDifficultyForTime(self, t, user, observatory=None):
         #TODO: Properly implement this function.
         return ScorableObject.limitingStellarMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
 
@@ -894,7 +894,7 @@ class TwoMassXSCRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject
         #TODO: Properly implement this function.
         return 1.0
 
-    def getUserDifficultyForTime(self, t, user):
+    def getUserDifficultyForTime(self, t, user, observatory=None):
         #TODO: Allow fainter magnitudes for galaxies since the goal of observing them is mainly to check for supernovas which might be quite bright.
         #TODO: Properly implement this function.
         return ScorableObject.limitingDSOMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
@@ -985,7 +985,7 @@ class MessierRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
 
         return difficulty
 
-    def getUserDifficultyForTime(self, t, user):
+    def getUserDifficultyForTime(self, t, user, observatory=None):
         #TODO: Properly implement this function.
         return ScorableObject.limitingDSOMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
 
@@ -993,34 +993,35 @@ class AstorbRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     """
     A record storing a the Keplerian orbital elements and physical properties for a single asteroid from the astorb database.
     """
-    number = models.IntegerField(null=True)
-    name = models.CharField(max_length=18)
-    absMag = models.FloatField()
-    slopeParam = models.FloatField()
-    colorIndex = models.FloatField(null=True)
-    diameter = models.FloatField(null=True)
-    taxanomicClass = models.CharField(max_length=7)
-    orbitCode = models.IntegerField()
-    criticalCode = models.IntegerField()
-    astrometryNeededCode = models.IntegerField()
-    observationArc = models.IntegerField()
-    numObservations = models.IntegerField()
-    epoch = models.DateField()
-    meanAnomaly = models.FloatField()
-    argPerihelion = models.FloatField()
-    lonAscendingNode = models.FloatField()
-    inclination = models.FloatField()
-    eccentricity = models.FloatField()
-    semiMajorAxis = models.FloatField()
-    ceu = models.FloatField()
-    ceuRate = models.FloatField()
-    ceuDate = models.DateField(null=True)
-    nextPEU = models.FloatField()
-    nextPEUDate = models.DateField(null=True)
-    tenYearPEU = models.FloatField()
-    tenYearPEUDate = models.DateField(null=True)
-    tenYearPEUIfObserved = models.FloatField()
-    tenYearPEUDateIfObserved = models.DateField(null=True)
+    number = models.IntegerField(null=True)   # The asteroid's number, if it has been numbered, else None.
+    name = models.CharField(max_length=18, null=True)   # The asteroid's name, if it has one, or a blank string.
+    absMag = models.FloatField()   # The absolute magnitude parameter H (units: mag).
+    slopeParam = models.FloatField()   # The slope magnitude parameter G.
+    colorIndex = models.FloatField(null=True)   # The B-V magnitude color index of the asteroid (units: mag).
+    diameter = models.FloatField(null=True)   # The asteroid's diameter (units: km).
+    taxanomicClass = models.CharField(max_length=7)   # The IRAS taxanomic class of the asteroid.
+    orbitCode = models.IntegerField()   # The planet crossing code.
+    criticalCode = models.IntegerField()   # MPC critical-list code.
+    astrometryNeededCode = models.IntegerField()   # The Flagstaff Station code.
+    observationArc = models.IntegerField()   # The time between the first and last observations of the asteroid (units: days).
+    numObservations = models.IntegerField()   # The number of observations actually used in computing the orbit.
+    epoch = models.DateField()   # The epoch of the osculating orbit.
+    meanAnomaly = models.FloatField()   # Orbital parameter (units: deg).
+    argPerihelion = models.FloatField()   # Orbital parameter (units: deg).
+    lonAscendingNode = models.FloatField()   # Orbital parameter (units: deg).
+    inclination = models.FloatField()   # Orbital parameter (units: deg).
+    eccentricity = models.FloatField()   # Orbital parameter (units: unitless).
+    semiMajorAxis = models.FloatField()   # Orbital parameter (units: AU).
+    ceu = models.FloatField()   # The current ephemeris uncertainty (units: arcsec).
+    ceuRate = models.FloatField()  # The rate of change of the CEU (units: arcsec/d).
+    ceuDate = models.DateField(null=True)   # The date for which the CEU is valid.
+    nextPEU = models.FloatField()   # The next peak ephemeris uncertainty (units: arcsec).
+    nextPEUDate = models.DateField(null=True)   # The date of the next peak.
+    tenYearPEU = models.FloatField()   # The highest ephemeris uncertainty in the next 10 years. (units: arcsec)
+    tenYearPEUDate = models.DateField(null=True)   # The date of the 10 year peak uncertainty.
+    tenYearPEUIfObserved = models.FloatField()   # The new 10 year peak uncertainty if 2 observations were made at the next PEU (units: arcsec).
+    tenYearPEUDateIfObserved = models.DateField(null=True)   # The new 10 year PEU date if the above observations were done.
+
     bookmarks = GenericRelation('Bookmark')
 
     def getSkyCoords(self, dateTime):
@@ -1050,7 +1051,7 @@ class AstorbRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
         #TODO: Properly implement this function.
         return 2.0
 
-    def getUserDifficultyForTime(self, t, user):
+    def getUserDifficultyForTime(self, t, user, observatory=None):
         #TODO: Properly implement this function.
         return math.pow(log(self.ceu + 1), 2) * ScorableObject.limitingStellarMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
 
@@ -1200,7 +1201,7 @@ class ExoplanetRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject)
         #TODO: Properly implement this function.
         return 1.0
 
-    def getUserDifficultyForTime(self, t, user):
+    def getUserDifficultyForTime(self, t, user, observatory=None):
         #TODO: Properly implement this function.
         return ScorableObject.limitingStellarMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
 
