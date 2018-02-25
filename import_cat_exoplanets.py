@@ -11,6 +11,7 @@ import sys
 import csv
 import django
 import julian
+import pytz
 from django.db import transaction
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "cosmic.settings")
@@ -105,7 +106,7 @@ with transaction.atomic():
                 velocitySemiAplitude = parseFloat(row['K']),
                 velocitySlope = parseFloat(row['DVDT']),
 
-                timePeriastron = julian.from_jd(timePeriastronJD, fmt='jd') if timePeriastronJD != None else None,
+                timePeriastron = pytz.utc.localize(julian.from_jd(timePeriastronJD, fmt='jd')) if timePeriastronJD != None else None,
                 eccentricity = parseFloat(row['ECC']),
                 argPeriastron = parseFloat(row['OM']),
                 inclination = parseFloat(row['I']),
@@ -113,7 +114,7 @@ with transaction.atomic():
 
                 transitDepth = parseFloat(row['DEPTH']),
                 transitDuration = parseFloat(row['T14']),
-                transitEpoch = julian.from_jd(transitEpochJD, fmt='jd') if transitEpochJD != None else None,
+                transitEpoch = pytz.utc.localize(julian.from_jd(transitEpochJD, fmt='jd')) if transitEpochJD != None else None,
 
                 planetRadius = parseFloat(row['R']),
                 planetDensity = parseFloat(row['DENSITY']),
