@@ -18,7 +18,7 @@ time python3 import_cat_gcvs.py ${catalogPath}/gcvs/gcvs5.txt
 
 time python3 import_cat_astorb.py ${catalogPath}/astorb/astorb.dat
 
-time python3 calculate_astorb_ephemerides.py 2017 2018 29 5
+time python3 calculate_astorb_ephemerides.py 'January 2018' 'January 2019' 29 5 true
 
 time python3 import_cat_2mass_xsc.py ${catalogPath}/2mass/xsc_aaa ${catalogPath}/2mass/xsc_baa
 
