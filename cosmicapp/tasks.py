@@ -22,7 +22,7 @@ from photutils import make_source_mask, DAOStarFinder, IRAFStarFinder
 
 import ephem
 
-from .models import *
+from cosmicapp import models
 
 staticDirectory = os.path.dirname(os.path.realpath(__file__)) + "/static/cosmicapp/"
 
@@ -58,7 +58,7 @@ def storeImageLocation(image, w, sourceString):
     print(geometryString)
 
     #TODO: Store image.centerRot
-    ps = PlateSolution(
+    ps = models.PlateSolution(
         image = image,
         wcsHeader = w.to_header_string(True),
         source = sourceString,
@@ -118,7 +118,7 @@ def imagestats(filename):
             numChannels += 1
 
     #NOTE: These assume that all channels have the same width, height, and depth.  This may not always be true.
-    image = Image.objects.get(fileRecord__onDiskFileName=filename)
+    image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
     image.dimX = jsonObject[0]['width']
     image.dimY = jsonObject[0]['height']
     image.bitDepth = jsonObject[0]['depth']
@@ -129,7 +129,7 @@ def imagestats(filename):
             image.save()
 
             for channelEntry in channelColors:
-                channelInfo = ImageChannelInfo(
+                channelInfo = models.ImageChannelInfo(
                     image = image,
                     index = channelEntry[0],
                     channelType = channelEntry[1]
@@ -172,7 +172,7 @@ def imagestats(filename):
             if (key == None and value == None) or (key == "" and value == "") or (key == "" and value == None):
                 continue
 
-            headerField = ImageHeaderField(
+            headerField = models.ImageHeaderField(
                 image = image,
                 index = i,
                 key = key,
@@ -210,7 +210,7 @@ def imagestats(filename):
 
                 for frame in frames:
                     try:
-                        channelInfo = ImageChannelInfo.objects.get(image=image, index=channelIndex)
+                        channelInfo = models.ImageChannelInfo.objects.get(image=image, index=channelIndex)
                     except:
                         continue
 
@@ -241,7 +241,7 @@ def generateThumbnails(filename):
     filenameMedium = os.path.splitext(filename)[0] + "_thumb_medium.png"
     filenameLarge = os.path.splitext(filename)[0] + "_thumb_large.png"
 
-    image = Image.objects.get(fileRecord__onDiskFileName=filename)
+    image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
 
     for tempFilename, sizeArg, sizeString in [(filenameFull, "100%", "full"), (filenameSmall, "100x100", "small"),
                                               (filenameMedium, "300x300", "medium"), (filenameLarge, "900x900", "large")]:
@@ -287,7 +287,7 @@ def generateThumbnails(filename):
                     h = int(dimensions[1])
                     print('Thumbnail width: {}      height: {}'.format(w, h))
 
-                    record = ImageThumbnail(
+                    record = models.ImageThumbnail(
                         image = image,
                         width = w,
                         height = h,
@@ -303,10 +303,10 @@ def generateThumbnails(filename):
 @shared_task
 def sextractor(filename):
     # Get the image record
-    image = Image.objects.get(fileRecord__onDiskFileName=filename)
+    image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
 
     #TODO: Handle multi-extension fits files.
-    channelInfos = ImageChannelInfo.objects.filter(image=image).order_by('index')
+    channelInfos = models.ImageChannelInfo.objects.filter(image=image).order_by('index')
 
     detectThreshold = 4.0*channelInfos[0].bgStdDev
 
@@ -349,7 +349,7 @@ def sextractor(filename):
                     fluxAutoErr = fields[fieldDict['FLUXERR_AUTO']]
                     flags = fields[fieldDict['FLAGS']]
 
-                    record = SextractorResult(
+                    record = models.SextractorResult(
                         image = image,
                         pixelX = xPos,
                         pixelY = yPos,
@@ -361,7 +361,7 @@ def sextractor(filename):
 
                     record.save()
 
-            records = SextractorResult.objects.filter(image=image)
+            records = models.SextractorResult.objects.filter(image=image)
             meanFluxAuto = records.aggregate(Avg('fluxAuto'))['fluxAuto__avg']
             stdDevFluxAuto = records.aggregate(StdDev('fluxAuto'))['fluxAuto__stddev']
 
@@ -379,7 +379,7 @@ def sextractor(filename):
 @shared_task
 def image2xy(filename):
     # Get the image record
-    image = Image.objects.get(fileRecord__onDiskFileName=filename)
+    image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
 
     #TODO: Use the -P option to handle images with multiple planes.  Also has support for multi-extension fits built in if called with appropriate params.
     #TODO: Consider using the -d option to downsample by a given factor before running.
@@ -407,7 +407,7 @@ def image2xy(filename):
             if row['FLUX'] < 0.1:
                 continue
 
-            result = Image2xyResult(
+            result = models.Image2xyResult(
                 image = image,
                 pixelX = row['X'],
                 pixelY = row['Y'],
@@ -418,7 +418,7 @@ def image2xy(filename):
 
             result.save()
 
-        records = Image2xyResult.objects.filter(image=image)
+        records = models.Image2xyResult.objects.filter(image=image)
         meanFlux = records.aggregate(Avg('flux'))['flux__avg']
         stdDevFlux = records.aggregate(StdDev('flux'))['flux__stddev']
 
@@ -439,10 +439,10 @@ def daofind(filename):
     sys.stdout.flush()
 
     #TODO: daofind can only handle .fit files.  Should autoconvert the file to .fit if necessary before running.
-    image = Image.objects.get(fileRecord__onDiskFileName=filename)
+    image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
 
     #TODO: Handle multi-extension fits files.
-    channelInfos = ImageChannelInfo.objects.filter(image=image).order_by('index')
+    channelInfos = models.ImageChannelInfo.objects.filter(image=image).order_by('index')
 
     hdulist = fits.open(settings.MEDIA_ROOT + filename)
     data = hdulist[0].data
@@ -451,7 +451,7 @@ def daofind(filename):
 
     with transaction.atomic():
         for source in sources:
-            result = DaofindResult(
+            result = models.DaofindResult(
                 image = image,
                 pixelX = source['xcentroid'],
                 pixelY = source['ycentroid'],
@@ -466,7 +466,7 @@ def daofind(filename):
 
             result.save()
 
-        records = DaofindResult.objects.filter(image=image)
+        records = models.DaofindResult.objects.filter(image=image)
         meanMag = records.aggregate(Avg('mag'))['mag__avg']
         stdDevMag = records.aggregate(StdDev('mag'))['mag__stddev']
 
@@ -483,10 +483,10 @@ def starfind(filename):
     sys.stdout.flush()
 
     #TODO: starfind can only handle .fit files.  Should autoconvert the file to .fit if necessary before running.
-    image = Image.objects.get(fileRecord__onDiskFileName=filename)
+    image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
 
     #TODO: Handle multi-extension fits files.
-    channelInfos = ImageChannelInfo.objects.filter(image=image).order_by('index')
+    channelInfos = models.ImageChannelInfo.objects.filter(image=image).order_by('index')
 
     hdulist = fits.open(settings.MEDIA_ROOT + filename)
     data = hdulist[0].data
@@ -495,7 +495,7 @@ def starfind(filename):
 
     with transaction.atomic():
         for source in sources:
-            result = StarfindResult(
+            result = models.StarfindResult(
                 image = image,
                 pixelX = source['xcentroid'],
                 pixelY = source['ycentroid'],
@@ -511,7 +511,7 @@ def starfind(filename):
 
             result.save()
 
-        records = StarfindResult.objects.filter(image=image)
+        records = models.StarfindResult.objects.filter(image=image)
         meanMag = records.aggregate(Avg('mag'))['mag__avg']
         stdDevMag = records.aggregate(StdDev('mag'))['mag__stddev']
 
@@ -527,14 +527,14 @@ def starmatch(filename):
     print("starmatch: " + filename)
     sys.stdout.flush()
 
-    image = Image.objects.get(fileRecord__onDiskFileName=filename)
+    image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
 
     #NOTE: It may be faster if these dictionary 'name' entries were shortened or changed to 'ints', maybe an enum.
     inputs = [
-        { 'name': 'sextractor', 'model': SextractorResult },
-        { 'name': 'image2xy', 'model': Image2xyResult },
-        { 'name': 'daofind', 'model': DaofindResult },
-        { 'name': 'starfind', 'model': StarfindResult }
+        { 'name': 'sextractor', 'model': models.SextractorResult },
+        { 'name': 'image2xy', 'model': models.Image2xyResult },
+        { 'name': 'daofind', 'model': models.DaofindResult },
+        { 'name': 'starfind', 'model': models.StarfindResult }
         ]
 
     # Loop over all the pairs of source extraction methods listed in 'inputs'.
@@ -625,7 +625,7 @@ def starmatch(filename):
             x /= numMatches
             y /= numMatches
 
-            record = SourceFindMatch(
+            record = models.SourceFindMatch(
                 image = image,
                 pixelX = x,
                 pixelY = y,
@@ -649,8 +649,8 @@ def astrometryNet(filename):
     print("astrometrynet: " + filename)
     sys.stdout.flush()
 
-    image = Image.objects.get(fileRecord__onDiskFileName=filename)
-    superMatches = SourceFindMatch.objects.filter(image=image)
+    image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
+    superMatches = models.SourceFindMatch.objects.filter(image=image)
 
     xValues = []
     yValues = []
@@ -714,8 +714,8 @@ def astrometryNet(filename):
 
 @shared_task
 def parseHeaders(imageId):
-    image = Image.objects.get(pk=imageId)
-    headers = ImageHeaderField.objects.filter(image=imageId)
+    image = models.Image.objects.get(pk=imageId)
+    headers = models.ImageHeaderField.objects.filter(image=imageId)
 
     with transaction.atomic():
         for header in headers:
@@ -825,7 +825,7 @@ def parseHeaders(imageId):
             key = key.strip()
             value = value.strip()
 
-            prop = ImageProperty(
+            prop = models.ImageProperty(
                 image = image,
                 header = header,
                 key = key,
@@ -835,8 +835,8 @@ def parseHeaders(imageId):
             prop.save()
 
         # Handle data split across multiple header fields like dateObs and timeObs.
-        dateObsResult = ImageProperty.objects.filter(image=image, key='dateObs').first()
-        timeObsResult = ImageProperty.objects.filter(image=image, key='timeObs').first()
+        dateObsResult = models.ImageProperty.objects.filter(image=image, key='dateObs').first()
+        timeObsResult = models.ImageProperty.objects.filter(image=image, key='timeObs').first()
         if dateObsResult != None and timeObsResult != None:
             try:
                 image.dateTime = dateparser.parse(dateObsResult.value + ' ' + timeObsResult.value)
@@ -915,7 +915,7 @@ def computeSingleEphemerisRange(asteroid, ephemTimeStart, ephemTimeEnd, toleranc
 def computeAsteroidEphemerides(ephemTimeStart, ephemTimeEnd, tolerance, timeTolerance, clearFirst):
     def writeAstorbEphemerisToDB(astorbRecord, startTime, endTime, dimMag, brightMag, geometry):
         #print("saving " + str(startTime) + "       " + str(endTime) + "     " + geometry)
-        record = AstorbEphemeris(
+        record = models.AstorbEphemeris(
             astorbRecord = asteroid,
             startTime = startTime,
             endTime = endTime,
@@ -929,16 +929,16 @@ def computeAsteroidEphemerides(ephemTimeStart, ephemTimeEnd, tolerance, timeTole
     offset = 0
     pagesize = 25000
 
-    numAsteroids = AstorbRecord.objects.count()
+    numAsteroids = models.AstorbRecord.objects.count()
     print('Num asteroids to compute: {}'.format(numAsteroids))
     sys.stdout.flush()
 
     with transaction.atomic():
         if clearFirst:
-            AstorbEphemeris.objects.all().delete()
+            models.AstorbEphemeris.objects.all().delete()
 
         while offset < numAsteroids:
-            asteroids = AstorbRecord.objects.all()[offset : offset+pagesize]
+            asteroids = models.AstorbRecord.objects.all()[offset : offset+pagesize]
 
             for asteroid in asteroids:
                 #TODO: Add a check to see if there is already an ephemeris calculated near the start/end time and if so
