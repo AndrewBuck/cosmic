@@ -121,6 +121,7 @@ while not quit:
         sys.stdout.flush()
         time.sleep(waitTime)
         waitTime += 1
+        waitTime = min(waitTime, 30)
 
     # Write the result of the returned value back to the database, either success, failure, or error (early exit).
     #TODO: Pass the return result through directly as a string and modify the individual tasks to return more detailed strings.

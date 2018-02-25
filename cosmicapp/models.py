@@ -760,7 +760,11 @@ class ScorableObject:
         observer.lat = observatory.lat
         observer.lon = observatory.lon
         observer.elevation = observatory.elevation
-        observer.date = t
+        if isinstance(t, datetime):
+            observer.date = t
+        else:
+            print('Warning: making a datetime out of something which was already supposed to be a datetime.')
+            observer.date = datetime(t)
 
         if isinstance(self, SkyObject):
             ra, dec = self.getSkyCoords(t)
@@ -1087,7 +1091,7 @@ class AstorbRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
             7: 50      # Not critical asteroid, however absolute magnitude poorly known.
             }
 
-        astrometryNeededCode = {
+        astrometryNeededCodeDict = {
             10: 500,   # Space mission targets and occultation candidates.
             9: 20,     # Asteroids useful for mass determination.
             8: 50,     # Asteroids for which a few observations would upgrade the orbital uncertainty.
@@ -1119,9 +1123,9 @@ class AstorbRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
         errorInDeg = 2
         ceu = self.getCeuForTime(t)
         if ceu < 3600*errorInDeg:
-            2.0 * math.pow(ceu/3600.0, 2)
+            return 2.0 * math.pow(ceu/3600.0, 2)
         else:
-            max(0.1, 2.0 * math.pow(errorInDeg, 2) - 2.0 * math.pow(ceu/3600.0, 2))
+            return max(0.1, 2.0 * math.pow(errorInDeg, 2) - 2.0 * math.pow(ceu/3600.0, 2))
 
     def getUserDifficultyForTime(self, t, user, observatory=None):
         #TODO: Properly implement this function.
