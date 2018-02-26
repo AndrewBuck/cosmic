@@ -205,20 +205,7 @@ function addImageToDesktop(id)
 	selectedImages[i].mouseover = false;
 	selectedImages[i].active = false;
 	selectedImages[i].highlightColor = (77 * i) % 360;
-/*
-	if (i == 1)
-	{
-		// second image is offset and rotated by 15 deg
-		selectedImages[i].transformMatrix = math.matrix([
-			[	(Math.sqrt(3) + 1)/(2*Math.sqrt(2)) ,
-				(Math.sqrt(3) - 1)/(2*Math.sqrt(2)) ,
-				Math.floor(selectedImages[i].width/16) ] ,
-			[	(1 - Math.sqrt(3))/(2*Math.sqrt(2)) ,
-				(Math.sqrt(3) + 1)/(2*Math.sqrt(2)) ,
-				Math.floor(selectedImages[i].height/16) ] ,
-			[ 0, 0, 1 ]]);
-	} else
-*/
+
 	if (i > 1) {
 		// if two or more images are on the screen, assume they are aligned, and
 		// position the next image to follow the alignment 
@@ -912,17 +899,15 @@ function imageIndexListByWorkspaceCoordinates(coordWorkspaceVector)
 	
     for(i = 0; i < selectedImages.length; i++)
     {
-		coordImageVector = math.multiply(
-			math.inv(selectedImages[i].transformMatrix),
-			coordWorkspaceVector
-		);
-		if (isCoordInsideRect(coordImageVector, selectedImages[i].sizeVector))
-			list[list.length] = i;
-	}
+        coordImageVector = math.multiply(
+            math.inv(selectedImages[i].transformMatrix),
+            coordWorkspaceVector
+        );
+        if (isCoordInsideRect(coordImageVector, selectedImages[i].sizeVector))
+            list[list.length] = i;
+    }
 	return list;
 }
-
-
 
 /*
  * Returns the position of the mouse cursor on a specified image, relative to the image origin.
