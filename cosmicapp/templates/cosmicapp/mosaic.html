@@ -544,8 +544,6 @@ function handleMouseButtonDown(event)
 	imageListForTransform = imageIndexListByWorkspaceCoordinates(mouseWorkspaceVector);
 
 	mode = '';
-    //TODO: This if statement should probably only apply to the translate function, not to the rest as it doesn't make
-    //sense to require clicking on an actual image for those operations to be carried out.  Ask Eric about this.
 	var i = imageListForTransform[0];
 	if ( 0 <= i && selectedImages.length > i)
 	{
@@ -555,13 +553,14 @@ function handleMouseButtonDown(event)
 			mode = 'translate';
 		else if(mode == '' && event.which == 2 && !ctrlKeyPressed)
 			mode = 'movetoback'
-		else if(mode == '' && event.which == 3 && !ctrlKeyPressed)
-		    mode = 'pan';
-		else if(mode == '' && event.which == 1 && ctrlKeyPressed)
-			mode = 'rotateimages';
-		else if(mode == '' && event.which == 3 && ctrlKeyPressed)
-			mode = 'rotatecanvas';
 	}
+
+    if(mode == '' && event.which == 3 && !ctrlKeyPressed)
+        mode = 'pan';
+    else if(mode == '' && event.which == 1 && ctrlKeyPressed)
+        mode = 'rotateimages';
+    else if(mode == '' && event.which == 3 && ctrlKeyPressed)
+        mode = 'rotatecanvas';
 
     return false;
 };
