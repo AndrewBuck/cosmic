@@ -972,7 +972,10 @@ function onImageTableLoad()
 
 $(document).ready(function()
 {
+    // Disable the right click context menu on the canvas.
     $('body').on('contextmenu', 'canvas', function(e){ return false; });
+
+    // Setup keyboard and mouse handlers.
     $('#desktop').mousedown(handleMouseButtonDown);
     /* NOTE: 'move' and 'up' are bound to window instead of #desktop to handle drags out of the canvas boundary. */
     $(window).mousemove(handleMouseMove);
@@ -981,9 +984,12 @@ $(document).ready(function()
     $(document).keydown(handleKeyDown);
     $(document).keyup(handleKeyUp);
 
+    // Set up handler to respond to the time when the image table has finished loading new
+    // search results from the server, or when it first loads on page load.
     $(document).on('imageTableLoadEvent_mosaicGallery', onImageTableLoad)
-    $(window).on('resize', drawCanvas)
 
+    // Set up a handler to redraw the canvas whenever the browser window changes size.
+    $(window).on('resize', drawCanvas)
 });
 
 </script>
