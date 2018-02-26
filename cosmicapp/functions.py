@@ -54,7 +54,7 @@ def getAsteroidsAroundGeometry(geometry, bufferSize, targetTime, limitingMag, li
         startTime__lte=targetTime,
         endTime__gte=targetTime,
         brightMag__lt=limitingMag
-        ).order_by('-astorbRecord__ceu', 'astorbRecord_id').distinct('astorbRecord__ceu', 'astorbRecord_id')[:fakeLimit]
+        ).order_by('-astorbRecord__astrometryNeededCode', '-astorbRecord__ceu', 'astorbRecord_id').distinct('astorbRecord__astrometryNeededCode', 'astorbRecord__ceu', 'astorbRecord_id')[:fakeLimit]
 
     # Now that we have narrowed it down to a list of candidates, check through that list and calculate the exact
     # ephemeris at the desired targetTime for each candidate and discard any which don't actually fall within the

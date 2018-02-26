@@ -1664,7 +1664,7 @@ def observing(request):
 
     asteroids = getAsteroidsAroundGeometry(zenithGeometry, windowSize, currentTime, limitingMag, limit)
 
-    asteroids = sorted(asteroids, key = lambda x: x['record'].ceu, reverse=True)[:limit]
+    #asteroids = sorted(asteroids, key = lambda x: x['record'].ceu, reverse=True)[:limit]
 
     context['asteroids'] = asteroids
 

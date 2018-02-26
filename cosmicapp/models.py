@@ -1063,6 +1063,11 @@ class AstorbRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
         return ret
 
     def getCeuForTime(self, t):
+        if self.ceuDate == None or self.ceuRate == None or self.ceu == None:
+            # Asteroids without a ceuDate tend to be newly discovered asteroids with short observation arcs.  We use a
+            # moderately high "fake" ceu for these objects to avoid returning a null value.
+            return 500
+
         d = datetime(self.ceuDate.year, self.ceuDate.month, self.ceuDate.day, tzinfo=pytz.timezone('UTC'))
         deltaT = t - d
         value = self.ceu + self.ceuRate * (deltaT.total_seconds()/86400)
@@ -1092,16 +1097,16 @@ class AstorbRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
             }
 
         astrometryNeededCodeDict = {
-            10: 500,   # Space mission targets and occultation candidates.
-            9: 20,     # Asteroids useful for mass determination.
+            10: 100,   # Space mission targets and occultation candidates.
+            9: 70,     # Asteroids useful for mass determination.
             8: 50,     # Asteroids for which a few observations would upgrade the orbital uncertainty.
-            7: 5,      # MPC Critical list asteroids with future low uncertainties.
-            6: 10,     # Planet crossers of type 6:5.
+            7: 20,      # MPC Critical list asteroids with future low uncertainties.
+            6: 50,     # Planet crossers of type 6:5.
             5: 50,     # Asteroids for which a few more observations would lead to numbering them.
             4: 20,     # 
-            3: 5,      # 
-            2: 3,      # 
-            1: 2,      # 
+            3: 8,      # 
+            2: 5,      # 
+            1: 3,      # 
             0: 1       # 
             }
 
@@ -1109,7 +1114,7 @@ class AstorbRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
         ocMultiplier = orbitCodeDict[self.orbitCode] if self.orbitCode in orbitCodeDict else 1.0
         ccMultiplier = criticalCodeDict[self.criticalCode] if self.criticalCode in criticalCodeDict else 1.0
         anMultiplier = astrometryNeededCodeDict[self.astrometryNeededCode] if self.astrometryNeededCode in astrometryNeededCodeDict else 1.0
-        multiplier = ocMultiplier * ccMultiplier * anMultiplier
+        multiplier = ocMultiplier * ccMultiplier * anMultiplier / 5
 
         #TODO: Calculate an ephemeris and use angle from opposition as part of the score.
         #body = computeSingleEphemeris(self, dateTime)
@@ -1120,12 +1125,12 @@ class AstorbRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
         #TODO: Properly implement this function.
         # Score increases with increasing error up until errorInDeg is reached and then it drops down from the peak
         # value for errors larger than this.
-        errorInDeg = 2
+        errorInDeg = 1.5
         ceu = self.getCeuForTime(t)
         if ceu < 3600*errorInDeg:
-            return 2.0 * math.pow(ceu/3600.0, 2)
+            return 2.0 * max(3.0, math.pow(ceu/3600.0, 2))
         else:
-            return max(0.1, 2.0 * math.pow(errorInDeg, 2) - 2.0 * math.pow(ceu/3600.0, 2))
+            return max(2.0, 2.0 * math.pow(errorInDeg, 2) - 2.0 * math.pow(ceu/3600.0, 2))
 
     def getUserDifficultyForTime(self, t, user, observatory=None):
         #TODO: Properly implement this function.
