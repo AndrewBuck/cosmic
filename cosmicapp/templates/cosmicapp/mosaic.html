@@ -23,6 +23,12 @@ Image opacity: <input id="imageOpacitySlider" type=range min="0" max="100" value
 <script>
 var undoStack = [], redoStack = [];
 
+/*
+ * An object consisting of a function to be performed to "undo" some operation performed
+ * by the user, as well as an action to "redo" the same operation if desired.  Each of
+ * these functions also has a data space where you can pass whatever kind of data you
+ * want, which is then accessible to the function itself.
+*/
 function UndoObject(uAction, rAction, uData, rData)
 {
     this.undoAction = uAction;
@@ -31,6 +37,10 @@ function UndoObject(uAction, rAction, uData, rData)
     this.redoData = rData;
 };
 
+/*
+ * Takes a constructed undo object, pushes it to the undo stack and calls the "redo" action.
+ * Lastly, this function clears the redo stack since a new user operation has been performed.
+*/
 function executeUndoableAction(undoObject)
 {
     undoObject.redoAction;
@@ -38,16 +48,24 @@ function executeUndoableAction(undoObject)
     undoStack.push(undoObject);
 };
 
+/*
+ * Pops the top of the undo stack, executes its "undo" action, and pushes it to the redo stack.
+*/
 function performUndo()
 {
+    // Check to see if there are any items on the undoStack.
     if(undoStack.length > 0)
     {
+        // Pop and execute this action and store the object on the redo stack.
         action = undoStack.pop();
         action.undoAction();
         redoStack.push(action);
     }
 };
 
+/*
+ * Pops the top of the redo stack, executes its "redo" action, and pushes it to the undo stack.
+*/
 function performRedo()
 {
     if(redoStack.length > 0)
@@ -133,6 +151,13 @@ f	Vertical moving
 		);
 }
 
+/*
+ * Adds the image with a given image id to the editing desktop.  The process of doing this
+ * involves sending a request to the server asking for information about the image (the
+ * url of its thumbnails, width, height, etc).  This information is parsed and stored in
+ * the selectedImages array as an object along with a transformation matrix which
+ * transforms from image pixel coordinates into workspace coordinates.
+*/
 function addImageToDesktop(id)
 {
     i = selectedImages.length;
@@ -220,6 +245,9 @@ function addImageToDesktop(id)
     loadTransforms(false, false);
 };
 
+/*
+ * Removes the image with a given image id from the editing desktop.
+*/
 function removeImageFromDesktop(id)
 {
     arrayIndex = getSelectedImagesIndexById(id);
@@ -230,6 +258,14 @@ function removeImageFromDesktop(id)
     drawCanvas();
 };
 
+/*
+ * Sends an ajax request to the server asking for any stored transforms which have one or more of the selected images
+ * as one of the members in that transform.  After recieving the list of transforms back they are read through and any
+ * transforms made by other users are skipped over (CURRENTLY).  For transforms submitted by us, the image listed as
+ * the reference image is left in place, and then the subject image is moved to align properly with wherever the
+ * reference image currently is.  This means that moving or rotating the reference image and then re-running this
+ * function will move the subject images in the same way you moved the reference images.
+*/
 function loadTransforms(overwriteExisting, showWarnings)
 {
     var i;
@@ -307,6 +343,12 @@ function loadTransforms(overwriteExisting, showWarnings)
     });
 };
 
+/*
+ * Choose the first image we find with a plate solution as the reference image and then loop over all the other images.
+ * For each other image (the subject image) we send an ajax query to the server storing the first 6 elements of a 3x3
+ * transform matrix.  This matrix transforms the subject image from the reference image's coordinate space, to the
+ * coordinate space of the subject as it is currently positioned in the editor.
+*/
 function saveTransforms()
 {
     var i;
@@ -565,9 +607,9 @@ function handleMouseButtonDown(event)
     return false;
 };
 
-// given an axis and two points,
-// construct a affine rotation that
-// makes the points colinear
+/*
+ * Given an axis and two points, construct an affine rotation that makes the points colinear.
+*/
 function rotationMatrix(originVec, startVec, endVec)
 {
 // move into image axis reference frame
@@ -830,6 +872,10 @@ function handleKeyUp(event)
 
 };
 
+/*
+ * Return the array index of the image whose id matches the provided id or return -1 if
+ * no selected image has the given id.
+*/
 function getSelectedImagesIndexById(id)
 {
     arrayIndex = -1;
@@ -845,14 +891,19 @@ function getSelectedImagesIndexById(id)
     return arrayIndex;
 };
 
+/*
+ * Returns 'true' if 'a' is in a rectangle from the origin to 'b' else 'false'.
+*/
 function isCoordInsideRect(a, b)
 {
-// Returns 'true' if 'a' is in a rectangle from the origin to 'b' else 'false'
 	return Boolean((math.sign(math.sum(math.sign(math.subtract(b,a))) * math.sum(math.sign(a)) - 5)+1)>>1);
 //	return (math.sign(math.sum(math.sign(math.subtract(b,a))) * math.sum(math.sign(a)) - 5)+1)>>1;
 // -5 is special to affine vectors.  Can be altered to check if vector is affine first 
 }
 
+/*
+ * Returns a sorted list of indices to the selectedImages array which have pixels at the given workspace coords.
+*/
 function imageIndexListByWorkspaceCoordinates(coordWorkspaceVector)
 {
 // Returns sorted list of indices to the selectedImages array which have pixels at the given workspace coords
