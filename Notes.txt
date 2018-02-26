@@ -80,6 +80,13 @@ magnitude is much more important than the very minor change in position due to g
 
 
 
+It would be useful to have a function which takes two parameters, one of which is a number and the other is a "fuzzy
+range" of numbers like "a few hundred", or some other kind of general ranges that are then compared and one of three
+values is returned: a is much less than b, a and b are roughly equal, a is much greater than b.
+
+
+
+
 imhisto - iraf task that computes and prints a histogram of an image.  Should
           probably do this in 2 stages, first with bins across the whole range,
           then a second pass across the range that captures 95% of pixels.
