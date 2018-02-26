@@ -867,17 +867,13 @@ function handleKeyUp(event)
 */
 function getSelectedImagesIndexById(id)
 {
-    arrayIndex = -1;
     for(i = 0; i < selectedImages.length; i++)
     {
         if(selectedImages[i].id == id)
-        {
-            arrayIndex = i;
-            break;
-        }
+            return i;
     }
 
-    return arrayIndex;
+    return -1;
 };
 
 /*
