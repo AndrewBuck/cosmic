@@ -160,7 +160,7 @@ f	Vertical moving
 */
 function addImageToDesktop(id)
 {
-    i = selectedImages.length;
+    var i = selectedImages.length;
 
     selectedImages[i] = new Object({
         id: id,
@@ -421,7 +421,7 @@ function drawCanvas()
 	var workingCanvasMatrix = math.multiply(temporaryCanvasMatrix, canvasMatrix);
 	var workingCanvasZoom = math.sqrt(math.det(workingCanvasMatrix.subset(math.index([0,1],[0,1]))));
 
-    for(i = 0; i < selectedImages.length; i++)
+    for(var i = 0; i < selectedImages.length; i++)
     {
 		var strokeAlpha = $('#imageOpacitySlider').val()/100.0;
 		selectedImages[i].alpha = strokeAlpha;
@@ -547,7 +547,7 @@ function drawCanvas()
 
 function getMouseCoordinates(event)
 {
-    rect = canvas.getBoundingClientRect();
+    var rect = canvas.getBoundingClientRect();
 
 	mouseCanvasVector = math.matrix([
 		(event.clientX - rect.left) / (rect.right - rect.left) * canvas.width ,
@@ -560,7 +560,7 @@ function getMouseCoordinates(event)
 		mouseCanvasVector
 	);
 
-    for(i = 0; i < selectedImages.length; i++)
+    for(var i = 0; i < selectedImages.length; i++)
     {
 		selectedImages[i].mouseVector = math.multiply(
 			math.inv(selectedImages[i].transformMatrix) ,
@@ -573,6 +573,8 @@ function getMouseCoordinates(event)
 
 function handleMouseButtonDown(event)
 {
+    var i;
+
 	getMouseCoordinates(event);
  
 	mouseButtonDownCanvasVector = mouseCanvasVector;
@@ -586,7 +588,7 @@ function handleMouseButtonDown(event)
 	imageListForTransform = imageIndexListByWorkspaceCoordinates(mouseWorkspaceVector);
 
 	mode = '';
-	var i = imageListForTransform[0];
+	i = imageListForTransform[0];
 	if ( 0 <= i && selectedImages.length > i)
 	{
 		selectedImages[i].active = true;
@@ -906,8 +908,7 @@ function isCoordInsideRect(a, b)
 */
 function imageIndexListByWorkspaceCoordinates(coordWorkspaceVector)
 {
-// Returns sorted list of indices to the selectedImages array which have pixels at the given workspace coords
-	var list = [];
+    var list = [];
 	
     for(i = 0; i < selectedImages.length; i++)
     {
