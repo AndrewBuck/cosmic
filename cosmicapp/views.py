@@ -1188,7 +1188,7 @@ def getQuestionImage(request, id):
                                 oneOrIsTrue = True
 
                     # If at least one of the 'or' conditons was met we pass, otherwise if none were met we fail.
-                    if not oneOrIsTrue:
+                    if (not pcc.invert) and (not oneOrIsTrue):
                         allPreconditionsMet = False
 
         if not allPreconditionsMet:
