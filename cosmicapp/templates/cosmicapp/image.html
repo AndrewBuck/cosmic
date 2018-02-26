@@ -160,35 +160,35 @@ td.numMatchResults
         <th>Sextractor</th>
         <td class=numSourceResults>{{numSextractorSources}}</td>
         <td class=numMatchResults></td>
-        <td class=numMatchResults>{{numSextractorImage2xyMatches}}</td>
-        <td class=numMatchResults>{{numSextractorDaofindMatches}}</td>
-        <td class=numMatchResults>{{numSextractorStarfindMatches}}</td>
+        <td style="background-color: rgb(50,{% percentage numSextractorImage2xyMatches numImage2xySources 50 255 %},50);">{{numSextractorImage2xyMatches}}</td>
+        <td style="background-color: rgb(50,{% percentage numSextractorDaofindMatches numDaofindSources 50 255 %},50);">{{numSextractorDaofindMatches}}</td>
+        <td style="background-color: rgb(50,{% percentage numSextractorStarfindMatches numStarfindSources 50 255 %},50);">{{numSextractorStarfindMatches}}</td>
         </tr>
 
         <tr>
         <th>Image2xy</th>
         <td class=numSourceResults>{{numImage2xySources}}</td>
-        <td class=numMatchResults>{{numSextractorImage2xyMatches}}</td>
+        <td style="background-color: rgb(50,{% percentage numSextractorImage2xyMatches numSextractorSources 50 255 %},50);">{{numSextractorImage2xyMatches}}</td>
         <td class=numMatchResults></td>
-        <td class=numMatchResults>{{numImage2xyDaofindMatches}}</td>
-        <td class=numMatchResults>{{numImage2xyStarfindMatches}}</td>
+        <td style="background-color: rgb(50,{% percentage numImage2xyDaofindMatches numDaofindSources 50 255 %},50);">{{numImage2xyDaofindMatches}}</td>
+        <td style="background-color: rgb(50,{% percentage numImage2xyStarfindMatches numStarfindSources 50 255 %},50);">{{numImage2xyStarfindMatches}}</td>
         </tr>
 
         <tr>
         <th>Daofind</th>
         <td class=numSourceResults>{{numDaofindSources}}</td>
-        <td class=numMatchResults>{{numSextractorDaofindMatches}}</td>
-        <td class=numMatchResults>{{numImage2xyDaofindMatches}}</td>
+        <td style="background-color: rgb(50,{% percentage numSextractorDaofindMatches numSextractorSources 50 255 %},50);">{{numSextractorDaofindMatches}}</td>
+        <td style="background-color: rgb(50,{% percentage numImage2xyDaofindMatches numImage2xySources 50 255 %},50);">{{numImage2xyDaofindMatches}}</td>
         <td class=numMatchResults></td>
-        <td class=numMatchResults>{{numDaofindStarfindMatches}}</td>
+        <td style="background-color: rgb(50,{% percentage numDaofindStarfindMatches numStarfindSources 50 255 %},50);">{{numDaofindStarfindMatches}}</td>
         </tr>
 
         <tr>
         <th>Starfind</th>
         <td class=numSourceResults>{{numStarfindSources}}</td>
-        <td class=numMatchResults>{{numSextractorStarfindMatches}}</td>
-        <td class=numMatchResults>{{numImage2xyStarfindMatches}}</td>
-        <td class=numMatchResults>{{numDaofindStarfindMatches}}</td>
+        <td style="background-color: rgb(50,{% percentage numSextractorStarfindMatches numSextractorSources 50 255 %},50);">{{numSextractorStarfindMatches}}</td>
+        <td style="background-color: rgb(50,{% percentage numImage2xyStarfindMatches numImage2xySources 50 255 %},50);">{{numImage2xyStarfindMatches}}</td>
+        <td style="background-color: rgb(50,{% percentage numDaofindStarfindMatches numDaofindSources 50 255 %},50);">{{numDaofindStarfindMatches}}</td>
         <td class=numMatchResults></td>
         </tr>
     </table>

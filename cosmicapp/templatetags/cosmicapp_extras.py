@@ -36,6 +36,11 @@ def multiply(value, arg):
 def divide(value, arg):
     return value/arg
 
+@register.inclusion_tag('cosmicapp/tag_singleValue.html', takes_context=False)
+def percentage(value, arg, rangeMin=0, rangeMax=100):
+    tempDict = { 'singleValue': rangeMin + (rangeMax - rangeMin)*(value/arg) }
+    return tempDict
+
 @register.filter
 def invert(value):
     return 1.0/value
