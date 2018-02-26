@@ -67,6 +67,10 @@ processed photomotetrically.  We should look into possibly indexing or storing a
 
 
 
+Look into conflating identifers across wikidata and dbpedia from our imported catalogs, etc.
+
+
+
 Imagemagick seems to have trouble making thumbnails of fits images where most of the data are negative.  This is likely
 a bug in their code, or some issue with how the program is being called from our code.  More investigation is needed.
 
