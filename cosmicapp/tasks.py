@@ -243,10 +243,15 @@ def generateThumbnails(filename):
 
     image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
 
+    #TODO: For the really commonly loaded sizes like the ones in search results, etc, we
+    # should consider sending a smaller size and scaling it up to the size we want on screen
+    # to save bandwidth and decrease load times.
+    #TODO: All the thumbnails are square so we should decide what to do about this.
+    #TODO: Add some python logic to decide the exact dimensions we want the thumbnails to
+    # be to preserve aspect ratio but still respect screen space requirements.
     for tempFilename, sizeArg, sizeString in [(filenameFull, "100%", "full"), (filenameSmall, "100x100", "small"),
                                               (filenameMedium, "300x300", "medium"), (filenameLarge, "900x900", "large")]:
 
-        #TODO: Change to 8 bit thumbnails instead of the default of 16 bit.
         #TODO: Small images will actually get thumbnails made which are bigger than the original, should implement
         # protection against this - will need to test all callers to make sure that is safe.
         #TODO: Play around with the 'convolve' kernel here to see what the best one to use is.
@@ -311,6 +316,10 @@ def sextractor(filename):
     detectThreshold = 4.0*channelInfos[0].bgStdDev
 
     #TODO: sextractor can only handle .fit files.  Should autoconvert the file to .fit if necessary before running.
+    #TODO: sextractor has a ton of different modes and options, we should consider running
+    # it multiple times to detect point sources, then again for extended sources, etc.
+    # Each of these different settings options could be combined into a single output, or
+    # they could be independently matched against other detection algorithms.
     catfileName = settings.MEDIA_ROOT + filename + ".cat"
     proc = subprocess.Popen(['sextractor', '-CATALOG_NAME', catfileName, settings.MEDIA_ROOT + filename,
     '-THRESH_TYPE', 'ABSOLUTE', '-DETECT_THRESH', str(detectThreshold)],
@@ -689,6 +698,7 @@ def astrometryNet(filename):
         storeImageLocation(image, w, 'astrometry.net')
     else:
         print('\n\nNo plate solution found.')
+        #TODO: Add another job to the proess queue to re-run starfind algorithms with lower detection thresholds.
         #TODO: Add another job to the proess queue with lower priority and a deeper search.
 
     filesToCleanup = [

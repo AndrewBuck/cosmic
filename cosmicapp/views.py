@@ -1672,6 +1672,10 @@ def observing(request):
 
 @login_required
 def exportBookmarks(request):
+    #TODO: We should store both the output of the observing plan routine as well as a
+    # database record for each row of observing suggestion we send to the user.  Then later
+    # when they upload data to us we can correlate it against what we told them to image and
+    # this will help in finding plate solutions for tricky plates, etc.
     context = {"user" : request.user}
 
     if request.method == "POST":
