@@ -76,6 +76,7 @@ def getAsteroidsAroundGeometry(geometry, bufferSize, targetTime, limitingMag, li
     return asteroids
 
 def formulateObservingPlan(user, observatory, targets, includeOtherTargets, startTime, endTime, minTimeBetween, maxTimeBetween, limitingMag, minimumScore):
+    #TODO: Also include calibration images at the beginning, middle, and end of the observing session.
     minTimeBetweenTimedelta = timedelta(minutes=minTimeBetween)
     maxTimeBetweenTimedelta = timedelta(minutes=maxTimeBetween)
 
