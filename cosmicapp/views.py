@@ -370,7 +370,7 @@ def image(request, id):
     imagePlateArea = None
     if plateSolution != None:
         imagePlateArea = plateSolution.geometry.area
-        overlappingPlatesObjects = PlateSolution.objects.filter(geometry__overlaps=plateSolution.geometry)
+        overlappingPlatesObjects = PlateSolution.objects.filter(geometry__overlaps=plateSolution.geometry).distinct('image').exclude(image_id=image.pk)
         for plate in overlappingPlatesObjects:
             overlappingRegion = plateSolution.geometry.intersection(plate.geometry)
             overlappingPlates.append({
