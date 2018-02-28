@@ -89,6 +89,7 @@
 <td>Label:</td>
 <td></td>
     <td class='sextractorResults'>
+    <!-- TODO: Add x and y pixel values as options for labels. -->
     <input type=checkbox id=sextractorLabelFlux onchange="drawSources()"> Flux<br>
     <input type=checkbox id=sextractorLabelFluxErr onchange="drawSources()"> Flux Err<br>
     <input type=checkbox id=sextractorLabelFlags onchange="drawSources()"> Flags<br>
@@ -139,6 +140,7 @@ Your browser does not support the HTML5 canvas tag.
 <script>
 var imageId = {{id}};
 var sextractorResults = [], image2xyResults = [], daofindResults = [], starfindResults = [];
+var userCreatedResults = [];
 var sextractorResultsPromise, image2xyResultsPromise, daofindResultsPromise, starfindResultsPromise;
 var sourceFindMatches = [];
 var canvas, context;
@@ -148,12 +150,33 @@ var image2xyColor = "#14D3FF";
 var daofindColor = "#20E010";
 var starfindColor = "#7199E2";
 var sourceFindMatchesColor = "#F99740";
+var userCreatedColor = "#fff766";
 var numberOfBins = 10;
+var mouseX = 0;
+var mouseY = 0;
+var mouseObjectsList = [];
+var mouseXStart = -1;
+var mouseYStart = -1;
+var lmbDown = false;
+var reticlePrecision = 0.66;
+var mouseoverTextActive = false;
+var oldMouseCursor = document.body.style.cursor;
+var maxDistanceFromStar = 10;
+var maxDistanceFromStarSquared = maxDistanceFromStar*maxDistanceFromStar;
 
 var plot;
 
-function drawStroked(c, text, x, y)
+function drawStroked(c, text, x, y, ignoreDistance=false)
 {
+    if(mouseoverTextActive && !ignoreDistance)
+    {
+        var deltaX = x - mouseX;
+        var deltaY = {{image.dimY}} - y - mouseY;
+
+        if(deltaX*deltaX + deltaY*deltaY < 70*70)
+            return;
+    }
+
     oldLineWidth = c.lineWidth;
     oldStrokeStyle = c.strokeStyle;
     oldLineJoin = c.lineJoin;
@@ -534,13 +557,6 @@ function getSourceFindMatches()
     });
 };
 
-function drawSource(c, x, y, size, sizeFactor, sizeScaleFactor)
-{
-    c.beginPath();
-    c.arc(x, {{image.dimY}} - y, sizeFactor*Math.pow(size, sizeScaleFactor), 0, 2*Math.PI)
-    c.stroke();
-};
-
 function constructLabelText(paramArray)
 {
     var i;
@@ -559,6 +575,63 @@ function constructLabelText(paramArray)
     return labelArray.join(' ');
 };
 
+function drawSource(c, x, y, size, sizeFactor, sizeScaleFactor)
+{
+    if(mouseoverTextActive)
+    {
+        var deltaX = x - mouseX;
+        var deltaY = y - mouseY;
+
+        if(deltaX*deltaX + deltaY*deltaY < maxDistanceFromStarSquared)
+            return;
+    }
+
+    var drawRadius = sizeFactor*Math.pow(size, sizeScaleFactor);
+    drawRadius = math.min(drawRadius, 20);
+    drawRadius = math.max(drawRadius, 5);
+
+    c.beginPath();
+    c.arc(x, {{image.dimY}} - y, drawRadius, 0, 2*Math.PI)
+    c.stroke();
+};
+
+function drawReticle(c, x, y, size)
+{
+    var i;
+    var angle = Math.PI/8;
+
+    c.beginPath();
+    c.arc(x, {{image.dimY}} - y, size, 0, 2*Math.PI)
+    c.stroke();
+
+    c.beginPath();
+    c.moveTo(x-size*.2, {{image.dimY}} - y);
+    c.lineTo(x-size*.66, {{image.dimY}} - y);
+    c.stroke();
+
+    c.beginPath();
+    c.moveTo(x+size*.2, {{image.dimY}} - y);
+    c.lineTo(x+size*.66, {{image.dimY}} - y);
+    c.stroke();
+
+    c.beginPath();
+    c.moveTo(x, {{image.dimY}} - (y-size*.2));
+    c.lineTo(x, {{image.dimY}} - (y-size*.66));
+    c.stroke();
+
+    c.beginPath();
+    c.moveTo(x, {{image.dimY}} - (y+size*.2));
+    c.lineTo(x, {{image.dimY}} - (y+size*.66));
+    c.stroke();
+
+    for(i = 0; i < 4; i++)
+    {
+        c.beginPath();
+        c.arc(x, {{image.dimY}} - y, size*.66, i*Math.PI/2-angle, i*Math.PI/2+angle)
+        c.stroke();
+    }
+};
+
 function drawSources()
 {
     var i;
@@ -574,7 +647,7 @@ function drawSources()
     labelThreshold = $('#sextractorLabelThresholdSlider').val()/100.0;
     labelSize= $('#sextractorLabelSizeSlider').val()/5 + 10
     if($('#sextractorEnabledCheckbox').is(':checked'))
-    for(i = 0; i < sextractorResults.length; i++)
+    for(i = 0; i < sextractorResults.length && !lmbDown; i++)
     {
         drawSource(context, sextractorResults[i].x, sextractorResults[i].y, sextractorResults[i].confidence, sizeFactor, sizeScaleFactor);
 
@@ -600,7 +673,7 @@ function drawSources()
     labelThreshold = $('#image2xyLabelThresholdSlider').val()/100.0;
     labelSize= $('#image2xyLabelSizeSlider').val()/5 + 10
     if($('#image2xyEnabledCheckbox').is(':checked'))
-    for(i = 0; i < image2xyResults.length; i++)
+    for(i = 0; i < image2xyResults.length && !lmbDown; i++)
     {
         drawSource(context, image2xyResults[i].x, image2xyResults[i].y, image2xyResults[i].confidence, sizeFactor, sizeScaleFactor);
 
@@ -625,7 +698,7 @@ function drawSources()
     labelThreshold = $('#daofindLabelThresholdSlider').val()/100.0;
     labelSize= $('#daofindLabelSizeSlider').val()/5 + 10
     if($('#daofindEnabledCheckbox').is(':checked'))
-    for(i = 0; i < daofindResults.length; i++)
+    for(i = 0; i < daofindResults.length && !lmbDown; i++)
     {
         drawSource(context, daofindResults[i].x, daofindResults[i].y, daofindResults[i].confidence, sizeFactor, sizeScaleFactor);
 
@@ -654,7 +727,7 @@ function drawSources()
     labelThreshold = $('#starfindLabelThresholdSlider').val()/100.0;
     labelSize= $('#starfindLabelSizeSlider').val()/5 + 10
     if($('#starfindEnabledCheckbox').is(':checked'))
-    for(i = 0; i < starfindResults.length; i++)
+    for(i = 0; i < starfindResults.length && !lmbDown; i++)
     {
         drawSource(context, starfindResults[i].x, starfindResults[i].y, starfindResults[i].confidence, sizeFactor, sizeScaleFactor);
 
@@ -684,7 +757,7 @@ function drawSources()
     labelThreshold = $('#sourceFindMatchesLabelThresholdSlider').val()/100.0;
     labelSize= $('#sourceFindMatchesLabelSizeSlider').val()/5 + 10
     if($('#sourceFindMatchesEnabledCheckbox').is(':checked'))
-    for(i = 0; i < sourceFindMatches.length; i++)
+    for(i = 0; i < sourceFindMatches.length && !lmbDown; i++)
     {
         drawSource(context, sourceFindMatches[i].x, sourceFindMatches[i].y, sourceFindMatches[i].confidence, sizeFactor, sizeScaleFactor);
 
@@ -701,6 +774,85 @@ function drawSources()
             context.textAlign = 'start';
         }
     }
+
+    context.strokeStyle = userCreatedColor;
+    context.fillStyle = userCreatedColor;
+
+    for(i = 0; i < userCreatedResults.length && !lmbDown; i++)
+    {
+        drawSource(context, userCreatedResults[i].x, userCreatedResults[i].y, 1.0, 10, 2);
+    }
+
+    labelSize = 20
+    context.font = labelSize + 'px sans-serif'
+    if(mouseX > {{image.dimX}} / 2)
+    {
+        context.textAlign = 'end';
+        xPos = mouseX - 30;
+    }
+    else
+    {
+        context.textAlign = 'start';
+        xPos = mouseX + 30;
+    }
+
+    yPos = mouseY - (mouseY/{{image.dimY}})*(mouseObjectsList.length-0)*(labelSize+4) + 30*(1.0-mouseY/{{image.dimY}});
+
+    for(i = 0; i < mouseObjectsList.length && !lmbDown; i++)
+    {
+        switch(mouseObjectsList[i].method)
+        {
+            case 'sextractor':
+                context.strokeStyle = sextractorColor;
+                context.fillStyle = sextractorColor;
+                break;
+
+            case 'image2xy':
+                context.strokeStyle = image2xyColor;
+                context.fillStyle = image2xyColor;
+                break;
+
+            case 'daofind':
+                context.strokeStyle = daofindColor;
+                context.fillStyle = daofindColor;
+                break;
+
+            case 'starfind':
+                context.strokeStyle = starfindColor;
+                context.fillStyle = starfindColor;
+                break;
+
+            case 'multi':
+                context.strokeStyle = sourceFindMatchesColor;
+                context.fillStyle = sourceFindMatchesColor;
+                break;
+
+            case 'user - not uploaded':
+                context.strokeStyle = userCreatedColor;
+                context.fillStyle = userCreatedColor;
+                break;
+
+            default:
+                alert("Unhandled case statement for value: " + mouseObjectsList[i].method);
+                break;
+        }
+
+        drawStroked(context, mouseObjectsList[i].method + " " + math.round(mouseObjectsList[i].confidence, 2),
+                    xPos, {{image.dimY}} - yPos - i*(labelSize+4), true);
+    }
+
+    if(lmbDown)
+    {
+        //NOTE: These lines are duplicated elsewhere, if they change the others must too.
+        var deltaX = mouseX - mouseXStart;
+        var deltaY = mouseY - mouseYStart;
+        var xPos = mouseX - reticlePrecision*deltaX;
+        var yPos = mouseY - reticlePrecision*deltaY;
+
+        drawReticle(context, xPos, yPos, 30);
+    }
+
+    context.textAlign = 'start';
 };
 
 function updateTable(id)
@@ -846,10 +998,124 @@ function updateTable(id)
     drawSources();
 };
 
+function arraysEqual(arr1, arr2)
+{
+    if(arr1.length !== arr2.length)
+        return false;
+    for(var i = arr1.length; i--;)
+    {
+        if(arr1[i] !== arr2[i])
+            return false;
+    }
+
+    return true;
+};
+
+function handleMouseMove(event)
+{
+    var rect = canvas.getBoundingClientRect();
+
+    mouseX = event.clientX - rect.left;
+    mouseY = {{image.dimY}} - (event.clientY - rect.top);
+
+    if(event.clientX < rect.left || event.clientX >  rect.right || event.clientY < rect.top || event.clientY > rect.bottom)
+        return;
+
+    oldMouseObjectsList = mouseObjectsList;
+    mouseObjectsList = [];
+
+    sourceLists = [
+        [sextractorResults, 'sextractor'],
+        [image2xyResults, 'image2xy'],
+        [daofindResults, 'daofind'],
+        [starfindResults, 'starfind'],
+        [sourceFindMatches, 'multi'],
+        [userCreatedResults, 'user - not uploaded']
+        ];
+
+    for(var i = 0; i < sourceLists.length; i++)
+    {
+        currentList = sourceLists[i][0];
+        currentMethod = sourceLists[i][1];
+
+        for(var j = 0; j < currentList.length; j++)
+        {
+            currentSource = sourceLists[i][0][j];
+            x = currentSource.x;
+            y = currentSource.y;
+            deltaX = mouseX - x;
+            deltaY = mouseY - y;
+            dsq = deltaX*deltaX + deltaY*deltaY;
+            if(dsq < maxDistanceFromStarSquared)
+            {
+                var mouseLength = mouseObjectsList.length;
+                mouseObjectsList[mouseLength] = currentSource;
+                mouseObjectsList[mouseLength].method = currentMethod;
+            }
+        }
+    }
+
+    if(mouseObjectsList.length > 0)
+    {
+        mouseoverTextActive = true;
+        document.body.style.cursor = 'none';
+    }
+    else
+    {
+        if(mouseoverTextActive && !lmbDown)
+            document.body.style.cursor = oldMouseCursor;
+
+        mouseoverTextActive = false;
+    }
+
+    if(lmbDown || !arraysEqual(oldMouseObjectsList, mouseObjectsList))
+        drawSources();
+};
+
+function handleMouseButtonDown(event)
+{
+    var i;
+
+    if(event.which == 1)
+    {
+        lmbDown = true;
+        mouseXStart = mouseX;
+        mouseYStart = mouseY;
+        document.body.style.cursor = 'none';
+        drawSources();
+    }
+};
+
+function handleMouseButtonUp(event)
+{
+    var i;
+
+    if(event.which == 1)
+    {
+        //NOTE: These lines are duplicated elsewhere, if they change the others must too.
+        var deltaX = mouseX - mouseXStart;
+        var deltaY = mouseY - mouseYStart;
+        var xPos = mouseX - reticlePrecision*deltaX;
+        var yPos = mouseY - reticlePrecision*deltaY;
+
+        userCreatedResults[userCreatedResults.length] = {x: xPos, y: yPos, confidence: 1.0};
+
+        lmbDown = false;
+        document.body.style.cursor = oldMouseCursor;
+        drawSources();
+    }
+};
+
 window.onload = function()
 {
     canvas = document.getElementById("sourcesCanvas");
     context = canvas.getContext("2d");
+
+    //TODO: There are probably bugs here where you click the mouse down on the canvas and then release it elsewhere in the window, etc.
+    $(window).mousemove(handleMouseMove);
+    $('#sourcesCanvas').mousedown(handleMouseButtonDown);
+    $('#sourcesCanvas').mouseup(handleMouseButtonUp);
+    $("#sourcesCanvas").mouseleave(function(){document.body.style.cursor = oldMouseCursor;});
 
     var xdr = new Bokeh.DataRange1d({ follow: 'start' });
     var ydr = new Bokeh.DataRange1d({ follow: 'start' });
