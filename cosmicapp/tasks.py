@@ -313,7 +313,7 @@ def sextractor(filename):
     #TODO: Handle multi-extension fits files.
     channelInfos = models.ImageChannelInfo.objects.filter(image=image).order_by('index')
 
-    detectThreshold = 4.0*channelInfos[0].bgStdDev
+    detectThreshold = 2.0*channelInfos[0].bgStdDev
 
     #TODO: sextractor can only handle .fit files.  Should autoconvert the file to .fit if necessary before running.
     #TODO: sextractor has a ton of different modes and options, we should consider running
@@ -455,7 +455,7 @@ def daofind(filename):
 
     hdulist = fits.open(settings.MEDIA_ROOT + filename)
     data = hdulist[0].data
-    daofind = DAOStarFinder(fwhm = 2.5, threshold = 4*channelInfos[0].bgStdDev)
+    daofind = DAOStarFinder(fwhm = 2.5, threshold = 2.0*channelInfos[0].bgStdDev)
     sources = daofind(data - channelInfos[0].bgMedian)
 
     with transaction.atomic():
@@ -499,7 +499,7 @@ def starfind(filename):
 
     hdulist = fits.open(settings.MEDIA_ROOT + filename)
     data = hdulist[0].data
-    starfinder = IRAFStarFinder(fwhm = 2.5, threshold = 4*channelInfos[0].bgStdDev)
+    starfinder = IRAFStarFinder(fwhm = 2.5, threshold = 2.0*channelInfos[0].bgStdDev)
     sources = starfinder(data - channelInfos[0].bgMedian)
 
     with transaction.atomic():
