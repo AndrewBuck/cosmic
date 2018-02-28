@@ -669,6 +669,9 @@ def query(request):
 
         for result in results:
             sextractorDict = {}
+            ra, dec = result.getRaDec()
+            sextractorDict['ra'] = str(ra)
+            sextractorDict['dec'] = str(dec)
             sextractorDict['id'] = str(result.pk)
             sextractorDict['confidence'] = str(result.confidence)
             sextractorDict['imageId'] = str(result.image.pk)
@@ -695,6 +698,9 @@ def query(request):
 
         for result in results:
             image2xyDict = {}
+            ra, dec = result.getRaDec()
+            image2xyDict['ra'] = str(ra)
+            image2xyDict['dec'] = str(dec)
             image2xyDict['id'] = str(result.pk)
             image2xyDict['confidence'] = str(result.confidence)
             image2xyDict['imageId'] = str(result.image.pk)
@@ -720,6 +726,9 @@ def query(request):
 
         for result in results:
             daofindDict = {}
+            ra, dec = result.getRaDec()
+            daofindDict['ra'] = str(ra)
+            daofindDict['dec'] = str(dec)
             daofindDict['id'] = str(result.pk)
             daofindDict['confidence'] = str(result.confidence)
             daofindDict['imageId'] = str(result.image.pk)
@@ -749,6 +758,9 @@ def query(request):
 
         for result in results:
             starfindDict = {}
+            ra, dec = result.getRaDec()
+            starfindDict['ra'] = str(ra)
+            starfindDict['dec'] = str(dec)
             starfindDict['id'] = str(result.pk)
             starfindDict['confidence'] = str(result.confidence)
             starfindDict['imageId'] = str(result.image.pk)
@@ -779,6 +791,9 @@ def query(request):
 
         for result in results:
             sourceFindMatchDict = {}
+            ra, dec = result.getRaDec()
+            sourceFindMatchDict['ra'] = str(ra)
+            sourceFindMatchDict['dec'] = str(dec)
             sourceFindMatchDict['id'] = str(result.pk)
             sourceFindMatchDict['confidence'] = str(result.confidence)
             sourceFindMatchDict['numMatches'] = str(result.numMatches)

@@ -2,6 +2,7 @@ import math
 from datetime import date, datetime, timedelta, tzinfo
 import pytz
 import ephem
+from astropy import wcs
 
 from django.contrib.gis.db import models
 from django.contrib.auth.models import User
@@ -472,7 +473,12 @@ class PlateSolution(models.Model):
     area = models.FloatField(null=True)
 
 
+    def wcs(self):
+        return wcs.WCS(self.wcsHeader)
 
+    def getRaDec(self, x, y):
+        ret = self.wcs().all_pix2world(x, y, 1)    #TODO: Determine if this 1 should be a 0.
+        return ret
 
 class ProcessInput(models.Model):
     """
@@ -569,6 +575,14 @@ class SourceFindResult(models.Model):
     pixelZ = models.FloatField(null=True)
     confidence = models.FloatField(null=True)
 
+    def getRaDec(self):
+        plateSolution = self.image.getBestPlateSolution()
+
+        if plateSolution == None:
+            return (None, None)
+
+        return plateSolution.getRaDec(self.pixelX, self.pixelY)
+
     class Meta:
         abstract = True
 
@@ -622,7 +636,24 @@ class SourceFindMatch(SourceFindResult):
     daofindResult = models.ForeignKey(DaofindResult, null=True, on_delete=models.CASCADE)
     starfindResult = models.ForeignKey(StarfindResult, null=True, on_delete=models.CASCADE)
 
+    def getRaDec(self):
+        #TODO: This is a very expensive function to compute, we should consider computing this right when we create this db entry initially, however it will need to be updated when the "best" wcs for the targeted image changes.
+        num = 0
+        raSum = 0
+        decSum = 0
 
+        for t in (self.sextractorResult, self.image2xyResult, self.daofindResult, self.starfindResult):
+            if t != None:
+                ra, dec = t.getRaDec()
+                if ra != None:
+                    num += 1
+                    raSum += ra
+                    decSum += dec
+
+        if num == 0:
+            return (None, None)
+        else:
+            return (raSum/float(num), decSum/float(num))
 
 #TODO: Create a base class for catalog object entries with some standard params in it to make querying more uniform.
 class Catalog(models.Model):

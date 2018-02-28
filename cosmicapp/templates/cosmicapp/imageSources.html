@@ -316,6 +316,8 @@ function getSextractorResults()
                 sextractorResults[i] = new Object({
                     id: Number(attr.getNamedItem('id').nodeValue),
                     confidence: Number(attr.getNamedItem('confidence').nodeValue),
+                    ra: Number(attr.getNamedItem('ra').nodeValue),
+                    dec: Number(attr.getNamedItem('dec').nodeValue),
                     x: Number(attr.getNamedItem('pixelX').nodeValue),
                     y: Number(attr.getNamedItem('pixelY').nodeValue),
                     z: Number(attr.getNamedItem('pixelZ').nodeValue),
@@ -359,6 +361,8 @@ function getImage2xyResults()
                 image2xyResults[i] = new Object({
                     id: Number(attr.getNamedItem('id').nodeValue),
                     confidence: Number(attr.getNamedItem('confidence').nodeValue),
+                    ra: Number(attr.getNamedItem('ra').nodeValue),
+                    dec: Number(attr.getNamedItem('dec').nodeValue),
                     x: Number(attr.getNamedItem('pixelX').nodeValue),
                     y: Number(attr.getNamedItem('pixelY').nodeValue),
                     z: Number(attr.getNamedItem('pixelZ').nodeValue),
@@ -405,6 +409,8 @@ function getDaofindResults()
                 daofindResults[i] = new Object({
                     id: Number(attr.getNamedItem('id').nodeValue),
                     confidence: Number(attr.getNamedItem('confidence').nodeValue),
+                    ra: Number(attr.getNamedItem('ra').nodeValue),
+                    dec: Number(attr.getNamedItem('dec').nodeValue),
                     x: Number(attr.getNamedItem('pixelX').nodeValue),
                     y: Number(attr.getNamedItem('pixelY').nodeValue),
                     z: Number(attr.getNamedItem('pixelZ').nodeValue),
@@ -465,6 +471,8 @@ function getStarfindResults()
                 starfindResults[i] = new Object({
                     id: Number(attr.getNamedItem('id').nodeValue),
                     confidence: Number(attr.getNamedItem('confidence').nodeValue),
+                    ra: Number(attr.getNamedItem('ra').nodeValue),
+                    dec: Number(attr.getNamedItem('dec').nodeValue),
                     x: Number(attr.getNamedItem('pixelX').nodeValue),
                     y: Number(attr.getNamedItem('pixelY').nodeValue),
                     z: Number(attr.getNamedItem('pixelZ').nodeValue),
@@ -535,6 +543,8 @@ function getSourceFindMatches()
                     id: Number(attr.getNamedItem('id').nodeValue),
                     confidence: Number(attr.getNamedItem('confidence').nodeValue),
                     numMatches: Number(attr.getNamedItem('numMatches').nodeValue),
+                    ra: Number(attr.getNamedItem('ra').nodeValue),
+                    dec: Number(attr.getNamedItem('dec').nodeValue),
                     x: Number(attr.getNamedItem('pixelX').nodeValue),
                     y: Number(attr.getNamedItem('pixelY').nodeValue),
                     z: Number(attr.getNamedItem('pixelZ').nodeValue),
