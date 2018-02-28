@@ -38,6 +38,9 @@ def divide(value, arg):
 
 @register.inclusion_tag('cosmicapp/tag_singleValue.html', takes_context=False)
 def percentage(value, arg, rangeMin=0, rangeMax=100):
+    if arg == 0:
+        return { 'singleValue': rangeMax }
+
     tempDict = { 'singleValue': rangeMin + (rangeMax - rangeMin)*(value/arg) }
     return tempDict
 
