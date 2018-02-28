@@ -629,6 +629,8 @@ def starmatch(filename):
                     x += result.pixelX
                     y += result.pixelY
                     z = result.pixelZ
+                else:
+                    confidence *= 0.75
 
             confidence = math.pow(confidence, 1/numMatches)
             x /= numMatches
