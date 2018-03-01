@@ -141,12 +141,13 @@ Catalog.objects.filter(name="Exoplanets.org").delete()
 
 catalogDescription = Catalog(
     name = "Exoplanets.org",
-    fullName = "Exoplanet.org Database",
+    fullName = "Exoplanets.org Database",
     objectTypes = "Extrasolar planets",
     numObjects = ExoplanetRecord.objects.count(),
     limMagnitude = None,
     attributionShort = "This research has made use of the Exoplanet Orbit Database and the Exoplanet Data Explorer at exoplanets.org.",
     url = "http://exoplanets.org/",
+    importPeriod = 30,
     cosmicNotes = "Approximately half of the entries in the CSV file are Kepler candidate objects with no ra/dec.  The importer is skipping all of these for now until we can figure out how to handle them."
     )
 

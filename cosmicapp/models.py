@@ -674,6 +674,8 @@ class Catalog(models.Model):
     vizierUrl = models.TextField(null=True)
     url = models.TextField(null=True)
     cosmicNotes = models.TextField(null=True)
+    importDateTime = models.DateTimeField(auto_now=True, null=True)
+    importPeriod = models.FloatField(null=True)
 
 class ScorableObject:
     """

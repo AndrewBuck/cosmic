@@ -117,6 +117,7 @@ catalogDescription = Catalog(
     limMagnitude = None,
     attributionShort = "Copyright (c) 2012 MaxMind LLC.  All Rights Reserved.",
     url = "https://dev.maxmind.com/geoip/legacy/geolite/",
+    importPeriod = 180,
     cosmicNotes = "This is not an astronomical database, it is a database which maps IP addresses to Lat/Lon on the Earth.  It is used to set default locations for non-logged in users for things like Observation Suggestions and other tools which need a location to work."
     )
 

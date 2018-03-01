@@ -107,6 +107,7 @@ catalogDescription = Catalog(
     attributionShort = "The fourth U.S. Naval Observatory CCD Astrograph Catalog (UCAC4) by Zacharias N., Finch C.T., Girard T.M., Henden A., Bartlet J.L., Monet D.G., Zacharias M.I.",
     vizierID = "I/322A",
     vizierUrl = "http://vizier.u-strasbg.fr/viz-bin/VizieR?-source=I/322",
+    importPeriod = None,
     cosmicNotes = "Current import code does not crossmatch the 20 or so stars with the highest proper motion against "
                   "the hpm table provided as a supplement to the UCAC4 main files.  Future versions of the import script will do so."
     )

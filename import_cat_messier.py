@@ -81,6 +81,7 @@ catalogDescription = Catalog(
     attributionLong = "1850CDT..1784..227M - Connaissance des Temps, 1784, 227-269 (1850) - 01.01.86 20.07.15",
     vizierID = "",
     vizierUrl = "",
+    importPeriod = None,
     cosmicNotes = "Taken from table of results via simbad query as no downloadable list of the catalog seems to exist online."
     )
 

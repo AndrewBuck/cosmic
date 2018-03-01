@@ -92,6 +92,7 @@ catalogDescription = Catalog(
     attributionShort = "This publication makes use of data products from the Two Micron All Sky Survey, which is a joint project of the University of Massachusetts and the Infrared Processing and Analysis Center/California Institute of Technology, funded by the National Aeronautics and Space Administration and the National Science Foundation.",
     vizierID = "VII/233",
     vizierUrl = "http://vizier.u-strasbg.fr/viz-bin/VizieR?-source=VII%2F233",
+    importPeriod = None,
     cosmicNotes = "The full catalog has over 300 columns, only the basic size, shape, and magnitude in the K-band were read in to the database."
     )
 

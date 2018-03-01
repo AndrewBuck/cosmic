@@ -22,6 +22,9 @@ in our database and what sources it is gathered from.</p>
 
     <p><i>{{catalog.fullName}}</i></p>
 
+    <p>Imported on {{catalog.importDateTime}} marked for re-import every
+    {{catalog.importPeriod}} days.</p>
+
     <p>Contains {{catalog.numObjects|intcomma}} objects of type: {{catalog.objectTypes}}
     {% if catalog.limMagnitude %} - down to a limiting magnitude of {{catalog.limMagnitude}}{% endif %}</p>
 

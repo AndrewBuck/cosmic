@@ -127,6 +127,8 @@ catalogDescription = Catalog(
     vizierID = "B/astorb",
     vizierUrl = "http://vizier.u-strasbg.fr/viz-bin/VizieR?-source%3DB/astorb",
     url = "ftp://ftp.lowell.edu/pub/elgb/astorb.html",
+    #TODO: The astorb database is updated daily and has a daily diff available as well, we should look into doing this.  For now we will just occasionally pull the full catalog and import it fresh each time.
+    importPeriod = 10,
     cosmicNotes = "Several columns not imported."
     )
 
