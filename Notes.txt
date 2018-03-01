@@ -22,6 +22,14 @@ The imwcs command line program does plate solving similar to atrometry.net
 Login usernames should not be case sensitive.
 
 
+
+We should look into allowing login via a public key and having the user sign a message to
+log in.  This could work especially well for something like an app that logs in as the
+user.  You could create an api token for it and upload its public key to it and it could
+then make changes on the user's behalf.
+
+
+
 allow users to upload a text file containing md5 or sha hashes of filenames to be checked against uploaded files to
 ensure they uploaded correctly.
 
