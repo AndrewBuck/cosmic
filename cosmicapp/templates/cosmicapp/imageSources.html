@@ -132,6 +132,23 @@ colors are defined in javascript, we need to do this in the window.onload functi
 </tr>
 </table>
 
+<p><div id=uploadResultsDiv>
+    Move your mouse over the image to examine the detected sources.  If there are dim
+    stars that were not detected by the automatic search routines you can mark a few of
+    them yourself.  Left click and hold the mouse button to carefully center on a star and
+    then release the mouse button.  You only need to mark 5 to 10 stars manually in any given
+    image, however, you should mark some of the <i>dimmest</i> stars you can
+    <i>reliably</i> see.  After you have marked some dim stars we can then re-calibrate
+    the detection algorithms to the stars you marked and re-run them to automatically mark
+    all the rest.
+    <br><br>
+    <div id=uploadResultsButtonDiv>
+        You have marked <div id=uploadResultsNumDiv style="display: inline-block">0</div> of the <i>dimmest</i> stars
+        you can <i>reliably</i> see in the image below:
+        <input id=uploadMarkedStarsButton type=button value="Upload marked stars.">
+    </div>
+</div></p>
+
 <canvas id="sourcesCanvas" width="{{image.dimX}}" height="{{image.dimY}}" style="border:4px solid #00A030">
 Your browser does not support the HTML5 canvas tag.
 </canvas>
@@ -164,18 +181,20 @@ var reticlePrecision = 0.66;
 var mouseoverTextActive = false;
 var oldMouseCursor = document.body.style.cursor;
 var maxDistanceFromStar = 10;
+var mouseTextHideDistance = 120;
 var maxDistanceFromStarSquared = maxDistanceFromStar*maxDistanceFromStar;
+var lastDrawSourcesTime = 0;
 
 var plot;
 
 function drawStroked(c, text, x, y, ignoreDistance=false)
 {
-    if(mouseoverTextActive && !ignoreDistance)
+    if(!ignoreDistance)
     {
         var deltaX = x - mouseX;
         var deltaY = {{image.dimY}} - y - mouseY;
 
-        if(deltaX*deltaX + deltaY*deltaY < 70*70)
+        if(deltaX*deltaX + deltaY*deltaY < mouseTextHideDistance*mouseTextHideDistance)
             return;
     }
 
@@ -589,14 +608,18 @@ function constructLabelText(paramArray)
 
 function drawSource(c, x, y, size, sizeFactor, sizeScaleFactor)
 {
-    if(mouseoverTextActive)
-    {
-        var deltaX = x - mouseX;
-        var deltaY = y - mouseY;
+    var oldGlobalAlpha = c.globalAlpha;
 
-        if(deltaX*deltaX + deltaY*deltaY < maxDistanceFromStarSquared)
-            return;
-    }
+    var deltaX = x - mouseX;
+    var deltaY = y - mouseY;
+
+    var dist = Math.sqrt(deltaX*deltaX + deltaY*deltaY);
+    var multiplier = 15;
+    if(dist < maxDistanceFromStar)
+        return;
+
+    if(dist < multiplier*maxDistanceFromStar)
+        context.globalAlpha = Math.max(0.2, Math.pow(dist/(multiplier*maxDistanceFromStar), 3));
 
     var drawRadius = sizeFactor*Math.pow(size, sizeScaleFactor);
     drawRadius = math.min(drawRadius, 20);
@@ -605,10 +628,23 @@ function drawSource(c, x, y, size, sizeFactor, sizeScaleFactor)
     c.beginPath();
     c.arc(x, {{image.dimY}} - y, drawRadius, 0, 2*Math.PI)
     c.stroke();
+
+    context.globalAlpha = oldGlobalAlpha;
 };
 
-function drawReticle(c, x, y, size)
+function drawReticle(c, x, y, size, color='#A02020', opacity=-1)
 {
+    var oldGlobalAlpha = c.globalAlpha;
+    if(opacity = -1)
+        c.globalAlpha = 0.4 + 0.6*Math.pow(mouseObjectsList.length/3, 2);
+    else
+        c.globalAlpha = opacity;
+
+    oldStrokeStyle = c.strokeStyle;
+    oldFillStyle = c.fillStyle;
+    c.strokeStyle = color;
+    c.fillStyle = color;
+
     var i;
     var angle = Math.PI/8;
 
@@ -642,11 +678,23 @@ function drawReticle(c, x, y, size)
         c.arc(x, {{image.dimY}} - y, size*.66, i*Math.PI/2-angle, i*Math.PI/2+angle)
         c.stroke();
     }
+
+    context.globalAlpha = oldGlobalAlpha;
 };
 
 function drawSources()
 {
     var i;
+
+    var d = new Date();
+    var currentMilliseconds = d.getTime();
+    if(currentMilliseconds - lastDrawSourcesTime < 100)
+    {
+        //TODO: Need to start a timer or something to trigger a redraw after the timeout has expired.
+        return;
+    }
+
+    lastDrawSourcesTime = currentMilliseconds;
 
     context.drawImage(img, 0, 0);
     context.lineWidth = 2;
@@ -810,6 +858,7 @@ function drawSources()
 
     yPos = mouseY - (mouseY/{{image.dimY}})*(mouseObjectsList.length-0)*(labelSize+4) + 30*(1.0-mouseY/{{image.dimY}});
 
+    var raDecPrinted = false;
     for(i = 0; i < mouseObjectsList.length && !lmbDown; i++)
     {
         switch(mouseObjectsList[i].method)
@@ -851,6 +900,14 @@ function drawSources()
 
         drawStroked(context, mouseObjectsList[i].method + " " + math.round(mouseObjectsList[i].confidence, 2),
                     xPos, {{image.dimY}} - yPos - i*(labelSize+4), true);
+
+        if(!raDecPrinted)
+        {
+            raDecPrinted = true;
+            drawStroked(context, "ra, dec: " + math.round(mouseObjectsList[i].ra, 3) + " "
+            + math.round(mouseObjectsList[i].dec, 3),
+                        xPos, {{image.dimY}} - yPos + (labelSize+4), true);
+        }
     }
 
     if(lmbDown)
@@ -861,10 +918,22 @@ function drawSources()
         var xPos = mouseX - reticlePrecision*deltaX;
         var yPos = mouseY - reticlePrecision*deltaY;
 
-        drawReticle(context, xPos, yPos, 30);
+        drawReticle(context, xPos, yPos, 30, userCreatedColor);
+    }
+    else
+    {
+        drawReticle(context, mouseX, mouseY, 30/reticlePrecision, userCreatedColor, 0.8);
     }
 
     context.textAlign = 'start';
+
+    // Log the draw time taken by the routine to the console.
+    if(false)
+    {
+        var d = new Date();
+        var endMilliseconds = d.getTime();
+        console.log("Draw time: " + (endMilliseconds - currentMilliseconds) + " milliseconds.");
+    }
 };
 
 function updateTable(id)
@@ -1036,14 +1105,23 @@ function handleMouseMove(event)
     oldMouseObjectsList = mouseObjectsList;
     mouseObjectsList = [];
 
-    sourceLists = [
-        [sextractorResults, 'sextractor'],
-        [image2xyResults, 'image2xy'],
-        [daofindResults, 'daofind'],
-        [starfindResults, 'starfind'],
-        [sourceFindMatches, 'multi'],
-        [userCreatedResults, 'user - not uploaded']
-        ];
+    //TODO: Add an if statement for each source and only include it in this array if it is
+    //checked up above.
+    sourceLists = [];
+
+    if($('#sextractorEnabledCheckbox').is(':checked'))
+        sourceLists[sourceLists.length] = [sextractorResults, 'sextractor'];
+
+    if($('#image2xyEnabledCheckbox').is(':checked'))
+        sourceLists[sourceLists.length] = [image2xyResults, 'image2xy'];
+    if($('#daofindEnabledCheckbox').is(':checked'))
+        sourceLists[sourceLists.length] = [daofindResults, 'daofind'];
+    if($('#starfindEnabledCheckbox').is(':checked'))
+        sourceLists[sourceLists.length] = [starfindResults, 'starfind'];
+    if($('#sourceFindMatchesEnabledCheckbox').is(':checked'))
+        sourceLists[sourceLists.length] = [sourceFindMatches, 'multi'];
+
+    sourceLists[sourceLists.length] = [userCreatedResults, 'user - not uploaded'];
 
     for(var i = 0; i < sourceLists.length; i++)
     {
@@ -1068,20 +1146,11 @@ function handleMouseMove(event)
     }
 
     if(mouseObjectsList.length > 0)
-    {
         mouseoverTextActive = true;
-        document.body.style.cursor = 'none';
-    }
     else
-    {
-        if(mouseoverTextActive && !lmbDown)
-            document.body.style.cursor = oldMouseCursor;
-
         mouseoverTextActive = false;
-    }
 
-    if(lmbDown || !arraysEqual(oldMouseObjectsList, mouseObjectsList))
-        drawSources();
+    drawSources();
 };
 
 function handleMouseButtonDown(event)
@@ -1093,7 +1162,6 @@ function handleMouseButtonDown(event)
         lmbDown = true;
         mouseXStart = mouseX;
         mouseYStart = mouseY;
-        document.body.style.cursor = 'none';
         drawSources();
     }
 };
@@ -1113,8 +1181,16 @@ function handleMouseButtonUp(event)
         userCreatedResults[userCreatedResults.length] = {x: xPos, y: yPos, confidence: 1.0};
 
         lmbDown = false;
-        document.body.style.cursor = oldMouseCursor;
         drawSources();
+    }
+
+    $('#uploadResultsNumDiv').html(userCreatedResults.length);
+
+    if(userCreatedResults.length == 1)
+    {
+        $('#uploadMarkedStarsButton').hide(1000);
+        $('#uploadMarkedStarsButton').prop( "disabled", false );
+        $('#uploadMarkedStarsButton').show(1000);
     }
 };
 
@@ -1127,7 +1203,10 @@ window.onload = function()
     $(window).mousemove(handleMouseMove);
     $('#sourcesCanvas').mousedown(handleMouseButtonDown);
     $('#sourcesCanvas').mouseup(handleMouseButtonUp);
+    $("#sourcesCanvas").mouseenter(function(){document.body.style.cursor = 'none';});
     $("#sourcesCanvas").mouseleave(function(){document.body.style.cursor = oldMouseCursor;});
+
+    $('#uploadMarkedStarsButton').prop( "disabled", true );
 
     var xdr = new Bokeh.DataRange1d({ follow: 'start' });
     var ydr = new Bokeh.DataRange1d({ follow: 'start' });
