@@ -195,6 +195,11 @@ class BookmarkableItem:
     """
     @property
     def getDisplayName(self):
+        """
+        --> Should be reimplemented by child classes. <--
+        Returns the name for this object which should be shown to users.  The name can be
+        any string and can follow whatever convention would be appropriate to the object type.
+        """
         return "getDisplayName uniplemented"
 
 class SkyObject:
@@ -204,9 +209,15 @@ class SkyObject:
     an image with known sky coordinates.
     """
     def getSkyCoords(self, dateTime):
+        """
+        --> Should be reimplemented by child classes. <--
+        """
         return (None, None)
 
     def getMag(self, dateTime):
+        """
+        --> Should be reimplemented by child classes. <--
+        """
         return None
 
 class Observatory(models.Model):
@@ -721,6 +732,7 @@ class ScorableObject:
 
     def getValueForTime(self, t):
         """
+        --> Should be reimplemented by child classes. <--
         Returns the scientific value of this ScorableObject for the given time t.
 
         Reflects an estimation of the relative scientific value if an observation of a ScorableObject were to be performed
@@ -731,6 +743,7 @@ class ScorableObject:
 
     def getDifficultyForTime(self, t):
         """
+        --> Should be reimplemented by child classes. <--
         Returns the intrinsic observing difficulty score for difficulty common to all observers for this ScorableObject forven time t.
         the given time t.
 
@@ -742,6 +755,7 @@ class ScorableObject:
 
     def getUserDifficultyForTime(self, t, user, observatory=None):
         """
+        --> Should be reimplemented by child classes. <--
         Returns the difficulty score for this ScorableObject for the given time t for difficulties assosciated with
         observing from a given user's observatory.
 
