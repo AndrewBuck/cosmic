@@ -57,6 +57,8 @@ urlpatterns = [
     url(r'^observing/$', views.observing),
 
     url(r'^about/$', views.about),
+    url(r'^about/processes/$', views.processes),
+    url(r'^about/processes/(?P<process>[a-zA-Z0-9]+)$', views.processes),
 
     url(r'^export/bookmarks/$', views.exportBookmarks),
 

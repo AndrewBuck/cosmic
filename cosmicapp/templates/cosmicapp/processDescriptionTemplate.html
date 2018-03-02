@@ -1,0 +1,26 @@
+{% extends "cosmicapp/base.html" %}
+
+{% load static %}
+{% load cosmicapp_extras %}
+
+{% block extratitle %} - About Process {% endblock extratitle %}
+
+{% block extrahead %}
+{% endblock extrahead %}
+
+{% block mainbody %}
+<h2>Process task description for '<i>{% block processName %}undefined processName{% endblock %}</i>'</h2>
+
+<h3>Synopsis</h3>
+
+<p>
+{% block synopsis %}undefined synopsis{% endblock %}
+</p>
+
+<h3>Description</h3>
+
+<p>
+{% block description %}undefined description{% endblock %}
+</p>
+
+{% endblock mainbody %}

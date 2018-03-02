@@ -39,6 +39,19 @@ def about(request):
     context = {"user" : request.user}
     return render(request, "cosmicapp/about.html", context)
 
+def processes(request, process=None):
+    context = {"user" : request.user}
+
+    if process == None:
+        return render(request, "cosmicapp/processes.html", context)
+
+    validPages = ['astrometrynet', 'generatethumbnails', 'imagestats', 'parseheaders', 'sextractor', 'image2xy', 'daofind', 'starfind', 'starmatch']
+    process = process.lower()
+    if process in validPages:
+        return render(request, "cosmicapp/" + process + ".html", context)
+
+    else:
+        return HttpResponse('Process "' + process + '" not found.', status=400, reason='Parameters missing.')
 def createuser(request):
     context = {"user" : request.user}
 

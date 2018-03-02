@@ -1,0 +1,77 @@
+{% extends "cosmicapp/base.html" %}
+
+{% load static %}
+{% load cosmicapp_extras %}
+
+{% block extratitle %} - About Processes {% endblock extratitle %}
+
+{% block extrahead %}
+{% endblock extrahead %}
+
+{% block mainbody %}
+<h2>Processes</h2>
+
+<p>
+This page provides a listing of all the different types of task queue processes as well as
+a brief summary of each one.  For a more detailed description, click the name of the
+specific process below.  These tasks may be created by the website itself, or when images
+or other files are uploaded to Cosmic.  The tasks are taken out of the queue in order of
+priority and then executed.
+</p>
+
+<table cellpadding=5px>
+    <tr>
+        <td align=right> <a href="/about/processes/astrometryNet">astrometryNet</a> </td> <td>-</td>
+        <td> The Astrometry.net plate solving program.  The plate solver is fed a custom
+        generated list of detected sources from the starmatch task. </td>
+    </tr>
+
+    <tr>
+        <td align=right> <a href="/about/processes/generateThumbnails">generateThumbnails</a> </td> <td>-</td>
+        <td> Runs the ImageMagick 'convert' program to generate a series of 8-bit png
+        images in 4 different sizes suitable for display on the website. </td>
+    </tr>
+
+    <tr>
+        <td align=right> <a href="/about/processes/imagestats">imagestats</a> </td> <td>-</td>
+        <td> Runs the ImageMagick 'identify' program to record the width, height, color
+        channels, fits/png headers, image plate solution, as well as the mean, median
+        and standard deviation of the image and also just for the image background.</td>
+    </tr>
+
+    <tr>
+        <td align=right> <a href="/about/processes/parseHeaders">parseHeaders</a> </td> <td>-</td>
+        <td> Reads the database entries containing raw image headers and produces a second
+        table of 'cleaned' header tags which are more suitable to be queried on the website.</td>
+    </tr>
+
+    <tr>
+        <td align=right> <a href="/about/processes/sextractor">sextractor</a> </td> <td>-</td>
+        <td> Runs the Source Extractor program to detect both stellar and extended bright
+        objects in an uploaded image. </td>
+    </tr>
+
+    <tr>
+        <td align=right> <a href="/about/processes/image2xy">image2xy</a> </td> <td>-</td>
+        <td> Runs the image2xy program to detect stellar objects in an uploaded image. </td>
+    </tr>
+
+    <tr>
+        <td align=right> <a href="/about/processes/daofind">daofind</a> </td> <td>-</td>
+        <td> Runs the daofind algorithm from Astropy to detect stellar objects in an uploaded image. </td>
+    </tr>
+
+    <tr>
+        <td align=right> <a href="/about/processes/starfind">starfind</a> </td> <td>-</td>
+        <td> Runs the starfind algorithm from Astropy to detect stellar objects in an uploaded image. </td>
+    </tr>
+
+    <tr>
+        <td align=right> <a href="/about/processes/starmatch">starmatch</a> </td> <td>-</td>
+        <td> Looks at the results of every image source detection algorithm we run and
+        compares them to eachother to produce a list of 'matches' which represent the
+        same star detected by each separate algorithm as a single result. </td>
+    </tr>
+</table>
+
+{% endblock mainbody %}
