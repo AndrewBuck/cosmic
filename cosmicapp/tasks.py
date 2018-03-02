@@ -216,8 +216,9 @@ def imagestats(filename):
 
                     mean, median, stdDev = sigma_clipped_stats(frame, sigma=10, iters=0)
 
+                    #TODO: Look into this masking and potentially record the masked pixel data as a stored thing which can be accessed later on.
                     #mask = make_source_mask(frame, snr=10, npixels=5, dilate_size=11)
-                    bgMean, bgMedian, bgStdDev = sigma_clipped_stats(frame, sigma=3, iters=1)
+                    bgMean, bgMedian, bgStdDev = sigma_clipped_stats(frame, sigma=3, iters=3)
 
                     #TODO: For some reason the median and bgMedain are always 0.  Need to fix this.
                     channelInfo.mean = mean
