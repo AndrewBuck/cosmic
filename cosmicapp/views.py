@@ -443,9 +443,6 @@ def imageSources(request, id):
 
     context['image'] = image
 
-    sources = SextractorResult.objects.filter(image_id=image.pk)
-    context['sources'] = sources
-
     return render(request, "cosmicapp/imageSources.html", context)
 
 def imageProperties(request, id):
