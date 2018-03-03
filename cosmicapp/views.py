@@ -475,6 +475,8 @@ def imageProperties(request, id):
 
     return render(request, "cosmicapp/imageProperties.html", context)
 
+#TODO: This can probably be removed.
+"""
 def imageThumbnailUrl(request, id, size):
     context = {"user" : request.user}
 
@@ -488,6 +490,7 @@ def imageThumbnailUrl(request, id, size):
     stretch = request.GET.get('stretch', 'false')
 
     return HttpResponse(image.getThumbnailUrl(size, hintWidth, hintHeight, stretch))
+"""
 
 def parseQueryOrderBy(request, mappingDict, fallbackEntry, fallbackAscDesc):
     if 'order' in request.GET:
