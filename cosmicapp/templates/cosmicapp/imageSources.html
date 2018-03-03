@@ -906,7 +906,7 @@ function drawSources()
         if(!raDecPrinted)
         {
             raDecPrinted = true;
-            drawStroked(context, "ra, dec: " + math.round(mouseObjectsList[i].ra, 3) + " "
+            drawStroked(context, "ra dec: " + math.round(mouseObjectsList[i].ra, 3) + "   "
             + math.round(mouseObjectsList[i].dec, 3),
                         xPos, {{image.dimY}} - yPos + (labelSize+4), true);
         }
@@ -920,11 +920,14 @@ function drawSources()
         var xPos = mouseX - reticlePrecision*deltaX;
         var yPos = mouseY - reticlePrecision*deltaY;
 
-        drawReticle(context, xPos, yPos, 30, userCreatedColor);
+        drawReticle(context, xPos, yPos, 30, userCreatedColor, 0.8);
     }
     else
     {
-        drawReticle(context, mouseX, mouseY, 30/reticlePrecision, userCreatedColor, 0.8);
+        if(mouseoverTextActive)
+            drawReticle(context, mouseX, mouseY, 30/reticlePrecision, userCreatedColor, 0.8);
+        else
+            drawReticle(context, mouseX, mouseY, 30/reticlePrecision, userCreatedColor, 0.4);
     }
 
     context.textAlign = 'start';
