@@ -361,6 +361,18 @@ def processQueue(request):
 
     return render(request, "cosmicapp/processqueue.html", context)
 
+def processOutput(request, id):
+    context = {"user" : request.user}
+
+    processOutput = ProcessOutput.objects.filter(pk=id).first()
+
+    if processOutput == None:
+        return HttpResponse('Process Output Not Found: ' + str(id), status=400, reason='Process Output Not Found.')
+
+    context['processOutput'] = processOutput
+
+    return render(request, "cosmicapp/processOutput.html", context)
+
 def catalogs(request):
     context = {"user" : request.user}
     context['catalogs'] = Catalog.objects.all()

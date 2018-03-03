@@ -1,0 +1,24 @@
+{% extends "cosmicapp/base.html" %}
+
+{% load static %}
+{% load cosmicapp_extras %}
+
+{% block extratitle %} - Process Output {{processOutput.pk}} {% endblock extratitle %}
+
+{% block extrahead %}
+{% endblock extrahead %}
+
+{% block mainbody %}
+<h2>Process Output #{{processOutput.pk}}</h2>
+
+<h3>Output Text</h3>
+<p>
+{{processOutput.outputText|linebreaks}}
+</p>
+
+<h3>Error Text</h3>
+<p>
+{{processOutput.outputErrorText|linebreaks}}
+</p>
+
+{% endblock mainbody %}

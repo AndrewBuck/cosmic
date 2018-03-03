@@ -39,7 +39,7 @@ which gets put into this queue until the server has time to execute it.</p>
     {% endfor %}
 
     {% for processInput in processInputsCompleted %}
-    {% if processInput.completed == "success" %}
+    {% if processInput.completed == "success" or processInput.completed == "ProcessOutput created" %}
         <tr bgcolor="green">
     {% else %}
         <tr bgcolor="red">
@@ -53,7 +53,11 @@ which gets put into this queue until the server has time to execute it.</p>
         <td> {{processInput.estCostBandwidth|filesizeformat}} </td>
         <td> {{processInput.estCostStorage|filesizeformat}} </td>
         <td> {{processInput.estCostIO|filesizeformat}} </td>
-        <td> {{processInput.completed}} </td>
+        <td> {{processInput.completed}}
+        {% if processInput.processOutput.all.0 %}
+            <a href="/processoutput/{{processInput.processOutput.all.0.pk}}/">View Output {{processInput.processOutput.all.0.pk}}</a>
+        {% endif %}
+        </td>
     </tr>
     {% endfor %}
 

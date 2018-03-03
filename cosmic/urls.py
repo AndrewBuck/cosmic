@@ -28,7 +28,10 @@ urlpatterns = [
     url(r'^donate/', views.donate),
 
     url(r'^$', views.index),
+
     url(r'^processqueue/', views.processQueue),
+    url(r'^processoutput/(?P<id>[0-9]+)', views.processOutput),
+
     url(r'^catalogs/', views.catalogs),
 
     url(r'^user/(?P<username>.+)/bookmarks/$', views.bookmarkPage),

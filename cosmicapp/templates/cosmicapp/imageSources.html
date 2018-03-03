@@ -39,11 +39,11 @@ colors are defined in javascript, we need to do this in the window.onload functi
 
 <tr>
 <td>Enabled:</td>
-<td align=center><input type=checkbox id=methodEnabledLockCheckbox onchange="updateTable(this.id)" checked></td>
-<td align=center class='sextractorResults'><input type=checkbox id=sextractorEnabledCheckbox onchange="updateTable(this.id)" checked></td>
-<td align=center class='image2xyResults'><input type=checkbox id=image2xyEnabledCheckbox onchange="updateTable(this.id)" checked></td>
-<td align=center class='daofindResults'><input type=checkbox id=daofindEnabledCheckbox onchange="updateTable(this.id)" checked></td>
-<td align=center class='starfindResults'><input type=checkbox id=starfindEnabledCheckbox onchange="updateTable(this.id)" checked></td>
+<td align=center><input type=checkbox id=methodEnabledLockCheckbox onchange="updateTable(this.id)"></td>
+<td align=center class='sextractorResults'><input type=checkbox id=sextractorEnabledCheckbox onchange="updateTable(this.id)"></td>
+<td align=center class='image2xyResults'><input type=checkbox id=image2xyEnabledCheckbox onchange="updateTable(this.id)"></td>
+<td align=center class='daofindResults'><input type=checkbox id=daofindEnabledCheckbox onchange="updateTable(this.id)"></td>
+<td align=center class='starfindResults'><input type=checkbox id=starfindEnabledCheckbox onchange="updateTable(this.id)"></td>
 <td align=center class='sourceFindMatchesResults'><input type=checkbox id=sourceFindMatchesEnabledCheckbox onchange="updateTable(this.id)" checked></td>
 </tr>
 
@@ -162,6 +162,7 @@ var sextractorResults = [], image2xyResults = [], daofindResults = [], starfindR
 var userCreatedResults = [];
 var sextractorResultsPromise, image2xyResultsPromise, daofindResultsPromise, starfindResultsPromise;
 var sourceFindMatches = [];
+var finishedLoading = false;
 var canvas, context;
 var img;
 var sextractorColor = "#E02010";
@@ -585,6 +586,7 @@ function getSourceFindMatches()
                 sourceFindMatches[i].starfindResult = getObjectById(starfindResults, sourceFindMatches[i].starfindResultId);
             }
 
+            finishedLoading = true;
             drawSources();
             $('#sourceFindMatchesLoadingDiv').html('');
             Promise.resolve(true);
@@ -646,7 +648,7 @@ function drawSource(c, x, y, size, sizeFactor, sizeScaleFactor, boxXMin=undefine
 function drawReticle(c, x, y, size, color='#A02020', opacity=-1)
 {
     var oldGlobalAlpha = c.globalAlpha;
-    if(opacity = -1)
+    if(opacity == -1)
         c.globalAlpha = 0.4 + 0.6*Math.pow(mouseObjectsList.length/3, 2);
     else
         c.globalAlpha = opacity;
@@ -916,7 +918,7 @@ function drawSources()
         if(!raDecPrinted)
         {
             raDecPrinted = true;
-            drawStroked(context, "ra, dec: " + math.round(mouseObjectsList[i].ra, 3) + " "
+            drawStroked(context, "ra dec: " + math.round(mouseObjectsList[i].ra, 3) + "   "
             + math.round(mouseObjectsList[i].dec, 3),
                         xPos, {{image.dimY}} - yPos + (labelSize+4), true);
         }
@@ -930,14 +932,20 @@ function drawSources()
         var xPos = mouseX - reticlePrecision*deltaX;
         var yPos = mouseY - reticlePrecision*deltaY;
 
-        drawReticle(context, xPos, yPos, 30, userCreatedColor);
+        drawReticle(context, xPos, yPos, 30, userCreatedColor, 0.8);
     }
     else
     {
-        drawReticle(context, mouseX, mouseY, 30/reticlePrecision, userCreatedColor, 0.8);
+        if(mouseoverTextActive)
+            drawReticle(context, mouseX, mouseY, 30/reticlePrecision, userCreatedColor, 0.8);
+        else
+            drawReticle(context, mouseX, mouseY, 30/reticlePrecision, userCreatedColor, 0.4);
     }
 
     context.textAlign = 'start';
+
+    if(!finishedLoading)
+        drawStroked(context, "Loading...", {{image.dimX}}/2 - 40, {{image.dimY}}/2, true);
 
     // Log the draw time taken by the routine to the console.
     if(false)
