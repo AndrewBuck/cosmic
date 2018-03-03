@@ -694,6 +694,10 @@ def query(request):
             sextractorDict['fluxAuto'] = str(result.fluxAuto)
             sextractorDict['fluxAutoErr'] = str(result.fluxAutoErr)
             sextractorDict['flags'] = str(result.flags)
+            sextractorDict['boxXMin'] = str(result.boxXMin)
+            sextractorDict['boxYMin'] = str(result.boxYMin)
+            sextractorDict['boxXMax'] = str(result.boxXMax)
+            sextractorDict['boxYMax'] = str(result.boxYMax)
 
             etree.SubElement(root, "SextractorResult", sextractorDict)
 

@@ -604,6 +604,10 @@ class SextractorResult(SourceFindResult):
     fluxAuto = models.FloatField(null=True)
     fluxAutoErr = models.FloatField(null=True)
     flags = models.IntegerField(null=True)
+    boxXMin = models.FloatField(null=True)
+    boxYMin = models.FloatField(null=True)
+    boxXMax = models.FloatField(null=True)
+    boxYMax = models.FloatField(null=True)
 
 class Image2xyResult(SourceFindResult):
     """

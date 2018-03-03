@@ -352,24 +352,77 @@ def sextractor(filename):
 
                 #For lines that are not comments, use the fieldDict to determine what fields to read and store in the database.
                 else:
-                    xPos = fields[fieldDict['X_IMAGE']]
-                    yPos = fields[fieldDict['Y_IMAGE']]
                     zPos = None   #TODO: Add image layer number if this is a data cube, just leaving null for now.
-                    fluxAuto = fields[fieldDict['FLUX_AUTO']]
-                    fluxAutoErr = fields[fieldDict['FLUXERR_AUTO']]
-                    flags = fields[fieldDict['FLAGS']]
-
                     record = models.SextractorResult(
                         image = image,
-                        pixelX = xPos,
-                        pixelY = yPos,
+                        pixelX = fields[fieldDict['X_IMAGE_DBL']],
+                        pixelY = fields[fieldDict['Y_IMAGE_DBL']],
                         pixelZ = zPos,
-                        fluxAuto = fluxAuto,
-                        fluxAutoErr = fluxAutoErr,
-                        flags = flags
+                        fluxAuto = fields[fieldDict['FLUX_AUTO']],
+                        fluxAutoErr = fields[fieldDict['FLUXERR_AUTO']],
+                        flags = fields[fieldDict['FLAGS']],
+                        boxXMin = fields[fieldDict['XMIN_IMAGE']],
+                        boxYMin = fields[fieldDict['YMIN_IMAGE']],
+                        boxXMax = fields[fieldDict['XMAX_IMAGE']],
+                        boxYMax = fields[fieldDict['YMAX_IMAGE']]
                         )
 
                     record.save()
+
+                    """
+                    fields[fieldDict['NUMBER']]
+                    fields[fieldDict['FLUX_ISO']]
+                    fields[fieldDict['FLUXERR_ISO']]
+                    fields[fieldDict['MAG_ISO']]
+                    fields[fieldDict['MAGERR_ISO']]
+                    fields[fieldDict['MAG_AUTO']]
+                    fields[fieldDict['MAGERR_AUTO']]
+                    fields[fieldDict['FLUX_BEST']]
+                    fields[fieldDict['FLUXERR_BEST']]
+                    fields[fieldDict['MAG_BEST']]
+                    fields[fieldDict['MAGERR_BEST']]
+                    fields[fieldDict['THRESHOLD']]
+                    fields[fieldDict['FLUX_MAX']]
+                    fields[fieldDict['XPEAK_IMAGE']]
+                    fields[fieldDict['YPEAK_IMAGE']]
+                    fields[fieldDict['X_IMAGE']]
+                    fields[fieldDict['Y_IMAGE']]
+                    fields[fieldDict['ISO0']]
+                    fields[fieldDict['ISO1']]
+                    fields[fieldDict['ISO2']]
+                    fields[fieldDict['ISO3']]
+                    fields[fieldDict['ISO4']]
+                    fields[fieldDict['ISO5']]
+                    fields[fieldDict['ISO6']]
+                    fields[fieldDict['ISO7']]
+                    fields[fieldDict['IMAFLAGS_ISO']]
+                    fields[fieldDict['NIMAFLAGS_ISO']]
+                    fields[fieldDict['FWHM_IMAGE']]
+                    fields[fieldDict['ELLIPTICITY']]
+                    fields[fieldDict['FLUX_GROWTH']]
+                    fields[fieldDict['FLUX_GROWTHSTEP']]
+                    fields[fieldDict['MAG_GROWTH']]
+                    fields[fieldDict['MAG_GROWTHSTEP']]
+                    fields[fieldDict['FLUX_RADIUS']]
+                    fields[fieldDict['XPSF_IMAGE']]
+                    fields[fieldDict['YPSF_IMAGE']]
+                    fields[fieldDict['FLUX_PSF']]
+                    fields[fieldDict['FLUXERR_PSF']]
+                    fields[fieldDict['MAG_PSF']]
+                    fields[fieldDict['MAGERR_PSF']]
+                    fields[fieldDict['ERRAPSF_IMAGE']]
+                    fields[fieldDict['ERRBPSF_IMAGE']]
+                    fields[fieldDict['FLUX_MODEL']]
+                    fields[fieldDict['FLUXERR_MODEL']]
+                    fields[fieldDict['MAG_MODEL']]
+                    fields[fieldDict['MAGERR_MODEL']]
+                    fields[fieldDict['XMODEL_IMAGE']]
+                    fields[fieldDict['YMODEL_IMAGE']]
+                    fields[fieldDict['FLUX_POINTSOURCE']]
+                    fields[fieldDict['FLUXERR_POINTSOURCE']]
+                    fields[fieldDict['MAG_POINTSOURCE']]
+                    fields[fieldDict['MAGERR_POINTSOURCE']]
+                    """
 
             records = models.SextractorResult.objects.filter(image=image)
             meanFluxAuto = records.aggregate(Avg('fluxAuto'))['fluxAuto__avg']

@@ -342,7 +342,11 @@ function getSextractorResults()
                     z: Number(attr.getNamedItem('pixelZ').nodeValue),
                     fluxAuto: Number(attr.getNamedItem('fluxAuto').nodeValue),
                     fluxAutoErr: Number(attr.getNamedItem('fluxAutoErr').nodeValue),
-                    flags: Number(attr.getNamedItem('flags').nodeValue)
+                    flags: Number(attr.getNamedItem('flags').nodeValue),
+                    boxXMin: Number(attr.getNamedItem('boxXMin').nodeValue),
+                    boxYMin: Number(attr.getNamedItem('boxYMin').nodeValue),
+                    boxXMax: Number(attr.getNamedItem('boxXMax').nodeValue),
+                    boxYMax: Number(attr.getNamedItem('boxYMax').nodeValue)
                 });
 
                 //TODO:  Add confidence for this and other types to the bokeh histogram plot.
@@ -606,7 +610,7 @@ function constructLabelText(paramArray)
     return labelArray.join(' ');
 };
 
-function drawSource(c, x, y, size, sizeFactor, sizeScaleFactor)
+function drawSource(c, x, y, size, sizeFactor, sizeScaleFactor, boxXMin=undefined, boxYMin=undefined, boxXMax=undefined, boxYMax=undefined)
 {
     var oldGlobalAlpha = c.globalAlpha;
 
@@ -628,6 +632,13 @@ function drawSource(c, x, y, size, sizeFactor, sizeScaleFactor)
     c.beginPath();
     c.arc(x, {{image.dimY}} - y, drawRadius, 0, 2*Math.PI)
     c.stroke();
+
+    if(!(boxYMax === undefined))
+    {
+        c.beginPath();
+        c.rect(boxXMin, {{image.dimY}} - boxYMin, boxXMax-boxXMin, boxYMin-boxYMax);
+        c.stroke();
+    }
 
     context.globalAlpha = oldGlobalAlpha;
 };
@@ -709,7 +720,8 @@ function drawSources()
     if($('#sextractorEnabledCheckbox').is(':checked'))
     for(i = 0; i < sextractorResults.length && !lmbDown; i++)
     {
-        drawSource(context, sextractorResults[i].x, sextractorResults[i].y, sextractorResults[i].confidence, sizeFactor, sizeScaleFactor);
+        drawSource(context, sextractorResults[i].x, sextractorResults[i].y, sextractorResults[i].confidence, sizeFactor, sizeScaleFactor,
+                   sextractorResults[i].boxXMin, sextractorResults[i].boxYMin, sextractorResults[i].boxXMax, sextractorResults[i].boxYMax);
 
         if(sextractorResults[i].confidence > labelThreshold)
         {
