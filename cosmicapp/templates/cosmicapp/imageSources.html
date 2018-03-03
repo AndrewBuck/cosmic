@@ -162,6 +162,7 @@ var sextractorResults = [], image2xyResults = [], daofindResults = [], starfindR
 var userCreatedResults = [];
 var sextractorResultsPromise, image2xyResultsPromise, daofindResultsPromise, starfindResultsPromise;
 var sourceFindMatches = [];
+var finishedLoading = false;
 var canvas, context;
 var img;
 var sextractorColor = "#E02010";
@@ -581,6 +582,7 @@ function getSourceFindMatches()
                 sourceFindMatches[i].starfindResult = getObjectById(starfindResults, sourceFindMatches[i].starfindResultId);
             }
 
+            finishedLoading = true;
             drawSources();
             $('#sourceFindMatchesLoadingDiv').html('');
             Promise.resolve(true);
@@ -926,6 +928,9 @@ function drawSources()
     }
 
     context.textAlign = 'start';
+
+    if(!finishedLoading)
+        drawStroked(context, "Loading...", {{image.dimX}}/2 - 40, {{image.dimY}}/2, true);
 
     // Log the draw time taken by the routine to the console.
     if(false)
