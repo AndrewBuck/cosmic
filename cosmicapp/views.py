@@ -864,6 +864,8 @@ def query(request):
                 sourceFindMatchDict['daofindResult'] = str(result.daofindResult.pk)
             if result.starfindResult:
                 sourceFindMatchDict['starfindResult'] = str(result.starfindResult.pk)
+            if result.userSubmittedResult:
+                sourceFindMatchDict['userSubmittedResult'] = str(result.userSubmittedResult.pk)
 
             etree.SubElement(root, "SourceFindMatch", sourceFindMatchDict)
 
@@ -1375,6 +1377,21 @@ def saveUserSubmittedSourceResults(request):
             )
 
         userSubmittedResult.save()
+
+    with transaction.atomic():
+        piStarmatch = ProcessInput(
+            process = "starmatch",
+            requestor = User.objects.get(pk=request.user.pk),
+            submittedDateTime = timezone.now(),
+            priority = 20000,
+            estCostCPU = 10,
+            estCostBandwidth = 0,
+            estCostStorage = 3000,
+            estCostIO = 10000
+            )
+
+        piStarmatch.save()
+        piStarmatch.addArguments([image.fileRecord.onDiskFileName])
 
     return HttpResponse(json.dumps({'text': 'Response Saved Successfully'}), status=200)
 

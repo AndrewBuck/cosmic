@@ -580,7 +580,7 @@ function getSourceFindMatches()
             {
                 attr = results[i].attributes;
 
-                sextractorId = null, image2xyId = null, daofindId = null, starfindId = null;
+                sextractorId = null, image2xyId = null, daofindId = null, starfindId = null, userSubmittedId = null;
                 if(attr.getNamedItem('sextractorResult') != null)
                     sextractorId = Number(attr.getNamedItem('sextractorResult').nodeValue);
 
@@ -592,6 +592,9 @@ function getSourceFindMatches()
 
                 if(attr.getNamedItem('starfindResult') != null)
                     starfindId = Number(attr.getNamedItem('starfindResult').nodeValue);
+
+                if(attr.getNamedItem('userSubmittedResult') != null)
+                    userSubmittedId = Number(attr.getNamedItem('userSubmittedResult').nodeValue);
 
                 sourceFindMatches[i] = new Object({
                     id: Number(attr.getNamedItem('id').nodeValue),
@@ -605,7 +608,8 @@ function getSourceFindMatches()
                     sextractorResultId: sextractorId,
                     image2xyResultId: image2xyId,
                     daofindResultId: daofindId,
-                    starfindResultId: starfindId
+                    starfindResultId: starfindId,
+                    userSubmittedResultId: userSubmittedId
                 });
 
                 //TODO: Since this code depends on accessing other objects we will need to break it out into a function
@@ -614,6 +618,7 @@ function getSourceFindMatches()
                 sourceFindMatches[i].image2xyResult = getObjectById(image2xyResults, sourceFindMatches[i].image2xyResultId);
                 sourceFindMatches[i].daofindResult = getObjectById(daofindResults, sourceFindMatches[i].daofindResultId);
                 sourceFindMatches[i].starfindResult = getObjectById(starfindResults, sourceFindMatches[i].starfindResultId);
+                sourceFindMatches[i].userSubmittedResult = getObjectById(userSubmittedResults, sourceFindMatches[i].userSubmittedResultId);
             }
 
             finishedLoading = true;

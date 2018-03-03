@@ -651,6 +651,7 @@ class SourceFindMatch(SourceFindResult):
     image2xyResult = models.ForeignKey(Image2xyResult, null=True, on_delete=models.CASCADE)
     daofindResult = models.ForeignKey(DaofindResult, null=True, on_delete=models.CASCADE)
     starfindResult = models.ForeignKey(StarfindResult, null=True, on_delete=models.CASCADE)
+    userSubmittedResult = models.ForeignKey(UserSubmittedResult, null=True, on_delete=models.CASCADE)
 
     def getRaDec(self):
         #TODO: This is a very expensive function to compute, we should consider computing this right when we create this db entry initially, however it will need to be updated when the "best" wcs for the targeted image changes.

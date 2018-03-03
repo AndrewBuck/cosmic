@@ -662,12 +662,16 @@ def starmatch(filename):
 
     image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
 
+    models.SourceFindMatch.objects.filter(image=image).delete()
+
     #NOTE: It may be faster if these dictionary 'name' entries were shortened or changed to 'ints', maybe an enum.
     inputs = [
         { 'name': 'sextractor', 'model': models.SextractorResult },
         { 'name': 'image2xy', 'model': models.Image2xyResult },
         { 'name': 'daofind', 'model': models.DaofindResult },
-        { 'name': 'starfind', 'model': models.StarfindResult }
+        { 'name': 'starfind', 'model': models.StarfindResult },
+        { 'name': 'userSubmitted', 'model': models.UserSubmittedResult },
+        { 'name': 'userSubmitted2', 'model': models.UserSubmittedResult }
         ]
 
     # Loop over all the pairs of source extraction methods listed in 'inputs'.
@@ -737,13 +741,15 @@ def starmatch(filename):
             image2xyResult = superMatch.get('image2xy', None)
             daofindResult = superMatch.get('daofind', None)
             starfindResult = superMatch.get('starfind', None)
+            userSubmittedResult = superMatch.get('userSubmitted', None)
+            userSubmittedResult2 = superMatch.get('userSubmitted2', None)
 
             numMatches = 0
             confidence = 1
             x = 0
             y = 0
             z = 0
-            for result in [sextractorResult, image2xyResult, daofindResult, starfindResult]:
+            for result in [sextractorResult, image2xyResult, daofindResult, starfindResult, userSubmittedResult, userSubmittedResult2]:
                 # TODO: Should add an else clause here to pull down the confidence if the given result
                 # does not agree with the others.  Need to figure out how to weigh this disagreement.
                 if result != None:
@@ -769,7 +775,8 @@ def starmatch(filename):
                 sextractorResult = sextractorResult,
                 image2xyResult = image2xyResult,
                 daofindResult = daofindResult,
-                starfindResult = starfindResult
+                starfindResult = starfindResult,
+                userSubmittedResult = userSubmittedResult
                 )
 
             record.save()
