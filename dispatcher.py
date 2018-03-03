@@ -125,12 +125,23 @@ while not quit:
 
     # Write the result of the returned value back to the database, either success, failure, or error (early exit).
     #TODO: Pass the return result through directly as a string and modify the individual tasks to return more detailed strings.
-    if celeryResult.info == True:
-        pi.completed = 'success'
-    elif celeryResult.info == False:
-        pi.completed = 'failure'
+    if isinstance(celeryResult.info, dict):
+        processOutput = ProcessOutput(
+            processInput = pi,
+            outputText = celeryResult.info['outputText'],
+            outputErrorText = celeryResult.info['outputErrorText']
+            )
+
+        processOutput.save()
+
+        pi.completed = 'ProcessOutput created'
     else:
-        pi.completed = str(celeryResult.info)
+        if celeryResult.info == True:
+            pi.completed = 'success'
+        elif celeryResult.info == False:
+            pi.completed = 'failure'
+        else:
+            pi.completed = str(celeryResult.info)
 
     pi.save()
 

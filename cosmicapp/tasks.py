@@ -75,6 +75,9 @@ def storeImageLocation(image, w, sourceString):
 
 @shared_task
 def imagestats(filename):
+    outputText = ""
+    errorText = ""
+
     formatString = '{"width" : %w, "height" : %h, "depth" : %z, "channels" : "%[channels]"},'
     proc = subprocess.Popen(['identify', '-format', formatString, settings.MEDIA_ROOT + filename],
         stdout=subprocess.PIPE,
@@ -89,8 +92,10 @@ def imagestats(filename):
     output = output.rstrip().rstrip(',')
     output = '[' + output + ']'
 
-    print("imagestats: " + filename + "   " + output + "   " + error)
-    sys.stdout.flush()
+    outputText += output
+    errorText += error
+    outputText += '\n ==================== End of process output ====================\n\n'
+    errorText += '\n ==================== End of process error =====================\n\n'
 
     jsonObject = json.loads(output)
 
@@ -145,18 +150,25 @@ def imagestats(filename):
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
 
-    output, error = proc.communicate()
-    output = output.decode('utf-8')
-    error = error.decode('utf-8')
+    output2, error2 = proc.communicate()
+    output2 = output2.decode('utf-8')
+    error2 = error2.decode('utf-8')
 
     proc.wait()
 
-    print("imagestats:tags: " + filename)
-    sys.stdout.flush()
+    outputText += '\n ===============================================================\n\n'
+    outputText += output2
+    outputText += '\n ==================== End of process output ====================\n\n'
+    errorText += '\n ===============================================================\n\n'
+    errorText += error2
+    errorText += '\n ==================== End of process error =====================\n\n'
+
+
+    outputText += "imagestats:tags: " + filename + "\n"
 
     with transaction.atomic():
         i = 0
-        for line in output.splitlines():
+        for line in output2.splitlines():
             split = line.split('=', 1)
             key = None
             value = None
@@ -183,18 +195,18 @@ def imagestats(filename):
 
             i += 1
 
-    print("imagestats:wcs: " + filename)
+    outputText += "imagestats:wcs: " + filename + "\n"
     if os.path.splitext(filename)[-1].lower() in ['.fit', '.fits']:
         w = wcs.WCS(settings.MEDIA_ROOT + filename)
 
         if w.has_celestial:
-            print("WCS found in header")
+            outputText += "WCS found in header" + "\n"
 
             storeImageLocation(image, w, 'original')
         else:
-            print("WCS not found in header")
+            outputText += "WCS not found in header" + "\n"
 
-    print("imagestats:background: " + filename)
+    outputText += "imagestats:background: " + filename + "\n"
     if os.path.splitext(filename)[-1].lower() in ['.fit', '.fits']:
         hdulist = fits.open(settings.MEDIA_ROOT + filename)
         with transaction.atomic():
@@ -233,10 +245,18 @@ def imagestats(filename):
 
         hdulist.close()
 
-    return True
+    processOutput = {
+        'outputText': outputText,
+        'outputErrorText': errorText
+        }
+
+    return processOutput
 
 @shared_task
 def generateThumbnails(filename):
+    outputText = ""
+    errorText = ""
+
     filenameFull = os.path.splitext(filename)[0] + "_thumb_full.png"
     filenameSmall = os.path.splitext(filename)[0] + "_thumb_small.png"
     filenameMedium = os.path.splitext(filename)[0] + "_thumb_medium.png"
@@ -270,8 +290,12 @@ def generateThumbnails(filename):
 
         proc.wait()
 
-        print("generateThumbnails: " + tempFilename)
-        sys.stdout.flush()
+        outputText += output
+        errorText += error
+        outputText += '\n ==================== End of process output ====================\n\n'
+        errorText += '\n ==================== End of process error =====================\n\n'
+
+        outputText += "generateThumbnails: " + tempFilename + "\n"
 
         with transaction.atomic():
             for line in error.splitlines():
@@ -291,7 +315,7 @@ def generateThumbnails(filename):
                     dimensions = fields[3].split('+')[0].split('x')
                     w = int(dimensions[0])
                     h = int(dimensions[1])
-                    print('Thumbnail width: {}      height: {}'.format(w, h))
+                    outputText += 'Thumbnail width: {}      height: {}'.format(w, h) + "\n"
 
                     record = models.ImageThumbnail(
                         image = image,
@@ -304,10 +328,18 @@ def generateThumbnails(filename):
 
                     record.save()
 
-    return True
+    processOutput = {
+        'outputText': outputText,
+        'outputErrorText': errorText
+        }
+
+    return processOutput
 
 @shared_task
 def sextractor(filename):
+    outputText = ""
+    errorText = ""
+
     # Get the image record
     image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
 
@@ -335,8 +367,12 @@ def sextractor(filename):
 
     proc.wait()
 
-    print("sextractor: " + filename + "   " + output + "   " + error)
-    sys.stdout.flush()
+    outputText += output
+    errorText += error
+    outputText += '\n ==================== End of process output ====================\n\n'
+    errorText += '\n ==================== End of process error =====================\n\n'
+
+    outputText += "sextractor: " + filename + "\n"
 
     with open(catfileName, 'r') as catfile:
         fieldDict = {}
@@ -384,10 +420,18 @@ def sextractor(filename):
     except OSError:
         pass
 
-    return True
+    processOutput = {
+        'outputText': outputText,
+        'outputErrorText': errorText
+        }
+
+    return processOutput
 
 @shared_task
 def image2xy(filename):
+    outputText = ""
+    errorText = ""
+
     # Get the image record
     image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
 
@@ -407,7 +451,12 @@ def image2xy(filename):
 
     proc.wait()
 
-    print("image2xy: " + filename + "   " + output + "   " + error)
+    outputText += output
+    errorText += error
+    outputText += '\n ==================== End of process output ====================\n\n'
+    errorText += '\n ==================== End of process error =====================\n\n'
+
+    outputText += "image2xy: " + filename + "\n"
     sys.stdout.flush()
 
     table = Table.read(outputFilename, format='fits')
@@ -441,12 +490,19 @@ def image2xy(filename):
     except OSError:
         pass
 
-    return True
+    processOutput = {
+        'outputText': outputText,
+        'outputErrorText': errorText
+        }
+
+    return processOutput
 
 @shared_task
 def daofind(filename):
-    print("daofind: " + filename)
-    sys.stdout.flush()
+    outputText = ""
+    errorText = ""
+
+    outputText = "daofind: " + filename + "\n"
 
     #TODO: daofind can only handle .fit files.  Should autoconvert the file to .fit if necessary before running.
     image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
@@ -485,12 +541,19 @@ def daofind(filename):
             record.confidence = sigmoid((meanMag-record.mag)/stdDevMag)
             record.save()
 
-    return True
+    processOutput = {
+        'outputText': outputText,
+        'outputErrorText': errorText
+        }
+
+    return processOutput
 
 @shared_task
 def starfind(filename):
-    print("starfind: " + filename)
-    sys.stdout.flush()
+    outputText = ""
+    errorText = ""
+
+    outputText += "starfind: " + filename + "\n"
 
     #TODO: starfind can only handle .fit files.  Should autoconvert the file to .fit if necessary before running.
     image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
@@ -530,12 +593,19 @@ def starfind(filename):
             record.confidence = sigmoid((meanMag-record.mag)/stdDevMag)
             record.save()
 
-    return True
+    processOutput = {
+        'outputText': outputText,
+        'outputErrorText': errorText
+        }
+
+    return processOutput
 
 @shared_task
 def starmatch(filename):
-    print("starmatch: " + filename)
-    sys.stdout.flush()
+    outputText = ""
+    errorText = ""
+
+    outputText += "starmatch: " + filename + "\n"
 
     image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
 
@@ -553,7 +623,7 @@ def starmatch(filename):
         results1 = i1['model'].objects.filter(image=image)
         results2 = i2['model'].objects.filter(image=image)
 
-        print('Matching {} {} results with {} {} results'.format(len(results1), i1['name'], len(results2), i2['name']))
+        outputText += 'Matching {} {} results with {} {} results'.format(len(results1), i1['name'], len(results2), i2['name']) + "\n"
 
         # Loop over all the pairs of results in the two current methods and record
         # any match pairs that are within 3 pixels of eachother.
@@ -578,13 +648,12 @@ def starmatch(filename):
             if nearestResult != None:
                 matches.append( (r1, nearestResult) )
 
-        print('   Found {} matches.'.format(len(matches)))
+        outputText += '   Found {} matches.'.format(len(matches)) + "\n"
         matchedResults.append( (i1, i2, matches) )
 
     # Now that we have all the matches between every two individual methods, combine them into 'superMatches' where 3
     # or more different match types all agree on the same star.
-    print('Calculating super matches:')
-    sys.stdout.flush()
+    outputText += 'Calculating super matches:' + "\n"
     superMatches = []
     for i1, i2, matches in matchedResults:
         for match in matches:
@@ -607,7 +676,7 @@ def starmatch(filename):
                 superMatches.append(d)
 
     # Loop over all the superMatch entries and create a database entry for each one.
-    print('Found {} super matches.  Writing them to the DB...'.format(len(superMatches)))
+    outputText += 'Found {} super matches.  Writing them to the DB...'.format(len(superMatches)) + "\n"
     sys.stdout.flush()
     with transaction.atomic():
         for superMatch in superMatches:
@@ -652,14 +721,21 @@ def starmatch(filename):
 
             record.save()
 
-    print('Done.')
-    sys.stdout.flush()
-    return True
+    outputText += 'Done.' + "\n"
+
+    processOutput = {
+        'outputText': outputText,
+        'outputErrorText': errorText
+        }
+
+    return processOutput
 
 @shared_task
 def astrometryNet(filename):
-    print("astrometrynet: " + filename)
-    sys.stdout.flush()
+    outputText = ""
+    errorText = ""
+
+    outputText += "astrometrynet: " + filename + "\n"
 
     image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
     superMatches = models.SourceFindMatch.objects.filter(image=image)
@@ -677,11 +753,11 @@ def astrometryNet(filename):
         table = Table([xValues, yValues, confidenceValues], names=("XIMAGE", "YIMAGE", "CONFIDENCE"), dtype=('f4', 'f4', 'f4'));
         table.write(tableFilename, format='fits')
     except OSError:
-        print('ERROR: Could not open file for writing: ' + tableFilename)
+        errorText += 'ERROR: Could not open file for writing: ' + tableFilename + "\n"
         return False
 
-    print("Chose {} objects to use in plate solution.".format(len(table)))
-    print('\n', table)
+    outputText += "Chose {} objects to use in plate solution.".format(len(table)) + "\n"
+    outputText += str(table) + "\n"
 
     proc = subprocess.Popen(['solve-field', '--depth', '12,22,30',
             '--no-plots', '--overwrite', '--timestamp',
@@ -689,18 +765,30 @@ def astrometryNet(filename):
             '--width', str(image.dimX), '--height', str(image.dimY),
             '--cpulimit', '30',
             tableFilename
-            ])
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+            )
+
+    output, error = proc.communicate()
+    output = output.decode('utf-8')
+    error = error.decode('utf-8')
 
     proc.wait()
 
+    outputText += output
+    errorText += error
+    outputText += '\n ==================== End of process output ====================\n\n'
+    errorText += '\n ==================== End of process error =====================\n\n'
+
     solvedFilename = settings.MEDIA_ROOT + filename + '.sources.solved'
     if os.path.isfile(solvedFilename):
-        print('\n\nPlate solved successfully.')
+        outputText += '\n\nPlate solved successfully.' + "\n"
         w = wcs.WCS(settings.MEDIA_ROOT + filename + '.sources.wcs')
 
         storeImageLocation(image, w, 'astrometry.net')
     else:
-        print('\n\nNo plate solution found.')
+        outputText += '\n\nNo plate solution found.' + "\n"
         #TODO: Add another job to the proess queue to re-run starfind algorithms with lower detection thresholds.
         #TODO: Add another job to the proess queue with lower priority and a deeper search.
 
@@ -721,12 +809,20 @@ def astrometryNet(filename):
         except FileNotFoundError:
             pass
         except:
-            print('Error in removing file {}\nError was: {}'.format(f, sys.exc_info()[0]))
+            errorText += 'Error in removing file {}\nError was: {}'.format(f, sys.exc_info()[0]) + "\n"
 
-    return True
+    processOutput = {
+        'outputText': outputText,
+        'outputErrorText': errorText
+        }
+
+    return processOutput
 
 @shared_task
 def parseHeaders(imageId):
+    outputText = ""
+    errorText = ""
+
     image = models.Image.objects.get(pk=imageId)
     headers = models.ImageHeaderField.objects.filter(image=imageId)
 
@@ -743,7 +839,7 @@ def parseHeaders(imageId):
                     image.dateTime = dateparser.parse(value)
                     image.save()
                 except ValueError:
-                    print("ERROR: Could not parse dateObs: " + value)
+                    outputError += "ERROR: Could not parse dateObs: " + value + "\n"
 
             elif header.key in ['fits:time_obs', 'fits:time-obs']:
                 key = 'timeObs'
@@ -855,9 +951,14 @@ def parseHeaders(imageId):
                 image.dateTime = dateparser.parse(dateObsResult.value + ' ' + timeObsResult.value)
                 image.save()
             except ValueError:
-                print("ERROR: Could not parse dateObs: " + value)
+                errorText += "ERROR: Could not parse dateObs: " + value + "\n"
 
-    return True
+    processOutput = {
+        'outputText': outputText,
+        'outputErrorText': errorText
+        }
+
+    return processOutput
 
 def computeSingleEphemeris(asteroid, ephemTime):
     ephemTimeObject = ephem.Date(ephemTime)

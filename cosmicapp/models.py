@@ -209,9 +209,6 @@ class SkyObject:
     an image with known sky coordinates.
     """
     def getSkyCoords(self, dateTime):
-        """
-        --> Should be reimplemented by child classes. <--
-        """
         return (None, None)
 
     def getMag(self, dateTime):
@@ -538,8 +535,8 @@ class ProcessInput(models.Model):
             i += 1
 
 class ProcessOutput(models.Model):
-    processInput = models.ForeignKey(ProcessInput, on_delete=models.CASCADE)
-    finishedDateTime = models.DateTimeField(null=True)
+    processInput = models.ForeignKey(ProcessInput, on_delete=models.CASCADE, related_name='processOutput')
+    finishedDateTime = models.DateTimeField(auto_now=True, null=True)
     actualCostCPU = models.FloatField(null=True)
     actualCostBandwidth = models.FloatField(null=True)
     actualCostStorage = models.FloatField(null=True)
