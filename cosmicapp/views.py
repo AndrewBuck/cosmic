@@ -585,7 +585,7 @@ def query(request):
         if request.GET['queryfor'] in ['image', 'imageTransform']:
             if limit > 100:
                 limit = 100
-        elif request.GET['queryfor'] in ['sextractorResult', 'image2xyResult', 'daofindResult', 'starfindResult', 'sourceFindMatch']:
+        elif request.GET['queryfor'] in ['sextractorResult', 'image2xyResult', 'daofindResult', 'starfindResult', 'sourceFindMatch', 'userSubmittedResult']:
             if limit > 10000:
                 limit = 10000
 
@@ -808,6 +808,32 @@ def query(request):
             starfindDict['sharpness'] = str(result.sharpness)
 
             etree.SubElement(root, "StarfindResult", starfindDict)
+
+    elif request.GET['queryfor'] == 'userSubmittedResult':
+        orderField, ascDesc = parseQueryOrderBy(request, {'pixelX': 'pixelY'}, 'pixelX', '')
+        results = UserSubmittedResult.objects
+
+        if 'imageId' in request.GET:
+            for valueString in request.GET.getlist('imageId'):
+                values = cleanupQueryValues(valueString, 'int')
+                if len(values) > 0:
+                    results = results.filter(image__pk__in=values)
+
+        results = results.order_by(ascDesc + orderField)[offset:offset+limit]
+
+        for result in results:
+            userSubmittedDict = {}
+            ra, dec = result.getRaDec()
+            userSubmittedDict['ra'] = str(ra)
+            userSubmittedDict['dec'] = str(dec)
+            userSubmittedDict['id'] = str(result.pk)
+            userSubmittedDict['confidence'] = str(result.confidence)
+            userSubmittedDict['imageId'] = str(result.image.pk)
+            userSubmittedDict['pixelX'] = str(result.pixelX)
+            userSubmittedDict['pixelY'] = str(result.pixelY)
+            userSubmittedDict['pixelZ'] = str(result.pixelZ)
+
+            etree.SubElement(root, "UserSubmittedResult", userSubmittedDict)
 
     elif request.GET['queryfor'] == 'sourceFindMatch':
         orderField, ascDesc = parseQueryOrderBy(request, {'id': 'pk'}, 'id', '')
@@ -1330,6 +1356,30 @@ def saveTransform(request):
     record.save()
 
     return HttpResponse('')
+
+@login_required
+@require_http_methods(['POST'])
+def saveUserSubmittedSourceResults(request):
+    id = int(request.POST.get('imageId', '-1'))
+    if id != -1:
+        image = Image.objects.get(pk=id)
+    else:
+        return HttpResponse(json.dumps({'text': 'Image Not Found: ' + str(request.POST.get('imageId')),}), status=400,  reason='Image Not Found.')
+
+    userResults = json.loads(request.POST.get('userResults'))
+    for result in userResults:
+        userSubmittedResult = UserSubmittedResult(
+            user = request.user,
+            image = image,
+            pixelX = float(result['x']),
+            pixelY = float(result['y']),
+            pixelZ = None,  #TODO: Handle multi extension files.
+            confidence = 1.0
+            )
+
+        userSubmittedResult.save()
+
+    return HttpResponse(json.dumps({'text': 'Response Saved Successfully'}), status=200)
 
 @login_required
 @require_http_methods(['POST'])

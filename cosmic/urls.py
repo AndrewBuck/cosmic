@@ -52,6 +52,7 @@ urlpatterns = [
 
     url(r'^mosaic/$', views.mosaic),
     url(r'^save/transform/$', views.saveTransform),
+    url(r'^save/userSubmittedSourceResults/$', views.saveUserSubmittedSourceResults),
     url(r'^bookmark/$', views.bookmark),
 
     url(r'^calibration/$', views.calibration),

@@ -145,7 +145,7 @@ colors are defined in javascript, we need to do this in the window.onload functi
     <div id=uploadResultsButtonDiv>
         You have marked <div id=uploadResultsNumDiv style="display: inline-block">0</div> of the <i>dimmest</i> stars
         you can <i>reliably</i> see in the image below:
-        <input id=uploadMarkedStarsButton type=button value="Upload marked stars.">
+        <input id=uploadMarkedStarsButton type=button value="Upload marked stars." onclick="submitUserResults()">
     </div>
 </div></p>
 
@@ -159,7 +159,7 @@ Your browser does not support the HTML5 canvas tag.
 <script>
 var imageId = {{id}};
 var sextractorResults = [], image2xyResults = [], daofindResults = [], starfindResults = [];
-var userCreatedResults = [];
+var userCreatedResults = [], userSubmittedResults = [];
 var sextractorResultsPromise, image2xyResultsPromise, daofindResultsPromise, starfindResultsPromise;
 var sourceFindMatches = [];
 var finishedLoading = false;
@@ -359,6 +359,36 @@ function getSextractorResults()
             drawSources();
             $('#sextractorLoadingDiv').html('');
             Promise.resolve(true);
+        }
+    });
+};
+
+function getUserSubmittedResults()
+{
+    var i;
+
+    $.ajax({
+        url : "/query/?queryfor=userSubmittedResult&limit=10000&imageId=" + imageId,
+        type : "get",
+        async: true,
+        success : function(xml)
+        {
+            var results = xml.getElementsByTagName('UserSubmittedResult')
+            for(i = 0; i < results.length; i++)
+            {
+                attr = results[i].attributes;
+                userSubmittedResults[i] = new Object({
+                    id: Number(attr.getNamedItem('id').nodeValue),
+                    confidence: Number(attr.getNamedItem('confidence').nodeValue),
+                    ra: Number(attr.getNamedItem('ra').nodeValue),
+                    dec: Number(attr.getNamedItem('dec').nodeValue),
+                    x: Number(attr.getNamedItem('pixelX').nodeValue),
+                    y: Number(attr.getNamedItem('pixelY').nodeValue),
+                    z: Number(attr.getNamedItem('pixelZ').nodeValue),
+                });
+            }
+
+            drawSources();
         }
     });
 };
@@ -591,6 +621,41 @@ function getSourceFindMatches()
             $('#sourceFindMatchesLoadingDiv').html('');
             Promise.resolve(true);
         }
+    });
+};
+
+function submitUserResults()
+{
+    var i;
+    var commaString;
+
+    //TODO: Replace this loop with a jsonify function.
+    var jsonString = "["
+    for(i = 0; i < userCreatedResults.length; i++)
+    {
+        if(i < userCreatedResults.length-1)
+            commaString = ',';
+        else
+            commaString = '';
+
+        jsonString += '{"x": "' + userCreatedResults[i].x + '", "y": "' + userCreatedResults[i].y + '"}';
+        jsonString += commaString
+    }
+    jsonString += ']'
+
+    $.ajax({
+        url : "/save/userSubmittedSourceResults/",
+        type : "post",
+        data: {userResults: jsonString, imageId: imageId},
+        dataType: 'json',
+        success : function(response)
+        {
+            alert(response.text);
+            userCreatedResults = [];
+            userSubmittedResults = [];
+            getUserSubmittedResults();
+        }
+        //TODO: Implement error handler.
     });
 };
 
@@ -852,9 +917,14 @@ function drawSources()
     context.strokeStyle = userCreatedColor;
     context.fillStyle = userCreatedColor;
 
+    for(i = 0; i < userSubmittedResults.length && !lmbDown; i++)
+    {
+        drawSource(context, userSubmittedResults[i].x, userSubmittedResults[i].y, 1.0, 10, 2);
+    }
+
     for(i = 0; i < userCreatedResults.length && !lmbDown; i++)
     {
-        drawSource(context, userCreatedResults[i].x, userCreatedResults[i].y, 1.0, 10, 2);
+        drawReticle(context, userCreatedResults[i].x, userCreatedResults[i].y, 10, userCreatedColor, 0.8);
     }
 
     labelSize = 20
@@ -903,6 +973,11 @@ function drawSources()
                 break;
 
             case 'user - not uploaded':
+                context.strokeStyle = userCreatedColor;
+                context.fillStyle = userCreatedColor;
+                break;
+
+            case 'user':
                 context.strokeStyle = userCreatedColor;
                 context.fillStyle = userCreatedColor;
                 break;
@@ -1142,6 +1217,7 @@ function handleMouseMove(event)
         sourceLists[sourceLists.length] = [sourceFindMatches, 'multi'];
 
     sourceLists[sourceLists.length] = [userCreatedResults, 'user - not uploaded'];
+    sourceLists[sourceLists.length] = [userSubmittedResults, 'user'];
 
     for(var i = 0; i < sourceLists.length; i++)
     {
@@ -1251,6 +1327,7 @@ window.onload = function()
 
     updateTable();
 
+    getUserSubmittedResults();
     getSextractorResults();
     getImage2xyResults();
     getDaofindResults();

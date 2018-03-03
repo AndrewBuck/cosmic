@@ -636,6 +636,10 @@ class StarfindResult(SourceFindResult):
     pa = models.FloatField(null=True)
     sharpness = models.FloatField(null=True)
 
+#TODO: We should create another model to tie a bunch of results submitted at the same time to a single session.
+class UserSubmittedResult(SourceFindResult):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
 class SourceFindMatch(SourceFindResult):
     """
     A record storing links to the individual SourceFindResult records for sources which are found at the same location in
