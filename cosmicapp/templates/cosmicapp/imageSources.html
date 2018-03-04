@@ -728,9 +728,12 @@ function drawSource(c, x, y, size, sizeFactor, sizeScaleFactor, boxXMin=undefine
 
     if(!(boxYMax === undefined))
     {
-        c.beginPath();
-        c.rect(boxXMin, {{image.dimY}} - boxYMin, boxXMax-boxXMin, boxYMin-boxYMax);
-        c.stroke();
+        if(math.abs(boxXMax-boxXMin) > 8 && math.abs(boxYMax-boxYMin) > 8)
+        {
+            c.beginPath();
+            c.rect(boxXMin, {{image.dimY}} - boxYMin, boxXMax-boxXMin, boxYMin-boxYMax);
+            c.stroke();
+        }
     }
 
     context.globalAlpha = oldGlobalAlpha;
