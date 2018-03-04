@@ -95,11 +95,11 @@ while not quit:
         arg = pi.processargument_set.all()[0].arg
         celeryResult = starmatch.delay(arg)
 
-    elif pi.process == 'astrometrynet':
+    elif pi.process == 'astrometryNet':
         arg = pi.processargument_set.all()[0].arg
         celeryResult = astrometryNet.delay(arg)
 
-    elif pi.process == 'parseheaders':
+    elif pi.process == 'parseHeaders':
         arg = pi.processargument_set.all()[0].arg
         celeryResult = parseHeaders.delay(arg)
 

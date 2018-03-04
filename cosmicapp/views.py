@@ -222,7 +222,7 @@ def upload(request):
                     piStarmatch.prerequisites.add(piStarfind)
 
                     piAstrometryNet = ProcessInput(
-                        process = "astrometrynet",
+                        process = "astrometryNet",
                         requestor = User.objects.get(pk=request.user.pk),
                         submittedDateTime = timezone.now(),
                         priority = 1000,
@@ -239,7 +239,7 @@ def upload(request):
                     piAstrometryNet.prerequisites.add(piStarmatch)
 
                     piHeaders = ProcessInput(
-                        process = "parseheaders",
+                        process = "parseHeaders",
                         requestor = User.objects.get(pk=request.user.pk),
                         submittedDateTime = timezone.now(),
                         priority = 10000,
