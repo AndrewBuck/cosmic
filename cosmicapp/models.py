@@ -659,6 +659,9 @@ class StarfindResult(SourceFindResult):
 class UserSubmittedResult(SourceFindResult):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
+class UserSubmittedHotPixel(SourceFindResult):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
 class SourceFindMatch(SourceFindResult):
     """
     A record storing links to the individual SourceFindResult records for sources which are found at the same location in

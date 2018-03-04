@@ -145,7 +145,12 @@ colors are defined in javascript, we need to do this in the window.onload functi
     <div id=uploadResultsButtonDiv>
         You have marked <div id=uploadResultsNumDiv style="display: inline-block">0</div> of the <i>dimmest</i> stars
         you can <i>reliably</i> see in the image below:
-        <input id=uploadMarkedStarsButton type=button value="Upload marked stars." onclick="submitUserResults()">
+        <input id=uploadMarkedStarsButton type=button value="Upload marked objects." onclick="submitUserResults()">
+        <br>
+        You have also marked
+        <div style="display: inline-block" id=hotPixelsNumDiv>0</div> hot pixels (<i>ctrl</i>),
+        <div style="display: inline-block" id=hotLinesNumDiv>0</div> bad lines (<i>ctrl + x</i>), and
+        <div style="display: inline-block" id=hotColumnsNumDiv>0</div> bad columns (<i>ctrl + c</i>).
     </div>
 </div></p>
 
@@ -161,6 +166,7 @@ var imageId = {{id}};
 var limitPerSource = 1000;  //TODO: Add a notice in each of the loading methods if the number returned equals this limit.
 var sextractorResults = [], image2xyResults = [], daofindResults = [], starfindResults = [];
 var userCreatedResults = [], userSubmittedResults = [];
+var userCreatedHotPixels = [], userSubmittedHotPixels = [];
 var sextractorResultsPromise, image2xyResultsPromise, daofindResultsPromise, starfindResultsPromise;
 var sourceFindMatches = [];
 var finishedLoading = false;
@@ -399,6 +405,36 @@ function getUserSubmittedResults()
             {
                 attr = results[i].attributes;
                 userSubmittedResults[i] = new Object({
+                    id: Number(attr.getNamedItem('id').nodeValue),
+                    confidence: Number(attr.getNamedItem('confidence').nodeValue),
+                    ra: Number(attr.getNamedItem('ra').nodeValue),
+                    dec: Number(attr.getNamedItem('dec').nodeValue),
+                    x: Number(attr.getNamedItem('pixelX').nodeValue),
+                    y: Number(attr.getNamedItem('pixelY').nodeValue),
+                    z: Number(attr.getNamedItem('pixelZ').nodeValue),
+                });
+            }
+
+            drawSources();
+        }
+    });
+};
+
+function getUserSubmittedHotPixels()
+{
+    var i;
+
+    $.ajax({
+        url : "/query/?queryfor=userSubmittedHotPixel&limit=" + limitPerSource + "&imageId=" + imageId,
+        type : "get",
+        async: true,
+        success : function(xml)
+        {
+            var results = xml.getElementsByTagName('UserSubmittedHotPixel')
+            for(i = 0; i < results.length; i++)
+            {
+                attr = results[i].attributes;
+                userSubmittedHotPixels[i] = new Object({
                     id: Number(attr.getNamedItem('id').nodeValue),
                     confidence: Number(attr.getNamedItem('confidence').nodeValue),
                     ra: Number(attr.getNamedItem('ra').nodeValue),
@@ -655,31 +691,47 @@ function submitUserResults()
     var i;
     var commaString;
 
-    //TODO: Replace this loop with a jsonify function.
-    var jsonString = "["
-    for(i = 0; i < userCreatedResults.length; i++)
+    //TODO: Replace this function with a jsonify function.
+    function jsonify(results)
     {
-        if(i < userCreatedResults.length-1)
-            commaString = ',';
-        else
-            commaString = '';
+        var jsonString = "["
+        for(i = 0; i < results.length; i++)
+        {
+            if(i < results.length-1)
+                commaString = ',';
+            else
+                commaString = '';
 
-        jsonString += '{"x": "' + userCreatedResults[i].x + '", "y": "' + userCreatedResults[i].y + '"}';
-        jsonString += commaString
+            jsonString += '{'
+            for(key in results[i])
+                jsonString += '"' + key + '": "' + results[i][key] + '",';
+
+            jsonString = jsonString.substr(0, jsonString.length-1);
+
+            jsonString += '}'
+            jsonString += commaString
+        }
+        jsonString += ']'
+
+        return jsonString;
     }
-    jsonString += ']'
 
     $.ajax({
         url : "/save/userSubmittedSourceResults/",
         type : "post",
-        data: {userResults: jsonString, imageId: imageId},
+        data: {userResults: jsonify(userCreatedResults), hotPixels: jsonify(userCreatedHotPixels), imageId: imageId},
         dataType: 'json',
         success : function(response)
         {
             alert(response.text);
+
             userCreatedResults = [];
             userSubmittedResults = [];
             getUserSubmittedResults();
+
+            userCreatedHotPixels = [];
+            userSubmittedHotPixels = [];
+            getUserSubmittedHotPixels();
         }
         //TODO: Implement error handler.
     });
@@ -995,14 +1047,16 @@ function drawSources()
     context.fillStyle = userCreatedColor;
 
     for(i = 0; i < userSubmittedResults.length && !lmbDown; i++)
-    {
         drawSource(context, userSubmittedResults[i].x, userSubmittedResults[i].y, 1.0, 10, 2);
-    }
+
+    for(i = 0; i < userSubmittedHotPixels.length && !lmbDown; i++)
+        drawSource(context, userSubmittedHotPixels[i].x, userSubmittedHotPixels[i].y, 1.0, 5, 2);
 
     for(i = 0; i < userCreatedResults.length && !lmbDown; i++)
-    {
         drawReticle(context, userCreatedResults[i].x, userCreatedResults[i].y, 10, userCreatedColor, 0.8);
-    }
+
+    for(i = 0; i < userCreatedHotPixels.length && !lmbDown; i++)
+        drawReticle(context, userCreatedHotPixels[i].x, userCreatedHotPixels[i].y, 5, userCreatedColor, 0.8);
 
     labelSize = 20
     context.font = labelSize + 'px sans-serif'
@@ -1050,6 +1104,16 @@ function drawSources()
                 break;
 
             case 'user - not uploaded':
+                context.strokeStyle = userCreatedColor;
+                context.fillStyle = userCreatedColor;
+                break;
+
+            case 'user - hot pixel - not uploaded':
+                context.strokeStyle = userCreatedColor;
+                context.fillStyle = userCreatedColor;
+                break;
+
+            case 'user - hot pixel':
                 context.strokeStyle = userCreatedColor;
                 context.fillStyle = userCreatedColor;
                 break;
@@ -1306,7 +1370,9 @@ function handleMouseMove(event)
         sourceLists[sourceLists.length] = [sourceFindMatches, 'multi'];
 
     sourceLists[sourceLists.length] = [userCreatedResults, 'user - not uploaded'];
+    sourceLists[sourceLists.length] = [userCreatedHotPixels, 'user - hot pixel - not uploaded'];
     sourceLists[sourceLists.length] = [userSubmittedResults, 'user'];
+    sourceLists[sourceLists.length] = [userSubmittedHotPixels, 'user - hot pixel'];
 
     for(var i = 0; i < sourceLists.length; i++)
     {
@@ -1359,21 +1425,22 @@ function handleMouseButtonUp(event)
     {
         lmbDown = false;
 
-        if(mode == 'stars')
-        {
-            //NOTE: These lines are duplicated elsewhere, if they change the others must too.
-            var deltaX = mouseX - mouseXStart;
-            var deltaY = mouseY - mouseYStart;
-            var xPos = mouseX - reticlePrecision*deltaX;
-            var yPos = mouseY - reticlePrecision*deltaY;
+        //NOTE: These lines are duplicated elsewhere, if they change the others must too.
+        var deltaX = mouseX - mouseXStart;
+        var deltaY = mouseY - mouseYStart;
+        var xPos = mouseX - reticlePrecision*deltaX;
+        var yPos = mouseY - reticlePrecision*deltaY;
 
+        if(mode == 'stars')
             userCreatedResults[userCreatedResults.length] = {x: xPos, y: yPos, confidence: 1.0};
-        }
+        else if(mode == 'hotpixels')
+            userCreatedHotPixels[userCreatedHotPixels.length] = {x: xPos, y: yPos, confidence: 1.0};
 
         drawSources();
     }
 
     $('#uploadResultsNumDiv').html(userCreatedResults.length);
+    $('#hotPixelsNumDiv').html(userCreatedHotPixels.length);
 
     if(!submitButtonEnabled && (userCreatedResults.length == 1 || userCreatedHotPixels.length == 1))
     {
@@ -1475,6 +1542,7 @@ window.onload = function()
     updateTable();
 
     getUserSubmittedResults();
+    getUserSubmittedHotPixels();
     getSextractorResults();
     getImage2xyResults();
     getDaofindResults();

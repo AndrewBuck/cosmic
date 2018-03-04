@@ -832,6 +832,32 @@ def query(request):
 
             etree.SubElement(root, "UserSubmittedResult", userSubmittedDict)
 
+    elif request.GET['queryfor'] == 'userSubmittedHotPixel':
+        orderField, ascDesc = parseQueryOrderBy(request, {'confidence': 'confidence'}, 'confidence', '-')
+        results = UserSubmittedHotPixel.objects
+
+        if 'imageId' in request.GET:
+            for valueString in request.GET.getlist('imageId'):
+                values = cleanupQueryValues(valueString, 'int')
+                if len(values) > 0:
+                    results = results.filter(image__pk__in=values)
+
+        results = results.order_by(ascDesc + orderField)[offset:offset+limit]
+
+        for result in results:
+            userSubmittedDict = {}
+            ra, dec = result.getRaDec()
+            userSubmittedDict['ra'] = str(ra)
+            userSubmittedDict['dec'] = str(dec)
+            userSubmittedDict['id'] = str(result.pk)
+            userSubmittedDict['confidence'] = str(result.confidence)
+            userSubmittedDict['imageId'] = str(result.image.pk)
+            userSubmittedDict['pixelX'] = str(result.pixelX)
+            userSubmittedDict['pixelY'] = str(result.pixelY)
+            userSubmittedDict['pixelZ'] = str(result.pixelZ)
+
+            etree.SubElement(root, "UserSubmittedHotPixel", userSubmittedDict)
+
     elif request.GET['queryfor'] == 'sourceFindMatch':
         orderField, ascDesc = parseQueryOrderBy(request, {'confidence': 'confidence'}, 'confidence', '-')
         results = SourceFindMatch.objects
@@ -1377,6 +1403,19 @@ def saveUserSubmittedSourceResults(request):
             )
 
         userSubmittedResult.save()
+
+    userHotPixels = json.loads(request.POST.get('hotPixels'))
+    for result in userHotPixels:
+        userSubmittedHotPixel = UserSubmittedHotPixel(
+            user = request.user,
+            image = image,
+            pixelX = float(result['x']),
+            pixelY = float(result['y']),
+            pixelZ = None,  #TODO: Handle multi extension files.
+            confidence = 1.0
+            )
+
+        userSubmittedHotPixel.save()
 
     with transaction.atomic():
         piStarmatch = ProcessInput(
