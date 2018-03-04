@@ -32,7 +32,7 @@ colors are defined in javascript, we need to do this in the window.onload functi
 <th>Image2xy<div id=image2xyLoadingDiv></div></th>
 <th>Daofind<div id=daofindLoadingDiv></div></th>
 <th>Starfind<div id=starfindLoadingDiv></div></th>
-<th>Multiple<br>Method<br>Matches<div id=sourceFindMatchesLoadingDiv></div></th>
+<th>Multiple<br>Method<br>Matches<div id=sourceFindMatchesLoadingDiv><br><br>Waiting...</div></th>
 </tr>
 
 <!-- TODO: Add a row at the top here showing how many results there are from each detection method -->
@@ -158,6 +158,7 @@ Your browser does not support the HTML5 canvas tag.
 
 <script>
 var imageId = {{id}};
+var limitPerSource = 1000;  //TODO: Add a notice in each of the loading methods if the number returned equals this limit.
 var sextractorResults = [], image2xyResults = [], daofindResults = [], starfindResults = [];
 var userCreatedResults = [], userSubmittedResults = [];
 var sextractorResultsPromise, image2xyResultsPromise, daofindResultsPromise, starfindResultsPromise;
@@ -341,7 +342,7 @@ function getSextractorResults()
     $('#sextractorLoadingDiv').html('<br><br>Loading...');
 
     sextractorResultsPromise = $.ajax({
-        url : "/query/?queryfor=sextractorResult&limit=10000&imageId=" + imageId,
+        url : "/query/?queryfor=sextractorResult&limit=" + limitPerSource + "&imageId=" + imageId,
         type : "get",
         async: true,
         success : function(xml)
@@ -376,7 +377,7 @@ function getSextractorResults()
             addHistogramToPlot(fluxAutoValues, numberOfBins, sextractorColor, 'Flux (sextractor)', []);
 
             drawSources();
-            $('#sextractorLoadingDiv').html('');
+            $('#sextractorLoadingDiv').html("<br>" + sextractorResults.length + " Results<br>Loaded");
             Promise.resolve(true);
         }
     });
@@ -387,7 +388,7 @@ function getUserSubmittedResults()
     var i;
 
     $.ajax({
-        url : "/query/?queryfor=userSubmittedResult&limit=10000&imageId=" + imageId,
+        url : "/query/?queryfor=userSubmittedResult&limit=" + limitPerSource + "&imageId=" + imageId,
         type : "get",
         async: true,
         success : function(xml)
@@ -419,7 +420,7 @@ function getImage2xyResults()
     $('#image2xyLoadingDiv').html('<br><br>Loading...');
 
     image2xyResultsPromise = $.ajax({
-        url : "/query/?queryfor=image2xyResult&limit=10000&imageId=" + imageId,
+        url : "/query/?queryfor=image2xyResult&limit=" + limitPerSource + "&imageId=" + imageId,
         type : "get",
         async: true,
         success : function(xml)
@@ -450,7 +451,7 @@ function getImage2xyResults()
             addHistogramToPlot(fluxValues, numberOfBins, image2xyColor, 'Flux (image2xy)', []);
 
             drawSources();
-            $('#image2xyLoadingDiv').html('');
+            $('#image2xyLoadingDiv').html("<br>" + image2xyResults.length + " Results<br>Loaded");
             Promise.resolve(true);
         }
     });
@@ -463,7 +464,7 @@ function getDaofindResults()
     $('#daofindLoadingDiv').html('<br><br>Loading...');
 
     daofindResultsPromise = $.ajax({
-        url : "/query/?queryfor=daofindResult&limit=10000&imageId=" + imageId,
+        url : "/query/?queryfor=daofindResult&limit=" + limitPerSource + "&imageId=" + imageId,
         type : "get",
         async: true,
         success : function(xml)
@@ -511,7 +512,7 @@ function getDaofindResults()
             addHistogramToPlot(groundValues, numberOfBins, daofindColor, 'G Round (daofind)', [6, 6]);
 
             drawSources();
-            $('#daofindLoadingDiv').html('');
+            $('#daofindLoadingDiv').html("<br>" + daofindResults.length + " Results<br>Loaded");
             Promise.resolve(true);
         }
     });
@@ -524,7 +525,7 @@ function getStarfindResults()
     $('#starfindLoadingDiv').html('<br><br>Loading...');
 
     starfindResultsPromise = $.ajax({
-        url : "/query/?queryfor=starfindResult&limit=10000&imageId=" + imageId,
+        url : "/query/?queryfor=starfindResult&limit=" + limitPerSource + "&imageId=" + imageId,
         type : "get",
         async: true,
         success : function(xml)
@@ -576,7 +577,7 @@ function getStarfindResults()
             addHistogramToPlot(sharpnessValues, numberOfBins, starfindColor, 'Sharpness (starfind)', [2, 2, 2, 2, 5]);
 
             drawSources();
-            $('#starfindLoadingDiv').html('');
+            $('#starfindLoadingDiv').html("<br>" + starfindResults.length + " Results<br>Loaded");
             Promise.resolve(true);
         }
     });
@@ -589,7 +590,7 @@ function getSourceFindMatches()
     $('#sourceFindMatchesLoadingDiv').html('<br><br>Loading...');
 
     $.ajax({
-        url : "/query/?queryfor=sourceFindMatch&limit=10000&imageId=" + imageId,
+        url : "/query/?queryfor=sourceFindMatch&limit=" + limitPerSource + "&imageId=" + imageId,
         type : "get",
         async: true,
         success : function(xml)
@@ -642,7 +643,7 @@ function getSourceFindMatches()
 
             finishedLoading = true;
             drawSources();
-            $('#sourceFindMatchesLoadingDiv').html('');
+            $('#sourceFindMatchesLoadingDiv').html("<br>" + sourceFindMatches.length + " Results<br>Loaded");
             Promise.resolve(true);
         }
     });
