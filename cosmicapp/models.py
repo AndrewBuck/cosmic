@@ -488,6 +488,25 @@ class PlateSolution(models.Model):
         ret = self.wcs().all_pix2world(x, y, 1)    #TODO: Determine if this 1 should be a 0.
         return ret
 
+class ProcessPriority(models.Model):
+    """
+    A record storing a priority level for a particular task type.  Having default
+    priorities in a table makes it easy to compare and set them as well as to easily
+    display them on a page so users can see what the numbers mean.
+    """
+    name = models.CharField(max_length=64)
+    priority = models.FloatField(null=True)
+    priorityClass = models.CharField(max_length=64)
+    setDateTime = models.DateTimeField(auto_now=True, null=True)
+
+    @staticmethod
+    def getPriorityForProcess(processName, processClass='batch'):
+        try:
+            priority = ProcessPriority.objects.get(name=processName, priorityClass=processClass)
+        except:
+            return 1
+
+        return priority.priority
 class ProcessInput(models.Model):
     """
     A record storing parameters for a queued process to be run at a later time by the website.  The 'process' field is a
