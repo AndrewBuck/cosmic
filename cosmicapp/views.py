@@ -124,7 +124,7 @@ def upload(request):
                         process = "imagestats",
                         requestor = User.objects.get(pk=request.user.pk),
                         submittedDateTime = timezone.now(),
-                        priority = 10000,
+                        priority = ProcessPriority.getPriorityForProcess("imagestats", "batch"),
                         estCostCPU = record.uploadSize / 1e6,
                         estCostBandwidth = 0,
                         estCostStorage = 1000,
@@ -138,7 +138,7 @@ def upload(request):
                         process = "generateThumbnails",
                         requestor = User.objects.get(pk=request.user.pk),
                         submittedDateTime = timezone.now(),
-                        priority = 5000,
+                        priority = ProcessPriority.getPriorityForProcess("generateThumbnails", "batch"),
                         estCostCPU = record.uploadSize / 1e6,
                         estCostBandwidth = 0,
                         estCostStorage = record.uploadSize / 10,
@@ -152,7 +152,7 @@ def upload(request):
                         process = "sextractor",
                         requestor = User.objects.get(pk=request.user.pk),
                         submittedDateTime = timezone.now(),
-                        priority = 3000,
+                        priority = ProcessPriority.getPriorityForProcess("sextractor", "batch"),
                         estCostCPU = 0.5 * record.uploadSize / 1e6,
                         estCostBandwidth = 0,
                         estCostStorage = 3000,
@@ -166,7 +166,7 @@ def upload(request):
                         process = "image2xy",
                         requestor = User.objects.get(pk=request.user.pk),
                         submittedDateTime = timezone.now(),
-                        priority = 3000,
+                        priority = ProcessPriority.getPriorityForProcess("image2xy", "batch"),
                         estCostCPU = 0.5 * record.uploadSize / 1e6,
                         estCostBandwidth = 0,
                         estCostStorage = 3000,
@@ -180,7 +180,7 @@ def upload(request):
                         process = "daofind",
                         requestor = User.objects.get(pk=request.user.pk),
                         submittedDateTime = timezone.now(),
-                        priority = 3000,
+                        priority = ProcessPriority.getPriorityForProcess("daofind", "batch"),
                         estCostCPU = 0.5 * record.uploadSize / 1e6,
                         estCostBandwidth = 0,
                         estCostStorage = 3000,
@@ -194,7 +194,7 @@ def upload(request):
                         process = "starfind",
                         requestor = User.objects.get(pk=request.user.pk),
                         submittedDateTime = timezone.now(),
-                        priority = 3000,
+                        priority = ProcessPriority.getPriorityForProcess("starfind", "batch"),
                         estCostCPU = 0.5 * record.uploadSize / 1e6,
                         estCostBandwidth = 0,
                         estCostStorage = 3000,
@@ -208,7 +208,7 @@ def upload(request):
                         process = "starmatch",
                         requestor = User.objects.get(pk=request.user.pk),
                         submittedDateTime = timezone.now(),
-                        priority = 3000,
+                        priority = ProcessPriority.getPriorityForProcess("starmatch", "batch"),
                         estCostCPU = 10,
                         estCostBandwidth = 0,
                         estCostStorage = 3000,
@@ -222,10 +222,10 @@ def upload(request):
                     piStarmatch.prerequisites.add(piStarfind)
 
                     piAstrometryNet = ProcessInput(
-                        process = "astrometrynet",
+                        process = "astrometryNet",
                         requestor = User.objects.get(pk=request.user.pk),
                         submittedDateTime = timezone.now(),
-                        priority = 1000,
+                        priority = ProcessPriority.getPriorityForProcess("astrometryNet", "batch"),
                         estCostCPU = 100,
                         estCostBandwidth = 3000,
                         estCostStorage = 3000,
@@ -239,10 +239,10 @@ def upload(request):
                     piAstrometryNet.prerequisites.add(piStarmatch)
 
                     piHeaders = ProcessInput(
-                        process = "parseheaders",
+                        process = "parseHeaders",
                         requestor = User.objects.get(pk=request.user.pk),
                         submittedDateTime = timezone.now(),
-                        priority = 10000,
+                        priority = ProcessPriority.getPriorityForProcess("parseHeaders", "batch"),
                         estCostCPU = .1,
                         estCostBandwidth = 0,
                         estCostStorage = 1000,
@@ -681,7 +681,7 @@ def query(request):
             etree.SubElement(root, "ImageTransform", imageTransformDict)
 
     elif request.GET['queryfor'] == 'sextractorResult':
-        orderField, ascDesc = parseQueryOrderBy(request, {'fluxAuto': 'fluxAuto'}, 'fluxAuto', '-')
+        orderField, ascDesc = parseQueryOrderBy(request, {'confidence': 'confidence'}, 'confidence', '-')
         results = SextractorResult.objects
 
         if 'imageId' in request.GET:
@@ -714,7 +714,7 @@ def query(request):
             etree.SubElement(root, "SextractorResult", sextractorDict)
 
     elif request.GET['queryfor'] == 'image2xyResult':
-        orderField, ascDesc = parseQueryOrderBy(request, {'flux': 'flux'}, 'flux', '-')
+        orderField, ascDesc = parseQueryOrderBy(request, {'confidence': 'confidence'}, 'confidence', '-')
         results = Image2xyResult.objects
 
         if 'imageId' in request.GET:
@@ -742,7 +742,7 @@ def query(request):
             etree.SubElement(root, "Image2xyResult", image2xyDict)
 
     elif request.GET['queryfor'] == 'daofindResult':
-        orderField, ascDesc = parseQueryOrderBy(request, {'mag': 'mag'}, 'mag', '')
+        orderField, ascDesc = parseQueryOrderBy(request, {'confidence': 'confidence'}, 'confidence', '-')
         results = DaofindResult.objects
 
         if 'imageId' in request.GET:
@@ -774,7 +774,7 @@ def query(request):
             etree.SubElement(root, "DaofindResult", daofindDict)
 
     elif request.GET['queryfor'] == 'starfindResult':
-        orderField, ascDesc = parseQueryOrderBy(request, {'mag': 'mag'}, 'mag', '')
+        orderField, ascDesc = parseQueryOrderBy(request, {'confidence': 'confidence'}, 'confidence', '-')
         results = StarfindResult.objects
 
         if 'imageId' in request.GET:
@@ -807,7 +807,7 @@ def query(request):
             etree.SubElement(root, "StarfindResult", starfindDict)
 
     elif request.GET['queryfor'] == 'userSubmittedResult':
-        orderField, ascDesc = parseQueryOrderBy(request, {'pixelX': 'pixelY'}, 'pixelX', '')
+        orderField, ascDesc = parseQueryOrderBy(request, {'confidence': 'confidence'}, 'confidence', '-')
         results = UserSubmittedResult.objects
 
         if 'imageId' in request.GET:
@@ -832,8 +832,34 @@ def query(request):
 
             etree.SubElement(root, "UserSubmittedResult", userSubmittedDict)
 
+    elif request.GET['queryfor'] == 'userSubmittedHotPixel':
+        orderField, ascDesc = parseQueryOrderBy(request, {'confidence': 'confidence'}, 'confidence', '-')
+        results = UserSubmittedHotPixel.objects
+
+        if 'imageId' in request.GET:
+            for valueString in request.GET.getlist('imageId'):
+                values = cleanupQueryValues(valueString, 'int')
+                if len(values) > 0:
+                    results = results.filter(image__pk__in=values)
+
+        results = results.order_by(ascDesc + orderField)[offset:offset+limit]
+
+        for result in results:
+            userSubmittedDict = {}
+            ra, dec = result.getRaDec()
+            userSubmittedDict['ra'] = str(ra)
+            userSubmittedDict['dec'] = str(dec)
+            userSubmittedDict['id'] = str(result.pk)
+            userSubmittedDict['confidence'] = str(result.confidence)
+            userSubmittedDict['imageId'] = str(result.image.pk)
+            userSubmittedDict['pixelX'] = str(result.pixelX)
+            userSubmittedDict['pixelY'] = str(result.pixelY)
+            userSubmittedDict['pixelZ'] = str(result.pixelZ)
+
+            etree.SubElement(root, "UserSubmittedHotPixel", userSubmittedDict)
+
     elif request.GET['queryfor'] == 'sourceFindMatch':
-        orderField, ascDesc = parseQueryOrderBy(request, {'id': 'pk'}, 'id', '')
+        orderField, ascDesc = parseQueryOrderBy(request, {'confidence': 'confidence'}, 'confidence', '-')
         results = SourceFindMatch.objects
 
         if 'imageId' in request.GET:
@@ -864,6 +890,8 @@ def query(request):
                 sourceFindMatchDict['daofindResult'] = str(result.daofindResult.pk)
             if result.starfindResult:
                 sourceFindMatchDict['starfindResult'] = str(result.starfindResult.pk)
+            if result.userSubmittedResult:
+                sourceFindMatchDict['userSubmittedResult'] = str(result.userSubmittedResult.pk)
 
             etree.SubElement(root, "SourceFindMatch", sourceFindMatchDict)
 
@@ -1375,6 +1403,34 @@ def saveUserSubmittedSourceResults(request):
             )
 
         userSubmittedResult.save()
+
+    userHotPixels = json.loads(request.POST.get('hotPixels'))
+    for result in userHotPixels:
+        userSubmittedHotPixel = UserSubmittedHotPixel(
+            user = request.user,
+            image = image,
+            pixelX = float(result['x']),
+            pixelY = float(result['y']),
+            pixelZ = None,  #TODO: Handle multi extension files.
+            confidence = 1.0
+            )
+
+        userSubmittedHotPixel.save()
+
+    with transaction.atomic():
+        piStarmatch = ProcessInput(
+            process = "starmatch",
+            requestor = User.objects.get(pk=request.user.pk),
+            submittedDateTime = timezone.now(),
+            priority = ProcessPriority.getPriorityForProcess("starmatch", "interactive"),
+            estCostCPU = 10,
+            estCostBandwidth = 0,
+            estCostStorage = 3000,
+            estCostIO = 10000
+            )
+
+        piStarmatch.save()
+        piStarmatch.addArguments([image.fileRecord.onDiskFileName])
 
     return HttpResponse(json.dumps({'text': 'Response Saved Successfully'}), status=200)
 

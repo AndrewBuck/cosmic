@@ -32,7 +32,7 @@ colors are defined in javascript, we need to do this in the window.onload functi
 <th>Image2xy<div id=image2xyLoadingDiv></div></th>
 <th>Daofind<div id=daofindLoadingDiv></div></th>
 <th>Starfind<div id=starfindLoadingDiv></div></th>
-<th>Multiple<br>Method<br>Matches<div id=sourceFindMatchesLoadingDiv></div></th>
+<th>Multiple Matches<div id=sourceFindMatchesLoadingDiv><br><br>Waiting...</div></th>
 </tr>
 
 <!-- TODO: Add a row at the top here showing how many results there are from each detection method -->
@@ -145,7 +145,12 @@ colors are defined in javascript, we need to do this in the window.onload functi
     <div id=uploadResultsButtonDiv>
         You have marked <div id=uploadResultsNumDiv style="display: inline-block">0</div> of the <i>dimmest</i> stars
         you can <i>reliably</i> see in the image below:
-        <input id=uploadMarkedStarsButton type=button value="Upload marked stars." onclick="submitUserResults()">
+        <input id=uploadMarkedStarsButton type=button value="Upload marked objects." onclick="submitUserResults()">
+        <br>
+        You have also marked
+        <div style="display: inline-block" id=hotPixelsNumDiv>0</div> hot pixels (<i>ctrl</i>),
+        <div style="display: inline-block" id=hotLinesNumDiv>0</div> bad lines (<i>ctrl + x</i>), and
+        <div style="display: inline-block" id=hotColumnsNumDiv>0</div> bad columns (<i>ctrl + c</i>).
     </div>
 </div></p>
 
@@ -158,11 +163,14 @@ Your browser does not support the HTML5 canvas tag.
 
 <script>
 var imageId = {{id}};
+var limitPerSource = 1000;  //TODO: Add a notice in each of the loading methods if the number returned equals this limit.
 var sextractorResults = [], image2xyResults = [], daofindResults = [], starfindResults = [];
 var userCreatedResults = [], userSubmittedResults = [];
+var userCreatedHotPixels = [], userSubmittedHotPixels = [];
 var sextractorResultsPromise, image2xyResultsPromise, daofindResultsPromise, starfindResultsPromise;
 var sourceFindMatches = [];
 var finishedLoading = false;
+var submitButtonEnabled = false;
 var canvas, context;
 var img;
 var sextractorColor = "#E02010";
@@ -187,6 +195,25 @@ var maxDistanceFromStarSquared = maxDistanceFromStar*maxDistanceFromStar;
 var lastDrawSourcesTime = 0;
 
 var plot;
+
+var keyCodeDict = {
+    17: 'ctrl',
+    16: 'shift',
+    67: 'c',
+    88: 'x',
+    90: 'z'
+    }
+
+var keyStatusDict = {
+    'ctrl': false,
+    'shift': false,
+    'c': false,
+    'x': false,
+    'z': false
+    }
+
+var numKeysPressed = 0;
+var mode = '';
 
 function drawStroked(c, text, x, y, ignoreDistance=false)
 {
@@ -322,7 +349,7 @@ function getSextractorResults()
     $('#sextractorLoadingDiv').html('<br><br>Loading...');
 
     sextractorResultsPromise = $.ajax({
-        url : "/query/?queryfor=sextractorResult&limit=10000&imageId=" + imageId,
+        url : "/query/?queryfor=sextractorResult&limit=" + limitPerSource + "&imageId=" + imageId,
         type : "get",
         async: true,
         success : function(xml)
@@ -357,7 +384,7 @@ function getSextractorResults()
             addHistogramToPlot(fluxAutoValues, numberOfBins, sextractorColor, 'Flux (sextractor)', []);
 
             drawSources();
-            $('#sextractorLoadingDiv').html('');
+            $('#sextractorLoadingDiv').html("<br>" + sextractorResults.length + " Results<br>Loaded");
             Promise.resolve(true);
         }
     });
@@ -368,7 +395,7 @@ function getUserSubmittedResults()
     var i;
 
     $.ajax({
-        url : "/query/?queryfor=userSubmittedResult&limit=10000&imageId=" + imageId,
+        url : "/query/?queryfor=userSubmittedResult&limit=" + limitPerSource + "&imageId=" + imageId,
         type : "get",
         async: true,
         success : function(xml)
@@ -393,6 +420,36 @@ function getUserSubmittedResults()
     });
 };
 
+function getUserSubmittedHotPixels()
+{
+    var i;
+
+    $.ajax({
+        url : "/query/?queryfor=userSubmittedHotPixel&limit=" + limitPerSource + "&imageId=" + imageId,
+        type : "get",
+        async: true,
+        success : function(xml)
+        {
+            var results = xml.getElementsByTagName('UserSubmittedHotPixel')
+            for(i = 0; i < results.length; i++)
+            {
+                attr = results[i].attributes;
+                userSubmittedHotPixels[i] = new Object({
+                    id: Number(attr.getNamedItem('id').nodeValue),
+                    confidence: Number(attr.getNamedItem('confidence').nodeValue),
+                    ra: Number(attr.getNamedItem('ra').nodeValue),
+                    dec: Number(attr.getNamedItem('dec').nodeValue),
+                    x: Number(attr.getNamedItem('pixelX').nodeValue),
+                    y: Number(attr.getNamedItem('pixelY').nodeValue),
+                    z: Number(attr.getNamedItem('pixelZ').nodeValue),
+                });
+            }
+
+            drawSources();
+        }
+    });
+};
+
 function getImage2xyResults()
 {
     var i;
@@ -400,7 +457,7 @@ function getImage2xyResults()
     $('#image2xyLoadingDiv').html('<br><br>Loading...');
 
     image2xyResultsPromise = $.ajax({
-        url : "/query/?queryfor=image2xyResult&limit=10000&imageId=" + imageId,
+        url : "/query/?queryfor=image2xyResult&limit=" + limitPerSource + "&imageId=" + imageId,
         type : "get",
         async: true,
         success : function(xml)
@@ -431,7 +488,7 @@ function getImage2xyResults()
             addHistogramToPlot(fluxValues, numberOfBins, image2xyColor, 'Flux (image2xy)', []);
 
             drawSources();
-            $('#image2xyLoadingDiv').html('');
+            $('#image2xyLoadingDiv').html("<br>" + image2xyResults.length + " Results<br>Loaded");
             Promise.resolve(true);
         }
     });
@@ -444,7 +501,7 @@ function getDaofindResults()
     $('#daofindLoadingDiv').html('<br><br>Loading...');
 
     daofindResultsPromise = $.ajax({
-        url : "/query/?queryfor=daofindResult&limit=10000&imageId=" + imageId,
+        url : "/query/?queryfor=daofindResult&limit=" + limitPerSource + "&imageId=" + imageId,
         type : "get",
         async: true,
         success : function(xml)
@@ -492,7 +549,7 @@ function getDaofindResults()
             addHistogramToPlot(groundValues, numberOfBins, daofindColor, 'G Round (daofind)', [6, 6]);
 
             drawSources();
-            $('#daofindLoadingDiv').html('');
+            $('#daofindLoadingDiv').html("<br>" + daofindResults.length + " Results<br>Loaded");
             Promise.resolve(true);
         }
     });
@@ -505,7 +562,7 @@ function getStarfindResults()
     $('#starfindLoadingDiv').html('<br><br>Loading...');
 
     starfindResultsPromise = $.ajax({
-        url : "/query/?queryfor=starfindResult&limit=10000&imageId=" + imageId,
+        url : "/query/?queryfor=starfindResult&limit=" + limitPerSource + "&imageId=" + imageId,
         type : "get",
         async: true,
         success : function(xml)
@@ -557,7 +614,7 @@ function getStarfindResults()
             addHistogramToPlot(sharpnessValues, numberOfBins, starfindColor, 'Sharpness (starfind)', [2, 2, 2, 2, 5]);
 
             drawSources();
-            $('#starfindLoadingDiv').html('');
+            $('#starfindLoadingDiv').html("<br>" + starfindResults.length + " Results<br>Loaded");
             Promise.resolve(true);
         }
     });
@@ -570,7 +627,7 @@ function getSourceFindMatches()
     $('#sourceFindMatchesLoadingDiv').html('<br><br>Loading...');
 
     $.ajax({
-        url : "/query/?queryfor=sourceFindMatch&limit=10000&imageId=" + imageId,
+        url : "/query/?queryfor=sourceFindMatch&limit=" + limitPerSource + "&imageId=" + imageId,
         type : "get",
         async: true,
         success : function(xml)
@@ -580,7 +637,7 @@ function getSourceFindMatches()
             {
                 attr = results[i].attributes;
 
-                sextractorId = null, image2xyId = null, daofindId = null, starfindId = null;
+                sextractorId = null, image2xyId = null, daofindId = null, starfindId = null, userSubmittedId = null;
                 if(attr.getNamedItem('sextractorResult') != null)
                     sextractorId = Number(attr.getNamedItem('sextractorResult').nodeValue);
 
@@ -592,6 +649,9 @@ function getSourceFindMatches()
 
                 if(attr.getNamedItem('starfindResult') != null)
                     starfindId = Number(attr.getNamedItem('starfindResult').nodeValue);
+
+                if(attr.getNamedItem('userSubmittedResult') != null)
+                    userSubmittedId = Number(attr.getNamedItem('userSubmittedResult').nodeValue);
 
                 sourceFindMatches[i] = new Object({
                     id: Number(attr.getNamedItem('id').nodeValue),
@@ -605,7 +665,8 @@ function getSourceFindMatches()
                     sextractorResultId: sextractorId,
                     image2xyResultId: image2xyId,
                     daofindResultId: daofindId,
-                    starfindResultId: starfindId
+                    starfindResultId: starfindId,
+                    userSubmittedResultId: userSubmittedId
                 });
 
                 //TODO: Since this code depends on accessing other objects we will need to break it out into a function
@@ -614,11 +675,12 @@ function getSourceFindMatches()
                 sourceFindMatches[i].image2xyResult = getObjectById(image2xyResults, sourceFindMatches[i].image2xyResultId);
                 sourceFindMatches[i].daofindResult = getObjectById(daofindResults, sourceFindMatches[i].daofindResultId);
                 sourceFindMatches[i].starfindResult = getObjectById(starfindResults, sourceFindMatches[i].starfindResultId);
+                sourceFindMatches[i].userSubmittedResult = getObjectById(userSubmittedResults, sourceFindMatches[i].userSubmittedResultId);
             }
 
             finishedLoading = true;
             drawSources();
-            $('#sourceFindMatchesLoadingDiv').html('');
+            $('#sourceFindMatchesLoadingDiv').html("<br>" + sourceFindMatches.length + " Results<br>Loaded");
             Promise.resolve(true);
         }
     });
@@ -629,31 +691,47 @@ function submitUserResults()
     var i;
     var commaString;
 
-    //TODO: Replace this loop with a jsonify function.
-    var jsonString = "["
-    for(i = 0; i < userCreatedResults.length; i++)
+    //TODO: Replace this function with a jsonify function.
+    function jsonify(results)
     {
-        if(i < userCreatedResults.length-1)
-            commaString = ',';
-        else
-            commaString = '';
+        var jsonString = "["
+        for(i = 0; i < results.length; i++)
+        {
+            if(i < results.length-1)
+                commaString = ',';
+            else
+                commaString = '';
 
-        jsonString += '{"x": "' + userCreatedResults[i].x + '", "y": "' + userCreatedResults[i].y + '"}';
-        jsonString += commaString
+            jsonString += '{'
+            for(key in results[i])
+                jsonString += '"' + key + '": "' + results[i][key] + '",';
+
+            jsonString = jsonString.substr(0, jsonString.length-1);
+
+            jsonString += '}'
+            jsonString += commaString
+        }
+        jsonString += ']'
+
+        return jsonString;
     }
-    jsonString += ']'
 
     $.ajax({
         url : "/save/userSubmittedSourceResults/",
         type : "post",
-        data: {userResults: jsonString, imageId: imageId},
+        data: {userResults: jsonify(userCreatedResults), hotPixels: jsonify(userCreatedHotPixels), imageId: imageId},
         dataType: 'json',
         success : function(response)
         {
             alert(response.text);
+
             userCreatedResults = [];
             userSubmittedResults = [];
             getUserSubmittedResults();
+
+            userCreatedHotPixels = [];
+            userSubmittedHotPixels = [];
+            getUserSubmittedHotPixels();
         }
         //TODO: Implement error handler.
     });
@@ -694,7 +772,7 @@ function drawSource(c, x, y, size, sizeFactor, sizeScaleFactor, boxXMin=undefine
 
     var drawRadius = sizeFactor*Math.pow(size, sizeScaleFactor);
     drawRadius = math.min(drawRadius, 20);
-    drawRadius = math.max(drawRadius, 5);
+    drawRadius = math.max(drawRadius, 2);
 
     c.beginPath();
     c.arc(x, {{image.dimY}} - y, drawRadius, 0, 2*Math.PI)
@@ -702,11 +780,60 @@ function drawSource(c, x, y, size, sizeFactor, sizeScaleFactor, boxXMin=undefine
 
     if(!(boxYMax === undefined))
     {
-        c.beginPath();
-        c.rect(boxXMin, {{image.dimY}} - boxYMin, boxXMax-boxXMin, boxYMin-boxYMax);
-        c.stroke();
+        if(math.abs(boxXMax-boxXMin) > 8 && math.abs(boxYMax-boxYMin) > 8)
+        {
+            c.beginPath();
+            c.rect(boxXMin, {{image.dimY}} - boxYMin, boxXMax-boxXMin, boxYMin-boxYMax);
+            c.stroke();
+        }
     }
 
+    context.globalAlpha = oldGlobalAlpha;
+};
+
+function drawHLine(c, y, color='#A02020', opacity=-1)
+{
+    var oldGlobalAlpha = c.globalAlpha;
+    var oldStrokeStyle = c.strokeStyle;
+    var oldFillStyle = c.fillStyle;
+    c.strokeStyle = color;
+    c.fillStyle = color;
+
+    if(opacity == -1)
+        c.globalAlpha = 0.2;
+    else
+        c.globalAlpha = opacity;
+
+    c.beginPath();
+    c.moveTo(0, {{image.dimY}} - y);
+    c.lineTo({{image.dimX}}, {{image.dimY}} - y);
+    c.stroke();
+
+    c.strokeStyle = oldStrokeStyle;
+    c.fillStyle = oldFillStyle;
+    context.globalAlpha = oldGlobalAlpha;
+};
+
+function drawVLine(c, x, color='#A02020', opacity=-1)
+{
+    var oldGlobalAlpha = c.globalAlpha;
+    var oldStrokeStyle = c.strokeStyle;
+    var oldFillStyle = c.fillStyle;
+    c.strokeStyle = color;
+    c.fillStyle = color;
+
+    if(opacity == -1)
+        c.globalAlpha = 0.2;
+    else
+        c.globalAlpha = opacity;
+
+    c.beginPath();
+    c.moveTo(x, 0);
+    c.lineTo(x, {{image.dimY}});
+    c.stroke();
+
+    c.strokeStyle = oldStrokeStyle;
+    c.fillStyle = oldFillStyle;
     context.globalAlpha = oldGlobalAlpha;
 };
 
@@ -757,6 +884,8 @@ function drawReticle(c, x, y, size, color='#A02020', opacity=-1)
         c.stroke();
     }
 
+    c.strokeStyle = oldStrokeStyle;
+    c.fillStyle = oldFillStyle;
     context.globalAlpha = oldGlobalAlpha;
 };
 
@@ -918,14 +1047,16 @@ function drawSources()
     context.fillStyle = userCreatedColor;
 
     for(i = 0; i < userSubmittedResults.length && !lmbDown; i++)
-    {
         drawSource(context, userSubmittedResults[i].x, userSubmittedResults[i].y, 1.0, 10, 2);
-    }
+
+    for(i = 0; i < userSubmittedHotPixels.length && !lmbDown; i++)
+        drawSource(context, userSubmittedHotPixels[i].x, userSubmittedHotPixels[i].y, 1.0, 5, 2);
 
     for(i = 0; i < userCreatedResults.length && !lmbDown; i++)
-    {
         drawReticle(context, userCreatedResults[i].x, userCreatedResults[i].y, 10, userCreatedColor, 0.8);
-    }
+
+    for(i = 0; i < userCreatedHotPixels.length && !lmbDown; i++)
+        drawReticle(context, userCreatedHotPixels[i].x, userCreatedHotPixels[i].y, 5, userCreatedColor, 0.8);
 
     labelSize = 20
     context.font = labelSize + 'px sans-serif'
@@ -977,6 +1108,16 @@ function drawSources()
                 context.fillStyle = userCreatedColor;
                 break;
 
+            case 'user - hot pixel - not uploaded':
+                context.strokeStyle = userCreatedColor;
+                context.fillStyle = userCreatedColor;
+                break;
+
+            case 'user - hot pixel':
+                context.strokeStyle = userCreatedColor;
+                context.fillStyle = userCreatedColor;
+                break;
+
             case 'user':
                 context.strokeStyle = userCreatedColor;
                 context.fillStyle = userCreatedColor;
@@ -1007,14 +1148,26 @@ function drawSources()
         var xPos = mouseX - reticlePrecision*deltaX;
         var yPos = mouseY - reticlePrecision*deltaY;
 
-        drawReticle(context, xPos, yPos, 30, userCreatedColor, 0.8);
+        if(mode == 'stars' || mode == 'hotpixels')
+            drawReticle(context, xPos, yPos, 30, userCreatedColor, 0.8);
+        else if(mode == 'hotlines')
+            drawHLine(context, yPos, userCreatedColor, 0.8);
+        else if(mode == 'hotcolumns')
+            drawVLine(context, xPos, userCreatedColor, 0.8);
     }
     else
     {
-        if(mouseoverTextActive)
-            drawReticle(context, mouseX, mouseY, 30/reticlePrecision, userCreatedColor, 0.8);
-        else
-            drawReticle(context, mouseX, mouseY, 30/reticlePrecision, userCreatedColor, 0.4);
+        if(mode == 'stars' || mode == 'hotpixels')
+        {
+            if(mouseoverTextActive)
+                drawReticle(context, mouseX, mouseY, 30/reticlePrecision, userCreatedColor, 0.8);
+            else
+                drawReticle(context, mouseX, mouseY, 30/reticlePrecision, userCreatedColor, 0.4);
+        }
+        else if(mode == 'hotlines')
+            drawHLine(context, mouseY, userCreatedColor, 0.8);
+        else if(mode == 'hotcolumns')
+            drawVLine(context, mouseX, userCreatedColor, 0.8);
     }
 
     context.textAlign = 'start';
@@ -1194,8 +1347,8 @@ function handleMouseMove(event)
     mouseX = event.clientX - rect.left;
     mouseY = {{image.dimY}} - (event.clientY - rect.top);
 
-    if(event.clientX < rect.left || event.clientX >  rect.right || event.clientY < rect.top || event.clientY > rect.bottom)
-        return;
+    if(!lmbDown && (event.clientX < rect.left || event.clientX >  rect.right || event.clientY < rect.top || event.clientY > rect.bottom))
+        return true;
 
     oldMouseObjectsList = mouseObjectsList;
     mouseObjectsList = [];
@@ -1217,7 +1370,9 @@ function handleMouseMove(event)
         sourceLists[sourceLists.length] = [sourceFindMatches, 'multi'];
 
     sourceLists[sourceLists.length] = [userCreatedResults, 'user - not uploaded'];
+    sourceLists[sourceLists.length] = [userCreatedHotPixels, 'user - hot pixel - not uploaded'];
     sourceLists[sourceLists.length] = [userSubmittedResults, 'user'];
+    sourceLists[sourceLists.length] = [userSubmittedHotPixels, 'user - hot pixel'];
 
     for(var i = 0; i < sourceLists.length; i++)
     {
@@ -1251,21 +1406,21 @@ function handleMouseMove(event)
 
 function handleMouseButtonDown(event)
 {
-    var i;
+    if(mouseX < 0 || mouseX > {{image.dimX}} || mouseY < 0 || mouseY > {{image.dimY}})
+        return true;
 
     if(event.which == 1)
     {
         lmbDown = true;
         mouseXStart = mouseX;
         mouseYStart = mouseY;
-        drawSources();
     }
+
+    drawSources();
 };
 
 function handleMouseButtonUp(event)
 {
-    var i;
-
     if(event.which == 1)
     {
         //NOTE: These lines are duplicated elsewhere, if they change the others must too.
@@ -1274,19 +1429,74 @@ function handleMouseButtonUp(event)
         var xPos = mouseX - reticlePrecision*deltaX;
         var yPos = mouseY - reticlePrecision*deltaY;
 
-        userCreatedResults[userCreatedResults.length] = {x: xPos, y: yPos, confidence: 1.0};
+        if(lmbDown && mode == 'stars')
+            userCreatedResults[userCreatedResults.length] = {x: xPos, y: yPos, confidence: 1.0};
+        else if(lmbDown && mode == 'hotpixels')
+            userCreatedHotPixels[userCreatedHotPixels.length] = {x: xPos, y: yPos, confidence: 1.0};
 
         lmbDown = false;
         drawSources();
     }
 
     $('#uploadResultsNumDiv').html(userCreatedResults.length);
+    $('#hotPixelsNumDiv').html(userCreatedHotPixels.length);
 
-    if(userCreatedResults.length == 1)
+    if(!submitButtonEnabled && (userCreatedResults.length == 1 || userCreatedHotPixels.length == 1))
     {
+        submitButtonEnabled = true;
         $('#uploadMarkedStarsButton').hide(1000);
         $('#uploadMarkedStarsButton').prop( "disabled", false );
         $('#uploadMarkedStarsButton').show(1000);
+    }
+};
+
+function handleKeyDown(event)
+{
+    if(!lmbDown && (mouseX < 0 || mouseX > {{image.dimX}} || mouseY < 0 || mouseY > {{image.dimY}}))
+        return true;
+
+    //alert(keyCodeDict[event.which]);
+    keyStatusDict[keyCodeDict[event.which]] = true;
+    countKeysPressed();
+
+    drawSources();
+};
+
+function handleKeyUp(event)
+{
+    keyStatusDict[keyCodeDict[event.which]] = false;
+    countKeysPressed();
+
+    drawSources();
+};
+
+function countKeysPressed()
+{
+    var count = 0;
+    for(var key in keyStatusDict)
+        if(keyStatusDict[key])
+            count++;
+
+    numKeysPressed = count;
+    //alert(numKeysPressed);
+
+    switch(numKeysPressed)
+    {
+        case 0:
+            mode = 'stars';
+            break;
+
+        case 1:
+            if(keyStatusDict['ctrl'])
+                mode = 'hotpixels';
+            break;
+
+        case 2:
+            if(keyStatusDict['ctrl'] && keyStatusDict['x'])
+                mode = 'hotlines';
+            else if(keyStatusDict['ctrl'] && keyStatusDict['c'])
+                mode = 'hotcolumns';
+            break;
     }
 };
 
@@ -1296,11 +1506,14 @@ window.onload = function()
     context = canvas.getContext("2d");
 
     //TODO: There are probably bugs here where you click the mouse down on the canvas and then release it elsewhere in the window, etc.
-    $(window).mousemove(handleMouseMove);
-    $('#sourcesCanvas').mousedown(handleMouseButtonDown);
-    $('#sourcesCanvas').mouseup(handleMouseButtonUp);
+    $(document).mousemove(handleMouseMove);
+    $(document).mousedown(handleMouseButtonDown);
+    $(document).mouseup(handleMouseButtonUp);
     $("#sourcesCanvas").mouseenter(function(){document.body.style.cursor = 'none';});
     $("#sourcesCanvas").mouseleave(function(){document.body.style.cursor = oldMouseCursor;});
+    $(document).keydown(handleKeyDown);
+    $(document).keyup(handleKeyUp);
+    countKeysPressed();
 
     $('#uploadMarkedStarsButton').prop( "disabled", true );
 
@@ -1328,6 +1541,7 @@ window.onload = function()
     updateTable();
 
     getUserSubmittedResults();
+    getUserSubmittedHotPixels();
     getSextractorResults();
     getImage2xyResults();
     getDaofindResults();
