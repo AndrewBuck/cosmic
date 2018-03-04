@@ -718,7 +718,7 @@ function drawSource(c, x, y, size, sizeFactor, sizeScaleFactor, boxXMin=undefine
 
     var drawRadius = sizeFactor*Math.pow(size, sizeScaleFactor);
     drawRadius = math.min(drawRadius, 20);
-    drawRadius = math.max(drawRadius, 5);
+    drawRadius = math.max(drawRadius, 2);
 
     c.beginPath();
     c.arc(x, {{image.dimY}} - y, drawRadius, 0, 2*Math.PI)
