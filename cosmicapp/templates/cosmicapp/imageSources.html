@@ -734,6 +734,52 @@ function drawSource(c, x, y, size, sizeFactor, sizeScaleFactor, boxXMin=undefine
     context.globalAlpha = oldGlobalAlpha;
 };
 
+function drawHLine(c, y, color='#A02020', opacity=-1)
+{
+    var oldGlobalAlpha = c.globalAlpha;
+    var oldStrokeStyle = c.strokeStyle;
+    var oldFillStyle = c.fillStyle;
+    c.strokeStyle = color;
+    c.fillStyle = color;
+
+    if(opacity == -1)
+        c.globalAlpha = 0.2;
+    else
+        c.globalAlpha = opacity;
+
+    c.beginPath();
+    c.moveTo(0, {{image.dimY}} - y);
+    c.lineTo({{image.dimX}}, {{image.dimY}} - y);
+    c.stroke();
+
+    c.strokeStyle = oldStrokeStyle;
+    c.fillStyle = oldFillStyle;
+    context.globalAlpha = oldGlobalAlpha;
+};
+
+function drawVLine(c, x, color='#A02020', opacity=-1)
+{
+    var oldGlobalAlpha = c.globalAlpha;
+    var oldStrokeStyle = c.strokeStyle;
+    var oldFillStyle = c.fillStyle;
+    c.strokeStyle = color;
+    c.fillStyle = color;
+
+    if(opacity == -1)
+        c.globalAlpha = 0.2;
+    else
+        c.globalAlpha = opacity;
+
+    c.beginPath();
+    c.moveTo(x, 0);
+    c.lineTo(x, {{image.dimY}});
+    c.stroke();
+
+    c.strokeStyle = oldStrokeStyle;
+    c.fillStyle = oldFillStyle;
+    context.globalAlpha = oldGlobalAlpha;
+};
+
 function drawReticle(c, x, y, size, color='#A02020', opacity=-1)
 {
     var oldGlobalAlpha = c.globalAlpha;
