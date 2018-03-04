@@ -32,7 +32,7 @@ colors are defined in javascript, we need to do this in the window.onload functi
 <th>Image2xy<div id=image2xyLoadingDiv></div></th>
 <th>Daofind<div id=daofindLoadingDiv></div></th>
 <th>Starfind<div id=starfindLoadingDiv></div></th>
-<th>Multiple<br>Method<br>Matches<div id=sourceFindMatchesLoadingDiv><br><br>Waiting...</div></th>
+<th>Multiple Matches<div id=sourceFindMatchesLoadingDiv><br><br>Waiting...</div></th>
 </tr>
 
 <!-- TODO: Add a row at the top here showing how many results there are from each detection method -->
@@ -164,6 +164,7 @@ var userCreatedResults = [], userSubmittedResults = [];
 var sextractorResultsPromise, image2xyResultsPromise, daofindResultsPromise, starfindResultsPromise;
 var sourceFindMatches = [];
 var finishedLoading = false;
+var submitButtonEnabled = false;
 var canvas, context;
 var img;
 var sextractorColor = "#E02010";
@@ -1371,8 +1372,9 @@ function handleMouseButtonUp(event)
 
     $('#uploadResultsNumDiv').html(userCreatedResults.length);
 
-    if(userCreatedResults.length == 1)
+    if(!submitButtonEnabled && (userCreatedResults.length == 1 || userCreatedHotPixels.length == 1))
     {
+        submitButtonEnabled = true;
         $('#uploadMarkedStarsButton').hide(1000);
         $('#uploadMarkedStarsButton').prop( "disabled", false );
         $('#uploadMarkedStarsButton').show(1000);
