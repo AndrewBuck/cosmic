@@ -103,6 +103,10 @@ while not quit:
         arg = pi.processargument_set.all()[0].arg
         celeryResult = parseHeaders.delay(arg)
 
+    elif pi.process == 'flagSources':
+        arg = pi.processargument_set.all()[0].arg
+        celeryResult = flagSources.delay(arg)
+
     else:
         print("Skipping unknown task type: " + pi.process)
         sys.stdout.flush()

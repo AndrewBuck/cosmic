@@ -63,6 +63,18 @@ priority, created = ProcessPriority.objects.get_or_create(
     )
 
 priority, created = ProcessPriority.objects.get_or_create(
+    name = 'flagSources',
+    priority = 3000,
+    priorityClass = 'batch'
+    )
+
+priority, created = ProcessPriority.objects.get_or_create(
+    name = 'flagSources',
+    priority = 100000,
+    priorityClass = 'interactive'
+    )
+
+priority, created = ProcessPriority.objects.get_or_create(
     name = 'astrometryNet',
     priority = 1000,
     priorityClass = 'batch'

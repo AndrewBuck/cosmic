@@ -601,6 +601,9 @@ class SourceFindResult(models.Model):
     pixelY = models.FloatField(null=True)
     pixelZ = models.FloatField(null=True)
     confidence = models.FloatField(null=True)
+    flagHotPixel = models.NullBooleanField()
+    flagBadLine = models.NullBooleanField()
+    flagBadColumn = models.NullBooleanField()
 
     def getRaDec(self):
         plateSolution = self.image.getBestPlateSolution()

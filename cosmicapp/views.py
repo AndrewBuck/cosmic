@@ -1418,6 +1418,21 @@ def saveUserSubmittedSourceResults(request):
         userSubmittedHotPixel.save()
 
     with transaction.atomic():
+        #TODO: We only need to add a flagSources task if the use submitted new hot pixels in the request.
+        piFlagSources = ProcessInput(
+            process = "flagSources",
+            requestor = User.objects.get(pk=request.user.pk),
+            submittedDateTime = timezone.now(),
+            priority = ProcessPriority.getPriorityForProcess("flagSources", "interactive") + 0.1,
+            estCostCPU = 10,
+            estCostBandwidth = 0,
+            estCostStorage = 0,
+            estCostIO = 10000
+            )
+
+        piFlagSources.save()
+        piFlagSources.addArguments([str(image.pk)])
+
         piStarmatch = ProcessInput(
             process = "starmatch",
             requestor = User.objects.get(pk=request.user.pk),
@@ -1431,6 +1446,7 @@ def saveUserSubmittedSourceResults(request):
 
         piStarmatch.save()
         piStarmatch.addArguments([image.fileRecord.onDiskFileName])
+        piStarmatch.prerequisites.add(piFlagSources)
 
     return HttpResponse(json.dumps({'text': 'Response Saved Successfully'}), status=200)
 
