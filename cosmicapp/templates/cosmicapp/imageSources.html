@@ -827,6 +827,8 @@ function drawReticle(c, x, y, size, color='#A02020', opacity=-1)
         c.stroke();
     }
 
+    c.strokeStyle = oldStrokeStyle;
+    c.fillStyle = oldFillStyle;
     context.globalAlpha = oldGlobalAlpha;
 };
 
