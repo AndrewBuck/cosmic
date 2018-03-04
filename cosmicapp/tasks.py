@@ -252,6 +252,31 @@ def imagestats(filename):
 
     return processOutput
 
+# TODO: Histogram of FITS data (count vs adu) in linear and logarithmic (if possible?).
+# Needs to be high resolution, but deal efficiently with large swaths of 0-count.  Must
+# ignore non-data pixels properly. Design as per discussion.
+
+# TODO: Fit a gaussian curve to the dark pixels in the histogram.
+#   Histogram area used for fitting should start at the darkest populated pixel and extend
+#   to include at least * 10% of the total data pixels and as many further bins as
+#   improves + fitting metric.
+# NOTE: Extending past the * 10% may be tricky.  Though we are assumed to be in a dense
+# region there may be empty bins or features that result in the addition of * one bin to be
+# detrimental to the fitting metric, but adding * two bins improves the fit.
+#   Step by a minimum number of pixels rather than by number of bins.  Set number of pixels
+#   as some percentage of the total pixels * 1%, or as a percentage of the pixels used in the
+#   fitting so far * 10%.
+# * Arbitrary value
+# + Mimize sum of square of difference, or something more clever.
+#   Maybe too clever: minimize \sum_{i=0}^{b(n)} \frac{w_i^2 (f_i - c_i)^2}{n^a}, where
+#       n = number of pixels used to fit
+#       b(n) = minimum bin number with n cumulative pixels
+#       w_i = width of bin i
+#       f_i = value of functional fit at bin i
+#       c_i = count at bin i
+#       a = coeffecient ... suspect = 1
+#   Now, vary n along with coeffecients of f
+    
 @shared_task
 def generateThumbnails(filename):
     outputText = ""
@@ -264,10 +289,60 @@ def generateThumbnails(filename):
 
     image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
 
+    # NOTE: For setting black-point, white-point, and gamma, we will apply a naive ideal
+    # model for the thumbnail histogram.  See notebook for more details.  We will use the
+    # range of [0:1] for intensity values.
+    #   Ideal image properties:
+    #       All data pixels are strictly above 0.0 and strictly below 1.0.
+    #       Over-saturated pixels are exactly 1.0.
+    #       Non-data pixels (hot, dead, etc) are flagged (have transparancy of 1.0, etc.)
+    #       Pixels may have any shape and size?
+    #   Ideal image assumptions:
+    #       Sky background constitutes a large portion of the image.
+    #           Sky background pixels can be found in a roughly gaussian-shaped grouping
+    #           at the low end of the linear-scale histogram of the data pixels. See TODO
+    #       Nebulosity results in a skewing of the histogram gaussian to the brighter
+    #       values in proportion to the relative area.
+    #           Fitting only the dimmer half of the histogram gaussian should be
+    #           less sensitive to nebulosity.
+    #               We may be able to stop the fitting well before the peak, making the
+    #               fitting even less sensitive to nebulosity, etc.
+    #   Ideal thumbnail properties:
+    #       Show all the interesting features in an image.
+    #       Viewable in wide range of ambient lighting.
+    #       Be just large enough (bytes, dim) for the viewing context. NOTE: There are
+    #       some interesting optimizations possible here.
+    #           
+    #
+    #   Ideal thumbnail assumptions: Some ideas based on playing with source fits for a
+    #   while.  Probably will evolve significantly over time.
+    #       Over-exposed pixels represented as 1.0 
+    #       About 0.01% of brightest, non-over-exposed pixels should be crushed to 1.0
+    #       About 0.01% of darkest, non-dead pixels crushed to 0.0
+    #       The fraction of bits devoted to sky pixels (and dim stars and nebulosity by
+    #       extension) is proportional to their "interestingness" (scientifically, or
+    #       asthetically, or whatever) rather than their proportion in the original data.
+    #           We will devote the lower ~2/5 of the range for the sky gaussian, centered
+    #           at ~1/5, leaving the rest for un-over-exposed "bright" pixels.
+    #               Here we assume that the 3-sigma (~99%) width of the sky background
+    #               gaussian (at least the ideal lower half which is less effected by
+    #               nebulosity) is less than ~1/5.
+
+    # TODO: Classify all non-data pixels.
+    #       Read pixel classification from FITS header
+    #       Run auto-classification on remaining pixels 
+    #           Normalize image to [0,1]
+    #           Mark dead any pixel with value = 0
+    
+    # TODO: Generate transformation by looking at plate solutions for subsections of
+    #   full image and extracting coeffecients
+
     #TODO: For the really commonly loaded sizes like the ones in search results, etc, we
     # should consider sending a smaller size and scaling it up to the size we want on screen
     # to save bandwidth and decrease load times.
+    
     #TODO: All the thumbnails are square so we should decide what to do about this.
+    
     #TODO: Add some python logic to decide the exact dimensions we want the thumbnails to
     # be to preserve aspect ratio but still respect screen space requirements.
     for tempFilename, sizeArg, sizeString in [(filenameFull, "100%", "full"), (filenameSmall, "100x100", "small"),
