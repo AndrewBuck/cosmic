@@ -1079,14 +1079,26 @@ function drawSources()
         var xPos = mouseX - reticlePrecision*deltaX;
         var yPos = mouseY - reticlePrecision*deltaY;
 
-        drawReticle(context, xPos, yPos, 30, userCreatedColor, 0.8);
+        if(mode == 'stars' || mode == 'hotpixels')
+            drawReticle(context, xPos, yPos, 30, userCreatedColor, 0.8);
+        else if(mode == 'hotlines')
+            drawHLine(context, yPos, userCreatedColor, 0.8);
+        else if(mode == 'hotcolumns')
+            drawVLine(context, xPos, userCreatedColor, 0.8);
     }
     else
     {
-        if(mouseoverTextActive)
-            drawReticle(context, mouseX, mouseY, 30/reticlePrecision, userCreatedColor, 0.8);
-        else
-            drawReticle(context, mouseX, mouseY, 30/reticlePrecision, userCreatedColor, 0.4);
+        if(mode == 'stars' || mode == 'hotpixels')
+        {
+            if(mouseoverTextActive)
+                drawReticle(context, mouseX, mouseY, 30/reticlePrecision, userCreatedColor, 0.8);
+            else
+                drawReticle(context, mouseX, mouseY, 30/reticlePrecision, userCreatedColor, 0.4);
+        }
+        else if(mode == 'hotlines')
+            drawHLine(context, mouseY, userCreatedColor, 0.8);
+        else if(mode == 'hotcolumns')
+            drawVLine(context, mouseX, userCreatedColor, 0.8);
     }
 
     context.textAlign = 'start';
@@ -1341,13 +1353,17 @@ function handleMouseButtonUp(event)
     if(event.which == 1)
     {
         lmbDown = false;
-        //NOTE: These lines are duplicated elsewhere, if they change the others must too.
-        var deltaX = mouseX - mouseXStart;
-        var deltaY = mouseY - mouseYStart;
-        var xPos = mouseX - reticlePrecision*deltaX;
-        var yPos = mouseY - reticlePrecision*deltaY;
 
-        userCreatedResults[userCreatedResults.length] = {x: xPos, y: yPos, confidence: 1.0};
+        if(mode == 'stars')
+        {
+            //NOTE: These lines are duplicated elsewhere, if they change the others must too.
+            var deltaX = mouseX - mouseXStart;
+            var deltaY = mouseY - mouseYStart;
+            var xPos = mouseX - reticlePrecision*deltaX;
+            var yPos = mouseY - reticlePrecision*deltaY;
+
+            userCreatedResults[userCreatedResults.length] = {x: xPos, y: yPos, confidence: 1.0};
+        }
 
         drawSources();
     }
