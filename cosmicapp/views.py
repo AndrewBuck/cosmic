@@ -681,7 +681,7 @@ def query(request):
             etree.SubElement(root, "ImageTransform", imageTransformDict)
 
     elif request.GET['queryfor'] == 'sextractorResult':
-        orderField, ascDesc = parseQueryOrderBy(request, {'fluxAuto': 'fluxAuto'}, 'fluxAuto', '-')
+        orderField, ascDesc = parseQueryOrderBy(request, {'confidence': 'confidence'}, 'confidence', '-')
         results = SextractorResult.objects
 
         if 'imageId' in request.GET:
@@ -714,7 +714,7 @@ def query(request):
             etree.SubElement(root, "SextractorResult", sextractorDict)
 
     elif request.GET['queryfor'] == 'image2xyResult':
-        orderField, ascDesc = parseQueryOrderBy(request, {'flux': 'flux'}, 'flux', '-')
+        orderField, ascDesc = parseQueryOrderBy(request, {'confidence': 'confidence'}, 'confidence', '-')
         results = Image2xyResult.objects
 
         if 'imageId' in request.GET:
@@ -742,7 +742,7 @@ def query(request):
             etree.SubElement(root, "Image2xyResult", image2xyDict)
 
     elif request.GET['queryfor'] == 'daofindResult':
-        orderField, ascDesc = parseQueryOrderBy(request, {'mag': 'mag'}, 'mag', '')
+        orderField, ascDesc = parseQueryOrderBy(request, {'confidence': 'confidence'}, 'confidence', '-')
         results = DaofindResult.objects
 
         if 'imageId' in request.GET:
@@ -774,7 +774,7 @@ def query(request):
             etree.SubElement(root, "DaofindResult", daofindDict)
 
     elif request.GET['queryfor'] == 'starfindResult':
-        orderField, ascDesc = parseQueryOrderBy(request, {'mag': 'mag'}, 'mag', '')
+        orderField, ascDesc = parseQueryOrderBy(request, {'confidence': 'confidence'}, 'confidence', '-')
         results = StarfindResult.objects
 
         if 'imageId' in request.GET:
@@ -807,7 +807,7 @@ def query(request):
             etree.SubElement(root, "StarfindResult", starfindDict)
 
     elif request.GET['queryfor'] == 'userSubmittedResult':
-        orderField, ascDesc = parseQueryOrderBy(request, {'pixelX': 'pixelY'}, 'pixelX', '')
+        orderField, ascDesc = parseQueryOrderBy(request, {'confidence': 'confidence'}, 'confidence', '-')
         results = UserSubmittedResult.objects
 
         if 'imageId' in request.GET:
@@ -833,7 +833,7 @@ def query(request):
             etree.SubElement(root, "UserSubmittedResult", userSubmittedDict)
 
     elif request.GET['queryfor'] == 'sourceFindMatch':
-        orderField, ascDesc = parseQueryOrderBy(request, {'id': 'pk'}, 'id', '')
+        orderField, ascDesc = parseQueryOrderBy(request, {'confidence': 'confidence'}, 'confidence', '-')
         results = SourceFindMatch.objects
 
         if 'imageId' in request.GET:
