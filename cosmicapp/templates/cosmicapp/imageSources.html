@@ -1406,15 +1406,15 @@ function handleMouseMove(event)
 
 function handleMouseButtonDown(event)
 {
+    if(mouseX < 0 || mouseX > {{image.dimX}} || mouseY < 0 || mouseY > {{image.dimY}})
+        return true;
+
     if(event.which == 1)
     {
         lmbDown = true;
         mouseXStart = mouseX;
         mouseYStart = mouseY;
     }
-
-    if(!lmbDown && (mouseX < 0 || mouseX > {{image.dimX}} || mouseY < 0 || mouseY > {{image.dimY}}))
-        return true;
 
     drawSources();
 };
@@ -1423,19 +1423,18 @@ function handleMouseButtonUp(event)
 {
     if(event.which == 1)
     {
-        lmbDown = false;
-
         //NOTE: These lines are duplicated elsewhere, if they change the others must too.
         var deltaX = mouseX - mouseXStart;
         var deltaY = mouseY - mouseYStart;
         var xPos = mouseX - reticlePrecision*deltaX;
         var yPos = mouseY - reticlePrecision*deltaY;
 
-        if(mode == 'stars')
+        if(lmbDown && mode == 'stars')
             userCreatedResults[userCreatedResults.length] = {x: xPos, y: yPos, confidence: 1.0};
-        else if(mode == 'hotpixels')
+        else if(lmbDown && mode == 'hotpixels')
             userCreatedHotPixels[userCreatedHotPixels.length] = {x: xPos, y: yPos, confidence: 1.0};
 
+        lmbDown = false;
         drawSources();
     }
 
