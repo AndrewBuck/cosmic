@@ -188,6 +188,25 @@ var lastDrawSourcesTime = 0;
 
 var plot;
 
+var keyCodeDict = {
+    17: 'ctrl',
+    16: 'shift',
+    67: 'c',
+    88: 'x',
+    90: 'z'
+    }
+
+var keyStatusDict = {
+    'ctrl': false,
+    'shift': false,
+    'c': false,
+    'x': false,
+    'z': false
+    }
+
+var numKeysPressed = 0;
+var mode = '';
+
 function drawStroked(c, text, x, y, ignoreDistance=false)
 {
     if(!ignoreDistance)
@@ -1199,8 +1218,8 @@ function handleMouseMove(event)
     mouseX = event.clientX - rect.left;
     mouseY = {{image.dimY}} - (event.clientY - rect.top);
 
-    if(event.clientX < rect.left || event.clientX >  rect.right || event.clientY < rect.top || event.clientY > rect.bottom)
-        return;
+    if(!lmbDown && (event.clientX < rect.left || event.clientX >  rect.right || event.clientY < rect.top || event.clientY > rect.bottom))
+        return true;
 
     oldMouseObjectsList = mouseObjectsList;
     mouseObjectsList = [];
@@ -1263,8 +1282,12 @@ function handleMouseButtonDown(event)
         lmbDown = true;
         mouseXStart = mouseX;
         mouseYStart = mouseY;
-        drawSources();
     }
+
+    if(!lmbDown && (mouseX < 0 || mouseX > {{image.dimX}} || mouseY < 0 || mouseY > {{image.dimY}}))
+        return true;
+
+    drawSources();
 };
 
 function handleMouseButtonUp(event)
@@ -1273,6 +1296,7 @@ function handleMouseButtonUp(event)
 
     if(event.which == 1)
     {
+        lmbDown = false;
         //NOTE: These lines are duplicated elsewhere, if they change the others must too.
         var deltaX = mouseX - mouseXStart;
         var deltaY = mouseY - mouseYStart;
@@ -1281,7 +1305,6 @@ function handleMouseButtonUp(event)
 
         userCreatedResults[userCreatedResults.length] = {x: xPos, y: yPos, confidence: 1.0};
 
-        lmbDown = false;
         drawSources();
     }
 
@@ -1295,17 +1318,70 @@ function handleMouseButtonUp(event)
     }
 };
 
+function handleKeyDown(event)
+{
+    if(!lmbDown && (mouseX < 0 || mouseX > {{image.dimX}} || mouseY < 0 || mouseY > {{image.dimY}}))
+        return true;
+
+    //alert(keyCodeDict[event.which]);
+    keyStatusDict[keyCodeDict[event.which]] = true;
+    countKeysPressed();
+
+    drawSources();
+};
+
+function handleKeyUp(event)
+{
+    keyStatusDict[keyCodeDict[event.which]] = false;
+    countKeysPressed();
+
+    drawSources();
+};
+
+function countKeysPressed()
+{
+    var count = 0;
+    for(var key in keyStatusDict)
+        if(keyStatusDict[key])
+            count++;
+
+    numKeysPressed = count;
+    //alert(numKeysPressed);
+
+    switch(numKeysPressed)
+    {
+        case 0:
+            mode = 'stars';
+            break;
+
+        case 1:
+            if(keyStatusDict['ctrl'])
+                mode = 'hotpixels';
+            break;
+
+        case 2:
+            if(keyStatusDict['ctrl'] && keyStatusDict['x'])
+                mode = 'hotlines';
+            else if(keyStatusDict['ctrl'] && keyStatusDict['c'])
+                mode = 'hotcolumns';
+            break;
+    }
+};
+
 window.onload = function()
 {
     canvas = document.getElementById("sourcesCanvas");
     context = canvas.getContext("2d");
 
     //TODO: There are probably bugs here where you click the mouse down on the canvas and then release it elsewhere in the window, etc.
-    $(window).mousemove(handleMouseMove);
-    $('#sourcesCanvas').mousedown(handleMouseButtonDown);
-    $('#sourcesCanvas').mouseup(handleMouseButtonUp);
+    $(document).mousemove(handleMouseMove);
+    $(document).mousedown(handleMouseButtonDown);
+    $(document).mouseup(handleMouseButtonUp);
     $("#sourcesCanvas").mouseenter(function(){document.body.style.cursor = 'none';});
     $("#sourcesCanvas").mouseleave(function(){document.body.style.cursor = oldMouseCursor;});
+    $(document).keydown(handleKeyDown);
+    $(document).keyup(handleKeyUp);
+    countKeysPressed();
 
     $('#uploadMarkedStarsButton').prop( "disabled", true );
 
