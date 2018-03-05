@@ -213,6 +213,7 @@ def imagestats(filename):
             channelIndex = 0
             for hdu in hdulist:
                 frames = []
+                #TODO: Check that this is really image data and not a table, etc.
                 if len(hdu.data.shape) == 2:
                     frames.append(hdu.data)
 
@@ -221,6 +222,85 @@ def imagestats(filename):
                         frames.append(hdu.data[channelIndex+i])
 
                 for frame in frames:
+                    outputText += "imagestats:histogram:\n"
+                    # Compute min/max of data values and count valid pixels.
+                    minValue = frame[0][0]
+                    maxValue = frame[0][0]
+                    numValidPixels = 0
+                    for i in frame:
+                        for j in i:
+                            #TODO: Need to check that the pixel is not a hot pixel, etc.
+                            numValidPixels += 1
+
+                            if j < minValue:
+                                minValue = j
+
+                            if j > maxValue:
+                                maxValue = j
+
+                    # Fill the bins array with zero count for every bin.
+                    numBins = 10000
+                    binWidth = (maxValue-minValue)/float(numBins)
+                    bins = []
+                    for i in range(numBins+1):
+                        bins.append(0)
+
+                    # Now that we know the data range, compute the bin values and then
+                    # loop over again to sort the pixels into bins.
+                    for i in frame:
+                        for j in i:
+                            binIndex = math.floor( (j-minValue)/binWidth )
+                            bins[binIndex] += 1
+
+                    plotFilename = "histogramData_{}_{}.gnuplot".format(image.pk, channelIndex)
+                    binFilename = "histogramData_{}_{}.txt".format(image.pk, channelIndex)
+
+                    # Write the gnuplot script file.
+                    with open("/cosmicmedia/" + plotFilename, "w") as outputFile:
+                        outputFile.write("set terminal svg size 400,300 dynamic mouse standalone\n" +
+                                         "set output '{}/{}.svg'\n".format(staticDirectory + "images", plotFilename) +
+                                         "set key off\n" +
+                                         "set logscale y\n" +
+                                         "set style line 1 linewidth 3 linecolor 'blue'\n" +
+                                         "plot '/cosmicmedia/{}' using 1:2 with lines linestyle 1\n".format(binFilename)
+                                         )
+
+                    # Write the 2 column data to be read in by gnuplot.
+                    with open("/cosmicmedia/" + binFilename, "w") as outputFile:
+                        for binCount, binNumber in zip(bins, range(len(bins))):
+                            if binCount == 0.0:
+                                continue
+
+                            binFloor = minValue + binNumber*binWidth
+                            binCount = binCount/numValidPixels
+
+                            histogramBin = models.ImageHistogramBin(
+                                image = image,
+                                binFloor = binFloor,
+                                binCount = binCount
+                                )
+
+                            histogramBin.save()
+
+                            outputFile.write("{} {}\n".format(binFloor, binCount))
+
+                    outputText += "Running gnuplot:\n\n"
+                    proc = subprocess.Popen(['gnuplot', "/cosmicmedia/" + plotFilename],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE
+                            )
+
+                    output, error = proc.communicate()
+                    output = output.decode('utf-8')
+                    error = error.decode('utf-8')
+
+                    proc.wait()
+
+                    outputText += output
+                    errorText += error
+                    outputText += '\n ==================== End of process output ====================\n\n'
+                    errorText += '\n ==================== End of process error =====================\n\n'
+
                     try:
                         channelInfo = models.ImageChannelInfo.objects.get(image=image, index=channelIndex)
                     except:
@@ -239,6 +319,8 @@ def imagestats(filename):
                     channelInfo.bgMean = bgMean
                     channelInfo.bgMedian = bgMedian
                     channelInfo.bgStdDev = bgStdDev
+                    channelInfo.numValidHistogramPixels = numValidPixels
+                    channelInfo.histogramBinWidth = binWidth
                     channelInfo.save()
 
                     channelIndex += 1

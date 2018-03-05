@@ -60,6 +60,8 @@ td.numMatchResults
 <th>Background<br>Mean</th>
 <th>Background<br>Median</th>
 <th>Background<br>StdDev</th>
+<th>Num Pixels</th>
+<th width=200px>Histogram</th>
 </tr>
 {% for channel in image.imagechannelinfo_set.all %}
 <tr>
@@ -71,6 +73,8 @@ td.numMatchResults
 <td>{{channel.bgMean|floatformat:3}}</td>
 <td>{{channel.bgMedian|floatformat:3}}</td>
 <td>{{channel.bgStdDev|floatformat:3}}</td>
+<td>{{channel.numValidHistogramPixels|intcomma}}</td>
+<td><a href="{{channel.getHistogramUrl}}"><img src="{{channel.getHistogramUrl}}"></a></td>
 </tr>
 {% endfor %}
 </table>
