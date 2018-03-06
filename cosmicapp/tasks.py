@@ -1158,14 +1158,7 @@ def parseHeaders(imageId):
             key = key.strip()
             value = value.strip()
 
-            prop = models.ImageProperty(
-                image = image,
-                header = header,
-                key = key,
-                value = value
-                )
-
-            prop.save()
+            image.addImageProperty(key, value, False, header)
 
         # Handle data split across multiple header fields like dateObs and timeObs.
         dateObsResult = models.ImageProperty.objects.filter(image=image, key='dateObs').first()

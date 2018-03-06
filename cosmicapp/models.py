@@ -370,20 +370,35 @@ class Image(models.Model, SkyObject):
         #TODO: Add code to make a more informed choice about which plate solution to use if there is more than 1.
         return self.plateSolutions.first()
 
-    def addImageProperty(self, key, value, overwriteValue=True):
-        #TODO: This could be done more elegantly with get_or_create().
-        try:
-            imageProperty = ImageProperty.objects.get(image=image, key=key)
-            imageProperty.value = value
-        except:
+    def addImageProperty(self, key, value, overwriteValue=True, header=None):
+        createNew = False
+
+        if overwriteValue:
+            try:
+                imageProperty = ImageProperty.objects.get(image=image, key=key)
+                imageProperty.value = value
+            except:
+                createNew = True
+
+        else:
+            createNew = True
+
+        if createNew:
             imageProperty = ImageProperty(
                 image = self,
-                header = None,
+                header = header,
                 key = key,
                 value = value
                 )
 
         imageProperty.save()
+
+    def getImageProperty(self, key):
+        imageProperty = ImageProperty.objects.filter(image=self, key=key).first()
+        if imageProperty == None:
+            return None
+
+        return imageProperty.value
 
 class ImageThumbnail(models.Model):
     """
