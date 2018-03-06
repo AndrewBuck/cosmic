@@ -255,11 +255,16 @@ def imagestats(filename):
                     plotFilename = "histogramData_{}_{}.gnuplot".format(image.pk, channelIndex)
                     binFilename = "histogramData_{}_{}.txt".format(image.pk, channelIndex)
 
+                    logScaleXString = ""
+                    if minValue > 0.0:
+                        logScaleXString = "set logscale x\n"
+
                     # Write the gnuplot script file.
                     with open("/cosmicmedia/" + plotFilename, "w") as outputFile:
                         outputFile.write("set terminal svg size 400,300 dynamic mouse standalone\n" +
                                          "set output '{}/{}.svg'\n".format(staticDirectory + "images", plotFilename) +
                                          "set key off\n" +
+                                         logScaleXString +
                                          "set logscale y\n" +
                                          "set style line 1 linewidth 3 linecolor 'blue'\n" +
                                          "plot '/cosmicmedia/{}' using 1:2 with lines linestyle 1\n".format(binFilename)
