@@ -28,11 +28,11 @@
 colors are defined in javascript, we need to do this in the window.onload function. -->
 <th></th>
 <th>Lock</th>
-<th>Sextractor<div id=sextractorLoadingDiv></div></th>
-<th>Image2xy<div id=image2xyLoadingDiv></div></th>
-<th>Daofind<div id=daofindLoadingDiv></div></th>
-<th>Starfind<div id=starfindLoadingDiv></div></th>
-<th>Multiple Matches<div id=sourceFindMatchesLoadingDiv><br><br>Waiting...</div></th>
+<th id=sextractorTableHeader>Sextractor<div id=sextractorLoadingDiv></div></th>
+<th id=image2xyTableHeader>Image2xy<div id=image2xyLoadingDiv></div></th>
+<th id=daofindTableHeader>Daofind<div id=daofindLoadingDiv></div></th>
+<th id=starfindTableHeader>Starfind<div id=starfindLoadingDiv></div></th>
+<th id=sourceFindMatchesTableHeader>Multiple Matches<div id=sourceFindMatchesLoadingDiv><br><br>Waiting...</div></th>
 </tr>
 
 <!-- TODO: Add a row at the top here showing how many results there are from each detection method -->
@@ -385,6 +385,7 @@ function getSextractorResults()
 
             drawSources();
             $('#sextractorLoadingDiv').html("<br>" + sextractorResults.length + " Results<br>Loaded");
+            $('#sextractorTableHeader').attr('bgcolor', sextractorColor);
             Promise.resolve(true);
         }
     });
@@ -489,6 +490,7 @@ function getImage2xyResults()
 
             drawSources();
             $('#image2xyLoadingDiv').html("<br>" + image2xyResults.length + " Results<br>Loaded");
+            $('#image2xyTableHeader').attr('bgcolor', image2xyColor);
             Promise.resolve(true);
         }
     });
@@ -550,6 +552,7 @@ function getDaofindResults()
 
             drawSources();
             $('#daofindLoadingDiv').html("<br>" + daofindResults.length + " Results<br>Loaded");
+            $('#daofindTableHeader').attr('bgcolor', daofindColor);
             Promise.resolve(true);
         }
     });
@@ -615,6 +618,7 @@ function getStarfindResults()
 
             drawSources();
             $('#starfindLoadingDiv').html("<br>" + starfindResults.length + " Results<br>Loaded");
+            $('#starfindTableHeader').attr('bgcolor', starfindColor);
             Promise.resolve(true);
         }
     });
@@ -681,6 +685,7 @@ function getSourceFindMatches()
             finishedLoading = true;
             drawSources();
             $('#sourceFindMatchesLoadingDiv').html("<br>" + sourceFindMatches.length + " Results<br>Loaded");
+            $('#sourceFindMatchesTableHeader').attr('bgcolor', sourceFindMatchesColor);
             Promise.resolve(true);
         }
     });
