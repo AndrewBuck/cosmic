@@ -8,9 +8,11 @@ fi
 
 catalogPath="${1%/}"
 
-time python3 createQuestions.py
+time python3 createVariables.py
 
 time python3 createPriorities.py
+
+time python3 createQuestions.py
 
 time python3 import_cat_messier.py
 
