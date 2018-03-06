@@ -10,8 +10,7 @@
 {% csrf_token %}
     <table border="2px">
         <tr>
-        <th> Key </th>
-        <th width=250px> Value </th>
+        <th width=400px> Key=Value </th>
         <th> Original Key </th>
         <th width=400px> Original Value </th>
         <th> correct? </th>
@@ -21,8 +20,7 @@
 
     {% for property in properties %}
         <tr id="row_{{property.pk}}">
-            <td>{{property.key}}</td>
-            <td>{{property.value}}</td>
+            <td>{{property.key}}={{property.value}}</td>
             <td>{{property.header.key}}</td>
             <td>{{property.header.value}}</td>
             <td><input type=checkbox id="correct_{{property.pk}}"></td>
