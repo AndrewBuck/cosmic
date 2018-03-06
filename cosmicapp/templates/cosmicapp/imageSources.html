@@ -1063,12 +1063,12 @@ function drawSources()
     if(mouseX > {{image.dimX}} / 2)
     {
         context.textAlign = 'end';
-        xPos = mouseX - 30;
+        xPos = mouseX - 50;
     }
     else
     {
         context.textAlign = 'start';
-        xPos = mouseX + 30;
+        xPos = mouseX + 50;
     }
 
     yPos = mouseY - (mouseY/{{image.dimY}})*(mouseObjectsList.length-0)*(labelSize+4) + 30*(1.0-mouseY/{{image.dimY}});
