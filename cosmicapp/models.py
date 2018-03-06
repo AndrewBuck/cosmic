@@ -23,6 +23,47 @@ from .tasks import computeSingleEphemeris
 
 #TODO:  Need to review the null constraint for all fields and try to minimize use of null=True, this is best done after the database is in a more stable state.
 
+class CosmicVariable(models.Model):
+    name = models.CharField(max_length=32)
+    variableType = models.CharField(max_length=32)
+    value = models.TextField(null=True)
+
+    @staticmethod
+    def setVariable(name, variableType, value):
+        variable = CosmicVariable.objects.filter(name=name).first()
+        if variable == None:
+            variable = CosmicVariable(
+                name = name,
+                variableType = variableType,
+                value = value
+                )
+        else:
+            variable.variableType = variableType
+            variable.value = value
+
+        variable.save()
+
+    @staticmethod
+    def getVariable(name):
+        variable = CosmicVariable.objects.filter(name=name).first()
+        if variable == None:
+            return None
+
+        if variable.variableType == 'int':
+            return int(variable.value)
+        elif variable.variableType == 'float':
+            return float(variable.value)
+        elif variable.variableType == 'string':
+            return variable.value
+        elif variable.variableType == 'bookmark':
+            #TODO: Consider if we want to limit setting bookmarks to user objects, etc.
+            return Bookmark.objects.filter(pk=int(variavle.value))
+        elif variable.variableType == 'bookmarkFolder':
+            return BookmarkFolder.objects.filter(pk=int(variavle.value))
+
+        else:
+            return None
+
 class InstrumentComponent(models.Model):
     """
     An Optical tube assembly that forms the core of the optical path of an instrument.

@@ -981,11 +981,23 @@ def astrometryNet(filename):
     outputText += "Chose {} objects to use in plate solution.".format(len(table)) + "\n"
     outputText += str(table) + "\n"
 
+    previousResult = image.getImageProperty('astrometryNet')
+    cpuLimit = '30'
+    if previousResult == None:
+        cpuLimit = str(models.CosmicVariable.getVariable('astrometryNetTimeout1'))
+    elif previousResult == 'failure':
+        cpuLimit = str(models.CosmicVariable.getVariable('astrometryNetTimeout2'))
+    elif previousResult == 'success':
+        #TODO: Decide what to do here.
+        cpuLimit = '10'
+
+    outputText += "Limiting runtime to {} seconds of CPU time.".format(cpuLimit) + "\n"
+
     proc = subprocess.Popen(['solve-field', '--depth', '12,22,30',
             '--no-plots', '--overwrite', '--timestamp',
             '--x-column', 'XIMAGE', '--y-column', 'YIMAGE', '--sort-column', 'CONFIDENCE',
             '--width', str(image.dimX), '--height', str(image.dimY),
-            '--cpulimit', '30',
+            '--cpulimit', cpuLimit,
             tableFilename
             ],
             stdout=subprocess.PIPE,
