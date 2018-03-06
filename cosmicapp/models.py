@@ -370,6 +370,21 @@ class Image(models.Model, SkyObject):
         #TODO: Add code to make a more informed choice about which plate solution to use if there is more than 1.
         return self.plateSolutions.first()
 
+    def addImageProperty(self, key, value, overwriteValue=True):
+        #TODO: This could be done more elegantly with get_or_create().
+        try:
+            imageProperty = ImageProperty.objects.get(image=image, key=key)
+            imageProperty.value = value
+        except:
+            imageProperty = ImageProperty(
+                image = self,
+                header = None,
+                key = key,
+                value = value
+                )
+
+        imageProperty.save()
+
 class ImageThumbnail(models.Model):
     """
     A record containing details about an individual thumbnail for an image on the site.  Each uploaded image gets multiple

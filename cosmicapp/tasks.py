@@ -1009,8 +1009,10 @@ def astrometryNet(filename):
         w = wcs.WCS(settings.MEDIA_ROOT + filename + '.sources.wcs')
 
         storeImageLocation(image, w, 'astrometry.net')
+        image.addImageProperty('astrometryNet', 'success')
     else:
         outputText += '\n\nNo plate solution found.' + "\n"
+        image.addImageProperty('astrometryNet', 'failure')
         #TODO: Add another job to the proess queue to re-run starfind algorithms with lower detection thresholds.
         #TODO: Add another job to the proess queue with lower priority and a deeper search.
 
