@@ -1401,7 +1401,7 @@ def saveUserSubmittedSourceResults(request):
             pixelX = float(result['x']),
             pixelY = float(result['y']),
             pixelZ = None,  #TODO: Handle multi extension files.
-            confidence = 1.0
+            confidence = 0.8
             )
 
         userSubmittedResult.save()
@@ -1414,7 +1414,7 @@ def saveUserSubmittedSourceResults(request):
             pixelX = float(result['x']),
             pixelY = float(result['y']),
             pixelZ = None,  #TODO: Handle multi extension files.
-            confidence = 1.0
+            confidence = 0.8
             )
 
         userSubmittedHotPixel.save()
