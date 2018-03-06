@@ -113,6 +113,7 @@ while not quit:
         continue
 
     pi.startedDateTime = timezone.now()
+    pi.save()
     print("Task dispatched.")
     sys.stdout.flush()
 
