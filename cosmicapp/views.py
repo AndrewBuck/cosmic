@@ -45,7 +45,9 @@ def processes(request, process=None):
     if process == None:
         return render(request, "cosmicapp/processes.html", context)
 
-    validPages = ['astrometrynet', 'generatethumbnails', 'imagestats', 'parseheaders', 'sextractor', 'image2xy', 'daofind', 'starfind', 'starmatch']
+    validPages = ['astrometrynet', 'generatethumbnails', 'imagestats', 'parseheaders', 'sextractor', 'image2xy',
+        'daofind', 'starfind', 'starmatch', 'flagsources']
+
     process = process.lower()
     if process in validPages:
         return render(request, "cosmicapp/" + process + ".html", context)

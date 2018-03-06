@@ -72,6 +72,12 @@ priority and then executed.
         compares them to eachother to produce a list of 'matches' which represent the
         same star detected by each separate algorithm as a single result. </td>
     </tr>
+
+    <tr>
+        <td align=right> <a href="/about/processes/flagSources">flagSources</a> </td> <td>-</td>
+        <td> Looks through the results of all detected sources and checks each one to see
+        if if is near a hot pixel a bad line, or a bad column; and if so flags it as possibly bad data. </td>
+    </tr>
 </table>
 
 {% endblock mainbody %}
