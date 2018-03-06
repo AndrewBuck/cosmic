@@ -16,7 +16,6 @@ quit = False
 
 # The time to wait between successive checks to the DB for tasks in the queue.  The first value is the time to wait
 # between tasks when there is more than one in the queue, subsequent values are used for a "backoff timer".
-#TODO: The 10 second sleep between task submissions is a hack to workaround the sqlite db limitation.  Set to a small value for production use.
 sleepTimes = [0.1, 0.5, 0.5, 0.5, 1, 1, 1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 60]
 sleepTimeIndex = 0
@@ -139,7 +138,7 @@ while not quit:
 
         processOutput.save()
 
-        pi.completed = 'ProcessOutput created'
+        pi.completed = 'success.'
     else:
         if celeryResult.info == True:
             pi.completed = 'success'
