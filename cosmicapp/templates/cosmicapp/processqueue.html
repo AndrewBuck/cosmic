@@ -1,4 +1,5 @@
 {% extends "cosmicapp/base.html" %}
+{% load cosmicapp_extras %}
 
 {% block extratitle %} - Process queue {% endblock %}
 
@@ -11,31 +12,34 @@ which gets put into this queue until the server has time to execute it.</p>
 
     <table border="2px">
     <tr>
-        <th> <a href="/about/processes/">Process <br> (name)</a> </th>
-        <th> Requestor <br> (username) </th>
-        <th> SubmittedDateTime <br> (time) </th>
-        <th> StartedDateTime <br> (time) </th>
-        <th> Priority <br> (highest first) </th>
-        <th> Est CPU <br> (seconds) </th>
-        <th> Est Bandwidth</th>
-        <th> Est Storage</th>
-        <th> Est IO</th>
-        <th> Completed <br> (T/F/Err) </th>
+        <th> User<br><br> <a href="/about/processes/">Process</a> </th>
+        <th> Submitted <br><br> (time) </th>
+        <th> Started <br><br> (time) </th>
+        <th> Finished <br><br> (time) </th>
+        <th> Priority <br><br> (value)</th>
+        <th> Est CPU <br><br> (s) </th>
+        <th> Est Bw <br><br>(size)</th>
+        <th> Est Storage <br><br>(size)</th>
+        <th> Est IO <br><br>(size)</th>
+        <th> Completed <br><br> (T/F/Err) </th>
     </tr>
 
     {% for processInput in processInputsUncompleted %}
     <tr bgcolor="yellow">
-        <td> <a href="/about/processes/{{processInput.process}}">{{processInput.process}}</a> </td>
-        <td> <a href="/user/{{processInput.requestor}}/">{{processInput.requestor}}</a> </td>
-        <td> {{processInput.submittedDateTime}} </td>
-        <td> {{processInput.startedDateTime}} </td>
+        <td>
+            <a href="/user/{{processInput.requestor}}/">{{processInput.requestor}}</a>
+            <br><br>
+            <a href="/about/processes/{{processInput.process}}">{{processInput.process}}</a>
+        </td>
+        <td> {{processInput.submittedDateTime|formatTime|safe}} </td>
+        <td> {{processInput.startedDateTime|formatTime|safe}} </td>
+        <td> {{processInput.processOutput.all.0.finishedDateTime|formatTime|safe}} </td>
         <td> {{processInput.priority}} </td>
         <td> {{processInput.estCostCPU}} </td>
         <td> {{processInput.estCostBandwidth|filesizeformat}} </td>
         <td> {{processInput.estCostStorage|filesizeformat}} </td>
         <td> {{processInput.estCostIO|filesizeformat}} </td>
-        <td> {{processInput.completed}} </td>
-    </tr>
+        <td> {{processInput.completed}} </td> </tr>
     {% endfor %}
 
     {% for processInput in processInputsCompleted %}
@@ -44,10 +48,14 @@ which gets put into this queue until the server has time to execute it.</p>
     {% else %}
         <tr bgcolor="red">
     {% endif %}
-        <td> <a href="/about/processes/{{processInput.process}}">{{processInput.process}}</a> </td>
-        <td> <a href="/user/{{processInput.requestor}}/">{{processInput.requestor}}</a> </td>
-        <td> {{processInput.submittedDateTime}} </td>
-        <td> {{processInput.startedDateTime}} </td>
+        <td>
+            <a href="/user/{{processInput.requestor}}/">{{processInput.requestor}}</a>
+            <br><br>
+            <a href="/about/processes/{{processInput.process}}">{{processInput.process}}</a>
+        </td>
+        <td> {{processInput.submittedDateTime|formatTime|safe}} </td>
+        <td> {{processInput.startedDateTime|formatTime|safe}} </td>
+        <td> {{processInput.processOutput.all.0.finishedDateTime|formatTime|safe}} </td>
         <td> {{processInput.priority}} </td>
         <td> {{processInput.estCostCPU}} </td>
         <td> {{processInput.estCostBandwidth|filesizeformat}} </td>
@@ -55,7 +63,7 @@ which gets put into this queue until the server has time to execute it.</p>
         <td> {{processInput.estCostIO|filesizeformat}} </td>
         <td> {{processInput.completed}}
         {% if processInput.processOutput.all.0 %}
-            <a href="/processoutput/{{processInput.processOutput.all.0.pk}}/">View Output {{processInput.processOutput.all.0.pk}}</a>
+            <br><a href="/processoutput/{{processInput.processOutput.all.0.pk}}/">Output {{processInput.processOutput.all.0.pk}}</a>
         {% endif %}
         </td>
     </tr>

@@ -29,6 +29,15 @@ def formatDec(dec):
     return sign + str(angle)
 
 @register.filter
+def formatTime(time):
+    if time == None:
+        return '[time not entered]'
+
+    timeString = '<div class=formattedTime style="display: inline-block">' + str(time).replace(' ', '<br>').replace('+', '<br>UTC +') + '</div>'
+
+    return timeString
+
+@register.filter
 def multiply(value, arg):
     return value*arg
 
