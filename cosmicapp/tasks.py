@@ -960,6 +960,20 @@ def astrometryNet(filename):
     outputText += "astrometrynet: " + filename + "\n"
 
     image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
+
+    imageType = image.getImageProperty('imageType')
+    outputText += "Image type is: " + imageType + "\n"
+    if imageType in ('bias', 'dark', 'flat'):
+        outputText += "\n\n\nReturning, do not need to plate solve calibration images (bias, dark, flat)\n"
+
+        processOutput = {
+            'outputText': outputText,
+            'outputErrorText': errorText
+            }
+
+        return processOutput
+
+
     superMatches = models.SourceFindMatch.objects.filter(image=image)
 
     xValues = []
