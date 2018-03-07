@@ -28,11 +28,11 @@
 colors are defined in javascript, we need to do this in the window.onload function. -->
 <th></th>
 <th>Lock</th>
-<th id=sextractorTableHeader>Sextractor<div id=sextractorLoadingDiv></div></th>
-<th id=image2xyTableHeader>Image2xy<div id=image2xyLoadingDiv></div></th>
-<th id=daofindTableHeader>Daofind<div id=daofindLoadingDiv></div></th>
-<th id=starfindTableHeader>Starfind<div id=starfindLoadingDiv></div></th>
-<th id=sourceFindMatchesTableHeader>Multiple Matches<div id=sourceFindMatchesLoadingDiv><br><br>Waiting...</div></th>
+<th width=200 id=sextractorTableHeader>Sextractor<div id=sextractorLoadingDiv></div></th>
+<th width=200 id=image2xyTableHeader>Image2xy<div id=image2xyLoadingDiv></div></th>
+<th width=200 id=daofindTableHeader>Daofind<div id=daofindLoadingDiv></div></th>
+<th width=200 id=starfindTableHeader>Starfind<div id=starfindLoadingDiv></div></th>
+<th width=200 id=sourceFindMatchesTableHeader>Multiple Matches<div id=sourceFindMatchesLoadingDiv><br><br>Waiting...</div></th>
 </tr>
 
 <!-- TODO: Add a row at the top here showing how many results there are from each detection method -->
@@ -88,8 +88,7 @@ colors are defined in javascript, we need to do this in the window.onload functi
 </tr>
 
 <tr>
-<td>Label:</td>
-<td></td>
+<td colspan=2>Label:</td>
     <td class='sextractorResults'>
     <!-- TODO: Add x and y pixel values as options for labels. -->
     <input type=checkbox id=sextractorLabelFlux onchange="drawSources()"> Flux<br>
@@ -129,6 +128,58 @@ colors are defined in javascript, we need to do this in the window.onload functi
     <input type=checkbox id=sourceFindMatchesLabelNum onchange="drawSources()" checked> Num Methods<br>
     <input type=checkbox id=sourceFindMatchesLabelConfidence onchange="drawSources()"> Confidence
     </td>
+</tr>
+
+<tr>
+<td colspan=2>How did<br>we do:</td>
+<td align=center class='sextractorResults'>
+    <div id=sextractorFeedbackButtonDiv>
+    <input type=button class=button value="Feedback" onclick="feedbackButtonClicked('sextractor')"><br><br>
+    </div>
+
+    <div id=sextractorButtonDiv hidden>
+    <input type=button class=button value="Found too many" onclick="submitUserFeedback('sextractor', 'tooMany')"><br><br>
+    <input type=button class=button value="About right" onclick="submitUserFeedback('sextractor', 'aboutRight')"><br><br>
+    <input type=button class=button value="Found too few" onclick="submitUserFeedback('sextractor', 'tooFew')">
+    </div>
+</td>
+
+<td align=center class='image2xyResults'>
+    <div id=image2xyFeedbackButtonDiv>
+    <input type=button class=button value="Feedback" onclick="feedbackButtonClicked('image2xy')"><br><br>
+    </div>
+
+    <div id=image2xyButtonDiv hidden>
+    <input type=button class=button value="Found too many" onclick="submitUserFeedback('image2xy', 'tooMany')"><br><br>
+    <input type=button class=button value="About right" onclick="submitUserFeedback('image2xy', 'aboutRight')"><br><br>
+    <input type=button class=button value="Found too few" onclick="submitUserFeedback('image2xy', 'tooFew')">
+    </div>
+</td>
+
+<td align=center class='daofindResults'>
+    <div id=daofindFeedbackButtonDiv>
+    <input type=button class=button value="Feedback" onclick="feedbackButtonClicked('daofind')"><br><br>
+    </div>
+
+    <div id=daofindButtonDiv hidden>
+    <input type=button class=button value="Found too many" onclick="submitUserFeedback('daofind', 'tooMany')"><br><br>
+    <input type=button class=button value="About right" onclick="submitUserFeedback('daofind', 'aboutRight')"><br><br>
+    <input type=button class=button value="Found too few" onclick="submitUserFeedback('daofind', 'tooFew')">
+    </div>
+</td>
+
+<td align=center class='starfindResults'>
+    <div id=starfindFeedbackButtonDiv>
+    <input type=button class=button value="Feedback" onclick="feedbackButtonClicked('starfind')"><br><br>
+    </div>
+
+    <div id=starfindButtonDiv hidden>
+    <input type=button class=button value="Found too many" onclick="submitUserFeedback('starfind', 'tooMany')"><br><br>
+    <input type=button class=button value="About right" onclick="submitUserFeedback('starfind', 'aboutRight')"><br><br>
+    <input type=button class=button value="Found too few" onclick="submitUserFeedback('starfind', 'tooFew')">
+    </div>
+</td>
+
 </tr>
 </table>
 
@@ -193,6 +244,7 @@ var maxDistanceFromStar = 10;
 var mouseTextHideDistance = 120;
 var maxDistanceFromStarSquared = maxDistanceFromStar*maxDistanceFromStar;
 var lastDrawSourcesTime = 0;
+var feedbackSubmittedDict = {'sextractor': false, 'image2xy': false, 'daofind': false, 'starfind': false}
 
 var plot;
 
@@ -742,6 +794,88 @@ function submitUserResults()
     });
 };
 
+function feedbackButtonClicked(method)
+{
+    $('#methodEnabledLockCheckbox').prop('checked', false)
+    $('#sextractorEnabledCheckbox').prop('checked', false)
+    $('#image2xyEnabledCheckbox').prop('checked', false)
+    $('#daofindEnabledCheckbox').prop('checked', false)
+    $('#starfindEnabledCheckbox').prop('checked', false)
+    $('#sourceFindMatchesEnabledCheckbox').prop('checked', false)
+
+    $('#' + method + 'EnabledCheckbox').prop('checked', true)
+
+    updateTable('feedbackButton');
+
+    $('#' + method + 'FeedbackButtonDiv').hide();
+    $('#' + method + 'ButtonDiv').show();
+
+    $('#sourcesCanvas')[0].scrollIntoView({behaviour: 'smooth', block: 'start', inline: 'start'});
+};
+
+function submitUserFeedback(method, feedback)
+{
+    $('#' + method + 'ButtonDiv').fadeOut(0);
+    if(feedback == 'aboutRight')
+        $('#' + method + 'ButtonDiv').html("Thank you.  We will use this to guide the refinement of the other source detection algorithms for this image.");
+    else
+        $('#' + method + 'ButtonDiv').html("Thank you.  New results will be available in a minute or two.");
+    $('#' + method + 'ButtonDiv').fadeIn(2000);
+
+    //TODO: Move this into the success function for the ajax query when it is written?
+    feedbackSubmittedDict[method] = true;
+    for(otherMethod in feedbackSubmittedDict)
+    {
+        if(otherMethod == method)
+            continue;
+
+        switch(method)
+        {
+            case 'sextractor':   theseResults = sextractorResults;   break;
+            case 'image2xy':     theseResults = image2xyResults;     break;
+            case 'daofind':      theseResults = daofindResults;      break;
+            case 'starfind':     theseResults = starfindResults;     break;
+        }
+
+        switch(otherMethod)
+        {
+            case 'sextractor':   results = sextractorResults;   break;
+            case 'image2xy':     results = image2xyResults;     break;
+            case 'daofind':      results = daofindResults;      break;
+            case 'starfind':     results = starfindResults;     break;
+        }
+
+        if(feedback == 'tooMany')
+            if(results.length > theseResults.length)
+            {
+                feedbackSubmittedDict[otherMethod] = true;
+                $('#' + otherMethod + 'FeedbackButtonDiv').hide();
+                $('#' + otherMethod + 'ButtonDiv').fadeOut(0);
+                $('#' + otherMethod + 'ButtonDiv').html("There are even more results on this method.");
+                $('#' + otherMethod + 'ButtonDiv').fadeIn(5000);
+            }
+
+        if(feedback == 'tooFew')
+            if(results.length < theseResults.length)
+            {
+                feedbackSubmittedDict[otherMethod] = true;
+                $('#' + otherMethod + 'FeedbackButtonDiv').hide();
+                $('#' + otherMethod + 'ButtonDiv').fadeOut(0);
+                $('#' + otherMethod + 'ButtonDiv').html("There are even fewer results on this method.");
+                $('#' + otherMethod + 'ButtonDiv').fadeIn(5000);
+            }
+
+        if(feedback == 'aboutRight')
+        {
+            feedbackSubmittedDict[otherMethod] = true;
+            $('#' + otherMethod + 'FeedbackButtonDiv').hide();
+            $('#' + otherMethod + 'ButtonDiv').fadeOut(0);
+            $('#' + otherMethod + 'ButtonDiv').html("Done.");
+            $('#' + otherMethod + 'ButtonDiv').fadeIn(5000);
+        }
+    }
+};
+
 function constructLabelText(paramArray)
 {
     var i;
@@ -1198,6 +1332,7 @@ function updateTable(id)
         case undefined:
             break;
 
+        case 'feedbackButton':
         case 'sextractorEnabledCheckbox':
         case 'image2xyEnabledCheckbox':
         case 'daofindEnabledCheckbox':
@@ -1217,6 +1352,16 @@ function updateTable(id)
                 $('#starfindEnabledCheckbox').prop('checked', temp)
                 $('#sourceFindMatchesEnabledCheckbox').prop('checked', temp)
             }
+
+            for(method in feedbackSubmittedDict)
+            {
+                if(!feedbackSubmittedDict[method])
+                {
+                    $('#' + method + 'FeedbackButtonDiv').show();
+                    $('#' + method + 'ButtonDiv').hide();
+                }
+            }
+
             break;
 
         case 'sextractorSizeSlider':
