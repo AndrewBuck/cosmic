@@ -284,6 +284,7 @@ class UploadedFileRecord(models.Model):
     uploadDateTime = models.DateTimeField()
     uploadSize = models.IntegerField()
 
+#TODO: Make Question a ScorableObject (in the sense of "how useful is it to show this uploaded image to a user").
 class Image(models.Model, SkyObject):
     """
     A record storing details about an image on the site.  For images uploaded as a file directly, the fileRecord is a key
@@ -1476,6 +1477,7 @@ class GeoLiteBlock(models.Model):
 
 
 
+#TODO: Make Question a ScorableObject.
 class Question(models.Model):
     """
     A record containing a question to be asked to users of the site about uploaded images, files, observer notes, etc.
