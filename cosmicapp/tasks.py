@@ -73,6 +73,14 @@ def storeImageLocation(image, w, sourceString):
     ps.area = ps.geometry.area
     ps.save()
 
+def constructProcessOutput(outputText, errorText):
+    processOutput = {
+        'outputText': outputText,
+        'outputErrorText': errorText
+        }
+
+    return processOutput
+
 @shared_task
 def imagestats(filename):
     outputText = ""
@@ -332,12 +340,7 @@ def imagestats(filename):
 
         hdulist.close()
 
-    processOutput = {
-        'outputText': outputText,
-        'outputErrorText': errorText
-        }
-
-    return processOutput
+    return constructProcessOutput(outputText, errorText)
 
 # TODO: Histogram of FITS data (count vs adu) in linear and logarithmic (if possible?).
 # Needs to be high resolution, but deal efficiently with large swaths of 0-count.  Must
@@ -490,12 +493,7 @@ def generateThumbnails(filename):
 
                     record.save()
 
-    processOutput = {
-        'outputText': outputText,
-        'outputErrorText': errorText
-        }
-
-    return processOutput
+    return constructProcessOutput(outputText, errorText)
 
 @shared_task
 def sextractor(filename):
@@ -636,12 +634,7 @@ def sextractor(filename):
     except OSError:
         pass
 
-    processOutput = {
-        'outputText': outputText,
-        'outputErrorText': errorText
-        }
-
-    return processOutput
+    return constructProcessOutput(outputText, errorText)
 
 @shared_task
 def image2xy(filename):
@@ -706,12 +699,7 @@ def image2xy(filename):
     except OSError:
         pass
 
-    processOutput = {
-        'outputText': outputText,
-        'outputErrorText': errorText
-        }
-
-    return processOutput
+    return constructProcessOutput(outputText, errorText)
 
 @shared_task
 def daofind(filename):
@@ -759,12 +747,7 @@ def daofind(filename):
             record.confidence = sigmoid((meanMag-record.mag)/stdDevMag)
             record.save()
 
-    processOutput = {
-        'outputText': outputText,
-        'outputErrorText': errorText
-        }
-
-    return processOutput
+    return constructProcessOutput(outputText, errorText)
 
 @shared_task
 def starfind(filename):
@@ -813,12 +796,7 @@ def starfind(filename):
             record.confidence = sigmoid((meanMag-record.mag)/stdDevMag)
             record.save()
 
-    processOutput = {
-        'outputText': outputText,
-        'outputErrorText': errorText
-        }
-
-    return processOutput
+    return constructProcessOutput(outputText, errorText)
 
 @shared_task
 def starmatch(filename):
@@ -950,12 +928,7 @@ def starmatch(filename):
 
     outputText += 'Done.' + "\n"
 
-    processOutput = {
-        'outputText': outputText,
-        'outputErrorText': errorText
-        }
-
-    return processOutput
+    return constructProcessOutput(outputText, errorText)
 
 @shared_task
 def astrometryNet(filename):
@@ -1071,12 +1044,7 @@ def astrometryNet(filename):
         except:
             errorText += 'Error in removing file {}\nError was: {}'.format(f, sys.exc_info()[0]) + "\n"
 
-    processOutput = {
-        'outputText': outputText,
-        'outputErrorText': errorText
-        }
-
-    return processOutput
+    return constructProcessOutput(outputText, errorText)
 
 @shared_task
 def parseHeaders(imageId):
@@ -1206,12 +1174,7 @@ def parseHeaders(imageId):
             except ValueError:
                 errorText += "ERROR: Could not parse dateObs: " + value + "\n"
 
-    processOutput = {
-        'outputText': outputText,
-        'outputErrorText': errorText
-        }
-
-    return processOutput
+    return constructProcessOutput(outputText, errorText)
 
 @shared_task
 def flagSources(imageIdString):
@@ -1246,12 +1209,7 @@ def flagSources(imageIdString):
     else:
         outputText += "Image has no user submitted hot pixels in it\n"
 
-    processOutput = {
-        'outputText': outputText,
-        'outputErrorText': errorText
-        }
-
-    return processOutput
+    return constructProcessOutput(outputText, errorText)
 
 def computeSingleEphemeris(asteroid, ephemTime):
     ephemTimeObject = ephem.Date(ephemTime)
