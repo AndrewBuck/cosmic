@@ -267,6 +267,31 @@ var keyStatusDict = {
 var numKeysPressed = 0;
 var mode = '';
 
+//TODO: Replace this function with a jsonify function.
+function jsonify(results)
+{
+    var jsonString = "["
+    for(i = 0; i < results.length; i++)
+    {
+        if(i < results.length-1)
+            commaString = ',';
+        else
+            commaString = '';
+
+        jsonString += '{'
+        for(key in results[i])
+            jsonString += '"' + key + '": "' + results[i][key] + '",';
+
+        jsonString = jsonString.substr(0, jsonString.length-1);
+
+        jsonString += '}'
+        jsonString += commaString
+    }
+    jsonString += ']'
+
+    return jsonString;
+}
+
 function drawStroked(c, text, x, y, ignoreDistance=false)
 {
     if(!ignoreDistance)
@@ -747,31 +772,6 @@ function submitUserResults()
 {
     var i;
     var commaString;
-
-    //TODO: Replace this function with a jsonify function.
-    function jsonify(results)
-    {
-        var jsonString = "["
-        for(i = 0; i < results.length; i++)
-        {
-            if(i < results.length-1)
-                commaString = ',';
-            else
-                commaString = '';
-
-            jsonString += '{'
-            for(key in results[i])
-                jsonString += '"' + key + '": "' + results[i][key] + '",';
-
-            jsonString = jsonString.substr(0, jsonString.length-1);
-
-            jsonString += '}'
-            jsonString += commaString
-        }
-        jsonString += ']'
-
-        return jsonString;
-    }
 
     $.ajax({
         url : "/save/userSubmittedSourceResults/",
