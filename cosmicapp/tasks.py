@@ -997,17 +997,22 @@ def astrometryNet(filename):
 
     previousResult = image.getImageProperty('astrometryNet')
     cpuLimit = '30'
+    depth = '8,14,22'
     if previousResult == None:
         cpuLimit = str(models.CosmicVariable.getVariable('astrometryNetTimeout1'))
+        depth = str(models.CosmicVariable.getVariable('astrometryNetDepth1'))
     elif previousResult == 'failure':
         cpuLimit = str(models.CosmicVariable.getVariable('astrometryNetTimeout2'))
+        depth = str(models.CosmicVariable.getVariable('astrometryNetDepth2'))
     elif previousResult == 'success':
         #TODO: Decide what to do here.
         cpuLimit = '10'
+        depth = '50'
 
     outputText += "Limiting runtime to {} seconds of CPU time.".format(cpuLimit) + "\n"
+    outputText += "Limiting depth to {} objects.".format(depth) + "\n"
 
-    proc = subprocess.Popen(['solve-field', '--depth', '12,22,30',
+    proc = subprocess.Popen(['solve-field', '--depth', depth,
             '--no-plots', '--overwrite', '--timestamp',
             '--x-column', 'XIMAGE', '--y-column', 'YIMAGE', '--sort-column', 'CONFIDENCE',
             '--width', str(image.dimX), '--height', str(image.dimY),
