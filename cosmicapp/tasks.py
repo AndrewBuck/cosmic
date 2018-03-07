@@ -967,7 +967,7 @@ def astrometryNet(filename):
     image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
 
     imageType = image.getImageProperty('imageType')
-    outputText += "Image type is: " + imageType + "\n"
+    outputText += "Image type is: " + str(imageType) + "\n"
     if imageType in ('bias', 'dark', 'flat'):
         outputText += "\n\n\nReturning, do not need to plate solve calibration images (bias, dark, flat)\n"
 
