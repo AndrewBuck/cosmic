@@ -971,7 +971,6 @@ def astrometryNet(filename):
         return False
 
     outputText += "Chose {} objects to use in plate solution.".format(len(table)) + "\n"
-    outputText += str(table) + "\n"
 
     previousResult = image.getImageProperty('astrometryNet')
     cpuLimit = '30'
