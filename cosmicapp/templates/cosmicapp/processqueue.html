@@ -43,7 +43,7 @@ which gets put into this queue until the server has time to execute it.</p>
     {% endfor %}
 
     {% for processInput in processInputsCompleted %}
-    {% if processInput.completed == "success" or processInput.completed == "ProcessOutput created" %}
+    {% if processInput.completed == "success" or processInput.completed == "success." %}
         <tr bgcolor="green">
     {% else %}
         <tr bgcolor="red">
