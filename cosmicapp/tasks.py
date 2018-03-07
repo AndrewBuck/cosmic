@@ -508,7 +508,8 @@ def sextractor(filename):
     #TODO: Handle multi-extension fits files.
     channelInfos = models.ImageChannelInfo.objects.filter(image=image).order_by('index')
 
-    detectThreshold = 2.0*channelInfos[0].bgStdDev
+    detectThresholdMultiplier = models.CosmicVariable.getVariable('sextractorThreshold')
+    detectThreshold = detectThresholdMultiplier*channelInfos[0].bgStdDev
 
     #TODO: sextractor can only handle .fit files.  Should autoconvert the file to .fit if necessary before running.
     #TODO: sextractor has a ton of different modes and options, we should consider running
@@ -727,7 +728,9 @@ def daofind(filename):
 
     hdulist = fits.open(settings.MEDIA_ROOT + filename)
     data = hdulist[0].data
-    daofind = DAOStarFinder(fwhm = 2.5, threshold = 2.0*channelInfos[0].bgStdDev)
+    detectThresholdMultiplier = models.CosmicVariable.getVariable('daofindThreshold')
+    #TODO: Set the fwhm from a variable if this is the first run, or from the previous run average if this is the second run of this task.
+    daofind = DAOStarFinder(fwhm = 2.5, threshold = detectThresholdMultiplier*channelInfos[0].bgStdDev)
     sources = daofind(data - channelInfos[0].bgMedian)
 
     with transaction.atomic():
@@ -778,7 +781,9 @@ def starfind(filename):
 
     hdulist = fits.open(settings.MEDIA_ROOT + filename)
     data = hdulist[0].data
-    starfinder = IRAFStarFinder(fwhm = 2.5, threshold = 2.0*channelInfos[0].bgStdDev)
+    detectThresholdMultiplier = models.CosmicVariable.getVariable('starfindThreshold')
+    #TODO: Set the fwhm from a variable if this is the first run, or from the previous run average if this is the second run of this task.
+    starfinder = IRAFStarFinder(fwhm = 2.5, threshold = detectThresholdMultiplier*channelInfos[0].bgStdDev)
     sources = starfinder(data - channelInfos[0].bgMedian)
 
     with transaction.atomic():
