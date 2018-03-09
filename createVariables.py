@@ -13,6 +13,6 @@ CosmicVariable.setVariable('astrometryNetTimeout2', 'int', '120')
 CosmicVariable.setVariable('astrometryNetDepth2', 'string', '8,26,50')
 
 CosmicVariable.setVariable('sextractorThreshold', 'float', '2.0')
-CosmicVariable.setVariable('daofindThreshold', 'float', '2.0')
-CosmicVariable.setVariable('starfindThreshold', 'float', '2.0')
+CosmicVariable.setVariable('daofindThreshold', 'float', '3.0')
+CosmicVariable.setVariable('starfindThreshold', 'float', '3.0')
 
