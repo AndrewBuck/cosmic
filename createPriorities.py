@@ -51,6 +51,12 @@ priority, created = ProcessPriority.objects.get_or_create(
     )
 
 priority, created = ProcessPriority.objects.get_or_create(
+    name = 'flagSources',
+    priority = 3002,
+    priorityClass = 'batch'
+    )
+
+priority, created = ProcessPriority.objects.get_or_create(
     name = 'starmatch',
     priority = 3000,
     priorityClass = 'batch'

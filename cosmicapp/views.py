@@ -206,6 +206,20 @@ def upload(request):
                     piStarfind.save()
                     piStarfind.addArguments([record.onDiskFileName])
 
+                    piFlagSources = ProcessInput(
+                        process = "flagSources",
+                        requestor = User.objects.get(pk=request.user.pk),
+                        submittedDateTime = timezone.now(),
+                        priority = ProcessPriority.getPriorityForProcess("flagSources", "batch"),
+                        estCostCPU = 10,
+                        estCostBandwidth = 0,
+                        estCostStorage = 3000,
+                        estCostIO = 10000
+                        )
+
+                    piFlagSources.save()
+                    piFlagSources.addArguments([imageRecord.pk])
+
                     piStarmatch = ProcessInput(
                         process = "starmatch",
                         requestor = User.objects.get(pk=request.user.pk),
@@ -222,6 +236,7 @@ def upload(request):
                     piStarmatch.prerequisites.add(piSextractor)
                     piStarmatch.prerequisites.add(piDaofind)
                     piStarmatch.prerequisites.add(piStarfind)
+                    piStarmatch.prerequisites.add(piFlagSources)
 
                     piAstrometryNet = ProcessInput(
                         process = "astrometryNet",
