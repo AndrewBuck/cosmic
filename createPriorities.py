@@ -33,9 +33,21 @@ priority, created = ProcessPriority.objects.get_or_create(
     )
 
 priority, created = ProcessPriority.objects.get_or_create(
+    name = 'sextractor',
+    priority = 100000,
+    priorityClass = 'interactive'
+    )
+
+priority, created = ProcessPriority.objects.get_or_create(
     name = 'image2xy',
     priority = 3008,
     priorityClass = 'batch'
+    )
+
+priority, created = ProcessPriority.objects.get_or_create(
+    name = 'image2xy',
+    priority = 100000,
+    priorityClass = 'interactive'
     )
 
 priority, created = ProcessPriority.objects.get_or_create(
@@ -45,9 +57,21 @@ priority, created = ProcessPriority.objects.get_or_create(
     )
 
 priority, created = ProcessPriority.objects.get_or_create(
+    name = 'daofind',
+    priority = 100000,
+    priorityClass = 'interactive'
+    )
+
+priority, created = ProcessPriority.objects.get_or_create(
     name = 'starfind',
     priority = 3004,
     priorityClass = 'batch'
+    )
+
+priority, created = ProcessPriority.objects.get_or_create(
+    name = 'starfind',
+    priority = 100000,
+    priorityClass = 'interactive'
     )
 
 priority, created = ProcessPriority.objects.get_or_create(
@@ -84,5 +108,11 @@ priority, created = ProcessPriority.objects.get_or_create(
     name = 'astrometryNet',
     priority = 1000,
     priorityClass = 'batch'
+    )
+
+priority, created = ProcessPriority.objects.get_or_create(
+    name = 'astrometryNet',
+    priority = 100000,
+    priorityClass = 'interactive'
     )
 
