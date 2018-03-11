@@ -1183,6 +1183,7 @@ def flagSources(imageIdString):
     outputText += "Flagging image sources for image '{}'\n".format(imageIdString)
 
     imageId = int(imageIdString)
+    image = models.Image.objects.get(pk=imageId)
 
     hotPixels = models.UserSubmittedHotPixel.objects.filter(image_id=imageId)
     numHotPixels = hotPixels.count()
@@ -1196,6 +1197,14 @@ def flagSources(imageIdString):
         for table in tablesToSearch:
             sources = table.objects.filter(image_id=imageId)
             for source in sources:
+                #TODO: Should come up with a good definition of edge distance.
+                edgeDist = 10
+                if source.pixelX <= edgeDist or source.pixelY <= edgeDist or \
+                    source.pixelX >= image.dimX - edgeDist or source.pixelY >= image.dimY - edgeDist:
+
+                    source.flagEdge = True
+                    source.save()
+
                 for hotPixel in hotPixels:
                     deltaX = source.pixelX - hotPixel.pixelX
                     deltaY = source.pixelY - hotPixel.pixelY

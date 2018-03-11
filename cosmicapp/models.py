@@ -694,6 +694,7 @@ class SourceFindResult(models.Model):
     flagHotPixel = models.NullBooleanField()
     flagBadLine = models.NullBooleanField()
     flagBadColumn = models.NullBooleanField()
+    flagEdge = models.NullBooleanField()
 
     def getRaDec(self):
         plateSolution = self.image.getBestPlateSolution()
