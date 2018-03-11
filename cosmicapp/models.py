@@ -777,7 +777,7 @@ class SourceFindMatch(SourceFindResult):
         for t in (self.sextractorResult, self.image2xyResult, self.daofindResult, self.starfindResult):
             if t != None:
                 ra, dec = t.getRaDec()
-                if ra != None:
+                if ra is not None:
                     num += 1
                     raSum += ra
                     decSum += dec
