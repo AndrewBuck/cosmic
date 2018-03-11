@@ -435,12 +435,19 @@ class Image(models.Model, SkyObject):
 
         imageProperty.save()
 
-    def getImageProperty(self, key):
-        imageProperty = ImageProperty.objects.filter(image=self, key=key).first()
-        if imageProperty == None:
-            return None
+    def getImageProperty(self, key, asList=False):
+        imageProperty = ImageProperty.objects.filter(image=self, key=key).order_by('-createDateTime')
+        if not asList:
+            imageProperty = imageProperty.first()
+            if imageProperty == None:
+                return None
 
-        return imageProperty.value
+            return imageProperty.value
+        else:
+            return imageProperty
+
+    def removeImageProperty(self, key):
+        imageProperty = ImageProperty.objects.filter(image=self, key=key).delete()
 
 class ImageThumbnail(models.Model):
     """
