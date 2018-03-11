@@ -13,9 +13,12 @@
         <th width=400px> Key=Value </th>
         <th> Original Key </th>
         <th width=400px> Original Value </th>
+        <th> Property Create Time </th>
+        {% comment %}
         <th> correct? </th>
         <th> Incorrect? </th>
         <th> Comment<br>if<br>incorrect </th>
+        {% endcomment %}
         </tr>
 
     {% for property in properties %}
@@ -23,9 +26,12 @@
             <td>{{property.key}}={{property.value}}</td>
             <td>{{property.header.key}}</td>
             <td>{{property.header.value}}</td>
+            <td>{{property.createDateTime}}</td>
+            {% comment %}
             <td><input type=checkbox id="correct_{{property.pk}}"></td>
             <td><input type=checkbox id="incorrect_{{property.pk}}"></td>
             <td><input type=text id="comment_{{property.pk}}"></td>
+            {% endcomment %}
         </tr>
     {% endfor %}
     </table>

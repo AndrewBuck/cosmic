@@ -498,6 +498,7 @@ class ImageProperty(models.Model):
     header = models.ForeignKey(ImageHeaderField, on_delete=models.CASCADE, null=True)  #TODO: Make this many to many?
     key = models.TextField()
     value = models.TextField()
+    createDateTime = models.DateTimeField(auto_now=True)
 
 class ImageChannelInfo(models.Model):
     """
