@@ -538,6 +538,7 @@ def sextractor(filename):
     with open(catfileName, 'r') as catfile:
         fieldDict = {}
         with transaction.atomic():
+            models.SextractorResult.objects.filter(image=image).delete()
             for line in catfile:
                 # Split the line into fields (space separated) and throw out empty fields caused by multiple spaces in a
                 # row.  I.E. do a "combine consecutive delimeters" operation.
@@ -671,6 +672,7 @@ def image2xy(filename):
     table = Table.read(outputFilename, format='fits')
 
     with transaction.atomic():
+        models.Image2xyResult.objects.filter(image=image).delete()
         for row in table:
             if row['FLUX'] < 0.1:
                 continue
@@ -722,6 +724,7 @@ def daofind(filename):
     sources = daofind(data - channelInfos[0].bgMedian)
 
     with transaction.atomic():
+        models.DaofindResult.objects.filter(image=image).delete()
         for source in sources:
             result = models.DaofindResult(
                 image = image,
@@ -770,6 +773,7 @@ def starfind(filename):
     sources = starfinder(data - channelInfos[0].bgMedian)
 
     with transaction.atomic():
+        models.StarfindResult.objects.filter(image=image).delete()
         for source in sources:
             result = models.StarfindResult(
                 image = image,
@@ -881,6 +885,7 @@ def starmatch(filename):
     outputText += 'Found {} super matches.  Writing them to the DB...'.format(len(superMatches)) + "\n"
     sys.stdout.flush()
     with transaction.atomic():
+        models.SourceFindMatch.objects.filter(image=image).delete()
         for superMatch in superMatches:
             sextractorResult = superMatch.get('sextractor', None)
             image2xyResult = superMatch.get('image2xy', None)
