@@ -1469,7 +1469,7 @@ def saveUserSubmittedSourceResults(request):
             process = "astrometryNet",
             requestor = User.objects.get(pk=request.user.pk),
             submittedDateTime = timezone.now(),
-            priority = ProcessPriority.getPriorityForProcess("starmatch", "interactive") + 0.5,
+            priority = ProcessPriority.getPriorityForProcess("astrometryNet", "interactive") + 0.5,
             estCostCPU = 100,
             estCostBandwidth = 3000,
             estCostStorage = 3000,
@@ -1478,7 +1478,7 @@ def saveUserSubmittedSourceResults(request):
 
         piAstrometryNet.save()
         piAstrometryNet.addArguments([image.fileRecord.onDiskFileName])
-        piAstrometryNet.prerequisites.add(piFlagSources)
+        piAstrometryNet.prerequisites.add(piStarmatch)
 
     return HttpResponse(json.dumps({'text': 'Response Saved Successfully'}), status=200)
 
