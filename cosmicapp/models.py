@@ -417,7 +417,7 @@ class Image(models.Model, SkyObject):
 
         if overwriteValue:
             try:
-                imageProperty = ImageProperty.objects.get(image=image, key=key)
+                imageProperty = ImageProperty.objects.get(image=self, key=key)
                 imageProperty.value = value
             except:
                 createNew = True
