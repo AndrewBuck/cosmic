@@ -1484,6 +1484,154 @@ def saveUserSubmittedSourceResults(request):
 
 @login_required
 @require_http_methods(['POST'])
+def saveUserSubmittedFeedback(request):
+    id = int(request.POST.get('imageId', '-1'))
+    if id != -1:
+        image = Image.objects.get(pk=id)
+    else:
+        return HttpResponse(json.dumps({'text': 'Image Not Found: ' + str(request.POST.get('imageId')),}), status=400,  reason='Image Not Found.')
+
+    method = request.POST.get('method')
+    feedback = request.POST.get('feedback')
+
+    image.addImageProperty(method + 'Feedback', feedback)
+
+    methodDict = {
+        'sextractor': SextractorResult,
+        'image2xy': Image2xyResult,
+        'daofind': DaofindResult,
+        'starfind': StarfindResult
+        }
+
+    numResults = methodDict[method].objects.filter(image=image).count()
+    image.addImageProperty('userNumExpectedResults', str(numResults) + ' ' + feedback, False)
+
+    with transaction.atomic():
+        piSextractor = ProcessInput(
+            process = "sextractor",
+            requestor = User.objects.get(pk=request.user.pk),
+            submittedDateTime = timezone.now(),
+            priority = ProcessPriority.getPriorityForProcess("sextractor", "interactive") + 0.9,
+            estCostCPU = 0.5 * image.fileRecord.uploadSize / 1e6,
+            estCostBandwidth = 0,
+            estCostStorage = 3000,
+            estCostIO = image.fileRecord.uploadSize
+            )
+
+        piSextractor.save()
+        piSextractor.addArguments([image.fileRecord.onDiskFileName])
+
+        piImage2xy = ProcessInput(
+            process = "image2xy",
+            requestor = User.objects.get(pk=request.user.pk),
+            submittedDateTime = timezone.now(),
+            priority = ProcessPriority.getPriorityForProcess("image2xy", "interactive") + 0.8,
+            estCostCPU = 0.5 * image.fileRecord.uploadSize / 1e6,
+            estCostBandwidth = 0,
+            estCostStorage = 3000,
+            estCostIO = image.fileRecord.uploadSize
+            )
+
+        piImage2xy.save()
+        piImage2xy.addArguments([image.fileRecord.onDiskFileName])
+
+        piDaofind = ProcessInput(
+            process = "daofind",
+            requestor = User.objects.get(pk=request.user.pk),
+            submittedDateTime = timezone.now(),
+            priority = ProcessPriority.getPriorityForProcess("daofind", "interactive") + 0.7,
+            estCostCPU = 0.5 * image.fileRecord.uploadSize / 1e6,
+            estCostBandwidth = 0,
+            estCostStorage = 3000,
+            estCostIO = image.fileRecord.uploadSize
+            )
+
+        piDaofind.save()
+        piDaofind.addArguments([image.fileRecord.onDiskFileName])
+
+        piStarfind = ProcessInput(
+            process = "starfind",
+            requestor = User.objects.get(pk=request.user.pk),
+            submittedDateTime = timezone.now(),
+            priority = ProcessPriority.getPriorityForProcess("starfind", "interactive") + 0.6,
+            estCostCPU = 0.5 * image.fileRecord.uploadSize / 1e6,
+            estCostBandwidth = 0,
+            estCostStorage = 3000,
+            estCostIO = image.fileRecord.uploadSize
+            )
+
+        piStarfind.save()
+        piStarfind.addArguments([image.fileRecord.onDiskFileName])
+
+        piFlagSources = ProcessInput(
+            process = "flagSources",
+            requestor = User.objects.get(pk=request.user.pk),
+            submittedDateTime = timezone.now(),
+            priority = ProcessPriority.getPriorityForProcess("flagSources", "interactive") + 0.2,
+            estCostCPU = 0.5 * image.fileRecord.uploadSize / 1e6,
+            estCostBandwidth = 0,
+            estCostStorage = 3000,
+            estCostIO = image.fileRecord.uploadSize
+            )
+
+        piFlagSources.save()
+        piFlagSources.addArguments([image.pk])
+        piFlagSources.prerequisites.add(piSextractor)
+        piFlagSources.prerequisites.add(piImage2xy)
+        piFlagSources.prerequisites.add(piDaofind)
+        piFlagSources.prerequisites.add(piStarfind)
+
+        piStarmatch = ProcessInput(
+            process = "starmatch",
+            requestor = User.objects.get(pk=request.user.pk),
+            submittedDateTime = timezone.now(),
+            priority = ProcessPriority.getPriorityForProcess("starmatch", "interactive") + 0.1,
+            estCostCPU = 0.5 * image.fileRecord.uploadSize / 1e6,
+            estCostBandwidth = 0,
+            estCostStorage = 3000,
+            estCostIO = image.fileRecord.uploadSize
+            )
+
+        piStarmatch.save()
+        piStarmatch.addArguments([image.fileRecord.onDiskFileName])
+        piStarmatch.prerequisites.add(piFlagSources)
+
+        # NOTE: This flagSources task is called twice, once to flag the individual source find methods,
+        # and then now a second time to also flag the SourceFindMatch results as well.
+        piFlagSources = ProcessInput(
+            process = "flagSources",
+            requestor = User.objects.get(pk=request.user.pk),
+            submittedDateTime = timezone.now(),
+            priority = ProcessPriority.getPriorityForProcess("flagSources", "interactive") + 0.09,
+            estCostCPU = 0.5 * image.fileRecord.uploadSize / 1e6,
+            estCostBandwidth = 0,
+            estCostStorage = 3000,
+            estCostIO = image.fileRecord.uploadSize
+            )
+
+        piFlagSources.save()
+        piFlagSources.addArguments([image.pk])
+        piFlagSources.prerequisites.add(piStarmatch)
+
+        piAstrometryNet = ProcessInput(
+            process = "astrometryNet",
+            requestor = User.objects.get(pk=request.user.pk),
+            submittedDateTime = timezone.now(),
+            priority = ProcessPriority.getPriorityForProcess("astrometryNet", "interactive") + 0.01,
+            estCostCPU = 100,
+            estCostBandwidth = 3000,
+            estCostStorage = 3000,
+            estCostIO = 10000000000
+            )
+
+        piAstrometryNet.save()
+        piAstrometryNet.addArguments([image.fileRecord.onDiskFileName])
+        piAstrometryNet.prerequisites.add(piStarmatch)
+
+    return HttpResponse(json.dumps({'text': 'Response Saved Successfully'}), status=200)
+
+@login_required
+@require_http_methods(['POST'])
 def bookmark(request):
 
     def getResultDictForBookmarkObject(targetObject, user):

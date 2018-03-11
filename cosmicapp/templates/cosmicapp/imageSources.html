@@ -830,58 +830,70 @@ function submitUserFeedback(method, feedback)
         $('#' + method + 'ButtonDiv').html("Thank you.  New results will be available in a minute or two.");
     $('#' + method + 'ButtonDiv').fadeIn(2000);
 
-    //TODO: Move this into the success function for the ajax query when it is written?
-    feedbackSubmittedDict[method] = true;
-    for(otherMethod in feedbackSubmittedDict)
-    {
-        if(otherMethod == method)
-            continue;
-
-        switch(method)
+    $.ajax({
+        url : "/save/userSubmittedFeedback/",
+        type : "post",
+        data: {method: method, feedback, feedback, imageId: imageId},
+        dataType: 'json',
+        success : function(response)
         {
-            case 'sextractor':   theseResults = sextractorResults;   break;
-            case 'image2xy':     theseResults = image2xyResults;     break;
-            case 'daofind':      theseResults = daofindResults;      break;
-            case 'starfind':     theseResults = starfindResults;     break;
-        }
+            alert(response.text);
 
-        switch(otherMethod)
-        {
-            case 'sextractor':   results = sextractorResults;   break;
-            case 'image2xy':     results = image2xyResults;     break;
-            case 'daofind':      results = daofindResults;      break;
-            case 'starfind':     results = starfindResults;     break;
-        }
-
-        if(feedback == 'tooMany')
-            if(results.length > theseResults.length)
+            feedbackSubmittedDict[method] = true;
+            for(otherMethod in feedbackSubmittedDict)
             {
-                feedbackSubmittedDict[otherMethod] = true;
-                $('#' + otherMethod + 'FeedbackButtonDiv').hide();
-                $('#' + otherMethod + 'ButtonDiv').fadeOut(0);
-                $('#' + otherMethod + 'ButtonDiv').html("There are even more results on this method.");
-                $('#' + otherMethod + 'ButtonDiv').fadeIn(5000);
-            }
+                if(otherMethod == method)
+                    continue;
 
-        if(feedback == 'tooFew')
-            if(results.length < theseResults.length)
-            {
-                feedbackSubmittedDict[otherMethod] = true;
-                $('#' + otherMethod + 'FeedbackButtonDiv').hide();
-                $('#' + otherMethod + 'ButtonDiv').fadeOut(0);
-                $('#' + otherMethod + 'ButtonDiv').html("There are even fewer results on this method.");
-                $('#' + otherMethod + 'ButtonDiv').fadeIn(5000);
-            }
+                switch(method)
+                {
+                    case 'sextractor':   theseResults = sextractorResults;   break;
+                    case 'image2xy':     theseResults = image2xyResults;     break;
+                    case 'daofind':      theseResults = daofindResults;      break;
+                    case 'starfind':     theseResults = starfindResults;     break;
+                }
 
-        if(feedback == 'aboutRight')
-        {
-            feedbackSubmittedDict[otherMethod] = true;
-            $('#' + otherMethod + 'FeedbackButtonDiv').hide();
-            $('#' + otherMethod + 'ButtonDiv').fadeOut(0);
-            $('#' + otherMethod + 'ButtonDiv').html("Done.");
-            $('#' + otherMethod + 'ButtonDiv').fadeIn(5000);
+                switch(otherMethod)
+                {
+                    case 'sextractor':   results = sextractorResults;   break;
+                    case 'image2xy':     results = image2xyResults;     break;
+                    case 'daofind':      results = daofindResults;      break;
+                    case 'starfind':     results = starfindResults;     break;
+                }
+
+                if(feedback == 'tooMany')
+                    if(results.length > theseResults.length)
+                    {
+                        feedbackSubmittedDict[otherMethod] = true;
+                        $('#' + otherMethod + 'FeedbackButtonDiv').hide();
+                        $('#' + otherMethod + 'ButtonDiv').fadeOut(0);
+                        $('#' + otherMethod + 'ButtonDiv').html("There are even more results on this method.");
+                        $('#' + otherMethod + 'ButtonDiv').fadeIn(5000);
+                    }
+
+                if(feedback == 'tooFew')
+                    if(results.length < theseResults.length)
+                    {
+                        feedbackSubmittedDict[otherMethod] = true;
+                        $('#' + otherMethod + 'FeedbackButtonDiv').hide();
+                        $('#' + otherMethod + 'ButtonDiv').fadeOut(0);
+                        $('#' + otherMethod + 'ButtonDiv').html("There are even fewer results on this method.");
+                        $('#' + otherMethod + 'ButtonDiv').fadeIn(5000);
+                    }
+
+                if(feedback == 'aboutRight')
+                {
+                    feedbackSubmittedDict[otherMethod] = true;
+                    $('#' + otherMethod + 'FeedbackButtonDiv').hide();
+                    $('#' + otherMethod + 'ButtonDiv').fadeOut(0);
+                    $('#' + otherMethod + 'ButtonDiv').html("Done.");
+                    $('#' + otherMethod + 'ButtonDiv').fadeIn(5000);
+                }
+            }
         }
-    }
+        //TODO: Implement error handler.
+    });
+
 };
 
 function constructLabelText(paramArray)

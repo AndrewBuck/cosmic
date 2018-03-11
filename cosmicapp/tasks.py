@@ -495,19 +495,95 @@ def generateThumbnails(filename):
 
     return constructProcessOutput(outputText, errorText)
 
-@shared_task
-def sextractor(filename):
+def initSourcefind(method, image):
+    methodDict = {
+        'sextractor': models.SextractorResult,
+        'image2xy': models.Image2xyResult,
+        'daofind': models.DaofindResult,
+        'starfind': models.StarfindResult
+        }
+
+    shouldReturn = False
     outputText = ""
     errorText = ""
 
+    outputText += "Running {}.\n\n".format(method)
+
+    # Check to see if we have run this task before and adjust the sensitivity higher or lower
+    # Start by seeing if we have a previously saved value, if not then load the default.
+    detectThresholdMultiplier = image.getImageProperty(method + 'Multiplier')
+    if detectThresholdMultiplier is None:
+        detectThresholdMultiplier = models.CosmicVariable.getVariable(method + 'Threshold')
+        outputText += 'Have not run before, setting default multiplier of {} standard deviations.\n'.format(detectThresholdMultiplier)
+    else:
+        detectThresholdMultiplier = float(detectThresholdMultiplier)
+        outputText += "Last detect threshold was {}.\n".format(detectThresholdMultiplier)
+
+        # Check to see if there is a recommendation from a method that got the sourcefind "about right".
+        previousRunNumFound = methodDict[method].objects.filter(image=image).count()
+        outputText += 'Previous run of this method found {} results.\n'.format(previousRunNumFound)
+        numExpectedFeedback = image.getImageProperty('userNumExpectedResults', True)
+        minValid = 0
+        maxValid = 1e9
+        feedbackFound = False
+        for feedback in numExpectedFeedback:
+            feedbackFound = True
+            numExpected, rangeString = feedback.value.split()
+            numExpected = float(numExpected)
+            findFactor = previousRunNumFound / numExpected
+            outputText += 'User feedback indicates that {} results is {}.\n'.format(numExpected, rangeString)
+            if rangeString == 'aboutRight':
+                aboutRightRange = 0.2
+                minValid = numExpected*(1-aboutRightRange)
+                maxValid = numExpected*(1+aboutRightRange)
+            elif rangeString in ['tooMany', 'wayTooMany']:
+                maxValid = min(maxValid, numExpected)
+            elif rangeString in ['tooFew', 'wayTooFew']:
+                minValid = max(minValid, numExpected)
+
+        if feedbackFound:
+            outputText += "Valid range of results is between {} and {}.\n".format(minValid, maxValid)
+            if previousRunNumFound <= 0.1*minValid:
+                detectThresholdMultiplier -= 1.0
+                outputText += "Last run was less than 10% of the user submitted range, reducing detection threshold a lot.\n"
+            elif previousRunNumFound <= minValid:
+                detectThresholdMultiplier -= 0.25
+                outputText += "Last run was less than {}% of the user submitted range, reducing detection threshold a little.\n".format(100*(1-aboutRightRange))
+            elif previousRunNumFound <= maxValid:
+                outputText += "Last run was within {}% of the user submitted range, not running again.".format(100*aboutRightRange)
+                shouldReturn = True
+            elif previousRunNumFound <= 10*maxValid:
+                detectThresholdMultiplier += 0.25
+                outputText += "Last run was more than {}% of the user submitted range, increasing detection threshold a little.".format(100*(1+aboutRightRange))
+            else:
+                detectThresholdMultiplier += 1.0
+                outputText += "Last run was more than 10 times the user submitted figure, increasing detection threshold a lot."
+
+    if detectThresholdMultiplier < 0.1:
+        outputText += "Not running threshold of {} standard deviations, exiting.\n".format(detectThresholdMultiplier)
+        shouldReturn = True
+
+    # Store the multiplier we decided to use in case we re-run this method in the future.
+    image.addImageProperty(method + 'Multiplier', str(detectThresholdMultiplier))
+
+    return (detectThresholdMultiplier, shouldReturn, outputText, errorText)
+
+@shared_task
+def sextractor(filename):
     # Get the image record
     image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
 
     #TODO: Handle multi-extension fits files.
     channelInfos = models.ImageChannelInfo.objects.filter(image=image).order_by('index')
 
-    detectThresholdMultiplier = models.CosmicVariable.getVariable('sextractorThreshold')
+    detectThresholdMultiplier, shouldReturn, outputText, errorText = initSourcefind('sextractor', image)
+
+    if shouldReturn:
+        return constructProcessOutput(outputText, errorText)
+
     detectThreshold = detectThresholdMultiplier*channelInfos[0].bgStdDev
+    outputText += 'Final multiplier of {} standard deviations.\n'.format(detectThresholdMultiplier)
+    outputText += 'Final detect threshold of {} above background.\n'.format(detectThreshold)
 
     #TODO: sextractor can only handle .fit files.  Should autoconvert the file to .fit if necessary before running.
     #TODO: sextractor has a ton of different modes and options, we should consider running
@@ -705,20 +781,23 @@ def image2xy(filename):
 
 @shared_task
 def daofind(filename):
-    outputText = ""
-    errorText = ""
-
-    outputText = "daofind: " + filename + "\n"
-
     #TODO: daofind can only handle .fit files.  Should autoconvert the file to .fit if necessary before running.
     image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
 
     #TODO: Handle multi-extension fits files.
     channelInfos = models.ImageChannelInfo.objects.filter(image=image).order_by('index')
 
+    detectThresholdMultiplier, shouldReturn, outputText, errorText = initSourcefind('daofind', image)
+
+    if shouldReturn:
+        return constructProcessOutput(outputText, errorText)
+
+    detectThreshold = detectThresholdMultiplier*channelInfos[0].bgStdDev
+    outputText += 'Final multiplier of {} standard deviations.\n'.format(detectThresholdMultiplier)
+    outputText += 'Final detect threshold of {} above background.\n'.format(detectThreshold)
+
     hdulist = fits.open(settings.MEDIA_ROOT + filename)
     data = hdulist[0].data
-    detectThresholdMultiplier = models.CosmicVariable.getVariable('daofindThreshold')
     #TODO: Set the fwhm from a variable if this is the first run, or from the previous run average if this is the second run of this task.
     daofind = DAOStarFinder(fwhm = 2.5, threshold = detectThresholdMultiplier*channelInfos[0].bgStdDev)
     sources = daofind(data - channelInfos[0].bgMedian)
@@ -754,20 +833,23 @@ def daofind(filename):
 
 @shared_task
 def starfind(filename):
-    outputText = ""
-    errorText = ""
-
-    outputText += "starfind: " + filename + "\n"
-
     #TODO: starfind can only handle .fit files.  Should autoconvert the file to .fit if necessary before running.
     image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
 
     #TODO: Handle multi-extension fits files.
     channelInfos = models.ImageChannelInfo.objects.filter(image=image).order_by('index')
 
+    detectThresholdMultiplier, shouldReturn, outputText, errorText = initSourcefind('starfind', image)
+
+    if shouldReturn:
+        return constructProcessOutput(outputText, errorText)
+
+    detectThreshold = detectThresholdMultiplier*channelInfos[0].bgStdDev
+    outputText += 'Final multiplier of {} standard deviations.\n'.format(detectThresholdMultiplier)
+    outputText += 'Final detect threshold of {} above background.\n'.format(detectThreshold)
+
     hdulist = fits.open(settings.MEDIA_ROOT + filename)
     data = hdulist[0].data
-    detectThresholdMultiplier = models.CosmicVariable.getVariable('starfindThreshold')
     #TODO: Set the fwhm from a variable if this is the first run, or from the previous run average if this is the second run of this task.
     starfinder = IRAFStarFinder(fwhm = 2.5, threshold = detectThresholdMultiplier*channelInfos[0].bgStdDev)
     sources = starfinder(data - channelInfos[0].bgMedian)
