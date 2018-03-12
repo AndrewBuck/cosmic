@@ -402,16 +402,6 @@ function addHistogramToPlot(data, nBins, lineColor, legendStr, dashArray)
     // Hack to force a window resize event which makes the plot properly draw the axis labels.
     window.dispatchEvent(new Event('resize'));
 
-    /*
-    oldXRange = plot.x_range;
-    oldYRange = plot.y_range;
-
-    plot.x_range.start = math.min(oldXRange.start, bins[0][0]);
-    plot.x_range.end = math.max(oldXRange.end, bins[0][bins[0].length-1]);
-    plot.y_range.start = -1;
-    plot.y_range.end = 100;   //TODO: Set this to the max value of any of the bin counts in the current dataset or the previous max.
-    */
-
     //plot.legend[0].location = "top_left";
     //plot.legend[0].click_policy="hide";
 
