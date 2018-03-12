@@ -525,6 +525,7 @@ def initSourcefind(method, image):
         numExpectedFeedback = image.getImageProperty('userNumExpectedResults', True)
         minValid = 0
         maxValid = 1e9
+        aboutRightRange = 0.2
         feedbackFound = False
         for feedback in numExpectedFeedback:
             feedbackFound = True
@@ -533,13 +534,12 @@ def initSourcefind(method, image):
             findFactor = previousRunNumFound / numExpected
             outputText += 'User feedback indicates that {} results is {}.\n'.format(numExpected, rangeString)
             if rangeString == 'aboutRight':
-                aboutRightRange = 0.2
                 minValid = numExpected*(1-aboutRightRange)
                 maxValid = numExpected*(1+aboutRightRange)
             elif rangeString in ['tooMany', 'wayTooMany']:
-                maxValid = min(maxValid, numExpected)
+                maxValid = min(maxValid, numExpected*(1-aboutRightRange))
             elif rangeString in ['tooFew', 'wayTooFew']:
-                minValid = max(minValid, numExpected)
+                minValid = max(minValid, numExpected*(1+aboutRightRange))
 
         if feedbackFound:
             outputText += "Valid range of results is between {} and {}.\n".format(minValid, maxValid)
