@@ -213,7 +213,9 @@ colors are defined in javascript, we need to do this in the window.onload functi
     </div>
 </div></p>
 
-<input id="objectsLimitingMagSlider" type=range min="0" max="160" value="140" oninput="drawSources()">
+<input type=button class=button value="-" onclick="adjustSliderValue('objectsLimitingMagSlider', -1)">
+<input type=button class=button value="+" onclick="adjustSliderValue('objectsLimitingMagSlider', 1)">
+<input id="objectsLimitingMagSlider" type=range min="0" max="160" value="140" onchange="drawSources()" oninput="drawSources()">
 <div id=objectsLimitingMagDiv style="display: inline-block"></div>
 <br>
 
@@ -280,6 +282,12 @@ var keyStatusDict = {
 
 var numKeysPressed = 0;
 var mode = '';
+
+function adjustSliderValue(sliderSelector, increment)
+{
+    var slider = document.getElementById(sliderSelector);
+    slider.value = Number(slider.value) + Number(increment);
+};
 
 function drawStroked(c, text, x, y, ignoreDistance=false)
 {
