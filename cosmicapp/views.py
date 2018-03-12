@@ -125,7 +125,6 @@ def upload(request):
                     piImagestats = ProcessInput(
                         process = "imagestats",
                         requestor = User.objects.get(pk=request.user.pk),
-                        submittedDateTime = timezone.now(),
                         priority = ProcessPriority.getPriorityForProcess("imagestats", "batch"),
                         estCostCPU = record.uploadSize / 1e6,
                         estCostBandwidth = 0,
@@ -139,7 +138,6 @@ def upload(request):
                     piThumbnails = ProcessInput(
                         process = "generateThumbnails",
                         requestor = User.objects.get(pk=request.user.pk),
-                        submittedDateTime = timezone.now(),
                         priority = ProcessPriority.getPriorityForProcess("generateThumbnails", "batch"),
                         estCostCPU = record.uploadSize / 1e6,
                         estCostBandwidth = 0,
@@ -153,7 +151,6 @@ def upload(request):
                     piSextractor = ProcessInput(
                         process = "sextractor",
                         requestor = User.objects.get(pk=request.user.pk),
-                        submittedDateTime = timezone.now(),
                         priority = ProcessPriority.getPriorityForProcess("sextractor", "batch"),
                         estCostCPU = 0.5 * record.uploadSize / 1e6,
                         estCostBandwidth = 0,
@@ -167,7 +164,6 @@ def upload(request):
                     piImage2xy = ProcessInput(
                         process = "image2xy",
                         requestor = User.objects.get(pk=request.user.pk),
-                        submittedDateTime = timezone.now(),
                         priority = ProcessPriority.getPriorityForProcess("image2xy", "batch"),
                         estCostCPU = 0.5 * record.uploadSize / 1e6,
                         estCostBandwidth = 0,
@@ -181,7 +177,6 @@ def upload(request):
                     piDaofind = ProcessInput(
                         process = "daofind",
                         requestor = User.objects.get(pk=request.user.pk),
-                        submittedDateTime = timezone.now(),
                         priority = ProcessPriority.getPriorityForProcess("daofind", "batch"),
                         estCostCPU = 0.5 * record.uploadSize / 1e6,
                         estCostBandwidth = 0,
@@ -195,7 +190,6 @@ def upload(request):
                     piStarfind = ProcessInput(
                         process = "starfind",
                         requestor = User.objects.get(pk=request.user.pk),
-                        submittedDateTime = timezone.now(),
                         priority = ProcessPriority.getPriorityForProcess("starfind", "batch"),
                         estCostCPU = 0.5 * record.uploadSize / 1e6,
                         estCostBandwidth = 0,
@@ -209,7 +203,6 @@ def upload(request):
                     piFlagSources = ProcessInput(
                         process = "flagSources",
                         requestor = User.objects.get(pk=request.user.pk),
-                        submittedDateTime = timezone.now(),
                         priority = ProcessPriority.getPriorityForProcess("flagSources", "batch"),
                         estCostCPU = 10,
                         estCostBandwidth = 0,
@@ -223,7 +216,6 @@ def upload(request):
                     piStarmatch = ProcessInput(
                         process = "starmatch",
                         requestor = User.objects.get(pk=request.user.pk),
-                        submittedDateTime = timezone.now(),
                         priority = ProcessPriority.getPriorityForProcess("starmatch", "batch"),
                         estCostCPU = 10,
                         estCostBandwidth = 0,
@@ -241,7 +233,6 @@ def upload(request):
                     piAstrometryNet = ProcessInput(
                         process = "astrometryNet",
                         requestor = User.objects.get(pk=request.user.pk),
-                        submittedDateTime = timezone.now(),
                         priority = ProcessPriority.getPriorityForProcess("astrometryNet", "batch"),
                         estCostCPU = 100,
                         estCostBandwidth = 3000,
@@ -258,7 +249,6 @@ def upload(request):
                     piHeaders = ProcessInput(
                         process = "parseHeaders",
                         requestor = User.objects.get(pk=request.user.pk),
-                        submittedDateTime = timezone.now(),
                         priority = ProcessPriority.getPriorityForProcess("parseHeaders", "batch"),
                         estCostCPU = .1,
                         estCostBandwidth = 0,
@@ -1439,7 +1429,6 @@ def saveUserSubmittedSourceResults(request):
         piFlagSources = ProcessInput(
             process = "flagSources",
             requestor = User.objects.get(pk=request.user.pk),
-            submittedDateTime = timezone.now(),
             priority = ProcessPriority.getPriorityForProcess("flagSources", "interactive") + 0.8,
             estCostCPU = 10,
             estCostBandwidth = 0,
@@ -1453,7 +1442,6 @@ def saveUserSubmittedSourceResults(request):
         piStarmatch = ProcessInput(
             process = "starmatch",
             requestor = User.objects.get(pk=request.user.pk),
-            submittedDateTime = timezone.now(),
             priority = ProcessPriority.getPriorityForProcess("starmatch", "interactive") + 0.7,
             estCostCPU = 10,
             estCostBandwidth = 0,
@@ -1468,7 +1456,6 @@ def saveUserSubmittedSourceResults(request):
         piAstrometryNet = ProcessInput(
             process = "astrometryNet",
             requestor = User.objects.get(pk=request.user.pk),
-            submittedDateTime = timezone.now(),
             priority = ProcessPriority.getPriorityForProcess("astrometryNet", "interactive") + 0.5,
             estCostCPU = 100,
             estCostBandwidth = 3000,
@@ -1510,7 +1497,6 @@ def saveUserSubmittedFeedback(request):
         piSextractor = ProcessInput(
             process = "sextractor",
             requestor = User.objects.get(pk=request.user.pk),
-            submittedDateTime = timezone.now(),
             priority = ProcessPriority.getPriorityForProcess("sextractor", "interactive") + 0.9,
             estCostCPU = 0.5 * image.fileRecord.uploadSize / 1e6,
             estCostBandwidth = 0,
@@ -1524,7 +1510,6 @@ def saveUserSubmittedFeedback(request):
         piImage2xy = ProcessInput(
             process = "image2xy",
             requestor = User.objects.get(pk=request.user.pk),
-            submittedDateTime = timezone.now(),
             priority = ProcessPriority.getPriorityForProcess("image2xy", "interactive") + 0.8,
             estCostCPU = 0.5 * image.fileRecord.uploadSize / 1e6,
             estCostBandwidth = 0,
@@ -1538,7 +1523,6 @@ def saveUserSubmittedFeedback(request):
         piDaofind = ProcessInput(
             process = "daofind",
             requestor = User.objects.get(pk=request.user.pk),
-            submittedDateTime = timezone.now(),
             priority = ProcessPriority.getPriorityForProcess("daofind", "interactive") + 0.7,
             estCostCPU = 0.5 * image.fileRecord.uploadSize / 1e6,
             estCostBandwidth = 0,
@@ -1552,7 +1536,6 @@ def saveUserSubmittedFeedback(request):
         piStarfind = ProcessInput(
             process = "starfind",
             requestor = User.objects.get(pk=request.user.pk),
-            submittedDateTime = timezone.now(),
             priority = ProcessPriority.getPriorityForProcess("starfind", "interactive") + 0.6,
             estCostCPU = 0.5 * image.fileRecord.uploadSize / 1e6,
             estCostBandwidth = 0,
@@ -1566,7 +1549,6 @@ def saveUserSubmittedFeedback(request):
         piFlagSources = ProcessInput(
             process = "flagSources",
             requestor = User.objects.get(pk=request.user.pk),
-            submittedDateTime = timezone.now(),
             priority = ProcessPriority.getPriorityForProcess("flagSources", "interactive") + 0.2,
             estCostCPU = 0.5 * image.fileRecord.uploadSize / 1e6,
             estCostBandwidth = 0,
@@ -1584,7 +1566,6 @@ def saveUserSubmittedFeedback(request):
         piStarmatch = ProcessInput(
             process = "starmatch",
             requestor = User.objects.get(pk=request.user.pk),
-            submittedDateTime = timezone.now(),
             priority = ProcessPriority.getPriorityForProcess("starmatch", "interactive") + 0.1,
             estCostCPU = 0.5 * image.fileRecord.uploadSize / 1e6,
             estCostBandwidth = 0,
@@ -1601,7 +1582,6 @@ def saveUserSubmittedFeedback(request):
         piFlagSources = ProcessInput(
             process = "flagSources",
             requestor = User.objects.get(pk=request.user.pk),
-            submittedDateTime = timezone.now(),
             priority = ProcessPriority.getPriorityForProcess("flagSources", "interactive") + 0.09,
             estCostCPU = 0.5 * image.fileRecord.uploadSize / 1e6,
             estCostBandwidth = 0,
@@ -1616,7 +1596,6 @@ def saveUserSubmittedFeedback(request):
         piAstrometryNet = ProcessInput(
             process = "astrometryNet",
             requestor = User.objects.get(pk=request.user.pk),
-            submittedDateTime = timezone.now(),
             priority = ProcessPriority.getPriorityForProcess("astrometryNet", "interactive") + 0.01,
             estCostCPU = 100,
             estCostBandwidth = 3000,

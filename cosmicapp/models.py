@@ -23,6 +23,8 @@ from .tasks import computeSingleEphemeris
 
 #TODO:  Need to review the null constraint for all fields and try to minimize use of null=True, this is best done after the database is in a more stable state.
 
+#TODO: Check all DateTime and similar type fields to see if they should be auto_now=True.
+
 class CosmicVariable(models.Model):
     name = models.CharField(max_length=32)
     variableType = models.CharField(max_length=32)
@@ -625,7 +627,7 @@ class ProcessInput(models.Model):
     prerequisites = models.ManyToManyField('self', symmetrical=False)
     process = models.CharField(max_length=32)
     requestor = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
-    submittedDateTime = models.DateTimeField()
+    submittedDateTime = models.DateTimeField(auto_now=True)
     startedDateTime = models.DateTimeField(null=True)
     priority = models.FloatField(null=True)
     estCostCPU = models.FloatField(null=True)
