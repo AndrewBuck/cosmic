@@ -412,6 +412,14 @@ class Image(models.Model, SkyObject):
         #TODO: Add code to make a more informed choice about which plate solution to use if there is more than 1.
         return self.plateSolutions.first()
 
+    def getBestRaDec(self):
+        ps = self.getBestPlateSolution()
+        if ps is not None:
+            return (ps.centerRA, ps.centerDec)
+        else:
+            #TODO: Make this check the image properties, etc.
+            return (None, None)
+
     def addImageProperty(self, key, value, overwriteValue=True, header=None):
         createNew = False
 
