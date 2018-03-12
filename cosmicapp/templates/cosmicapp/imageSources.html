@@ -216,6 +216,7 @@ colors are defined in javascript, we need to do this in the window.onload functi
 <input type=button class=button value="-" onclick="adjustSliderValue('objectsLimitingMagSlider', -1)">
 <input type=button class=button value="+" onclick="adjustSliderValue('objectsLimitingMagSlider', 1)">
 <input id="objectsLimitingMagSlider" type=range min="0" max="160" value="140" onchange="drawSources()" oninput="drawSources()">
+<input type=checkbox id=objectsEnabledCheckbox checked>
 <div id=objectsLimitingMagDiv style="display: inline-block"></div>
 <br>
 
@@ -1120,7 +1121,8 @@ function drawSources()
     context.strokeStyle = objectsColor;
     context.fillStyle = objectsColor;
     limitingMag = $('#objectsLimitingMagSlider').val()/10;
-    $('#objectsLimitingMagDiv').html("Background objects limiting Magnitude: " + limitingMag);
+    $('#objectsLimitingMagDiv').html("Catalog objects limiting Magnitude: " + limitingMag);
+    if($('#objectsEnabledCheckbox').is(':checked'))
     for(i = 0; i < objectsInImage.length && !lmbDown; i++)
     {
         if(objectsInImage[i].mag < limitingMag)
@@ -1613,11 +1615,12 @@ function handleMouseMove(event)
         sourceLists[sourceLists.length] = [starfindResults, 'starfind'];
     if($('#sourceFindMatchesEnabledCheckbox').is(':checked'))
         sourceLists[sourceLists.length] = [sourceFindMatches, 'multi'];
+    if($('#objectsEnabledCheckbox').is(':checked'))
+        sourceLists[sourceLists.length] = [objectsInImage, 'Catalog'];
 
     sourceLists[sourceLists.length] = [userCreatedResults, 'user - not uploaded'];
     sourceLists[sourceLists.length] = [userCreatedHotPixels, 'user - hot pixel - not uploaded'];
     sourceLists[sourceLists.length] = [userSubmittedResults, 'user'];
-    sourceLists[sourceLists.length] = [objectsInImage, 'Catalog'];
     sourceLists[sourceLists.length] = [userSubmittedHotPixels, 'user - hot pixel'];
 
     for(var i = 0; i < sourceLists.length; i++)
