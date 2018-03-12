@@ -554,10 +554,10 @@ def initSourcefind(method, image):
                 shouldReturn = True
             elif previousRunNumFound <= 10*maxValid:
                 detectThresholdMultiplier += 0.25
-                outputText += "Last run was more than {}% of the user submitted range, increasing detection threshold a little.".format(100*(1+aboutRightRange))
+                outputText += "Last run was more than {}% of the user submitted range, increasing detection threshold a little.\n".format(100*(1+aboutRightRange))
             else:
                 detectThresholdMultiplier += 1.0
-                outputText += "Last run was more than 10 times the user submitted figure, increasing detection threshold a lot."
+                outputText += "Last run was more than 10 times the user submitted figure, increasing detection threshold a lot.\n"
 
     if detectThresholdMultiplier < 0.1:
         outputText += "Not running threshold of {} standard deviations, exiting.\n".format(detectThresholdMultiplier)
