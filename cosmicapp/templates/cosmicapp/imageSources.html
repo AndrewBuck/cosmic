@@ -528,7 +528,7 @@ function getSextractorResults()
 
                 //TODO:  Add confidence for this and other types to the bokeh histogram plot.
                 fluxAutoValues[i] = sextractorResults[i].fluxAuto;
-                magAutoValues[i] = -2.5*math.log(sextractorResults[i].fluxAuto);
+                magAutoValues[i] = -2.5*math.log10(sextractorResults[i].fluxAuto);
             }
 
             //addHistogramToPlot(fluxAutoValues, numberOfBins, sextractorColor, 'Flux (sextractor)', []);
@@ -636,7 +636,7 @@ function getImage2xyResults()
 
                 //TODO:  Add confidence for this and other types to the bokeh histogram plot.
                 fluxValues[i] = image2xyResults[i].flux;
-                magValues[i] = -2.5*math.log(image2xyResults[i].flux);
+                magValues[i] = -2.5*math.log10(image2xyResults[i].flux);
             }
 
             //addHistogramToPlot(fluxValues, numberOfBins, image2xyColor, 'Flux (image2xy)', []);
