@@ -1103,9 +1103,9 @@ def astrometryNet(filename):
         resolution = (ps.resolutionX + ps.resolutionY)/2.0
         outputText += 'Image has a plate solution, restricting the scale to be within 30% of {} arcseconds per pixel.\n'.format(resolution)
         argArray.append('--scale-low')
-        argArray.append(0.7*resolution)
+        argArray.append(str(0.7*resolution))
         argArray.append('--scale-high')
-        argArray.append(1.3*resolution)
+        argArray.append(str(1.3*resolution))
         argArray.append('--scale-units')
         argArray.append('arcsecperpix')
     else:
