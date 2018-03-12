@@ -507,7 +507,7 @@ function getSextractorResults()
             var results = xml.getElementsByTagName('SextractorResult')
             for(i = 0; i < results.length; i++)
             {
-                attr = results[i].attributes;
+                var attr = results[i].attributes;
                 sextractorResults[i] = new Object({
                     id: Number(attr.getNamedItem('id').nodeValue),
                     confidence: Number(attr.getNamedItem('confidence').nodeValue),
@@ -552,7 +552,7 @@ function getUserSubmittedResults()
             var results = xml.getElementsByTagName('UserSubmittedResult')
             for(i = 0; i < results.length; i++)
             {
-                attr = results[i].attributes;
+                var attr = results[i].attributes;
                 userSubmittedResults[i] = new Object({
                     id: Number(attr.getNamedItem('id').nodeValue),
                     confidence: Number(attr.getNamedItem('confidence').nodeValue),
@@ -582,7 +582,7 @@ function getUserSubmittedHotPixels()
             var results = xml.getElementsByTagName('UserSubmittedHotPixel')
             for(i = 0; i < results.length; i++)
             {
-                attr = results[i].attributes;
+                var attr = results[i].attributes;
                 userSubmittedHotPixels[i] = new Object({
                     id: Number(attr.getNamedItem('id').nodeValue),
                     confidence: Number(attr.getNamedItem('confidence').nodeValue),
@@ -617,7 +617,7 @@ function getImage2xyResults()
             var results = xml.getElementsByTagName('Image2xyResult')
             for(i = 0; i < results.length; i++)
             {
-                attr = results[i].attributes;
+                var attr = results[i].attributes;
                 image2xyResults[i] = new Object({
                     id: Number(attr.getNamedItem('id').nodeValue),
                     confidence: Number(attr.getNamedItem('confidence').nodeValue),
@@ -666,7 +666,7 @@ function getDaofindResults()
             var results = xml.getElementsByTagName('DaofindResult')
             for(i = 0; i < results.length; i++)
             {
-                attr = results[i].attributes;
+                var attr = results[i].attributes;
                 daofindResults[i] = new Object({
                     id: Number(attr.getNamedItem('id').nodeValue),
                     confidence: Number(attr.getNamedItem('confidence').nodeValue),
@@ -729,7 +729,7 @@ function getStarfindResults()
             var results = xml.getElementsByTagName('StarfindResult')
             for(i = 0; i < results.length; i++)
             {
-                attr = results[i].attributes;
+                var attr = results[i].attributes;
                 starfindResults[i] = new Object({
                     id: Number(attr.getNamedItem('id').nodeValue),
                     confidence: Number(attr.getNamedItem('confidence').nodeValue),
@@ -787,7 +787,7 @@ function getSourceFindMatches()
             var results = xml.getElementsByTagName('SourceFindMatch')
             for(i = 0; i < results.length; i++)
             {
-                attr = results[i].attributes;
+                var attr = results[i].attributes;
 
                 sextractorId = null, image2xyId = null, daofindId = null, starfindId = null, userSubmittedId = null;
                 if(attr.getNamedItem('sextractorResult') != null)
