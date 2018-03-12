@@ -503,6 +503,7 @@ function getSextractorResults()
         success : function(xml)
         {
             fluxAutoValues = [];
+            magAutoValues = [];
 
             var results = xml.getElementsByTagName('SextractorResult')
             for(i = 0; i < results.length; i++)
@@ -527,9 +528,11 @@ function getSextractorResults()
 
                 //TODO:  Add confidence for this and other types to the bokeh histogram plot.
                 fluxAutoValues[i] = sextractorResults[i].fluxAuto;
+                magAutoValues[i] = -2.5*math.log(sextractorResults[i].fluxAuto);
             }
 
-            addHistogramToPlot(fluxAutoValues, numberOfBins, sextractorColor, 'Flux (sextractor)', []);
+            //addHistogramToPlot(fluxAutoValues, numberOfBins, sextractorColor, 'Flux (sextractor)', []);
+            addHistogramToPlot(magAutoValues, numberOfBins, sextractorColor, 'Mag (sextractor)', []);
 
             drawSources();
             $('#sextractorLoadingDiv').html("<br>" + sextractorResults.length + " Results<br>Loaded");
@@ -612,6 +615,7 @@ function getImage2xyResults()
         success : function(xml)
         {
             fluxValues = [];
+            magValues = [];
             backgroundValues = [];
 
             var results = xml.getElementsByTagName('Image2xyResult')
@@ -632,9 +636,11 @@ function getImage2xyResults()
 
                 //TODO:  Add confidence for this and other types to the bokeh histogram plot.
                 fluxValues[i] = image2xyResults[i].flux;
+                magValues[i] = -2.5*math.log(image2xyResults[i].flux);
             }
 
-            addHistogramToPlot(fluxValues, numberOfBins, image2xyColor, 'Flux (image2xy)', []);
+            //addHistogramToPlot(fluxValues, numberOfBins, image2xyColor, 'Flux (image2xy)', []);
+            addHistogramToPlot(magValues, numberOfBins, image2xyColor, 'Mag (image2xy)', []);
 
             drawSources();
             $('#image2xyLoadingDiv').html("<br>" + image2xyResults.length + " Results<br>Loaded");
@@ -657,11 +663,11 @@ function getDaofindResults()
         success : function(xml)
         {
             magValues = [];
-            fluxValues = [];
-            peakValues = [];
-            sharpnessValues = [];
-            sroundValues = [];
-            groundValues = [];
+            //fluxValues = [];
+            //peakValues = [];
+            //sharpnessValues = [];
+            //sroundValues = [];
+            //groundValues = [];
 
             var results = xml.getElementsByTagName('DaofindResult')
             for(i = 0; i < results.length; i++)
@@ -684,19 +690,19 @@ function getDaofindResults()
                 });
 
                 magValues[i] = daofindResults[i].mag;
-                fluxValues[i] = daofindResults[i].flux;
-                peakValues[i] = daofindResults[i].peak;
-                sharpnessValues[i] = daofindResults[i].sharpness;
-                sroundValues[i] = daofindResults[i].sround;
-                groundValues[i] = daofindResults[i].ground;
+                //fluxValues[i] = daofindResults[i].flux;
+                //peakValues[i] = daofindResults[i].peak;
+                //sharpnessValues[i] = daofindResults[i].sharpness;
+                //sroundValues[i] = daofindResults[i].sround;
+                //groundValues[i] = daofindResults[i].ground;
             }
 
             addHistogramToPlot(magValues, numberOfBins, daofindColor, 'Mag (daofind)', []);
-            addHistogramToPlot(fluxValues, numberOfBins, daofindColor, 'Flux (daofind)', [1, 3]);
-            addHistogramToPlot(peakValues, numberOfBins, daofindColor, 'Peak(daofind)', [1, 3, 3, 5]);
-            addHistogramToPlot(sharpnessValues, numberOfBins, daofindColor, 'Sharpness (daofind)', [3, 3]);
-            addHistogramToPlot(sroundValues, numberOfBins, daofindColor, 'S Round (daofind)', [3, 6]);
-            addHistogramToPlot(groundValues, numberOfBins, daofindColor, 'G Round (daofind)', [6, 6]);
+            //addHistogramToPlot(fluxValues, numberOfBins, daofindColor, 'Flux (daofind)', [1, 3]);
+            //addHistogramToPlot(peakValues, numberOfBins, daofindColor, 'Peak(daofind)', [1, 3, 3, 5]);
+            //addHistogramToPlot(sharpnessValues, numberOfBins, daofindColor, 'Sharpness (daofind)', [3, 3]);
+            //addHistogramToPlot(sroundValues, numberOfBins, daofindColor, 'S Round (daofind)', [3, 6]);
+            //addHistogramToPlot(groundValues, numberOfBins, daofindColor, 'G Round (daofind)', [6, 6]);
 
             drawSources();
             $('#daofindLoadingDiv').html("<br>" + daofindResults.length + " Results<br>Loaded");
@@ -719,12 +725,12 @@ function getStarfindResults()
         success : function(xml)
         {
             magValues = [];
-            peakValues = [];
-            fluxValues = [];
-            fwhmValues = [];
-            roundnessValues = [];
-            paValues = [];
-            sharpnessValues = [];
+            //peakValues = [];
+            //fluxValues = [];
+            //fwhmValues = [];
+            //roundnessValues = [];
+            //paValues = [];
+            //sharpnessValues = [];
 
             var results = xml.getElementsByTagName('StarfindResult')
             for(i = 0; i < results.length; i++)
@@ -748,21 +754,21 @@ function getStarfindResults()
                 });
 
                 magValues[i] = starfindResults[i].mag;
-                peakValues[i] = starfindResults[i].peak;
-                fluxValues[i] = starfindResults[i].flux;
-                fwhmValues[i] = starfindResults[i].fwhm;
-                roundnessValues[i] = starfindResults[i].roundness;
-                paValues[i] = starfindResults[i].pa;
-                sharpnessValues[i] = starfindResults[i].sharpness;
+                //peakValues[i] = starfindResults[i].peak;
+                //fluxValues[i] = starfindResults[i].flux;
+                //fwhmValues[i] = starfindResults[i].fwhm;
+                //roundnessValues[i] = starfindResults[i].roundness;
+                //paValues[i] = starfindResults[i].pa;
+                //sharpnessValues[i] = starfindResults[i].sharpness;
             }
 
             addHistogramToPlot(magValues, numberOfBins, starfindColor, 'Mag (starfind)', []);
-            addHistogramToPlot(peakValues, numberOfBins, starfindColor, 'Peak (starfind)', [1, 3]);
-            addHistogramToPlot(fluxValues, numberOfBins, starfindColor, 'Flux (starfind)', [1, 3, 3, 5]);
-            addHistogramToPlot(fwhmValues, numberOfBins, starfindColor, 'FWHM (starfind)', [3, 6]);
-            addHistogramToPlot(roundnessValues, numberOfBins, starfindColor, 'Roundness (starfind)', [6, 6]);
-            addHistogramToPlot(paValues, numberOfBins, starfindColor, 'PA (starfind)', [2, 2, 5]);
-            addHistogramToPlot(sharpnessValues, numberOfBins, starfindColor, 'Sharpness (starfind)', [2, 2, 2, 2, 5]);
+            //addHistogramToPlot(peakValues, numberOfBins, starfindColor, 'Peak (starfind)', [1, 3]);
+            //addHistogramToPlot(fluxValues, numberOfBins, starfindColor, 'Flux (starfind)', [1, 3, 3, 5]);
+            //addHistogramToPlot(fwhmValues, numberOfBins, starfindColor, 'FWHM (starfind)', [3, 6]);
+            //addHistogramToPlot(roundnessValues, numberOfBins, starfindColor, 'Roundness (starfind)', [6, 6]);
+            //addHistogramToPlot(paValues, numberOfBins, starfindColor, 'PA (starfind)', [2, 2, 5]);
+            //addHistogramToPlot(sharpnessValues, numberOfBins, starfindColor, 'Sharpness (starfind)', [2, 2, 2, 2, 5]);
 
             drawSources();
             $('#starfindLoadingDiv').html("<br>" + starfindResults.length + " Results<br>Loaded");
