@@ -1076,13 +1076,42 @@ def astrometryNet(filename):
     outputText += "Limiting runtime to {} seconds of CPU time.".format(cpuLimit) + "\n"
     outputText += "Limiting depth to {} objects.".format(depth) + "\n"
 
-    proc = subprocess.Popen(['solve-field', '--depth', depth,
+    argArray = ['solve-field', '--depth', depth,
             '--no-plots', '--overwrite', '--timestamp',
             '--x-column', 'XIMAGE', '--y-column', 'YIMAGE', '--sort-column', 'CONFIDENCE',
             '--width', str(image.dimX), '--height', str(image.dimY),
             '--cpulimit', cpuLimit,
             tableFilename
-            ],
+            ]
+
+    ra, dec = image.getBestRaDec()
+    if ra is not None:
+        argArray.append('--ra')
+        argArray.append(str(ra))
+        argArray.append('--dec')
+        argArray.append(str(dec))
+        argArray.append('--radius')
+        argArray.append(str(models.CosmicVariable.getVariable('astrometryNetRadius')))
+
+        outputText += 'Searching a {} degree radius around the ra, dec of ({}, {})\n'.format(models.CosmicVariable.getVariable('astrometryNetRadius'), ra, dec)
+
+    else:
+        outputText += 'Image has no plate solution or header data indicating where to search, searching the whole sky.\n'
+
+    ps = image.getBestPlateSolution()
+    if ps is not None:
+        resolution = (ps.resolutionX + ps.resolutionY)/2.0
+        outputText += 'Image has a plate solution, restricting the scale to be within 30% of {} arcseconds per pixel.\n'.format(resolution)
+        argArray.append('--scale-low')
+        argArray.append(0.7*resolution)
+        argArray.append('--scale-high')
+        argArray.append(1.3*resolution)
+        argArray.append('--scale-units')
+        argArray.append('arcsecperpix')
+    else:
+        outputText += 'Image does not have a plate solution.  Not restricting image scale range.\n'
+
+    proc = subprocess.Popen(argArray,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
             )
