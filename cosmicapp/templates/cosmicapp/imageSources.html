@@ -1142,9 +1142,9 @@ function drawSources()
     {
         if(objectsInImage[i].mag < limitingMag)
             if(objectsInImage[i].catalog == 'UCAC4')
-                drawSource(context, objectsInImage[i].x, objectsInImage[i].y, 2.0, 20-objectsInImage[i].mag, 1.0);
+                drawSource(context, objectsInImage[i].x, objectsInImage[i].y, 2.0, math.min(18-objectsInImage[i].mag, 7), 1.0);
             else
-                drawReticle(context, objectsInImage[i].x, objectsInImage[i].y, 30-objectsInImage[i].mag, objectsColor, 1.0);
+                drawReticle(context, objectsInImage[i].x, objectsInImage[i].y, math.min(30-objectsInImage[i].mag, 15), objectsColor, 1.0);
     }
 
 
