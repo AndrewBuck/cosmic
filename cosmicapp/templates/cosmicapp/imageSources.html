@@ -447,7 +447,8 @@ function getObjectsInImage()
                         case 'UCAC4Record':          mag = Number(attr.getNamedItem('magAperture').nodeValue);      break;
                     }
 
-                    objectsInImage[objectsInImage.length] = new Object({
+                    newIndex = objectsInImage.length
+                    objectsInImage[newIndex] = new Object({
                         catalog: catalog,
                         id: Number(attr.getNamedItem('id').nodeValue),
                         identifier: attr.getNamedItem('identifier').nodeValue,
@@ -457,6 +458,10 @@ function getObjectsInImage()
                         x: Number(attr.getNamedItem('pixelX').nodeValue),
                         y: Number(attr.getNamedItem('pixelY').nodeValue),
                     });
+
+                    if(isNaN(objectsInImage[newIndex].mag))
+                        objectsInImage[newIndex].mag = -1;
+
                 }
             }
 
