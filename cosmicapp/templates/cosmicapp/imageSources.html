@@ -1081,33 +1081,33 @@ function drawReticle(c, x, y, size, color='#A02020', opacity=-1, forceDraw=false
     var angle = Math.PI/8;
 
     c.beginPath();
-    c.arc(x, {{image.dimY}} - y, size, 0, 2*Math.PI)
+    c.arc(xPos, yPos, size, 0, 2*Math.PI)
     c.stroke();
 
     c.beginPath();
-    c.moveTo(x-size*.2, {{image.dimY}} - y);
-    c.lineTo(x-size*.66, {{image.dimY}} - y);
+    c.moveTo(xPos-size*.2, yPos);
+    c.lineTo(xPos-size*.66, yPos);
     c.stroke();
 
     c.beginPath();
-    c.moveTo(x+size*.2, {{image.dimY}} - y);
-    c.lineTo(x+size*.66, {{image.dimY}} - y);
+    c.moveTo(xPos+size*.2, yPos);
+    c.lineTo(xPos+size*.66, yPos);
     c.stroke();
 
     c.beginPath();
-    c.moveTo(x, {{image.dimY}} - (y-size*.2));
-    c.lineTo(x, {{image.dimY}} - (y-size*.66));
+    c.moveTo(xPos, yPos-size*.2);
+    c.lineTo(xPos, yPos-size*.66);
     c.stroke();
 
     c.beginPath();
-    c.moveTo(x, {{image.dimY}} - (y+size*.2));
-    c.lineTo(x, {{image.dimY}} - (y+size*.66));
+    c.moveTo(xPos, yPos+size*.2);
+    c.lineTo(xPos, yPos+size*.66);
     c.stroke();
 
     for(i = 0; i < 4; i++)
     {
         c.beginPath();
-        c.arc(x, {{image.dimY}} - y, size*.66, i*Math.PI/2-angle, i*Math.PI/2+angle)
+        c.arc(xPos, yPos, size*.66, i*Math.PI/2-angle, i*Math.PI/2+angle)
         c.stroke();
     }
 
