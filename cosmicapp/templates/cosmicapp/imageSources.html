@@ -213,6 +213,10 @@ colors are defined in javascript, we need to do this in the window.onload functi
     </div>
 </div></p>
 
+<input id="objectsLimitingMagSlider" type=range min="0" max="160" value="140" oninput="drawSources()">
+<div id=objectsLimitingMagDiv style="display: inline-block"></div>
+<br>
+
 <canvas id="sourcesCanvas" width="{{image.dimX}}" height="{{image.dimY}}" style="border:4px solid #00A030">
 Your browser does not support the HTML5 canvas tag.
 </canvas>
@@ -223,6 +227,7 @@ Your browser does not support the HTML5 canvas tag.
 <script>
 var imageId = {{id}};
 var limitPerSource = 1000;  //TODO: Add a notice in each of the loading methods if the number returned equals this limit.
+var objectsInImage = [];
 var sextractorResults = [], image2xyResults = [], daofindResults = [], starfindResults = [];
 var userCreatedResults = [], userSubmittedResults = [];
 var userCreatedHotPixels = [], userSubmittedHotPixels = [];
@@ -232,9 +237,10 @@ var finishedLoading = false;
 var submitButtonEnabled = false;
 var canvas, context;
 var img;
+var objectsColor = "#9df909";
 var sextractorColor = "#E02010";
 var image2xyColor = "#14D3FF";
-var daofindColor = "#20E010";
+var daofindColor = "#30A010";
 var starfindColor = "#7199E2";
 var sourceFindMatchesColor = "#F99740";
 var userCreatedColor = "#fff766";
@@ -426,6 +432,63 @@ function addHistogramToPlot(data, nBins, lineColor, legendStr, dashArray)
     //plot.legend[0].click_policy="hide";
 
     return quad;
+};
+
+function getObjectsInImage()
+{
+    var i, j;
+
+    $.ajax({
+        url : "/query/?queryfor=objectsInImage&limit=" + limitPerSource + "&imageId=" + imageId,
+        type : "get",
+        async: true,
+        success : function(xml)
+        {
+            typeArray = [
+                ['TwoMassXSCRecord', 'TwoMassXSC'],
+                ['MessierRecord', 'Messier'],
+                ['GCVSRecord', 'GCVS'],
+                ['AsteroidEphemerisShortRecord', 'Asteroid'],
+                ['ExoplanetRecord', 'Exoplanet'],
+                ['UCAC4Record', 'UCAC4']
+                ]
+
+            for(j = 0; j < typeArray.length; j++)
+            {
+                var recordType = typeArray[j][0];
+                var catalog = typeArray[j][1];
+                var results = xml.getElementsByTagName(recordType)
+
+                for(i = 0; i < results.length; i++)
+                {
+                    var attr = results[i].attributes;
+
+                    switch(recordType)
+                    {
+                        case 'TwoMassXSCRecord':     mag = Number(attr.getNamedItem('isophotalKMag').nodeValue);    break;
+                        case 'MessierRecord':        mag = Number(attr.getNamedItem('magV').nodeValue);             break;
+                        case 'GCVSRecord':           mag = Number(attr.getNamedItem('magMax').nodeValue);           break;
+                        case 'AsteroidEphemerisShortRecord':     mag = Number(attr.getNamedItem('mag').nodeValue);  break;
+                        case 'ExoplanetRecord':      mag = Number(attr.getNamedItem('magV').nodeValue);             break;
+                        case 'UCAC4Record':          mag = Number(attr.getNamedItem('magAperture').nodeValue);      break;
+                    }
+
+                    objectsInImage[objectsInImage.length] = new Object({
+                        catalog: catalog,
+                        id: Number(attr.getNamedItem('id').nodeValue),
+                        identifier: attr.getNamedItem('identifier').nodeValue,
+                        mag: mag,
+                        ra: Number(attr.getNamedItem('ra').nodeValue),
+                        dec: Number(attr.getNamedItem('dec').nodeValue),
+                        x: Number(attr.getNamedItem('pixelX').nodeValue),
+                        y: Number(attr.getNamedItem('pixelY').nodeValue),
+                    });
+                }
+            }
+
+            drawSources();
+        }
+    });
 };
 
 function getSextractorResults()
@@ -1065,6 +1128,20 @@ function drawSources()
     context.drawImage(img, 0, 0);
     context.lineWidth = 2;
 
+    context.strokeStyle = objectsColor;
+    context.fillStyle = objectsColor;
+    limitingMag = $('#objectsLimitingMagSlider').val()/10;
+    $('#objectsLimitingMagDiv').html("Background objects limiting Magnitude: " + limitingMag);
+    for(i = 0; i < objectsInImage.length && !lmbDown; i++)
+    {
+        if(objectsInImage[i].mag < limitingMag)
+            if(objectsInImage[i].catalog == 'UCAC4')
+                drawSource(context, objectsInImage[i].x, objectsInImage[i].y, 2.0, 20-objectsInImage[i].mag, 1.0);
+            else
+                drawReticle(context, objectsInImage[i].x, objectsInImage[i].y, 30-objectsInImage[i].mag, objectsColor, 1.0);
+    }
+
+
     context.strokeStyle = sextractorColor;
     context.fillStyle = sextractorColor;
 
@@ -1282,13 +1359,22 @@ function drawSources()
                 context.fillStyle = userCreatedColor;
                 break;
 
+            case 'Catalog':
+                context.strokeStyle = objectsColor;
+                context.fillStyle = objectsColor;
+                break;
+
             default:
                 alert("Unhandled case statement for value: " + mouseObjectsList[i].method);
                 break;
         }
 
-        drawStroked(context, mouseObjectsList[i].method + " " + math.round(mouseObjectsList[i].confidence, 2),
-                    xPos, {{image.dimY}} - yPos - i*(labelSize+4), true);
+        if(mouseObjectsList[i].method == 'Catalog')
+            drawStroked(context, mouseObjectsList[i].catalog + "  " + mouseObjectsList[i].identifier
+                        + "  " + math.round(mouseObjectsList[i].mag, 2), xPos, {{image.dimY}} - yPos - i*(labelSize+4), true);
+        else
+            drawStroked(context, mouseObjectsList[i].method + " " + math.round(mouseObjectsList[i].confidence, 2),
+                        xPos, {{image.dimY}} - yPos - i*(labelSize+4), true);
 
         if(!raDecPrinted)
         {
@@ -1542,6 +1628,7 @@ function handleMouseMove(event)
     sourceLists[sourceLists.length] = [userCreatedResults, 'user - not uploaded'];
     sourceLists[sourceLists.length] = [userCreatedHotPixels, 'user - hot pixel - not uploaded'];
     sourceLists[sourceLists.length] = [userSubmittedResults, 'user'];
+    sourceLists[sourceLists.length] = [objectsInImage, 'Catalog'];
     sourceLists[sourceLists.length] = [userSubmittedHotPixels, 'user - hot pixel'];
 
     for(var i = 0; i < sourceLists.length; i++)
@@ -1710,6 +1797,7 @@ window.onload = function()
 
     updateTable();
 
+    getObjectsInImage();
     getUserSubmittedResults();
     getUserSubmittedHotPixels();
     getSextractorResults();
