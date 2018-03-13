@@ -1319,7 +1319,8 @@ def flagSources(imageIdString):
                     source.pixelX >= image.dimX - edgeDist or source.pixelY >= image.dimY - edgeDist:
 
                     source.flagEdge = True
-                    source.save()
+                else:
+                    source.flagEdge = False
 
                 for hotPixel in hotPixels:
                     deltaX = source.pixelX - hotPixel.pixelX
@@ -1329,7 +1330,11 @@ def flagSources(imageIdString):
                         outputText += "source {} is within 3 pixels of hot pixel {}.\n".format(source.pk, hotPixel.pk)
                         source.flagHotPixel = True
                         source.confidence = 0.1
-                        source.save()
+
+                if source.flagHotPixel is None:
+                    source.flagHotPixel = False
+
+                source.save()
     else:
         outputText += "Image has no user submitted hot pixels in it\n"
 
