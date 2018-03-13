@@ -1,0 +1,18 @@
+{% extends "cosmicapp/objectinfobase.html" %}
+{% load static %}
+{% load cosmicapp_extras %}
+
+{% block mainbody %}
+<h3>2Mass Extended Sky Catalog Entry</h3>
+
+Identifier: {{obj.identifier}}<br>
+RA, Dec: {{obj.ra|formatRA}}&emsp;{{obj.dec|formatDec}}<br>
+
+<h3>Isophotal K-Band Flux</h3>
+Semi-major Axis (arcsec): {{obj.isophotalKSemiMajor}}<br>
+Semi-minor to Semi-major Axis Ratio: {{obj.isophotalKMinorMajor}}<br>
+Angle of Axis: {{obj.isophotalKAngle}}<br>
+Magnitude: {{obj.isophotalKMag}}<br>
+Magnitude Error: {{obj.isophotalKMagErr}}<br>
+
+{% endblock mainbody %}

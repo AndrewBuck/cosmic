@@ -1,0 +1,19 @@
+{% extends "cosmicapp/objectinfobase.html" %}
+{% load static %}
+{% load cosmicapp_extras %}
+
+{% block mainbody %}
+
+<h3>Messier Object</h3>
+Identifier: {{obj.identifier}}<br>
+RA, Dec: {{obj.ra|formatRA}}&emsp;{{obj.dec|formatDec}}<br>
+Object Type: {{obj.objectType}}<br>
+Spectral Type: {{obj.spectralType}}<br>
+Mag U: {{obj.magU}}<br>
+Mag B: {{obj.magB}}<br>
+Mag V: {{obj.magV}}<br>
+Mag R: {{obj.magR}}<br>
+Mag I: {{obj.magI}}<br>
+Number of References: {{obj.numReferences}}<br>
+
+{% endblock mainbody %}

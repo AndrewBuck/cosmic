@@ -86,6 +86,7 @@ for filename in sys.argv[1:]:
                     magError = magError / 100.0 if magError != 99 else None,
                     pmra = pmra / 10.0 if pmra not in [0, 32767] else None,
                     pmdec = pmdec / 10.0 if pmdec not in [0, 32767] else None,
+                    #TODO: Set this to NULL if 0 or whatever is actually in this field.
                     id2mass = fields[18]
                     )
 

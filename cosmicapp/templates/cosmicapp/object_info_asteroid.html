@@ -1,0 +1,39 @@
+{% extends "cosmicapp/objectinfobase.html" %}
+{% load static %}
+{% load cosmicapp_extras %}
+
+{% block mainbody %}
+<h3>Astorb Catalog Entry</h3>
+
+Number: {{obj.number}}<br>
+Name: {{obj.name}}<br>
+
+<h3>Physical Properties</h3>
+Absolute Magnitude (slope param) (color index): {{obj.absMag}}, ({{obj.slopeParam}}), ({{colorIndex}})<br>
+Diameter: {{obj.diameter}}<br>
+Taxanomic Class: {{obj.taxanomicClass}}<br>
+
+<h3>Watch Codes and Observational History</h3>
+Orbit Code: {{obj.orbitCode}}<br>
+Critical Code: {{obj.criticalCode}}<br>
+Astrometry Needed Code: {{obj.astrometryNeededCode}}<br>
+<br>
+Observation Arc: {{obj.observationArc}} days<br>
+Number of Observations: {{obj.numObservations}}<br>
+
+<h3>Orbital Parameters</h3>
+Epoch: {{obj.epoch}}<br>
+Mean Anomaly: {{obj.meanAnomaly}}<br>
+Argument of Perihelion: {{obj.argPerihelion}}<br>
+Longitude of the Ascending Node: {{obj.lonAscendingNode}}<br>
+Inclination: {{obj.inclination}}<br>
+Eccentricity: {{obj.eccentricity}}<br>
+Semi Major Axis: {{obj.semiMajorAxis}}<br>
+
+<h3>Positional Uncertainty</h3>
+CEU (rate): {{obj.ceu}}&emsp;({{obj.ceuRate}})<br>
+Next PEU (date): {{obj.nextPEU}} @{{obj.nextPEUDate}}<br>
+Ten Year PEU (date) (if observed at next PEU): {{obj.tenYearPEU}} @{{obj.tenYearPEUDate}} ({{obj.tenYearPEUIfObserved}} @{{obj.tenYearPEUDateIfObserved}})
+
+{% endblock mainbody %}
+

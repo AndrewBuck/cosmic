@@ -1,0 +1,27 @@
+{% extends "cosmicapp/objectinfobase.html" %}
+{% load static %}
+{% load cosmicapp_extras %}
+
+{% block mainbody %}
+
+<h3>Multi-Algorithm Star Match Result</h3>
+Image: <a href="/image/{{obj.image_id}}">{{obj.image_id}}</a><br>
+Image Coordinates (x, y): ({{obj.pixelX|floatformat:2}}, {{obj.pixelY|floatformat:2}})<br>
+Confidence: {{obj.confidence}}<br>
+
+<h3>Flags</h3>
+Hot Pixel: {{obj.flagHotPixel}}<br>
+Bad Line: {{obj.flagBadLine}}<br>
+Bad Column: {{obj.flagBadColumn}}<br>
+Edge: {{obj.flagEdge}}<br>
+
+<h3>Algorithm Specific Results</h3>
+<!--TODO: Show the confidence of each one, etc. -->
+Number of Algorithms Matching: {{obj.numMatches}}<br>
+Sextractor Result: <a href="/detectedSource/sextractor/{{obj.sextractorResult_id}}">{{obj.sextractorResult}}</a><br>
+Image2XY Result: <a href="/detectedSource/image2xy/{{obj.image2xyResult_id}}">{{obj.image2xyResult}}</a><br>
+Daofind Result: <a href="/detectedSource/daofind/{{obj.daofindResult_id}}">{{obj.daofindResult}}</a><br>
+Starfind Result: <a href="/detectedSource/starfind/{{obj.starfindResult_id}}">{{obj.starfindResult}}</a><br>
+User Submitted Result: <a href="/detectedSource/user/{{obj.userSubmittedResult_id}}">{{obj.userSubmittedResult}} (counts as 2 results)</a><br>
+
+{% endblock mainbody %}

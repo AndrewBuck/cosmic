@@ -1,0 +1,26 @@
+{% extends "cosmicapp/objectinfobase.html" %}
+{% load static %}
+{% load cosmicapp_extras %}
+
+{% block mainbody %}
+
+<h3>GCVS Catalog Entry</h3>
+Identifier: {{obj.identifier}}<br>
+Constellation Number: {{obj.constellationNumber}}<br>
+Star Number: {{obj.starNumber}}<br>
+Spectral Type: {{obj.spectralType}}<br>
+RA, Dec: {{obj.ra|formatRA}}&emsp;{{obj.dec|formatDec}}<br>
+Proper Motion RA, Dec: {{obj.pmra}}&emsp;{{obj.pmdec}}<br>
+
+<h3>Stellar Variability</h3>
+Variable Type (type 2): {{obj.variableType}}&emsp;({{obj.variableType2}})<br>
+Max Mag (flag): {{obj.magMax}} {{obj.magMaxFlag}}<br>
+Min Mag (flag): {{obj.magMin}} {{obj.magMinFlag}}<br>
+Min Mag 2 (flag): {{obj.magMin2}} {{obj.magMin2Flag}}<br>
+Epoch of Max Mag: {{obj.epochMaxMag}}<br>
+Outburst Year: {{obj.outburstYear}}<br>
+Period: {{obj.period}}<br>
+Period Rising Percentage: {{obj.periodRisingPercentage}}<br>
+
+{% endblock mainbody %}
+

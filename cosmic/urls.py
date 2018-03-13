@@ -33,6 +33,8 @@ urlpatterns = [
     url(r'^processoutput/(?P<id>[0-9]+)', views.processOutput),
 
     url(r'^catalogs/', views.catalogs),
+    url(r'^catalog/(?P<method>.+)/(?P<pk>.+)', views.objectInfo),
+    url(r'^detectedSource/(?P<method>.+)/(?P<pk>.+)', views.objectInfo),
 
     url(r'^user/(?P<username>.+)/bookmarks/$', views.bookmarkPage),
     url(r'^user/(?P<username>.+)/', views.userpage),

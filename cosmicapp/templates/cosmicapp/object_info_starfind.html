@@ -1,0 +1,26 @@
+{% extends "cosmicapp/objectinfobase.html" %}
+{% load static %}
+{% load cosmicapp_extras %}
+
+{% block mainbody %}
+
+<h3>Starfind Result</h3>
+Image: <a href="/image/{{obj.image_id}}">{{obj.image_id}}</a><br>
+Image Coordinates (x, y): ({{obj.pixelX|floatformat:2}}, {{obj.pixelY|floatformat:2}})<br>
+Confidence: {{obj.confidence}}<br>
+
+<h3>Flags</h3>
+Hot Pixel: {{obj.flagHotPixel}}<br>
+Bad Line: {{obj.flagBadLine}}<br>
+Bad Column: {{obj.flagBadColumn}}<br>
+Edge: {{obj.flagEdge}}<br>
+
+<h3>Algorithm Specific Results</h3>
+Instrumental Magnitude: {{obj.mag}}<br>
+Flux: {{obj.flux}}<br>
+Peak: {{obj.peak}}<br>
+FWHM: {{obj.fwhm}}<br>
+Sharpness: {{obj.sharpness}}<br>
+Roundness: {{obj.roundness}}<br>
+
+{% endblock mainbody %}

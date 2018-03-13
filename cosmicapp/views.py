@@ -51,9 +51,9 @@ def processes(request, process=None):
     process = process.lower()
     if process in validPages:
         return render(request, "cosmicapp/" + process + ".html", context)
-
     else:
         return HttpResponse('Process "' + process + '" not found.', status=400, reason='Parameters missing.')
+
 def createuser(request):
     context = {"user" : request.user}
 
@@ -385,6 +385,43 @@ def catalogs(request):
     context['catalogs'] = Catalog.objects.all()
 
     return render(request, "cosmicapp/catalogs.html", context)
+
+def objectInfo(request, method, pk):
+    try:
+        pk = int(pk)
+    except ValueError:
+        return HttpResponse('Error: "' + pk + '" is not an integer, expected the id number of a "' + method + '" object.', status=400, reason='not found.')
+
+    context = {"user" : request.user}
+    context['method'] = method
+    context['pk'] = pk
+
+    validPages = {
+        'user': UserSubmittedResult,
+        'sextractor': SextractorResult,
+        'image2xy': Image2xyResult,
+        'daofind': DaofindResult,
+        'starfind': StarfindResult,
+        'multi': SourceFindMatch,
+        'userhotpixel': UserSubmittedHotPixel,
+        'ucac4': UCAC4Record,
+        'gcvs': GCVSRecord,
+        '2massxsc': TwoMassXSCRecord,
+        'messier': MessierRecord,
+        'asteroid': AstorbRecord,
+        'exoplanet': ExoplanetRecord
+        }
+
+    method = method.lower()
+    if method in validPages:
+        obj = validPages[method].objects.filter(pk=pk).first()
+        if obj is None:
+            return render(request, "cosmicapp/objectnotfound.html", context)
+
+        context['obj'] = obj
+        return render(request, "cosmicapp/object_info_" + method + ".html", context)
+    else:
+        return HttpResponse('Method "' + method + '" not found.', status=400, reason='not found.')
 
 def image(request, id):
     context = {"user" : request.user}

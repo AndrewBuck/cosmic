@@ -419,7 +419,7 @@ function getObjectsInImage()
         success : function(xml)
         {
             typeArray = [
-                ['TwoMassXSCRecord', 'TwoMassXSC'],
+                ['TwoMassXSCRecord', '2MassXSC'],
                 ['MessierRecord', 'Messier'],
                 ['GCVSRecord', 'GCVS'],
                 ['AsteroidEphemerisShortRecord', 'Asteroid'],
@@ -1300,7 +1300,7 @@ function drawSources()
     for(i = 0; i < userCreatedHotPixels.length && !lmbDown; i++)
         drawReticle(context, userCreatedHotPixels[i].x, userCreatedHotPixels[i].y, 5, userCreatedColor, 0.8);
 
-    labelSize = 20
+    labelSize = 16
     context.font = labelSize + 'px sans-serif'
     if(mouseX > {{image.dimX}} / 2)
     {
@@ -1621,7 +1621,6 @@ function handleMouseMove(event)
 
     if($('#sextractorEnabledCheckbox').is(':checked'))
         sourceLists[sourceLists.length] = [sextractorResults, 'sextractor'];
-
     if($('#image2xyEnabledCheckbox').is(':checked'))
         sourceLists[sourceLists.length] = [image2xyResults, 'image2xy'];
     if($('#daofindEnabledCheckbox').is(':checked'))
@@ -1670,22 +1669,62 @@ function handleMouseMove(event)
 
 function handleMouseButtonDown(event)
 {
+    var i;
+
     if(mouseX < 0 || mouseX > {{image.dimX}} || mouseY < 0 || mouseY > {{image.dimY}})
         return true;
 
-    if(event.which == 1)
+    // Left click without shift key held.
+    if(event.which == 1 && !keyStatusDict['shift'])
     {
         lmbDown = true;
         mouseXStart = mouseX;
         mouseYStart = mouseY;
+
+        drawSources();
     }
 
-    drawSources();
+    // Left click with shift key held.
+    if(event.which == 1 && keyStatusDict['shift'])
+    {
+        for(i = 0; i < mouseObjectsList.length; i++)
+        {
+            switch(mouseObjectsList[i].method)
+            {
+                case 'sextractor':
+                case 'image2xy':
+                case 'daofind':
+                case 'starfind':
+                case 'multi':
+                case 'user':
+                    window.open('/detectedSource/' + mouseObjectsList[i].method + '/' + mouseObjectsList[i].id);
+                    break;
+
+                case 'user - hot pixel':
+                    window.open('/detectedSource/userHotPixel/' + mouseObjectsList[i].id);
+                    break;
+
+                case 'Catalog':
+                    window.open('/catalog/' + mouseObjectsList[i].catalog + '/' + mouseObjectsList[i].id);
+                    break;
+
+                case 'user - not uploaded':
+                case 'user - hot pixel - not uploaded':
+                    // This page intentionally left blank.
+                    break;
+
+                default:
+                    alert('Unhandled url handler: ' + mouseObjectsList[i].method);
+                    break;
+            }
+        }
+    }
 };
 
 function handleMouseButtonUp(event)
 {
-    if(event.which == 1)
+    // Left click without shift key held.
+    if(event.which == 1 && !keyStatusDict['shift'])
     {
         //NOTE: These lines are duplicated elsewhere, if they change the others must too.
         var deltaX = mouseX - mouseXStart;

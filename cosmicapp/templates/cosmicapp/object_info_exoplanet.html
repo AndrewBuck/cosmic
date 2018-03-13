@@ -1,0 +1,77 @@
+{% extends "cosmicapp/objectinfobase.html" %}
+{% load static %}
+{% load cosmicapp_extras %}
+
+{% block mainbody %}
+
+<h3>Exoplanet Catalog Entry</h3>
+Identifier (id 2): {{obj.identifier}} {{obj.identifier2}}<br>
+Star Identifier: {{obj.starIdentifier}}<br>
+Component: {{obj.component}}<br>
+Number of Components: {{obj.numComponents}}<br>
+RA, Dec: {{obj.ra|formatRA}}&emsp;{{obj.dec|formatDec}}<br>
+Distance: {{obj.dist}} parsecs<br>
+
+<h3>Stellar Magnitude</h3>
+Mag B-V: {{obj.magBMinusV}}<br>
+Mag V: {{obj.magV}}<br>
+Mag J: {{obj.magJ}}<br>
+Mag H: {{obj.magH}}<br>
+Mag KS: {{obj.magKS}}<br>
+
+<h3>Discovery Details</h3>
+Discovery Method (this planet): {{obj.thisPlanetDiscoveryMethod}}<br>
+Discovery Method (first in system): {{obj.firstPlanetDiscoveryMethod}}<br>
+Discovered via Microlensing: {{obj.discoveryMicrolensing}}<br>
+Discovered via Direct Imaging: {{obj.discoveryImaging}}<br>
+Discovered via Timing: {{obj.discoveryTiming}}<br>
+Discovered via Astrometry: {{obj.discoveryAstrometry}}<br>
+First Publication Date: {{obj.firstPublicationDate}}<br>
+First Reference: {{obj.firstReference}}<br>
+Orbit Reference: {{obj.orbitReference}}<br>
+
+<h3>Planet Physical Properties</h3>
+Mass: {{obj.mass}} Jupiter Masses<br>
+Planet Radius: {{obj.planetRadius}} Jupiter Radii<br>
+Planet Density: {{obj.planetDensity}} Grams/Centimeters<sup>3</sup><br>
+Planet Surface Gravity: {{obj.planetSurfaceGravity}} [log<sub>10</sub>(cm/s<sup>2</sup>)]<br>
+
+<h3>Planet Orbital Properties</h3>
+Orbital Period: {{obj.period}} days<br>
+Time of Periastron: {{obj.timePeriastron}}<br>
+Eccentricity: {{obj.eccentricity}}<br>
+Argument of Periastron: {{obj.argPeriastron}} degrees<br>
+Inclination: {{obj.inclination}} degrees<br>
+Semi-major Axis: {{obj.semiMajorAxis}} AU<br>
+
+<h3>Radial Velocity Measurements</h3>
+v sin(i): {{obj.vSinI}} km/s<br>
+m sin(i): {{obj.mSinI}} Jupiter Mass<br>
+<br>
+Velocity Semi Amplitude: {{obj.velocitySemiAplitude}} m/s<br>
+Velocity Slope: {{obj.velocitySlope}} m/s/day<br>
+
+<h3>Transit Properties</h3>
+Transit Depth: {{obj.transitDepth}}<br>
+Transit Duration: {{obj.transitDuration}}<br>
+Transit Epoch: {{obj.transitEpoch}}<br>
+
+<h3>External Links</h3>
+<!-- TODO: Fix these first 4 links. -->
+Exoplanet Explorer Link: <a href="{{obj.epeLink}}">{{obj.epeLink}}</a><br>
+Exoplanet Archive Link: <a href="{{obj.eaLink}}">{{obj.eaLink}}</a><br>
+Exoplanet Transit Database: <a href="{{obj.etdLink}}">{{obj.etdLink}}</a><br>
+SIMBAD Link: <a href="{{obj.simbadLink}}">{{obj.simbadLink}}</a><br>
+
+<br>
+
+{% if obj.transitDepth %}
+<a href="http://var2.astro.cz/ETD/etd.php?STARNAME={{obj.starIdentifier}}&PLANET={{obj.component}}">Transit</a>
+{% endif %}
+<a href="http://exoplanets.org/detail/{{obj.identifier}}">Exoplanet.org</a>
+<a href="https://exoplanetarchive.ipac.caltech.edu/cgi-bin/DisplayOverview/nph-DisplayOverview?objname={{obj.identifier}}">NASA</a>
+<a href="http://exoplanet.eu/catalog/{{obj.identifier}}">Exoplanet.eu</a>
+<a href="http://simbad.u-strasbg.fr/simbad/sim-id?Ident={{obj.identifier}}">SIMBAD</a>
+
+{% endblock mainbody %}
+

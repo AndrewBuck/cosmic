@@ -1,0 +1,16 @@
+{% extends "cosmicapp/objectinfobase.html" %}
+{% load static %}
+{% load cosmicapp_extras %}
+
+{% block mainbody %}
+<h3>UCAC4 Catalog Entry</h3>
+
+Identifier: {{obj.identifier}}<br>
+RA, Dec: {{obj.ra|formatRA}}&emsp;{{obj.dec|formatDec}}<br>
+Proper Motion RA, Dec: {{obj.pmra}}&emsp;{{obj.pmdec}}<br>
+Mag Fit: {{obj.magFit}}<br>
+Mag Aperture: {{obj.magAperture}}<br>
+Mag Error: {{obj.magError}}<br>
+ID in the 2MASS Catalog: {{obj.id2mass}}<br>
+
+{% endblock mainbody %}
