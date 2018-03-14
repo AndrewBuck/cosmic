@@ -2,6 +2,7 @@ import math
 from datetime import date, datetime, timedelta, tzinfo
 import pytz
 import ephem
+import numpy
 from astropy import wcs
 
 from django.contrib.gis.db import models
@@ -586,7 +587,7 @@ class PlateSolution(models.Model):
 
     def getRaDec(self, x, y):
         ret = self.wcs().all_pix2world(x, y, 1)    #TODO: Determine if this 1 should be a 0.
-        return ret
+        return (numpy.asscalar(ret[0]), numpy.asscalar(ret[1]))
 
 class ProcessPriority(models.Model):
     """

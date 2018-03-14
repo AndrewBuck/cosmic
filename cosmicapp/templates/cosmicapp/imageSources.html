@@ -416,52 +416,36 @@ function getObjectsInImage()
         url : "/query/?queryfor=objectsInImage&limit=" + limitPerSource + "&imageId=" + imageId,
         type : "get",
         async: true,
-        success : function(xml)
+        dataType: 'json',
+        success : function(response)
         {
-            typeArray = [
-                ['TwoMassXSCRecord', '2MassXSC'],
-                ['MessierRecord', 'Messier'],
-                ['GCVSRecord', 'GCVS'],
-                ['AsteroidEphemerisShortRecord', 'Asteroid'],
-                ['ExoplanetRecord', 'Exoplanet'],
-                ['UCAC4Record', 'UCAC4']
-                ]
+            typeArray = [ '2MassXSC', 'Messier', 'GCVS', 'Asteroid', 'Exoplanet', 'UCAC4' ];
 
-            for(j = 0; j < typeArray.length; j++)
+            for(image in response)
             {
-                var recordType = typeArray[j][0];
-                var catalog = typeArray[j][1];
-                var results = xml.getElementsByTagName(recordType)
-
-                for(i = 0; i < results.length; i++)
+                for(j = 0; j < typeArray.length; j++)
                 {
-                    var attr = results[i].attributes;
+                    var catalog = typeArray[j];
 
-                    switch(recordType)
+                    results = response[image][catalog];
+                    for(i = 0; i < results.length; i++)
                     {
-                        case 'TwoMassXSCRecord':     mag = Number(attr.getNamedItem('isophotalKMag').nodeValue);    break;
-                        case 'MessierRecord':        mag = Number(attr.getNamedItem('magV').nodeValue);             break;
-                        case 'GCVSRecord':           mag = Number(attr.getNamedItem('magMax').nodeValue);           break;
-                        case 'AsteroidEphemerisShortRecord':     mag = Number(attr.getNamedItem('mag').nodeValue);  break;
-                        case 'ExoplanetRecord':      mag = Number(attr.getNamedItem('magV').nodeValue);             break;
-                        case 'UCAC4Record':          mag = Number(attr.getNamedItem('magAperture').nodeValue);      break;
+                        switch(catalog)
+                        {
+                            case '2MassXSC':       mag = results[i].isophotalKMag;    break;
+                            case 'Messier':        mag = results[i].magV;             break;
+                            case 'GCVS':           mag = results[i].magMax;           break;
+                            case 'Asteroid':       mag = results[i].mag;              break;
+                            case 'Exoplanet':      mag = results[i].magV;             break;
+                            case 'UCAC4':          mag = results[i].magAperture;      break;
+                        }
+
+                        results[i].catalog = catalog;
+                        results[i].mag = mag;
+                        if(isNaN(results[i].mag))
+                            results[i].mag = -0.01;
                     }
-
-                    newIndex = objectsInImage.length
-                    objectsInImage[newIndex] = new Object({
-                        catalog: catalog,
-                        id: Number(attr.getNamedItem('id').nodeValue),
-                        identifier: attr.getNamedItem('identifier').nodeValue,
-                        mag: mag,
-                        ra: Number(attr.getNamedItem('ra').nodeValue),
-                        dec: Number(attr.getNamedItem('dec').nodeValue),
-                        x: Number(attr.getNamedItem('pixelX').nodeValue),
-                        y: Number(attr.getNamedItem('pixelY').nodeValue),
-                    });
-
-                    if(isNaN(objectsInImage[newIndex].mag))
-                        objectsInImage[newIndex].mag = -0.01;
-
+                    objectsInImage = objectsInImage.concat(results);
                 }
             }
 
@@ -479,32 +463,15 @@ function getSextractorResults()
         url : "/query/?queryfor=sextractorResult&limit=" + limitPerSource + "&imageId=" + imageId,
         type : "get",
         async: true,
-        success : function(xml)
+        dataType: 'json',
+        success : function(response)
         {
             fluxAutoValues = [];
             magAutoValues = [];
 
-            var results = xml.getElementsByTagName('SextractorResult')
-            for(i = 0; i < results.length; i++)
+            sextractorResults = response;
+            for(i = 0; i < sextractorResults.length; i++)
             {
-                var attr = results[i].attributes;
-                sextractorResults[i] = new Object({
-                    id: Number(attr.getNamedItem('id').nodeValue),
-                    confidence: Number(attr.getNamedItem('confidence').nodeValue),
-                    ra: Number(attr.getNamedItem('ra').nodeValue),
-                    dec: Number(attr.getNamedItem('dec').nodeValue),
-                    x: Number(attr.getNamedItem('pixelX').nodeValue),
-                    y: Number(attr.getNamedItem('pixelY').nodeValue),
-                    z: Number(attr.getNamedItem('pixelZ').nodeValue),
-                    fluxAuto: Number(attr.getNamedItem('fluxAuto').nodeValue),
-                    fluxAutoErr: Number(attr.getNamedItem('fluxAutoErr').nodeValue),
-                    flags: Number(attr.getNamedItem('flags').nodeValue),
-                    boxXMin: Number(attr.getNamedItem('boxXMin').nodeValue),
-                    boxYMin: Number(attr.getNamedItem('boxYMin').nodeValue),
-                    boxXMax: Number(attr.getNamedItem('boxXMax').nodeValue),
-                    boxYMax: Number(attr.getNamedItem('boxYMax').nodeValue)
-                });
-
                 //TODO:  Add confidence for this and other types to the bokeh histogram plot.
                 fluxAutoValues[i] = sextractorResults[i].fluxAuto;
                 magAutoValues[i] = -2.5*math.log10(sextractorResults[i].fluxAuto);
@@ -529,23 +496,10 @@ function getUserSubmittedResults()
         url : "/query/?queryfor=userSubmittedResult&limit=" + limitPerSource + "&imageId=" + imageId,
         type : "get",
         async: true,
-        success : function(xml)
+        dataType: 'json',
+        success : function(response)
         {
-            var results = xml.getElementsByTagName('UserSubmittedResult')
-            for(i = 0; i < results.length; i++)
-            {
-                var attr = results[i].attributes;
-                userSubmittedResults[i] = new Object({
-                    id: Number(attr.getNamedItem('id').nodeValue),
-                    confidence: Number(attr.getNamedItem('confidence').nodeValue),
-                    ra: Number(attr.getNamedItem('ra').nodeValue),
-                    dec: Number(attr.getNamedItem('dec').nodeValue),
-                    x: Number(attr.getNamedItem('pixelX').nodeValue),
-                    y: Number(attr.getNamedItem('pixelY').nodeValue),
-                    z: Number(attr.getNamedItem('pixelZ').nodeValue),
-                });
-            }
-
+            userSubmittedResults = response;
             drawSources();
         }
     });
@@ -559,23 +513,10 @@ function getUserSubmittedHotPixels()
         url : "/query/?queryfor=userSubmittedHotPixel&limit=" + limitPerSource + "&imageId=" + imageId,
         type : "get",
         async: true,
-        success : function(xml)
+        dataType: 'json',
+        success : function(response)
         {
-            var results = xml.getElementsByTagName('UserSubmittedHotPixel')
-            for(i = 0; i < results.length; i++)
-            {
-                var attr = results[i].attributes;
-                userSubmittedHotPixels[i] = new Object({
-                    id: Number(attr.getNamedItem('id').nodeValue),
-                    confidence: Number(attr.getNamedItem('confidence').nodeValue),
-                    ra: Number(attr.getNamedItem('ra').nodeValue),
-                    dec: Number(attr.getNamedItem('dec').nodeValue),
-                    x: Number(attr.getNamedItem('pixelX').nodeValue),
-                    y: Number(attr.getNamedItem('pixelY').nodeValue),
-                    z: Number(attr.getNamedItem('pixelZ').nodeValue),
-                });
-            }
-
+            userSubmittedHotPixels = response;
             drawSources();
         }
     });
@@ -591,28 +532,15 @@ function getImage2xyResults()
         url : "/query/?queryfor=image2xyResult&limit=" + limitPerSource + "&imageId=" + imageId,
         type : "get",
         async: true,
-        success : function(xml)
+        dataType: 'json',
+        success : function(response)
         {
             fluxValues = [];
             magValues = [];
-            backgroundValues = [];
 
-            var results = xml.getElementsByTagName('Image2xyResult')
-            for(i = 0; i < results.length; i++)
+            image2xyResults = response;
+            for(i = 0; i < image2xyResults.length; i++)
             {
-                var attr = results[i].attributes;
-                image2xyResults[i] = new Object({
-                    id: Number(attr.getNamedItem('id').nodeValue),
-                    confidence: Number(attr.getNamedItem('confidence').nodeValue),
-                    ra: Number(attr.getNamedItem('ra').nodeValue),
-                    dec: Number(attr.getNamedItem('dec').nodeValue),
-                    x: Number(attr.getNamedItem('pixelX').nodeValue),
-                    y: Number(attr.getNamedItem('pixelY').nodeValue),
-                    z: Number(attr.getNamedItem('pixelZ').nodeValue),
-                    flux: Number(attr.getNamedItem('flux').nodeValue),
-                    background: Number(attr.getNamedItem('background').nodeValue),
-                });
-
                 //TODO:  Add confidence for this and other types to the bokeh histogram plot.
                 fluxValues[i] = image2xyResults[i].flux;
                 magValues[i] = -2.5*math.log10(image2xyResults[i].flux);
@@ -639,7 +567,8 @@ function getDaofindResults()
         url : "/query/?queryfor=daofindResult&limit=" + limitPerSource + "&imageId=" + imageId,
         type : "get",
         async: true,
-        success : function(xml)
+        dataType: 'json',
+        success : function(response)
         {
             magValues = [];
             //fluxValues = [];
@@ -648,26 +577,9 @@ function getDaofindResults()
             //sroundValues = [];
             //groundValues = [];
 
-            var results = xml.getElementsByTagName('DaofindResult')
-            for(i = 0; i < results.length; i++)
+            daofindResults = response;
+            for(i = 0; i < daofindResults.length; i++)
             {
-                var attr = results[i].attributes;
-                daofindResults[i] = new Object({
-                    id: Number(attr.getNamedItem('id').nodeValue),
-                    confidence: Number(attr.getNamedItem('confidence').nodeValue),
-                    ra: Number(attr.getNamedItem('ra').nodeValue),
-                    dec: Number(attr.getNamedItem('dec').nodeValue),
-                    x: Number(attr.getNamedItem('pixelX').nodeValue),
-                    y: Number(attr.getNamedItem('pixelY').nodeValue),
-                    z: Number(attr.getNamedItem('pixelZ').nodeValue),
-                    mag: Number(attr.getNamedItem('mag').nodeValue),
-                    flux: Number(attr.getNamedItem('flux').nodeValue),
-                    peak: Number(attr.getNamedItem('peak').nodeValue),
-                    sharpness: Number(attr.getNamedItem('sharpness').nodeValue),
-                    sround: Number(attr.getNamedItem('sround').nodeValue),
-                    ground: Number(attr.getNamedItem('ground').nodeValue)
-                });
-
                 magValues[i] = daofindResults[i].mag;
                 //fluxValues[i] = daofindResults[i].flux;
                 //peakValues[i] = daofindResults[i].peak;
@@ -701,7 +613,8 @@ function getStarfindResults()
         url : "/query/?queryfor=starfindResult&limit=" + limitPerSource + "&imageId=" + imageId,
         type : "get",
         async: true,
-        success : function(xml)
+        dataType: 'json',
+        success : function(response)
         {
             magValues = [];
             //peakValues = [];
@@ -711,27 +624,9 @@ function getStarfindResults()
             //paValues = [];
             //sharpnessValues = [];
 
-            var results = xml.getElementsByTagName('StarfindResult')
-            for(i = 0; i < results.length; i++)
+            starfindResults = response;
+            for(i = 0; i < starfindResults.length; i++)
             {
-                var attr = results[i].attributes;
-                starfindResults[i] = new Object({
-                    id: Number(attr.getNamedItem('id').nodeValue),
-                    confidence: Number(attr.getNamedItem('confidence').nodeValue),
-                    ra: Number(attr.getNamedItem('ra').nodeValue),
-                    dec: Number(attr.getNamedItem('dec').nodeValue),
-                    x: Number(attr.getNamedItem('pixelX').nodeValue),
-                    y: Number(attr.getNamedItem('pixelY').nodeValue),
-                    z: Number(attr.getNamedItem('pixelZ').nodeValue),
-                    mag: Number(attr.getNamedItem('mag').nodeValue),
-                    peak: Number(attr.getNamedItem('peak').nodeValue),
-                    flux: Number(attr.getNamedItem('flux').nodeValue),
-                    fwhm: Number(attr.getNamedItem('fwhm').nodeValue),
-                    roundness: Number(attr.getNamedItem('roundness').nodeValue),
-                    pa: Number(attr.getNamedItem('pa').nodeValue),
-                    sharpness: Number(attr.getNamedItem('sharpness').nodeValue)
-                });
-
                 magValues[i] = starfindResults[i].mag;
                 //peakValues[i] = starfindResults[i].peak;
                 //fluxValues[i] = starfindResults[i].flux;
@@ -767,47 +662,18 @@ function getSourceFindMatches()
         url : "/query/?queryfor=sourceFindMatch&limit=" + limitPerSource + "&imageId=" + imageId,
         type : "get",
         async: true,
-        success : function(xml)
+        dataType: 'json',
+        success : function(response)
         {
-            var results = xml.getElementsByTagName('SourceFindMatch')
-            for(i = 0; i < results.length; i++)
+            sourceFindMatches = response;
+            for(i = 0; i < sourceFindMatches.length; i++)
             {
-                var attr = results[i].attributes;
+                sextractorId = sourceFindMatches[i].sextractorResult;
+                image2xyId = sourceFindMatches[i].image2xyResult;
+                daofindId = sourceFindMatches[i].daofindResult;
+                starfindId = sourceFindMatches[i].starfindResult;
+                userSubmittedId = sourceFindMatches[i].userSubmittedResult;
 
-                sextractorId = null, image2xyId = null, daofindId = null, starfindId = null, userSubmittedId = null;
-                if(attr.getNamedItem('sextractorResult') != null)
-                    sextractorId = Number(attr.getNamedItem('sextractorResult').nodeValue);
-
-                if(attr.getNamedItem('image2xyResult') != null)
-                    image2xyId = Number(attr.getNamedItem('image2xyResult').nodeValue);
-
-                if(attr.getNamedItem('daofindResult') != null)
-                    daofindId = Number(attr.getNamedItem('daofindResult').nodeValue);
-
-                if(attr.getNamedItem('starfindResult') != null)
-                    starfindId = Number(attr.getNamedItem('starfindResult').nodeValue);
-
-                if(attr.getNamedItem('userSubmittedResult') != null)
-                    userSubmittedId = Number(attr.getNamedItem('userSubmittedResult').nodeValue);
-
-                sourceFindMatches[i] = new Object({
-                    id: Number(attr.getNamedItem('id').nodeValue),
-                    confidence: Number(attr.getNamedItem('confidence').nodeValue),
-                    numMatches: Number(attr.getNamedItem('numMatches').nodeValue),
-                    ra: Number(attr.getNamedItem('ra').nodeValue),
-                    dec: Number(attr.getNamedItem('dec').nodeValue),
-                    x: Number(attr.getNamedItem('pixelX').nodeValue),
-                    y: Number(attr.getNamedItem('pixelY').nodeValue),
-                    z: Number(attr.getNamedItem('pixelZ').nodeValue),
-                    sextractorResultId: sextractorId,
-                    image2xyResultId: image2xyId,
-                    daofindResultId: daofindId,
-                    starfindResultId: starfindId,
-                    userSubmittedResultId: userSubmittedId
-                });
-
-                //TODO: Since this code depends on accessing other objects we will need to break it out into a function
-                //and call it again every time new objects are added to the lists.
                 sourceFindMatches[i].sextractorResult = getObjectById(sextractorResults, sourceFindMatches[i].sextractorResultId);
                 sourceFindMatches[i].image2xyResult = getObjectById(image2xyResults, sourceFindMatches[i].image2xyResultId);
                 sourceFindMatches[i].daofindResult = getObjectById(daofindResults, sourceFindMatches[i].daofindResultId);
@@ -1142,9 +1008,9 @@ function drawSources()
     {
         if(objectsInImage[i].mag < limitingMag)
             if(objectsInImage[i].catalog == 'UCAC4')
-                drawSource(context, objectsInImage[i].x, objectsInImage[i].y, 2.0, math.min(18-objectsInImage[i].mag, 7), 1.0);
+                drawSource(context, objectsInImage[i].pixelX, objectsInImage[i].pixelY, 2.0, math.min(18-objectsInImage[i].mag, 7), 1.0);
             else
-                drawReticle(context, objectsInImage[i].x, objectsInImage[i].y, math.min(30-objectsInImage[i].mag, 15), objectsColor, 1.0);
+                drawReticle(context, objectsInImage[i].pixelX, objectsInImage[i].pixelY, math.min(30-objectsInImage[i].mag, 15), objectsColor, 1.0);
     }
 
 
@@ -1158,7 +1024,7 @@ function drawSources()
     if($('#sextractorEnabledCheckbox').is(':checked'))
     for(i = 0; i < sextractorResults.length && !lmbDown; i++)
     {
-        drawSource(context, sextractorResults[i].x, sextractorResults[i].y, sextractorResults[i].confidence, sizeFactor, sizeScaleFactor,
+        drawSource(context, sextractorResults[i].pixelX, sextractorResults[i].pixelY, sextractorResults[i].confidence, sizeFactor, sizeScaleFactor,
                    sextractorResults[i].boxXMin, sextractorResults[i].boxYMin, sextractorResults[i].boxXMax, sextractorResults[i].boxYMax);
 
         if(sextractorResults[i].confidence > labelThreshold)
@@ -1171,7 +1037,7 @@ function drawSources()
                 ]);
 
             context.font = labelSize + 'px sans-serif'
-            drawStroked(context, labelText, sextractorResults[i].x + labelSize/2, {{image.dimY}} - sextractorResults[i].y - labelSize)
+            drawStroked(context, labelText, sextractorResults[i].pixelX + labelSize/2, {{image.dimY}} - sextractorResults[i].pixelY - labelSize)
         }
     }
 
@@ -1185,7 +1051,7 @@ function drawSources()
     if($('#image2xyEnabledCheckbox').is(':checked'))
     for(i = 0; i < image2xyResults.length && !lmbDown; i++)
     {
-        drawSource(context, image2xyResults[i].x, image2xyResults[i].y, image2xyResults[i].confidence, sizeFactor, sizeScaleFactor);
+        drawSource(context, image2xyResults[i].pixelX, image2xyResults[i].pixelY, image2xyResults[i].confidence, sizeFactor, sizeScaleFactor);
 
         if(image2xyResults[i].confidence > labelThreshold)
         {
@@ -1196,7 +1062,7 @@ function drawSources()
                 ]);
 
             context.font = labelSize + 'px sans-serif'
-            drawStroked(context, labelText, image2xyResults[i].x + labelSize/2, {{image.dimY}} - image2xyResults[i].y)
+            drawStroked(context, labelText, image2xyResults[i].pixelX + labelSize/2, {{image.dimY}} - image2xyResults[i].pixelY)
         }
     }
 
@@ -1210,7 +1076,7 @@ function drawSources()
     if($('#daofindEnabledCheckbox').is(':checked'))
     for(i = 0; i < daofindResults.length && !lmbDown; i++)
     {
-        drawSource(context, daofindResults[i].x, daofindResults[i].y, daofindResults[i].confidence, sizeFactor, sizeScaleFactor);
+        drawSource(context, daofindResults[i].pixelX, daofindResults[i].pixelY, daofindResults[i].confidence, sizeFactor, sizeScaleFactor);
 
         if(daofindResults[i].confidence > labelThreshold)
         {
@@ -1225,7 +1091,7 @@ function drawSources()
                 ]);
 
             context.font = labelSize + 'px sans-serif'
-            drawStroked(context, labelText, daofindResults[i].x + labelSize/2, {{image.dimY}} - daofindResults[i].y + labelSize)
+            drawStroked(context, labelText, daofindResults[i].pixelX + labelSize/2, {{image.dimY}} - daofindResults[i].pixelY + labelSize)
         }
     }
 
@@ -1239,7 +1105,7 @@ function drawSources()
     if($('#starfindEnabledCheckbox').is(':checked'))
     for(i = 0; i < starfindResults.length && !lmbDown; i++)
     {
-        drawSource(context, starfindResults[i].x, starfindResults[i].y, starfindResults[i].confidence, sizeFactor, sizeScaleFactor);
+        drawSource(context, starfindResults[i].pixelX, starfindResults[i].pixelY, starfindResults[i].confidence, sizeFactor, sizeScaleFactor);
 
         if(starfindResults[i].confidence > labelThreshold)
         {
@@ -1255,7 +1121,7 @@ function drawSources()
                 ]);
 
             context.font = labelSize + 'px sans-serif'
-            drawStroked(context, labelText, starfindResults[i].x + labelSize/2, {{image.dimY}} - starfindResults[i].y + 2*labelSize)
+            drawStroked(context, labelText, starfindResults[i].pixelX + labelSize/2, {{image.dimY}} - starfindResults[i].pixelY + 2*labelSize)
         }
     }
 
@@ -1269,7 +1135,7 @@ function drawSources()
     if($('#sourceFindMatchesEnabledCheckbox').is(':checked'))
     for(i = 0; i < sourceFindMatches.length && !lmbDown; i++)
     {
-        drawSource(context, sourceFindMatches[i].x, sourceFindMatches[i].y, sourceFindMatches[i].confidence, sizeFactor, sizeScaleFactor);
+        drawSource(context, sourceFindMatches[i].pixelX, sourceFindMatches[i].pixelY, sourceFindMatches[i].confidence, sizeFactor, sizeScaleFactor);
 
         if(sourceFindMatches[i].confidence > labelThreshold)
         {
@@ -1280,7 +1146,7 @@ function drawSources()
 
             context.font = labelSize + 'px sans-serif'
             context.textAlign = 'end';
-            drawStroked(context, labelText, sourceFindMatches[i].x - labelSize/2, {{image.dimY}} - sourceFindMatches[i].y)
+            drawStroked(context, labelText, sourceFindMatches[i].pixelX - labelSize/2, {{image.dimY}} - sourceFindMatches[i].pixelY)
             context.textAlign = 'start';
         }
     }
@@ -1289,10 +1155,10 @@ function drawSources()
     context.fillStyle = userCreatedColor;
 
     for(i = 0; i < userSubmittedResults.length && !lmbDown; i++)
-        drawSource(context, userSubmittedResults[i].x, userSubmittedResults[i].y, 1.0, 10, 2);
+        drawSource(context, userSubmittedResults[i].pixelX, userSubmittedResults[i].pixelY, 1.0, 10, 2);
 
     for(i = 0; i < userSubmittedHotPixels.length && !lmbDown; i++)
-        drawSource(context, userSubmittedHotPixels[i].x, userSubmittedHotPixels[i].y, 1.0, 5, 2);
+        drawSource(context, userSubmittedHotPixels[i].pixelX, userSubmittedHotPixels[i].pixelY, 1.0, 5, 2);
 
     for(i = 0; i < userCreatedResults.length && !lmbDown; i++)
         drawReticle(context, userCreatedResults[i].x, userCreatedResults[i].y, 10, userCreatedColor, 0.8);
@@ -1645,8 +1511,8 @@ function handleMouseMove(event)
         for(var j = 0; j < currentList.length; j++)
         {
             currentSource = sourceLists[i][0][j];
-            x = currentSource.x;
-            y = currentSource.y;
+            x = currentSource.pixelX;
+            y = currentSource.pixelY;
             deltaX = mouseX - x;
             deltaY = mouseY - y;
             dsq = deltaX*deltaX + deltaY*deltaY;

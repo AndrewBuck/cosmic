@@ -596,7 +596,36 @@ def cleanupQueryValues(valueString, parseAs):
     return values
 
 def query(request):
+    jsonResponse = None
     root = etree.Element("queryresult")
+
+    def dumpJsonAndAddRaDec(results):
+        resultList = []
+        for result in results:
+            ra, dec = result.getRaDec()
+            d = result.__dict__
+            del d['_state']
+            d['ra'] = ra
+            d['dec'] = dec
+            resultList.append(d)
+
+        return resultList
+
+    def dumpJsonAndAddXY(results, w):
+        resultList = []
+        for result in results:
+            ra, dec = result.getSkyCoords(image.dateTime)
+            x, y = w.all_world2pix(ra, dec, 1)    #TODO: Determine if this 1 should be a 0.
+            x = numpy.asscalar(x)
+            y = numpy.asscalar(y)
+            d = result.__dict__
+            del d['_state']
+            d['pixelX'] = x
+            d['pixelY'] = y
+            resultList.append(d)
+
+        return resultList
+
 
     # Strip out "blank" query parameters such as 'id='.
     #NOTE: Modifying the request.GET datastructure is not standard, need to make sure this is safe.  Maybe better to
@@ -735,27 +764,7 @@ def query(request):
                     results = results.filter(image__pk__in=values)
 
         results = results.order_by(ascDesc + orderField)[offset:offset+limit]
-
-        for result in results:
-            sextractorDict = {}
-            ra, dec = result.getRaDec()
-            sextractorDict['ra'] = str(ra)
-            sextractorDict['dec'] = str(dec)
-            sextractorDict['id'] = str(result.pk)
-            sextractorDict['confidence'] = str(result.confidence)
-            sextractorDict['imageId'] = str(result.image.pk)
-            sextractorDict['pixelX'] = str(result.pixelX)
-            sextractorDict['pixelY'] = str(result.pixelY)
-            sextractorDict['pixelZ'] = str(result.pixelZ)
-            sextractorDict['fluxAuto'] = str(result.fluxAuto)
-            sextractorDict['fluxAutoErr'] = str(result.fluxAutoErr)
-            sextractorDict['flags'] = str(result.flags)
-            sextractorDict['boxXMin'] = str(result.boxXMin)
-            sextractorDict['boxYMin'] = str(result.boxYMin)
-            sextractorDict['boxXMax'] = str(result.boxXMax)
-            sextractorDict['boxYMax'] = str(result.boxYMax)
-
-            etree.SubElement(root, "SextractorResult", sextractorDict)
+        jsonResponse = json.dumps(dumpJsonAndAddRaDec(results), default=lambda o: o.__dict__)
 
     elif request.GET['queryfor'] == 'image2xyResult':
         orderField, ascDesc = parseQueryOrderBy(request, {'confidence': 'confidence'}, 'confidence', '-')
@@ -768,22 +777,7 @@ def query(request):
                     results = results.filter(image__pk__in=values)
 
         results = results.order_by(ascDesc + orderField)[offset:offset+limit]
-
-        for result in results:
-            image2xyDict = {}
-            ra, dec = result.getRaDec()
-            image2xyDict['ra'] = str(ra)
-            image2xyDict['dec'] = str(dec)
-            image2xyDict['id'] = str(result.pk)
-            image2xyDict['confidence'] = str(result.confidence)
-            image2xyDict['imageId'] = str(result.image.pk)
-            image2xyDict['pixelX'] = str(result.pixelX)
-            image2xyDict['pixelY'] = str(result.pixelY)
-            image2xyDict['pixelZ'] = str(result.pixelZ)
-            image2xyDict['flux'] = str(result.flux)
-            image2xyDict['background'] = str(result.background)
-
-            etree.SubElement(root, "Image2xyResult", image2xyDict)
+        jsonResponse = json.dumps(dumpJsonAndAddRaDec(results), default=lambda o: o.__dict__)
 
     elif request.GET['queryfor'] == 'daofindResult':
         orderField, ascDesc = parseQueryOrderBy(request, {'confidence': 'confidence'}, 'confidence', '-')
@@ -796,26 +790,7 @@ def query(request):
                     results = results.filter(image__pk__in=values)
 
         results = results.order_by(ascDesc + orderField)[offset:offset+limit]
-
-        for result in results:
-            daofindDict = {}
-            ra, dec = result.getRaDec()
-            daofindDict['ra'] = str(ra)
-            daofindDict['dec'] = str(dec)
-            daofindDict['id'] = str(result.pk)
-            daofindDict['confidence'] = str(result.confidence)
-            daofindDict['imageId'] = str(result.image.pk)
-            daofindDict['pixelX'] = str(result.pixelX)
-            daofindDict['pixelY'] = str(result.pixelY)
-            daofindDict['pixelZ'] = str(result.pixelZ)
-            daofindDict['mag'] = str(result.mag)
-            daofindDict['flux'] = str(result.flux)
-            daofindDict['peak'] = str(result.peak)
-            daofindDict['sharpness'] = str(result.sharpness)
-            daofindDict['sround'] = str(result.sround)
-            daofindDict['ground'] = str(result.ground)
-
-            etree.SubElement(root, "DaofindResult", daofindDict)
+        jsonResponse = json.dumps(dumpJsonAndAddRaDec(results), default=lambda o: o.__dict__)
 
     elif request.GET['queryfor'] == 'starfindResult':
         orderField, ascDesc = parseQueryOrderBy(request, {'confidence': 'confidence'}, 'confidence', '-')
@@ -828,27 +803,7 @@ def query(request):
                     results = results.filter(image__pk__in=values)
 
         results = results.order_by(ascDesc + orderField)[offset:offset+limit]
-
-        for result in results:
-            starfindDict = {}
-            ra, dec = result.getRaDec()
-            starfindDict['ra'] = str(ra)
-            starfindDict['dec'] = str(dec)
-            starfindDict['id'] = str(result.pk)
-            starfindDict['confidence'] = str(result.confidence)
-            starfindDict['imageId'] = str(result.image.pk)
-            starfindDict['pixelX'] = str(result.pixelX)
-            starfindDict['pixelY'] = str(result.pixelY)
-            starfindDict['pixelZ'] = str(result.pixelZ)
-            starfindDict['mag'] = str(result.mag)
-            starfindDict['peak'] = str(result.peak)
-            starfindDict['flux'] = str(result.flux)
-            starfindDict['fwhm'] = str(result.fwhm)
-            starfindDict['roundness'] = str(result.roundness)
-            starfindDict['pa'] = str(result.pa)
-            starfindDict['sharpness'] = str(result.sharpness)
-
-            etree.SubElement(root, "StarfindResult", starfindDict)
+        jsonResponse = json.dumps(dumpJsonAndAddRaDec(results), default=lambda o: o.__dict__)
 
     elif request.GET['queryfor'] == 'userSubmittedResult':
         orderField, ascDesc = parseQueryOrderBy(request, {'confidence': 'confidence'}, 'confidence', '-')
@@ -861,20 +816,7 @@ def query(request):
                     results = results.filter(image__pk__in=values)
 
         results = results.order_by(ascDesc + orderField)[offset:offset+limit]
-
-        for result in results:
-            userSubmittedDict = {}
-            ra, dec = result.getRaDec()
-            userSubmittedDict['ra'] = str(ra)
-            userSubmittedDict['dec'] = str(dec)
-            userSubmittedDict['id'] = str(result.pk)
-            userSubmittedDict['confidence'] = str(result.confidence)
-            userSubmittedDict['imageId'] = str(result.image.pk)
-            userSubmittedDict['pixelX'] = str(result.pixelX)
-            userSubmittedDict['pixelY'] = str(result.pixelY)
-            userSubmittedDict['pixelZ'] = str(result.pixelZ)
-
-            etree.SubElement(root, "UserSubmittedResult", userSubmittedDict)
+        jsonResponse = json.dumps(dumpJsonAndAddRaDec(results), default=lambda o: o.__dict__)
 
     elif request.GET['queryfor'] == 'userSubmittedHotPixel':
         orderField, ascDesc = parseQueryOrderBy(request, {'confidence': 'confidence'}, 'confidence', '-')
@@ -887,20 +829,7 @@ def query(request):
                     results = results.filter(image__pk__in=values)
 
         results = results.order_by(ascDesc + orderField)[offset:offset+limit]
-
-        for result in results:
-            userSubmittedDict = {}
-            ra, dec = result.getRaDec()
-            userSubmittedDict['ra'] = str(ra)
-            userSubmittedDict['dec'] = str(dec)
-            userSubmittedDict['id'] = str(result.pk)
-            userSubmittedDict['confidence'] = str(result.confidence)
-            userSubmittedDict['imageId'] = str(result.image.pk)
-            userSubmittedDict['pixelX'] = str(result.pixelX)
-            userSubmittedDict['pixelY'] = str(result.pixelY)
-            userSubmittedDict['pixelZ'] = str(result.pixelZ)
-
-            etree.SubElement(root, "UserSubmittedHotPixel", userSubmittedDict)
+        jsonResponse = json.dumps(dumpJsonAndAddRaDec(results), default=lambda o: o.__dict__)
 
     elif request.GET['queryfor'] == 'sourceFindMatch':
         orderField, ascDesc = parseQueryOrderBy(request, {'confidence': 'confidence'}, 'confidence', '-')
@@ -913,31 +842,7 @@ def query(request):
                     results = results.filter(image__pk__in=values)
 
         results = results.order_by(ascDesc + orderField)[offset:offset+limit]
-
-        for result in results:
-            sourceFindMatchDict = {}
-            ra, dec = result.getRaDec()
-            sourceFindMatchDict['ra'] = str(ra)
-            sourceFindMatchDict['dec'] = str(dec)
-            sourceFindMatchDict['id'] = str(result.pk)
-            sourceFindMatchDict['confidence'] = str(result.confidence)
-            sourceFindMatchDict['numMatches'] = str(result.numMatches)
-            sourceFindMatchDict['pixelX'] = str(result.pixelX)
-            sourceFindMatchDict['pixelY'] = str(result.pixelY)
-            sourceFindMatchDict['pixelZ'] = str(result.pixelZ)
-            sourceFindMatchDict['imageId'] = str(result.image.pk)
-            if result.sextractorResult:
-                sourceFindMatchDict['sextractorResult'] = str(result.sextractorResult.pk)
-            if result.image2xyResult:
-                sourceFindMatchDict['image2xyResult'] = str(result.image2xyResult.pk)
-            if result.daofindResult:
-                sourceFindMatchDict['daofindResult'] = str(result.daofindResult.pk)
-            if result.starfindResult:
-                sourceFindMatchDict['starfindResult'] = str(result.starfindResult.pk)
-            if result.userSubmittedResult:
-                sourceFindMatchDict['userSubmittedResult'] = str(result.userSubmittedResult.pk)
-
-            etree.SubElement(root, "SourceFindMatch", sourceFindMatchDict)
+        jsonResponse = json.dumps(dumpJsonAndAddRaDec(results), default=lambda o: o.__dict__)
 
     elif request.GET['queryfor'] == 'objectsInImage':
         #TODO: Need to consider adding order by and limit statements to the queries for the actual objects, and need to
@@ -956,8 +861,10 @@ def query(request):
         if bufferDistance > 3:
             bufferDistance = 3
 
+        imagesDict = {}
         for image in images:
             imageSubElement = etree.SubElement(root, "Image_" + str(image.pk))
+            imageResultsDict = {}
 
             plateSolution = image.getBestPlateSolution()
             if plateSolution == None:
@@ -968,135 +875,22 @@ def query(request):
             #TODO: Consider adding the details of the plate solution to the queryresult.
 
             twoMassXSCResults = TwoMassXSCRecord.objects.filter(geometry__dwithin=(plateSolution.geometry, bufferDistance))
-
-            for result in twoMassXSCResults:
-                x, y = w.all_world2pix(result.ra, result.dec, 1)    #TODO: Determine if this 1 should be a 0.
-                twoMassXSCDict = {}
-                twoMassXSCDict['id'] = str(result.pk)
-                twoMassXSCDict['identifier'] = str(result.identifier)
-                twoMassXSCDict['ra'] = str(result.ra)
-                twoMassXSCDict['dec'] = str(result.dec)
-                twoMassXSCDict['pixelX'] = str(x)
-                twoMassXSCDict['pixelY'] = str(y)
-                twoMassXSCDict['isophotalKSemiMajor'] = str(result.isophotalKSemiMajor)
-                twoMassXSCDict['isophotalKMinorMajor'] = str(result.isophotalKMinorMajor)
-                twoMassXSCDict['isophotalKAngle'] = str(result.isophotalKAngle)
-                twoMassXSCDict['isophotalKMag'] = str(result.isophotalKMag)
-                twoMassXSCDict['isophotalKMagErr'] = str(result.isophotalKMagErr)
-
-                etree.SubElement(imageSubElement, "TwoMassXSCRecord", twoMassXSCDict)
-
             messierResults = MessierRecord.objects.filter(geometry__dwithin=(plateSolution.geometry, bufferDistance))
-
-            for result in messierResults:
-                x, y = w.all_world2pix(result.ra, result.dec, 1)    #TODO: Determine if this 1 should be a 0.
-                messierDict = {}
-                messierDict['id'] = str(result.pk)
-                messierDict['identifier'] = str(result.identifier)
-                messierDict['ra'] = str(result.ra)
-                messierDict['dec'] = str(result.dec)
-                messierDict['pixelX'] = str(x)
-                messierDict['pixelY'] = str(y)
-                messierDict['objectType'] = str(result.objectType)
-                messierDict['spectralType'] = str(result.spectralType)
-                messierDict['magU'] = str(result.magU)
-                messierDict['magB'] = str(result.magB)
-                messierDict['magV'] = str(result.magV)
-                messierDict['magR'] = str(result.magR)
-                messierDict['magI'] = str(result.magI)
-                messierDict['numReferences'] = str(result.numReferences)
-
-                etree.SubElement(imageSubElement, "MessierRecord", messierDict)
-
             gcvsResults = GCVSRecord.objects.filter(geometry__dwithin=(plateSolution.geometry, bufferDistance))
-
-            for result in gcvsResults:
-                x, y = w.all_world2pix(result.ra, result.dec, 1)    #TODO: Determine if this 1 should be a 0.
-                gcvsDict = {}
-                gcvsDict['id'] = str(result.pk)
-                gcvsDict['identifier'] = str(result.identifier)
-                gcvsDict['ra'] = str(result.ra)
-                gcvsDict['dec'] = str(result.dec)
-                gcvsDict['pixelX'] = str(x)
-                gcvsDict['pixelY'] = str(y)
-                gcvsDict['constellationNumber'] = str(result.constellationNumber)
-                gcvsDict['starNumber'] = str(result.starNumber)
-                gcvsDict['pmRA'] = str(result.pmRA)
-                gcvsDict['pmDec'] = str(result.pmDec)
-                gcvsDict['variableType'] = str(result.variableType)
-                gcvsDict['variableType2'] = str(result.variableType2)
-                gcvsDict['magMax'] = str(result.magMax)
-                gcvsDict['magMaxFlag'] = str(result.magMaxFlag)
-                gcvsDict['magMin'] = str(result.magMin)
-                gcvsDict['magMinFlag'] = str(result.magMinFlag)
-                gcvsDict['magMin2'] = str(result.magMin2)
-                gcvsDict['magMin2Flag'] = str(result.magMin2Flag)
-                gcvsDict['epochMaxMag'] = str(result.epochMaxMag)
-                gcvsDict['outburstYear'] = str(result.outburstYear)
-                gcvsDict['period'] = str(result.period)
-                gcvsDict['periodRisingPercentage'] = str(result.periodRisingPercentage)
-                gcvsDict['spectralType'] = str(result.spectralType)
-
-                etree.SubElement(imageSubElement, "GCVSRecord", gcvsDict)
-
             asteroidResults = getAsteroidsAroundGeometry(plateSolution.geometry, bufferDistance, image.dateTime, 999, 1000)
-
-            for result in asteroidResults:
-                x, y = w.all_world2pix(result['ephem'].ra*(180/math.pi), result['ephem'].dec*(180/math.pi), 1)    #TODO: Determine if this 1 should be a 0.
-                asteroidDict = {}
-                asteroidDict['id'] = str(result['record'].pk)
-                asteroidDict['number'] = str(result['record'].number)
-                asteroidDict['name'] = str(result['record'].name)
-                asteroidDict['ra'] = str(result['ephem'].ra*(180/math.pi))
-                asteroidDict['dec'] = str(result['ephem'].dec*(180/math.pi))
-                asteroidDict['mag'] = str(result['ephem'].mag)
-                asteroidDict['pixelX'] = str(x)
-                asteroidDict['pixelY'] = str(y)
-
-                etree.SubElement(imageSubElement, "AsteroidEphemerisShortRecord", asteroidDict)
-
             exoplanetResults = ExoplanetRecord.objects.filter(geometry__dwithin=(plateSolution.geometry, bufferDistance))
-
-            for result in exoplanetResults:
-                x, y = w.all_world2pix(result.ra, result.dec, 1)    #TODO: Determine if this 1 should be a 0.
-                exoplanetDict = {}
-                exoplanetDict['id'] = str(result.pk)
-                exoplanetDict['identifier'] = str(result.identifier)
-                exoplanetDict['identifier2'] = str(result.identifier2)
-                exoplanetDict['starIdentifier'] = str(result.starIdentifier)
-                exoplanetDict['component'] = str(result.component)
-                exoplanetDict['numComponents'] = str(result.numComponents)
-                exoplanetDict['ra'] = str(result.ra)
-                exoplanetDict['dec'] = str(result.dec)
-                exoplanetDict['pixelX'] = str(x)
-                exoplanetDict['pixelY'] = str(y)
-                exoplanetDict['magV'] = str(result.magV)
-                exoplanetDict['period'] = str(result.period)
-                exoplanetDict['transitEpoch'] = str(result.transitEpoch)
-                exoplanetDict['transitDuration'] = str(result.transitDuration)
-                exoplanetDict['transitDepth'] = str(result.transitDepth)
-
-                etree.SubElement(imageSubElement, "ExoplanetRecord", exoplanetDict)
-
             ucac4Results = UCAC4Record.objects.filter(geometry__dwithin=(plateSolution.geometry, bufferDistance))
 
-            for result in ucac4Results:
-                x, y = w.all_world2pix(result.ra, result.dec, 1)    #TODO: Determine if this 1 should be a 0.
-                ucac4Dict = {}
-                ucac4Dict['id'] = str(result.pk)
-                ucac4Dict['identifier'] = str(result.identifier)
-                ucac4Dict['ra'] = str(result.ra)
-                ucac4Dict['dec'] = str(result.dec)
-                ucac4Dict['pmra'] = str(result.pmra)
-                ucac4Dict['pmdec'] = str(result.pmdec)
-                ucac4Dict['pixelX'] = str(x)
-                ucac4Dict['pixelY'] = str(y)
-                ucac4Dict['magFit'] = str(result.magFit)
-                ucac4Dict['magAperture'] = str(result.magAperture)
-                ucac4Dict['magError'] = str(result.magError)
-                ucac4Dict['id2mass'] = str(result.id2mass)
+            imageResultsDict['2MassXSC'] = dumpJsonAndAddXY(twoMassXSCResults, w)
+            imageResultsDict['Messier'] = dumpJsonAndAddXY(messierResults, w)
+            imageResultsDict['GCVS'] = dumpJsonAndAddXY(gcvsResults, w)
+            imageResultsDict['Asteroid'] = dumpJsonAndAddXY(asteroidResults, w)
+            imageResultsDict['Exoplanet'] = dumpJsonAndAddXY(exoplanetResults, w)
+            imageResultsDict['UCAC4'] = dumpJsonAndAddXY(ucac4Results, w)
 
-                etree.SubElement(imageSubElement, "UCAC4Record", ucac4Dict)
+            imagesDict[image.pk] = imageResultsDict
+
+        jsonResponse = json.dumps(imagesDict, default=lambda o: o.__dict__)
 
     elif request.GET['queryfor'] == 'ota':
         results = OTA.objects
@@ -1134,8 +928,12 @@ def query(request):
 
             etree.SubElement(root, "Camera", cameraDict)
 
-    #TODO: Also write the values used in the query into the result, so the client can check if the limit they set was reduced, etc.
-    return HttpResponse(etree.tostring(root, pretty_print=False), content_type='application/xml')
+    #TODO: This if statement is temporary.  When the xml output side is no longer being used it can just be deleted.
+    if jsonResponse is None:
+        #TODO: Also write the values used in the query into the result, so the client can check if the limit they set was reduced, etc.
+        return HttpResponse(etree.tostring(root, pretty_print=False), content_type='application/xml')
+    else:
+        return HttpResponse(jsonResponse)
 
 def questions(request):
     context = {"user" : request.user}
