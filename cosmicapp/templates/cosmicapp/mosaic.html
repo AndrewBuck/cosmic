@@ -272,11 +272,10 @@ function loadTransforms(overwriteExisting, showWarnings)
         url : "/query/?queryfor=imageTransform&bothId=" + idString,
         type : "get",
         async: false,
-        success : function(xml)
+        dataType: 'json',
+        success : function(response)
         {
-            var results = xml.getElementsByTagName('ImageTransform')
-
-            if(results.length == 0)
+            if(response.length == 0)
             {
                 if(showWarnings)
                     alert('No Stored offsets were found on the server for these images.');
@@ -284,32 +283,20 @@ function loadTransforms(overwriteExisting, showWarnings)
                 return;
             }
 
-            for(i = 0; i < results.length; i++)
+            for(i = 0; i < response.length; i++)
             {
-                var attr = results[i].attributes;
-
-                var userId = Number(attr.getNamedItem('userId').nodeValue);
-                var referenceId = Number(attr.getNamedItem('referenceId').nodeValue);
-                var subjectId = Number(attr.getNamedItem('subjectId').nodeValue);
-
                 //TODO: Add ui elements to control allowing loading of other users offsets.
-                if(userId != myUserId)
+                if(response[i].user_id != myUserId)
                     continue;
 
-                var subjectIndex = getSelectedImagesIndexById(subjectId);
+                var subjectIndex = getSelectedImagesIndexById(response[i].subjectImage_id);
                 if(!selectedImages[subjectIndex].storedTransformMatrixApplied || overwriteExisting)
                 {
-                    var referenceIndex = getSelectedImagesIndexById(referenceId);
-                    var m00 = Number(attr.getNamedItem('m00').nodeValue);
-                    var m01 = Number(attr.getNamedItem('m01').nodeValue);
-                    var m02 = Number(attr.getNamedItem('m02').nodeValue);
-                    var m10 = Number(attr.getNamedItem('m10').nodeValue);
-                    var m11 = Number(attr.getNamedItem('m11').nodeValue);
-                    var m12 = Number(attr.getNamedItem('m12').nodeValue);
+                    var referenceIndex = getSelectedImagesIndexById(response[i].referenceImage_id);
 
                     var loadMatrix = math.matrix([
-                        [m00, m01, m02],
-                        [m10, m11, m12],
+                        [response[i].m00, response[i].m01, response[i].m02],
+                        [response[i].m10, response[i].m11, response[i].m12],
                         [0, 0, 1]
                     ]);
 

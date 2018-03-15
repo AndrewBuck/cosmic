@@ -736,22 +736,7 @@ def query(request):
                     results = results.filter(subjectImage__in=values)
 
         results = results.order_by(ascDesc + orderField)[offset:offset+limit]
-
-        for result in results:
-            imageTransformDict = {}
-            imageTransformDict['id'] = str(result.pk)
-            imageTransformDict['userId'] = str(result.user.pk)
-            imageTransformDict['userName'] = str(result.user.username)
-            imageTransformDict['referenceId'] = str(result.referenceImage.pk)
-            imageTransformDict['subjectId'] = str(result.subjectImage.pk)
-            imageTransformDict['m00'] = str(result.m00)
-            imageTransformDict['m01'] = str(result.m01)
-            imageTransformDict['m02'] = str(result.m02)
-            imageTransformDict['m10'] = str(result.m10)
-            imageTransformDict['m11'] = str(result.m11)
-            imageTransformDict['m12'] = str(result.m12)
-
-            etree.SubElement(root, "ImageTransform", imageTransformDict)
+        jsonResponse = json.dumps(list(results), default=lambda o: o.__dict__)
 
     elif request.GET['queryfor'] == 'sextractorResult':
         orderField, ascDesc = parseQueryOrderBy(request, {'confidence': 'confidence'}, 'confidence', '-')
