@@ -77,14 +77,49 @@ function refreshCamera()
     });
 };
 
+function refreshMount()
+{
+    $.ajax({
+        url : "/query/?queryfor=mount",
+        type : "get",
+        async: true,
+        dataType: 'json',
+        success : function(response)
+        {
+            html = ''
+            html += '<tr>'
+            html += '<th>Make</th> <th>Model</th> <th>Mount Type</th> <th>Max Weight<br>(kg)</th>'
+            html += '<th>Autoguide<br>Compatible</th> <th>Goto<br>Compatible</th>'
+            html += '</tr>'
+
+            mountResults = response;
+            for(i = 0; i < mountResults.length; i++)
+            {
+                html += '<tr>'
+                html += '<td>' + mountResults[i].make + '</td>';
+                html += '<td>' + mountResults[i].model + '</td>';
+                html += '<td>' + mountResults[i].mountType + '</td>';
+                html += '<td>' + mountResults[i].maxWeight + '</td>';
+                html += '<td>' + mountResults[i].autoguideCompatible + '</td>';
+                html += '<td>' + mountResults[i].gotoCompatible + '</td>';
+                html += '</tr>'
+            };
+
+            $('#mountTable').html(html);
+        }
+    });
+};
+
 function init()
 {
     refreshOTA();
     refreshCamera();
+    refreshMount();
 };
 
 function showNewOTA() { $('#newOTADiv').show(); };
 function showNewCamera() { $('#newCameraDiv').show(); };
+function showNewMount() { $('#newMountDiv').show(); };
 
 $(document).ready(init);
 </script>
@@ -117,6 +152,8 @@ tag your images, it is these complete instruments that you will associate with e
             <tr><td>Focal Length (in units of mm)</td><td><input type=text name=focalLength></td><td>(required)</td></tr>
             <tr><td>Design (optical design)</td><td><input type=text name=design></td><td>(required)</td></tr>
             </table>
+            <!-- TODO: Make this do an onclick javascript to post the form and then call
+            upadateOTA() afterward to avoid page reload, etc (and similarly for other equipment). -->
             <input type=submit value=Submit><br>
         </form>
     </div>
@@ -160,6 +197,38 @@ tag your images, it is these complete instruments that you will associate with e
     <input type=button class=button value="New Camera" onclick="showNewCamera()">
 
 <h3>Mounts</h3>
+    <table id=mountTable border=2px>
+    </table>
+
+    <p>{{mountMessage}}</p>
+
+    <div id=newMountDiv hidden>
+        <br>
+        <form method=post action='/equipment/'>
+            {% csrf_token %}
+            <input type=hidden name=equipmentType value=Mount>
+            <table>
+            <tr><td>Make (company name)</td><td><input type=text name=make></td><td>(required)</td></tr>
+            <tr><td>Model (name)</td><td><input type=text name=model></td><td>(required)</td></tr>
+            <tr><td>Mount Type</td><td><input type=text name=mountType></td><td>(required)</td></tr>
+            <tr><td>Max Weight (kg)</td><td><input type=text name=maxWeight></td><td>(required)</td></tr>
+            <tr><td>Autoguide Compatible</td>
+                <td>Yes: <input type=radio name=autoguideCompatible value=true>&emsp;&emsp;
+                No: <input type=radio name=autoguideCompatible value=false>
+                </td><td>(required)</td></tr>
+            <tr><td>Goto Compatible</td>
+                <td>Yes: <input type=radio name=gotoCompatible value=true>&emsp;&emsp;
+                No: <input type=radio name=gotoCompatible value=false>
+                </td><td>(required)</td></tr>
+            </table>
+            <!-- TODO: Make this do an onclick javascript to post the form and then call
+            upadateMount() afterward to avoid page reload, etc (and similarly for other equipment). -->
+            <input type=submit value=Submit><br>
+        </form>
+    </div>
+    <br>
+    <input type=button class=button value="New Mount" onclick="showNewMount()">
+
 
 <h3>Complete Instruments</h3>
 

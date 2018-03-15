@@ -133,14 +133,14 @@ class Camera(InstrumentComponent):
     exposureMax = models.FloatField(null=True, blank=True)
     coolingCapacity = models.FloatField(null=True, blank=True)
 
-class Mount(models.Model):
+class Mount(InstrumentComponent):
     """
     The moving mount that a telescope OTA and all connected components ride on.
     """
-    make = models.CharField(max_length=64, null=True, blank=True)
-    model = models.CharField(max_length=64, null=True, blank=True)
     mountType = models.CharField(max_length=64, null=True, blank=True)
-    mountedOn = models.CharField(max_length=64, null=True, blank=True)
+    maxWeight = models.FloatField(null=True, blank=True)
+    autoguideCompatible = models.NullBooleanField()
+    gotoCompatible = models.NullBooleanField()
 
 #TODO: Delete this class.
 class Instrument(models.Model):

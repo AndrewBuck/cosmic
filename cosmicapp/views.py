@@ -884,6 +884,11 @@ def query(request):
         results = results.order_by('make', 'model')
         jsonResponse = json.dumps(list(results), default=lambda o: o.__dict__)
 
+    elif request.GET['queryfor'] == 'mount':
+        results = Mount.objects
+        results = results.order_by('make', 'model')
+        jsonResponse = json.dumps(list(results), default=lambda o: o.__dict__)
+
     return HttpResponse(jsonResponse)
 
 def questions(request):
@@ -949,6 +954,28 @@ def equipment(request):
                     context['cameraMessage'] = 'New Camera Created'
                 else:
                     context['cameraMessage'] = 'Camera was identical to an existing Camera, no duplicate created.'
+
+        elif request.POST['equipmentType'] == 'Mount':
+            missingFields = validateRequiredFields( ('make', 'model', 'mountType', 'maxWeight', 'autoguideCompatible', 'gotoCompatible') )
+            if len(missingFields) > 0:
+                context['mountMessage'] = 'ERROR: Missing fields: ' + ', '.join(missingFields)
+            else:
+                autoguideCompatible = request.POST['autoguideCompatible'].strip() == 'true'
+                gotoCompatible = request.POST['gotoCompatible'].strip() == 'true'
+
+                newMount, created = Mount.objects.get_or_create(
+                    make = request.POST['make'].strip(),
+                    model = request.POST['model'].strip(),
+                    mountType = request.POST['mountType'].strip(),
+                    maxWeight = request.POST['maxWeight'].strip(),
+                    autoguideCompatible = autoguideCompatible,
+                    gotoCompatible = gotoCompatible
+                    )
+
+                if created:
+                    context['mountMessage'] = 'New Mount Created'
+                else:
+                    context['mountMessage'] = 'Mount was identical to an existing Mount, no duplicate created.'
 
     return render(request, "cosmicapp/equipment.html", context)
 
