@@ -884,12 +884,7 @@ def query(request):
         results = results.order_by('make', 'model')
         jsonResponse = json.dumps(list(results), default=lambda o: o.__dict__)
 
-    #TODO: This if statement is temporary.  When the xml output side is no longer being used it can just be deleted.
-    if jsonResponse is None:
-        #TODO: Also write the values used in the query into the result, so the client can check if the limit they set was reduced, etc.
-        return HttpResponse(etree.tostring(root, pretty_print=False), content_type='application/xml')
-    else:
-        return HttpResponse(jsonResponse)
+    return HttpResponse(jsonResponse)
 
 def questions(request):
     context = {"user" : request.user}
