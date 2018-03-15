@@ -263,29 +263,37 @@ def imagestats(filename):
                     plotFilename = "histogramData_{}_{}.gnuplot".format(image.pk, channelIndex)
                     binFilename = "histogramData_{}_{}.txt".format(image.pk, channelIndex)
 
-                    logScaleXString = ""
-                    if minValue > 0.0:
-                        logScaleXString = "set logscale x\n"
-
                     # Write the gnuplot script file.
                     with open("/cosmicmedia/" + plotFilename, "w") as outputFile:
                         outputFile.write("set terminal svg size 400,300 dynamic mouse standalone\n" +
                                          "set output '{}/{}.svg'\n".format(staticDirectory + "images", plotFilename) +
                                          "set key off\n" +
-                                         logScaleXString +
                                          "set logscale y\n" +
                                          "set style line 1 linewidth 3 linecolor 'blue'\n" +
                                          "plot '/cosmicmedia/{}' using 1:2 with lines linestyle 1\n".format(binFilename)
                                          )
 
                     # Write the 2 column data to be read in by gnuplot.
+                    cumulativePixelFraction = 0.0
                     with open("/cosmicmedia/" + binFilename, "w") as outputFile:
                         for binCount, binNumber in zip(bins, range(len(bins))):
                             if binCount == 0.0:
                                 continue
 
+
                             binFloor = minValue + binNumber*binWidth
                             binCount = binCount/numValidPixels
+                            cumulativePixelFraction += binCount
+
+                            # Skip writing values for up 0.05% of the darkest and
+                            # brightest pixels. This is to match the parameters used in
+                            # generating thumnails.
+                            ignoreLower = 0.0005
+                            ignoreUpper = 0.0005
+                            if cumulativePixelFraction <= ignoreLower:
+                                continue
+                            if cumulativePixelFraction - binCount >= 1.0 - ignoreLower:
+                                continue
 
                             histogramBin = models.ImageHistogramBin(
                                 image = image,
@@ -1027,7 +1035,7 @@ def astrometryNet(filename):
     image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
 
     imageType = image.getImageProperty('imageType')
-    outputText += "Image type is: " + imageType + "\n"
+    outputText += "Image type is: " + str(imageType) + "\n"
     if imageType in ('bias', 'dark', 'flat'):
         outputText += "\n\n\nReturning, do not need to plate solve calibration images (bias, dark, flat)\n"
 
