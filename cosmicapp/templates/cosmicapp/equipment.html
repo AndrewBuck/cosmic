@@ -6,26 +6,29 @@
 {% block mainbody %}
 {% include "./jquery.html" %}
 <script>
+var OTAResults = [], cameraResults = [];
+
 function refreshOTA()
 {
     $.ajax({
         url : "/query/?queryfor=ota",
         type : "get",
         async: true,
-        success : function(xml)
+        dataType: 'json',
+        success : function(response)
         {
             html = ''
             html += '<tr> <th>Make</th> <th>Model</th> <th>Aperture<br>(mm)</th> <th>Design</th> <th>Focal Length<br>(mm)</th> </tr>'
 
-            results = xml.getElementsByTagName('OTA')
-            for(i = 0; i < results.length; i++)
+            OTAResults = response;
+            for(i = 0; i < OTAResults.length; i++)
             {
                 html += '<tr>'
-                html += '<td>' + results[i].attributes.getNamedItem('make').nodeValue + '</td>'
-                html += '<td>' + results[i].attributes.getNamedItem('model').nodeValue + '</td>'
-                html += '<td>' + results[i].attributes.getNamedItem('aperture').nodeValue + '</td>'
-                html += '<td>' + results[i].attributes.getNamedItem('design').nodeValue + '</td>'
-                html += '<td>' + results[i].attributes.getNamedItem('focalLength').nodeValue + '</td>'
+                html += '<td>' + OTAResults[i].make + '</td>';
+                html += '<td>' + OTAResults[i].model + '</td>';
+                html += '<td>' + OTAResults[i].aperture + '</td>';
+                html += '<td>' + OTAResults[i].design + '</td>';
+                html += '<td>' + OTAResults[i].focalLength + '</td>';
                 html += '</tr>'
             };
 
@@ -40,7 +43,8 @@ function refreshCamera()
         url : "/query/?queryfor=camera",
         type : "get",
         async: true,
-        success : function(xml)
+        dataType: 'json',
+        success : function(response)
         {
             html = ''
             html += '<tr>'
@@ -50,21 +54,21 @@ function refreshCamera()
             html += '<th>Cooling Capacity<br>(C)</th>'
             html += '</tr>'
 
-            results = xml.getElementsByTagName('Camera')
-            for(i = 0; i < results.length; i++)
+            cameraResults = response;
+            for(i = 0; i < cameraResults.length; i++)
             {
                 html += '<tr>'
-                html += '<td>' + results[i].attributes.getNamedItem('make').nodeValue + '</td>'
-                html += '<td>' + results[i].attributes.getNamedItem('model').nodeValue + '</td>'
-                html += '<td>' + results[i].attributes.getNamedItem('dimX').nodeValue + '</td>'
-                html += '<td>' + results[i].attributes.getNamedItem('dimY').nodeValue + '</td>'
-                html += '<td>' + results[i].attributes.getNamedItem('pixelDimX').nodeValue + '</td>'
-                html += '<td>' + results[i].attributes.getNamedItem('pixelDimY').nodeValue + '</td>'
-                html += '<td>' + results[i].attributes.getNamedItem('readNoise').nodeValue + '</td>'
-                html += '<td>' + results[i].attributes.getNamedItem('ePerADU').nodeValue + '</td>'
-                html += '<td>' + results[i].attributes.getNamedItem('exposureMin').nodeValue + '</td>'
-                html += '<td>' + results[i].attributes.getNamedItem('exposureMax').nodeValue + '</td>'
-                html += '<td>' + results[i].attributes.getNamedItem('coolingCapacity').nodeValue + '</td>'
+                html += '<td>' + cameraResults[i].make + '</td>';
+                html += '<td>' + cameraResults[i].model + '</td>';
+                html += '<td>' + cameraResults[i].dimX + '</td>';
+                html += '<td>' + cameraResults[i].dimY + '</td>';
+                html += '<td>' + cameraResults[i].pixelDimX + '</td>';
+                html += '<td>' + cameraResults[i].pixelDimY + '</td>';
+                html += '<td>' + cameraResults[i].readNoise + '</td>';
+                html += '<td>' + cameraResults[i].ePerADU + '</td>';
+                html += '<td>' + cameraResults[i].exposureMin + '</td>';
+                html += '<td>' + cameraResults[i].exposureMax + '</td>';
+                html += '<td>' + cameraResults[i].coolingCapacity + '</td>';
                 html += '</tr>'
             };
 
@@ -147,6 +151,8 @@ tag your images, it is these complete instruments that you will associate with e
             <tr><td>Exposure Max</td><td><input type=text name=exposureMax></td><td></td></tr>
             <tr><td>Cooling Capacity</td><td><input type=text name=coolingCapacity></td><td></td></tr>
             </table>
+            <!-- TODO: Make this do an onclick javascript to post the form and then call
+            upadateCamera() afterward to avoid page reload, etc (and similarly for other equipment). -->
             <input type=submit value=Submit><br>
         </form>
     </div>

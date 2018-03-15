@@ -895,38 +895,12 @@ def query(request):
     elif request.GET['queryfor'] == 'ota':
         results = OTA.objects
         results = results.order_by('make', 'model', 'aperture', 'design', 'focalLength')
-
-        for result in results:
-            otaDict = {}
-            otaDict['id'] = str(result.pk)
-            otaDict['make'] = str(result.make)
-            otaDict['model'] = str(result.model)
-            otaDict['focalLength'] = str(result.focalLength)
-            otaDict['aperture'] = str(result.aperture)
-            otaDict['design'] = str(result.design)
-
-            etree.SubElement(root, "OTA", otaDict)
+        jsonResponse = json.dumps(list(results), default=lambda o: o.__dict__)
 
     elif request.GET['queryfor'] == 'camera':
         results = Camera.objects
         results = results.order_by('make', 'model')
-
-        for result in results:
-            cameraDict = {}
-            cameraDict['id'] = str(result.pk)
-            cameraDict['make'] = str(result.make)
-            cameraDict['model'] = str(result.model)
-            cameraDict['dimX'] = str(result.dimX)
-            cameraDict['dimY'] = str(result.dimY)
-            cameraDict['pixelDimX'] = str(result.pixelDimX)
-            cameraDict['pixelDimY'] = str(result.pixelDimY)
-            cameraDict['readNoise'] = str(result.readNoise)
-            cameraDict['ePerADU'] = str(result.ePerADU)
-            cameraDict['exposureMin'] = str(result.exposureMin)
-            cameraDict['exposureMax'] = str(result.exposureMax)
-            cameraDict['coolingCapacity'] = str(result.coolingCapacity)
-
-            etree.SubElement(root, "Camera", cameraDict)
+        jsonResponse = json.dumps(list(results), default=lambda o: o.__dict__)
 
     #TODO: This if statement is temporary.  When the xml output side is no longer being used it can just be deleted.
     if jsonResponse is None:
