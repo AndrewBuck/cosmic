@@ -266,13 +266,26 @@ def imagestats(filename):
                                          )
 
                     # Write the 2 column data to be read in by gnuplot.
+                    cumulativePixelFraction = 0.0
                     with open("/cosmicmedia/" + binFilename, "w") as outputFile:
                         for binCount, binNumber in zip(bins, range(len(bins))):
                             if binCount == 0.0:
                                 continue
 
+
                             binFloor = minValue + binNumber*binWidth
                             binCount = binCount/numValidPixels
+                            cumulativePixelFraction += binCount
+
+                            # Skip writing values for up 0.05% of the darkest and
+                            # brightest pixels. This is to match the parameters used in
+                            # generating thumnails.
+                            ignoreLower = 0.0005
+                            ignoreUpper = 0.0005
+                            if cumulativePixelFraction <= ignoreLower:
+                                continue
+                            if cumulativePixelFraction - binCount >= 1.0 - ignoreLower:
+                                continue
 
                             histogramBin = models.ImageHistogramBin(
                                 image = image,
