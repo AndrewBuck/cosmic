@@ -141,6 +141,7 @@ function ImageGallery(galleryName, paramString, includeLinks, imageOnclickFuncti
     {
         var html = '';
 
+        //TODO: Replace this function?
         thumbUrl = $.ajax(
             {url: '/image/' + id + '/thumbnail/full/',
             async: false}
@@ -189,32 +190,30 @@ function ImageGallery(galleryName, paramString, includeLinks, imageOnclickFuncti
                 url: '/query/?queryfor=image&' + paramString + '&order=time_desc&limit=' + this.numRows*this.numCols +
                         '&offset=' + this.offset,
                 context: this,
+                dataType: 'json',
                 success: parseFunction
                 });
         }
     };
 
-    this.parseGalleryLoadResponse = function(xml, statusCode)
+    this.parseGalleryLoadResponse = function(response, statusCode)
     {
         var i;
         var html = ""
-
-        var results = xml.getElementsByTagName('Image')
 
         $('#newResultsDivider.' + this.name).remove();
         if(!this.firstLoadOfGallery)
         {
             html += '<div id=newResultsDivider class="responsive ' + this.name + '" style="text-align: center; width: 95%; border: 1em solid blue">'
-            if(results.length > 0)
+            if(response.length > 0)
                 html += 'New Results:</div>'
             else
                 html += 'No more results to display.</div>'
         }
 
-        for(i = 0; i < results.length; i++)
+        for(i = 0; i < response.length; i++)
         {
-            var attr = results[i].attributes;
-            var imageId = attr.getNamedItem('id').nodeValue;
+            var imageId = response[i].id;
 
             html += '<div class="responsive ' + this.name + '" id="' + imageId + '">'
             html += '<div class="gallery">'
@@ -222,12 +221,12 @@ function ImageGallery(galleryName, paramString, includeLinks, imageOnclickFuncti
             if(this.includeLinks)
             {
                 html += '<a href="/image/' + imageId + '/">'
-                html += '<img src="' + attr.getNamedItem('thumbUrl'+this.thumbnailSize).nodeValue + '">';
+                html += '<img src="' + response[i]['thumbUrl'+this.thumbnailSize] + '">';
                 html += '</a>';
             }
             else
             {
-                html += '<img onclick="' + this.imageOnclickFunction + '(' + imageId + ')" src="' + attr.getNamedItem('thumbUrl'+this.thumbnailSize).nodeValue + '">';
+                html += '<img onclick="' + this.imageOnclickFunction + '(' + imageId + ')" src="' + response[i]['thumbUrl'+this.thumbnailSize] + '">';
             }
 
             var questionLink = '/image/' + imageId + '/question/';

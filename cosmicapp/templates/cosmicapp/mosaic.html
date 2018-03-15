@@ -177,22 +177,21 @@ function addImageToDesktop(id)
     $.ajax({
         url : "/query/?queryfor=image&id=" + id,
         type : "get",
+        //TODO: Make this async: true and move the rest of this function into the success handler.
         async: false,
-        success : function(xml)
+        dataType: 'json',
+        success : function(response)
         {
-            results = xml.getElementsByTagName('Image')
-            attr = results[0].attributes;
 			selectedImages[i].sizeVector = math.matrix([
-				Number(attr.getNamedItem('dimX').nodeValue) , 
-				Number(attr.getNamedItem('dimY').nodeValue) , 
+				response[0].dimX,
+				response[0].dimY,
 				1
-			]);
+			    ]);
 
-            selectedImages[i].numPlateSolutions = Number(attr.getNamedItem('numPlateSolutions').nodeValue);
+            selectedImages[i].numPlateSolutions = response[0].numPlateSolutions;
             sizeString = 'thumbUrl' + document.getElementById("thumbnailSizeInput").value;
-            selectedImages[i].image.src = attr.getNamedItem(sizeString).nodeValue;
             selectedImages[i].image.onload = drawCanvas;
-
+            selectedImages[i].image.src = response[0][sizeString];
         }
     });
 	var xdim = selectedImages[i].sizeVector.get([0]);

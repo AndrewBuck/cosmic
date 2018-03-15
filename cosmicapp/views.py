@@ -626,6 +626,20 @@ def query(request):
 
         return resultList
 
+    def dumpJsonAndAddThumbUrls(results):
+        resultList = []
+        for result in results:
+            d = result.__dict__
+            d['dateTime'] = str(d['dateTime'])
+            d['numPlateSolutions'] = str(result.plateSolutions.count())
+            #TODO: These next lines can be replaced by a direct db query which is faster than calling this function which does more calculation than we need here.
+            d['thumbUrlSmall'] = result.getThumbnailUrlSmall()
+            d['thumbUrlMedium'] = result.getThumbnailUrlMedium()
+            d['thumbUrlLarge'] = result.getThumbnailUrlLarge()
+            d['thumbUrlFull'] = result.getThumbnailUrlFull()
+            resultList.append(d)
+
+        return resultList
 
     # Strip out "blank" query parameters such as 'id='.
     #NOTE: Modifying the request.GET datastructure is not standard, need to make sure this is safe.  Maybe better to
@@ -705,24 +719,7 @@ def query(request):
         #TODO: Allow querying by uploaded filename.
 
         results = results.order_by(ascDesc + orderField)[offset:offset+limit]
-
-        for result in results:
-            imageDict = {}
-            imageDict['id'] = str(result.pk)
-            imageDict['dimX'] = str(result.dimX)
-            imageDict['dimY'] = str(result.dimY)
-            imageDict['dimZ'] = str(result.dimZ)
-            imageDict['bitDepth'] = str(result.bitDepth)
-            imageDict['frameType'] = result.frameType
-            imageDict['numPlateSolutions'] = str(result.plateSolutions.count())
-
-            #TODO: These next lines can be replaced by a direct db query which is faster than calling this function which does more calculation than we need here.
-            imageDict['thumbUrlSmall'] = result.getThumbnailUrlSmall()
-            imageDict['thumbUrlMedium'] = result.getThumbnailUrlMedium()
-            imageDict['thumbUrlLarge'] = result.getThumbnailUrlLarge()
-            imageDict['thumbUrlFull'] = result.getThumbnailUrlFull()
-
-            etree.SubElement(root, "Image", imageDict)
+        jsonResponse = json.dumps(dumpJsonAndAddThumbUrls(results), default=lambda o: o.__dict__)
 
     if request.GET['queryfor'] == 'imageTransform':
         orderField, ascDesc = parseQueryOrderBy(request, {'referenceImage': 'referenceImage'}, 'referenceImage', '')
