@@ -889,6 +889,11 @@ def query(request):
         results = results.order_by('make', 'model')
         jsonResponse = json.dumps(list(results), default=lambda o: o.__dict__)
 
+    elif request.GET['queryfor'] == 'pier':
+        results = Pier.objects
+        results = results.order_by('make', 'model')
+        jsonResponse = json.dumps(list(results), default=lambda o: o.__dict__)
+
     return HttpResponse(jsonResponse)
 
 def questions(request):
@@ -954,6 +959,23 @@ def equipment(request):
                     context['cameraMessage'] = 'New Camera Created'
                 else:
                     context['cameraMessage'] = 'Camera was identical to an existing Camera, no duplicate created.'
+
+        elif request.POST['equipmentType'] == 'Pier':
+            missingFields = validateRequiredFields( ('make', 'model', 'pierType') )
+            if len(missingFields) > 0:
+                context['pierMessage'] = 'ERROR: Missing fields: ' + ', '.join(missingFields)
+            else:
+                newPier, created = Pier.objects.get_or_create(
+                    make = request.POST['make'].strip(),
+                    model = request.POST['model'].strip(),
+                    pierType = request.POST['pierType'].strip(),
+                    maxPayload = request.POST['maxPayload'].strip()
+                    )
+
+                if created:
+                    context['pierMessage'] = 'New Pier Created'
+                else:
+                    context['pierMessage'] = 'Pier was identical to an existing Pier, no duplicate created.'
 
         elif request.POST['equipmentType'] == 'Mount':
             missingFields = validateRequiredFields( ('make', 'model', 'mountType', 'maxWeight', 'autoguideCompatible', 'gotoCompatible') )

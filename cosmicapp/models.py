@@ -133,6 +133,10 @@ class Camera(InstrumentComponent):
     exposureMax = models.FloatField(null=True, blank=True)
     coolingCapacity = models.FloatField(null=True, blank=True)
 
+class Pier(InstrumentComponent):
+    pierType = models.CharField(max_length=64, null=True, blank=True)
+    maxPayload = models.FloatField(null=True, blank=True)
+
 class Mount(InstrumentComponent):
     """
     The moving mount that a telescope OTA and all connected components ride on.

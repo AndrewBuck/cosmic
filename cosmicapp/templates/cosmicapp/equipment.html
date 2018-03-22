@@ -77,6 +77,36 @@ function refreshCamera()
     });
 };
 
+function refreshPier()
+{
+    $.ajax({
+        url : "/query/?queryfor=pier",
+        type : "get",
+        async: true,
+        dataType: 'json',
+        success : function(response)
+        {
+            html = ''
+            html += '<tr>'
+            html += '<th>Make</th> <th>Model</th> <th>Pier Type</th> <th>Max Payload<br>(kg)</th>'
+            html += '</tr>'
+
+            pierResults = response;
+            for(i = 0; i < pierResults.length; i++)
+            {
+                html += '<tr>'
+                html += '<td>' + pierResults[i].make + '</td>';
+                html += '<td>' + pierResults[i].model + '</td>';
+                html += '<td>' + pierResults[i].pierType + '</td>';
+                html += '<td>' + pierResults[i].maxPayload + '</td>';
+                html += '</tr>'
+            };
+
+            $('#pierTable').html(html);
+        }
+    });
+};
+
 function refreshMount()
 {
     $.ajax({
@@ -114,15 +144,19 @@ function init()
 {
     refreshOTA();
     refreshCamera();
+    refreshPier();
     refreshMount();
 };
 
 function showNewOTA() { $('#newOTADiv').show(); };
 function showNewCamera() { $('#newCameraDiv').show(); };
+function showNewPier() { $('#newPierDiv').show(); };
 function showNewMount() { $('#newMountDiv').show(); };
 
 $(document).ready(init);
 </script>
+
+<!-- TODO: Need to handle non-logged in users who come to this page.  It should probably just be view only. -->
 
 <h2>Equipment Editor</h2>
 
@@ -229,6 +263,30 @@ tag your images, it is these complete instruments that you will associate with e
     <br>
     <input type=button class=button value="New Mount" onclick="showNewMount()">
 
+<h3>Piers</h3>
+    <table id=pierTable border=2px>
+    </table>
+
+    <p>{{pierMessage}}</p>
+
+    <div id=newPierDiv hidden>
+        <br>
+        <form method=post action='/equipment/'>
+            {% csrf_token %}
+            <input type=hidden name=equipmentType value=Pier>
+            <table>
+            <tr><td>Make (company name)</td><td><input type=text name=make></td><td>(required)</td></tr>
+            <tr><td>Model (name)</td><td><input type=text name=model></td><td>(required)</td></tr>
+            <tr><td>Pier Type</td><td><input type=text name=pierType></td><td>(required)</td></tr>
+            <tr><td>Max Payload (kg)</td><td><input type=text name=maxPayload></td><td>(required)</td></tr>
+            </table>
+            <!-- TODO: Make this do an onclick javascript to post the form and then call
+            upadatePier() afterward to avoid page reload, etc (and similarly for other equipment). -->
+            <input type=submit value=Submit><br>
+        </form>
+    </div>
+    <br>
+    <input type=button class=button value="New Pier" onclick="showNewPier()">
 
 <h3>Complete Instruments</h3>
 
