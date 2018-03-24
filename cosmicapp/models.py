@@ -74,6 +74,9 @@ class InstrumentComponent(models.Model):
     make = models.CharField(max_length=64, null=True, blank=True)
     model = models.CharField(max_length=64, null=True, blank=True)
 
+    def __str__(self):
+        return type(self).__name__ + ": " + self.make + " - " + self.model
+
     class Meta:
         abstract = True
 
