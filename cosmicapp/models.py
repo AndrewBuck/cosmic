@@ -92,10 +92,20 @@ class ComponentInstance(models.Model):
     instrumentComponent = GenericForeignKey('content_type', 'object_id')
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    attachedTo = models.ForeignKey("ComponentInstance", on_delete=models.CASCADE)
     serialNumber = models.TextField(null=True)
     dateOnline = models.DateField(null=True, blank=True)
     dateOffline = models.DateField(null=True, blank=True)
+    cost = models.FloatField(null=True, blank=True)
+
+class InstrumentConfiguration(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    name = models.TextField(null=True)
+
+class InstrumentConfigurationLink(models.Model):
+    configuration = models.ForeignKey("InstrumentConfiguration", on_delete=models.CASCADE, related_name="configurationLinks")
+
+    attachedFrom = models.ForeignKey("ComponentInstance", on_delete=models.CASCADE, related_name="attachedFromLinks")
+    attachedTo = models.ForeignKey("ComponentInstance", null=True, on_delete=models.CASCADE, related_name="attachedToLinks")
 
 class OTA(InstrumentComponent):
     """

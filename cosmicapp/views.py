@@ -874,6 +874,38 @@ def query(request):
 
         jsonResponse = json.dumps(imagesDict, default=lambda o: o.__dict__)
 
+    elif request.GET['queryfor'] == 'userOwnedEquipment':
+        userId = int(request.GET.get('userId', -1))
+        results = ComponentInstance.objects.filter(user_id=userId)
+        results = results.order_by('content_type')
+        components = []
+        for result in results:
+            componentDict = {}
+            componentDict['componentInstance'] = result
+            componentDict['instrumentComponent'] = result.instrumentComponent
+            componentDict['componentString'] = str(result.instrumentComponent)
+            components.append(componentDict)
+
+        jsonResponse = json.dumps(components, default=lambda o: o.__dict__)
+
+    elif request.GET['queryfor'] == 'userInstrumentConfigurations':
+        userId = int(request.GET.get('userId', -1))
+        results = InstrumentConfiguration.objects.filter(user_id=userId)
+        results = results.order_by('id')
+        configurations = []
+        for configuration in results:
+            configurationDict = {}
+            configurationDict['configuration'] = configuration
+
+            configurationLinks = []
+            for link in configuration.configurationLinks.all():
+                configurationLinks.append(link)
+
+            configurationDict['configurationLinks'] = configurationLinks
+            configurations.append(configurationDict)
+
+        jsonResponse = json.dumps(configurations, default=lambda o: o.__dict__)
+
     elif request.GET['queryfor'] == 'ota':
         results = OTA.objects
         results = results.order_by('make', 'model', 'aperture', 'design', 'focalLength')
@@ -1443,6 +1475,68 @@ def saveUserSubmittedFeedback(request):
         piAstrometryNet.prerequisites.add(piStarmatch)
 
     return HttpResponse(json.dumps({'text': 'Response Saved Successfully'}), status=200)
+
+@login_required
+@require_http_methods(['POST'])
+def saveUserOwnedEquipment(request):
+    responseDict = {}
+    equipmentType = request.POST.get('equipmentType', None)
+    id = int(request.POST.get('id', '-1'))
+
+    equipmentTypeDict = {
+        'pier': Pier,
+        'mount': Mount,
+        'ota': OTA,
+        'camera': Camera
+        }
+
+    if equipmentType not in equipmentTypeDict:
+        responseDict['errorMessage'] = 'ERROR: Unknown equipment type: ' + str(equipmentType)
+        return HttpResponse(json.dumps(responseDict), status=400)
+
+    equipment = equipmentTypeDict[equipmentType].objects.filter(pk=id).first()
+    if equipment == None:
+        responseDict['errorMessage'] = 'ERROR: Equipment type: ' + str(equipmentType) + ' and id: ' + str(id) + ' not found.'
+        return HttpResponse(json.dumps(responseDict), status=400)
+
+    componentInstance = ComponentInstance(
+        instrumentComponent = equipment,
+        user = request.user
+        )
+
+    componentInstance.save()
+
+    responseDict['message'] = 'A new piece of equipment has been added to your equipment list.'
+
+    return HttpResponse(json.dumps(responseDict), status=200)
+
+@login_required
+@require_http_methods(['POST'])
+def saveInstrumentConfigurationLink(request):
+    responseDict = {}
+    configurationId = int(request.POST.get('configurationId', '-1000'))
+    fromId = int(request.POST.get('fromId', '-1000'))
+    toId = int(request.POST.get('toId', '-1000'))
+
+    try:
+        configurationObject = InstrumentConfiguration.objects.get(pk=configurationId)
+        fromObject = ComponentInstance.objects.get(pk=fromId)
+        toObject = ComponentInstance.objects.get(pk=toId)
+    except:
+        responseDict['errorMessage'] = 'Could not find all linked objects.'
+        return HttpResponse(json.dumps(responseDict), status=400)
+
+    instrumentConfigurationLink = InstrumentConfigurationLink(
+        configuration = configurationObject,
+        attachedFrom = fromObject,
+        attachedTo = toObject
+        )
+
+    instrumentConfigurationLink.save()
+
+    responseDict['message'] = 'New instrument configuration link created.'
+
+    return HttpResponse(json.dumps(responseDict), status=200)
 
 @login_required
 @require_http_methods(['POST'])

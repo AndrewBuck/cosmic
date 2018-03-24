@@ -7,9 +7,218 @@
 {% include "./jquery.html" %}
 <script>
 var OTAResults = [], cameraResults = [];
+var ownedEquipmentResults = [], instrumentConfigurationResults = [];
+
+function attachTo(configurationId, id1, id2 = null)
+{
+    var i;
+
+    // The first time we run this function id2 is null.  We then change the button that
+    // was clicked to cancel, and all the other ones to "this" and reset their onclick handlers.
+    if(id2 == null)
+    {
+        for(i = 0; i <  $('.attachToButton_' + configurationId).length; i++)
+        {
+            button = $('.attachToButton_' + configurationId).get(i);
+            if(id1 != button.getAttribute('data-id'))
+            {
+                button.setAttribute('value', 'This');
+
+                onclickString = 'attachTo(' + configurationId + ',' + id1 + ',';
+                onclickString += button.getAttribute('data-id') + ')';
+
+                button.setAttribute('onclick', onclickString);
+            }
+            else
+            {
+                button.setAttribute('value', 'Cancel');
+                button.setAttribute('onclick', 'attachTo(' + configurationId + ',' + id1  + ', -1)');
+            }
+        }
+    }
+    else
+    {
+        if(id2 == -1)
+        {
+            alert('Canceled');
+            refreshOwnedEquipment();
+            return;
+        }
+
+        // id2 was not null and not -1 so it is actually the id of the ComponentInstance
+        // that we are connecting to, so actually tell the server about the new connection and reload.
+        $.ajax({
+            url : "/save/instrumentConfigurationLink/",
+            type : "post",
+            async: true,
+            dataType: 'json',
+            data: {
+                configurationId: configurationId,
+                fromId: id1,
+                toId: id2
+            },
+            success : function(response)
+            {
+                refreshOwnedEquipment();
+                alert(response.message);
+            },
+            error : function(response)
+            {
+                var response = response.responseJSON;
+                alert(response.errorMessage);
+            }
+        });
+        refreshOwnedEquipment();
+    }
+};
+
+/*
+ * Loops through the ownedEquipmentResults until it finds one whose ComponentInstance id
+ * matches the id passed to the function.  The function then returns the index into the
+ * ownedEquipmentResults array of the target object, so that all of its properties can be
+ * read by the caller.
+*/
+function getOwnedEquipmentIdByInstanceId(id)
+{
+    for(i = 0; i < ownedEquipmentResults.length; i++)
+        if(ownedEquipmentResults[i].componentInstance.id == id)
+            return i
+
+    return null;
+};
+
+function refreshOwnedEquipment()
+{
+    var i;
+    var html;
+
+    $.ajax({
+        url : "/query/?queryfor=userOwnedEquipment&userId=" + {{request.user.id}},
+        type : "get",
+        async: true,
+        dataType: 'json',
+        success : function(response)
+        {
+            html = ''
+
+            ownedEquipmentResults = response;
+            for(i = 0; i < ownedEquipmentResults.length; i++)
+            {
+                component = ownedEquipmentResults[i].instrumentComponent
+                instance = ownedEquipmentResults[i].componentInstance
+                str = ownedEquipmentResults[i].componentString
+
+                html += '<tr>'
+                html += '<td>' + str + '</td>';
+                html += '</tr>'
+            }
+
+            $('#ownedEquipmentTable').html(html);
+
+            refreshInstrumentConfigurations();
+        }
+    });
+};
+
+function refreshInstrumentConfigurations()
+{
+    var i, j, k;
+    var html;
+
+    $.ajax({
+        url : "/query/?queryfor=userInstrumentConfigurations&userId=" + {{request.user.id}},
+        type : "get",
+        async: true,
+        dataType: 'json',
+        success : function(response)
+        {
+            html = ''
+
+            instrumentConfigurationResults = response;
+            for(i = 0; i < instrumentConfigurationResults.length; i++)
+            {
+                configuration = instrumentConfigurationResults[i].configuration;
+                configurationLinks = instrumentConfigurationResults[i].configurationLinks;
+
+                html += '<h3>' + configuration.name + '</h3>';
+
+                html += '<p>';
+                html += 'Your owned equipment that is not used in this instrument configuration:<br><br>';
+                var unusedEquipment = [];
+                for(j = 0; j < ownedEquipmentResults.length; j++)
+                {
+                    var equipment = ownedEquipmentResults[j];
+
+                    var isUsed = false;
+                    for(k = 0; k < configurationLinks.length; k++)
+                    {
+                        var link = configurationLinks[k];
+                        if(link.attachedFrom_id == equipment.componentInstance.id)
+                        {
+                            isUsed = true;
+                            break;
+                        }
+                    }
+
+                    if(!isUsed)
+                        unusedEquipment[unusedEquipment.length] = equipment;
+                }
+
+                for(j = 0; j < unusedEquipment.length; j++)
+                {
+                    component = unusedEquipment[j].instrumentComponent
+                    instance = unusedEquipment[j].componentInstance
+                    str = unusedEquipment[j].componentString
+
+                    html += str + " ";
+
+                    html += '<input ' + ' data-id=' + instance.id;
+                    html += ' type=button class=attachToButton_' + configuration.id + ' value="Attach To" ';
+                    html += 'onclick="attachTo(' + configuration.id + ',' + instance.id + ')">';
+                    html += '<br>'
+                }
+
+                html += '<br><br>';
+                html += 'Equipment used in this configuration:<br><br>';
+                for(k = 0; k < configurationLinks.length; k++)
+                {
+                    var link = configurationLinks[k];
+                    var fromId = getOwnedEquipmentIdByInstanceId(link.attachedFrom_id);
+                    var toId = getOwnedEquipmentIdByInstanceId(link.attachedTo_id);
+                    var fromComponentString = ownedEquipmentResults[fromId].componentString;
+                    var toComponentString = ownedEquipmentResults[toId].componentString;
+                    var fromComponentInstance = ownedEquipmentResults[fromId].componentInstance;
+                    var toComponentInstance = ownedEquipmentResults[toId].componentInstance;
+
+                    html += fromComponentString;
+
+                    html += '<input ' + ' data-id=' + fromComponentInstance.id;
+                    html += ' type=button class=attachToButton_' + configuration.id + ' value="Attach To" ';
+                    html += 'onclick="attachTo(' + configuration.id + ',' + fromComponentInstance.id + ')">';
+
+                    html += ' -> '
+                    html += toComponentString;
+
+                    html += '<input ' + ' data-id=' + toComponentInstance.id;
+                    html += ' type=button class=attachToButton_' + configuration.id + ' value="Attach To" ';
+                    html += 'onclick="attachTo(' + configuration.id + ',' + toComponentInstance.id + ')">';
+
+                    html += '<br>';
+                }
+
+                html += '</p>';
+            };
+
+            $('#instrumentConfigurationsDiv').html(html);
+        }
+    });
+};
 
 function refreshOTA()
 {
+    var i;
+    var html;
+
     $.ajax({
         url : "/query/?queryfor=ota",
         type : "get",
@@ -18,12 +227,16 @@ function refreshOTA()
         success : function(response)
         {
             html = ''
-            html += '<tr> <th>Make</th> <th>Model</th> <th>Aperture<br>(mm)</th> <th>Design</th> <th>Focal Length<br>(mm)</th> </tr>'
+            html += '<tr>'
+            html += '<th></th>'
+            html += '<th>Make</th> <th>Model</th> <th>Aperture<br>(mm)</th> <th>Design</th> <th>Focal Length<br>(mm)</th>'
+            html += '</tr>'
 
             OTAResults = response;
             for(i = 0; i < OTAResults.length; i++)
             {
                 html += '<tr>'
+                html += '<td> <input type=button value="I Own One of These" onclick="ownedEquipment(\'ota\', ' + OTAResults[i].id + ')"> </td>';
                 html += '<td>' + OTAResults[i].make + '</td>';
                 html += '<td>' + OTAResults[i].model + '</td>';
                 html += '<td>' + OTAResults[i].aperture + '</td>';
@@ -39,6 +252,9 @@ function refreshOTA()
 
 function refreshCamera()
 {
+    var i;
+    var html;
+
     $.ajax({
         url : "/query/?queryfor=camera",
         type : "get",
@@ -48,6 +264,7 @@ function refreshCamera()
         {
             html = ''
             html += '<tr>'
+            html += '<th></th>'
             html += '<th>Make</th> <th>Model</th> <th>Dim X<br>(pixels)</th> <th>Dim Y<br>(pixels)</th>'
             html += '<th>Pixel Dim X<br>(um/pix)</th> <th>Pixel Dim Y<br>(um/pix)</th>'
             html += '<th>Read Noise</th> <th>E per ADU</th> <th>Exposure Min<br>(s)</th> <th>Exposure Max<br>(s)</th>'
@@ -58,6 +275,7 @@ function refreshCamera()
             for(i = 0; i < cameraResults.length; i++)
             {
                 html += '<tr>'
+                html += '<td> <input type=button value="I Own One of These" onclick="ownedEquipment(\'camera\', ' + cameraResults[i].id + ')"> </td>';
                 html += '<td>' + cameraResults[i].make + '</td>';
                 html += '<td>' + cameraResults[i].model + '</td>';
                 html += '<td>' + cameraResults[i].dimX + '</td>';
@@ -79,6 +297,9 @@ function refreshCamera()
 
 function refreshPier()
 {
+    var i;
+    var html;
+
     $.ajax({
         url : "/query/?queryfor=pier",
         type : "get",
@@ -88,6 +309,7 @@ function refreshPier()
         {
             html = ''
             html += '<tr>'
+            html += '<th></th>'
             html += '<th>Make</th> <th>Model</th> <th>Pier Type</th> <th>Max Payload<br>(kg)</th>'
             html += '</tr>'
 
@@ -95,6 +317,7 @@ function refreshPier()
             for(i = 0; i < pierResults.length; i++)
             {
                 html += '<tr>'
+                html += '<td> <input type=button value="I Own One of These" onclick="ownedEquipment(\'pier\', ' + pierResults[i].id + ')"> </td>';
                 html += '<td>' + pierResults[i].make + '</td>';
                 html += '<td>' + pierResults[i].model + '</td>';
                 html += '<td>' + pierResults[i].pierType + '</td>';
@@ -109,6 +332,9 @@ function refreshPier()
 
 function refreshMount()
 {
+    var i;
+    var html;
+
     $.ajax({
         url : "/query/?queryfor=mount",
         type : "get",
@@ -118,6 +344,7 @@ function refreshMount()
         {
             html = ''
             html += '<tr>'
+            html += '<th></th>'
             html += '<th>Make</th> <th>Model</th> <th>Mount Type</th> <th>Max Weight<br>(kg)</th>'
             html += '<th>Autoguide<br>Compatible</th> <th>Goto<br>Compatible</th>'
             html += '</tr>'
@@ -126,6 +353,7 @@ function refreshMount()
             for(i = 0; i < mountResults.length; i++)
             {
                 html += '<tr>'
+                html += '<td> <input type=button value="I Own One of These" onclick="ownedEquipment(\'mount\', ' + mountResults[i].id + ')"> </td>';
                 html += '<td>' + mountResults[i].make + '</td>';
                 html += '<td>' + mountResults[i].model + '</td>';
                 html += '<td>' + mountResults[i].mountType + '</td>';
@@ -140,8 +368,33 @@ function refreshMount()
     });
 };
 
+function ownedEquipment(equipmentType, id)
+{
+    $.ajax({
+        url : "/save/userOwnedEquipment/",
+        type : "post",
+        async: true,
+        dataType: 'json',
+        data: {
+            equipmentType: equipmentType,
+            id: id
+        },
+        success : function(response)
+        {
+            refreshOwnedEquipment();
+            alert(response.message);
+        },
+        error : function(response)
+        {
+            var response = response.responseJSON;
+            alert(response.errorMessage);
+        }
+    });
+};
+
 function init()
 {
+    refreshOwnedEquipment();
     refreshOTA();
     refreshCamera();
     refreshPier();
@@ -160,12 +413,32 @@ $(document).ready(init);
 
 <h2>Equipment Editor</h2>
 
-<p>This page lists different kinds of equipment used to make astronomical observations.  You should make sure that the
-equipment you use is listed in the tables below.  If it is not, then please add an entry for each missing piece.  The
-last section lists complete instruments.  An "instrument" represents a complete setup: specifying a mount, the telescope optical
-path, the camera or eyepiece used, and so forth.  Once all the basic components of your equipment have been entered
-into the various tables, you can build a new instrument by assembling the components from the earlier tables.  When you
-tag your images, it is these complete instruments that you will associate with each image.</p>
+<p>
+This page lists different kinds of equipment used to make astronomical observations.  You
+should make sure that the equipment you use is listed in the tables at the bottom of the
+page.  If it is not, then please add an entry for each missing piece.  For each piece of
+equipment you own you should click on the "I Own One of These" buttons next to it (click
+multiple times if you own more than one of a specific thing).
+</p>
+
+<p>
+After creating a list of all the hardware you own (or have access to) you can create one
+or more "instrument configurations".  An instrument configuration is a description of how your
+equipment is physically connected together to form the whole setup you are using for some
+observations.  This allows you to build multiple configurations, if you have different
+ways to set up your equipment.  When you tag your images, it is these complete instrument
+configurations that you will associate with each image.
+</p>
+
+<h3>Equipment I Own</h3>
+<div>
+    <table id=ownedEquipmentTable border=2px>
+    </table>
+</div>
+
+<h3>Instrument Configurations</h3>
+<div id=instrumentConfigurationsDiv>
+</div>
 
 <h3>Optical Tube Assemblies</h3>
 <div>
@@ -195,8 +468,6 @@ tag your images, it is these complete instruments that you will associate with e
     <input type=button class=button value="New OTA" onclick="showNewOTA()">
 
 </div>
-
-<h3>Eyepieces</h3>
 
 <h3>Cameras</h3>
     <table id=cameraTable border=2px>
@@ -263,7 +534,7 @@ tag your images, it is these complete instruments that you will associate with e
     <br>
     <input type=button class=button value="New Mount" onclick="showNewMount()">
 
-<h3>Piers</h3>
+<h3>Piers / Tripods</h3>
     <table id=pierTable border=2px>
     </table>
 
@@ -287,8 +558,6 @@ tag your images, it is these complete instruments that you will associate with e
     </div>
     <br>
     <input type=button class=button value="New Pier" onclick="showNewPier()">
-
-<h3>Complete Instruments</h3>
 
 {% endblock %}
 
