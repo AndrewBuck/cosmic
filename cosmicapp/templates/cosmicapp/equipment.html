@@ -174,7 +174,10 @@ function refreshInstrumentConfigurations()
                 html += '<h3>' + configuration.name + '</h3>';
 
                 html += '<p>';
-                html += 'Your owned equipment that is not used in this instrument configuration:<br><br>';
+                html += '<table>';
+                html += '<tr>';
+                html += '<td>';
+                html += 'Your equipment that is not used in this configuration:<br><br>';
                 var unusedEquipment = [];
                 for(j = 0; j < ownedEquipmentResults.length; j++)
                 {
@@ -208,8 +211,9 @@ function refreshInstrumentConfigurations()
                     html += 'onclick="attachTo(' + configuration.id + ',' + instance.id + ')">';
                     html += '<br>'
                 }
+                html += '</td>';
 
-                html += '<br><br>';
+                html += '<td>';
                 html += 'Equipment used in this configuration:<br><br>';
                 for(k = 0; k < configurationLinks.length; k++)
                 {
@@ -236,6 +240,9 @@ function refreshInstrumentConfigurations()
 
                     html += '<br>';
                 }
+                html += '</td>';
+                html += '</tr>';
+                html += '</table>';
 
                 html += '</p>';
             };
