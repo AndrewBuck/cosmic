@@ -58,6 +58,7 @@ urlpatterns = [
     url(r'^save/userSubmittedFeedback/$', views.saveUserSubmittedFeedback),
     url(r'^save/userOwnedEquipment/$', views.saveUserOwnedEquipment),
     url(r'^save/instrumentConfigurationLink/$', views.saveInstrumentConfigurationLink),
+    url(r'^save/newInstrumentConfiguration/$', views.saveNewInstrumentConfiguration),
     url(r'^bookmark/$', views.bookmark),
 
     url(r'^calibration/$', views.calibration),

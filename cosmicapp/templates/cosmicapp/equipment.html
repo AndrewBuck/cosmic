@@ -87,6 +87,37 @@ function getOwnedEquipmentIdByInstanceId(id)
     return null;
 };
 
+function saveNewInstrumentConfiguration()
+{
+    configurationName = document.getElementsByName('instrumentConfigurationName')[0].value;
+
+    if(configurationName == "")
+    {
+        alert("Error: You must provide a name for the new instrument configuration.");
+        return;
+    }
+
+    $.ajax({
+        url : "/save/newInstrumentConfiguration/",
+        type : "post",
+        async: true,
+        dataType: 'json',
+        data: {
+            configurationName: configurationName
+        },
+        success : function(response)
+        {
+            refreshInstrumentConfigurations();
+            alert(response.message);
+        },
+        error : function(response)
+        {
+            var response = response.responseJSON;
+            alert(response.errorMessage);
+        }
+    });
+};
+
 function refreshOwnedEquipment()
 {
     var i;
@@ -401,6 +432,7 @@ function init()
     refreshMount();
 };
 
+function showNewInstrumentConfiguration() { $('#newInstrumentConfigurationDiv').show(); };
 function showNewOTA() { $('#newOTADiv').show(); };
 function showNewCamera() { $('#newCameraDiv').show(); };
 function showNewPier() { $('#newPierDiv').show(); };
@@ -437,6 +469,19 @@ configurations that you will associate with each image.
 </div>
 
 <h3>Instrument Configurations</h3>
+
+<input type=button class=button value="New Instrument Configuration" onclick="showNewInstrumentConfiguration()">
+<div id=newInstrumentConfigurationDiv hidden>
+    <table>
+        <tr>
+        <td>Configuration Name</td>
+        <td><input type=text name=instrumentConfigurationName></td>
+        <td>(required) A name for you to keep track of which configuration is which.</td>
+        </tr>
+    </table>
+    <input type=button value=Submit onclick="saveNewInstrumentConfiguration()"><br>
+</div>
+
 <div id=instrumentConfigurationsDiv>
 </div>
 

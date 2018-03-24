@@ -1540,6 +1540,27 @@ def saveInstrumentConfigurationLink(request):
 
 @login_required
 @require_http_methods(['POST'])
+def saveNewInstrumentConfiguration(request):
+    responseDict = {}
+    configurationName = request.POST.get('configurationName', None)
+
+    if configurationName is None or configurationName == "":
+        responseDict['errorMessage'] = 'Error: No name given.'
+        return HttpResponse(json.dumps(responseDict), status=400)
+
+    instrumentConfiguration = InstrumentConfiguration(
+        name = configurationName,
+        user = request.user
+        )
+
+    instrumentConfiguration.save()
+
+    responseDict['message'] = 'New instrument configuration created.'
+
+    return HttpResponse(json.dumps(responseDict), status=200)
+
+@login_required
+@require_http_methods(['POST'])
 def bookmark(request):
 
     def getResultDictForBookmarkObject(targetObject, user):
