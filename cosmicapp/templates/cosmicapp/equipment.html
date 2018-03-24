@@ -13,10 +13,13 @@ function attachTo(configurationId, id1, id2 = null)
 {
     var i;
 
+    $('.removeLinkButton_' + configurationId).hide();
+
     // The first time we run this function id2 is null.  We then change the button that
     // was clicked to cancel, and all the other ones to "this" and reset their onclick handlers.
     if(id2 == null)
     {
+        $('.attachToButton_' + configurationId).show();
         for(i = 0; i <  $('.attachToButton_' + configurationId).length; i++)
         {
             button = $('.attachToButton_' + configurationId).get(i);
@@ -41,6 +44,7 @@ function attachTo(configurationId, id1, id2 = null)
         if(id2 == -1)
         {
             alert('Canceled');
+            $('.removeLinkButton_' + configurationId).show();
             refreshOwnedEquipment();
             return;
         }
@@ -69,7 +73,54 @@ function attachTo(configurationId, id1, id2 = null)
             }
         });
         refreshOwnedEquipment();
+        $('.removeLinkButton_' + configurationId).show();
     }
+};
+
+function removeLink(id)
+{
+    $.ajax({
+        url : "/delete/instrumentConfigurationLink/",
+        type : "post",
+        async: true,
+        dataType: 'json',
+        data: {
+            id: id
+        },
+        success : function(response)
+        {
+            refreshOwnedEquipment();
+            alert(response.message);
+        },
+        error : function(response)
+        {
+            var response = response.responseJSON;
+            alert(response.errorMessage);
+        }
+    });
+};
+
+function removeInstrumentConfiguration(id)
+{
+    $.ajax({
+        url : "/delete/instrumentConfiguration/",
+        type : "post",
+        async: true,
+        dataType: 'json',
+        data: {
+            id: id
+        },
+        success : function(response)
+        {
+            refreshOwnedEquipment();
+            alert(response.message);
+        },
+        error : function(response)
+        {
+            var response = response.responseJSON;
+            alert(response.errorMessage);
+        }
+    });
 };
 
 /*
@@ -140,11 +191,16 @@ function refreshOwnedEquipment()
                 str = ownedEquipmentResults[i].componentString
 
                 html += '<tr>'
-                html += '<td>' + str + '</td>';
+                html += '<td><input type=button value=Remove onclick="removeEquipment(' +
+                i + ')"> ' + str + '</td>';
                 html += '</tr>'
             }
 
             $('#ownedEquipmentTable').html(html);
+            if(ownedEquipmentResults.length > 0)
+                $('#ownedEquipmentOuterDiv').show();
+            else
+                $('#ownedEquipmentOuterDiv').hide();
 
             refreshInstrumentConfigurations();
         }
@@ -171,8 +227,10 @@ function refreshInstrumentConfigurations()
                 configuration = instrumentConfigurationResults[i].configuration;
                 configurationLinks = instrumentConfigurationResults[i].configurationLinks;
 
-                html += '<h3>' + configuration.name + '</h3>';
-
+                html += '<h3>' + configuration.name;
+                html += '&nbsp;<input type=button value="Remove Instrument Configuration" ';
+                html += 'onclick="removeInstrumentConfiguration(' + configuration.id + ')">';
+                html += '</h3>';
                 html += '<p>';
                 html += '<table>';
                 html += '<tr>';
@@ -225,18 +283,22 @@ function refreshInstrumentConfigurations()
                     var fromComponentInstance = ownedEquipmentResults[fromId].componentInstance;
                     var toComponentInstance = ownedEquipmentResults[toId].componentInstance;
 
+                    html += '<input ' + ' data-id=' + fromComponentInstance.id;
+                    html += ' type=button class=removeLinkButton_' + configuration.id + ' value="Remove Link" ';
+                    html += 'onclick="removeLink(' + link.id + ')">&nbsp;&nbsp;';
+
                     html += fromComponentString;
 
                     html += '<input ' + ' data-id=' + fromComponentInstance.id;
                     html += ' type=button class=attachToButton_' + configuration.id + ' value="Attach To" ';
-                    html += 'onclick="attachTo(' + configuration.id + ',' + fromComponentInstance.id + ')">';
+                    html += 'onclick="attachTo(' + configuration.id + ',' + fromComponentInstance.id + ')" hidden>';
 
                     html += ' -> '
                     html += toComponentString;
 
                     html += '<input ' + ' data-id=' + toComponentInstance.id;
                     html += ' type=button class=attachToButton_' + configuration.id + ' value="Attach To" ';
-                    html += 'onclick="attachTo(' + configuration.id + ',' + toComponentInstance.id + ')">';
+                    html += 'onclick="attachTo(' + configuration.id + ',' + toComponentInstance.id + ')" hidden>';
 
                     html += '<br>';
                 }
@@ -248,6 +310,11 @@ function refreshInstrumentConfigurations()
             };
 
             $('#instrumentConfigurationsDiv').html(html);
+
+            if(ownedEquipmentResults.length > 1)
+                $('#instrumentConfigurationsOuterDiv').show();
+            else
+                $('#instrumentConfigurationsOuterDiv').hide();
         }
     });
 };
@@ -406,6 +473,29 @@ function refreshMount()
     });
 };
 
+function removeEquipment(index)
+{
+    $.ajax({
+        url : "/delete/userOwnedEquipment/",
+        type : "post",
+        async: true,
+        dataType: 'json',
+        data: {
+            id: ownedEquipmentResults[index].componentInstance.id
+        },
+        success : function(response)
+        {
+            refreshOwnedEquipment();
+            alert(response.message);
+        },
+        error : function(response)
+        {
+            var response = response.responseJSON;
+            alert(response.errorMessage);
+        }
+    });
+};
+
 function ownedEquipment(equipmentType, id)
 {
     $.ajax({
@@ -469,12 +559,15 @@ ways to set up your equipment.  When you tag your images, it is these complete i
 configurations that you will associate with each image.
 </p>
 
+<div id=ownedEquipmentOuterDiv hidden>
 <h3>Equipment I Own</h3>
 <div>
     <table id=ownedEquipmentTable border=2px>
     </table>
 </div>
+</div>
 
+<div id=instrumentConfigurationsOuterDiv hidden>
 <h3>Instrument Configurations</h3>
 
 <input type=button class=button value="New Instrument Configuration" onclick="showNewInstrumentConfiguration()">
@@ -490,6 +583,7 @@ configurations that you will associate with each image.
 </div>
 
 <div id=instrumentConfigurationsDiv>
+</div>
 </div>
 
 <h3>Optical Tube Assemblies</h3>

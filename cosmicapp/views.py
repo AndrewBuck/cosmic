@@ -1512,6 +1512,22 @@ def saveUserOwnedEquipment(request):
 
 @login_required
 @require_http_methods(['POST'])
+def deleteUserOwnedEquipment(request):
+    responseDict = {}
+    id = int(request.POST.get('id', '-1'))
+
+    try:
+        ComponentInstance.objects.filter(pk=id).delete()
+    except:
+        responseDict['errorMessage'] = 'ERROR'
+        return HttpResponse(json.dumps(responseDict), status=400)
+
+    responseDict['message'] = 'A piece of equipment has been removed from your equipment list.'
+
+    return HttpResponse(json.dumps(responseDict), status=200)
+
+@login_required
+@require_http_methods(['POST'])
 def saveInstrumentConfigurationLink(request):
     responseDict = {}
     configurationId = int(request.POST.get('configurationId', '-1000'))
@@ -1540,6 +1556,22 @@ def saveInstrumentConfigurationLink(request):
 
 @login_required
 @require_http_methods(['POST'])
+def deleteInstrumentConfigurationLink(request):
+    responseDict = {}
+    id = int(request.POST.get('id', '-1000'))
+
+    try:
+        configurationObject = InstrumentConfigurationLink.objects.filter(pk=id).delete()
+    except:
+        responseDict['errorMessage'] = 'Could not delete link.'
+        return HttpResponse(json.dumps(responseDict), status=400)
+
+    responseDict['message'] = 'Instrument configuration link deleted.'
+
+    return HttpResponse(json.dumps(responseDict), status=200)
+
+@login_required
+@require_http_methods(['POST'])
 def saveNewInstrumentConfiguration(request):
     responseDict = {}
     configurationName = request.POST.get('configurationName', None)
@@ -1556,6 +1588,21 @@ def saveNewInstrumentConfiguration(request):
     instrumentConfiguration.save()
 
     responseDict['message'] = 'New instrument configuration created.'
+
+    return HttpResponse(json.dumps(responseDict), status=200)
+
+@login_required
+@require_http_methods(['POST'])
+def deleteInstrumentConfiguration(request):
+    responseDict = {}
+    id = int(request.POST.get('id', '-1000'))
+    try:
+        InstrumentConfiguration.objects.filter(pk=id).delete()
+    except:
+        responseDict['errorMessage'] = 'Error: Could not delete instrument configuration.'
+        return HttpResponse(json.dumps(responseDict), status=400)
+
+    responseDict['message'] = 'Instrument configuration deleted.'
 
     return HttpResponse(json.dumps(responseDict), status=200)
 
