@@ -1917,7 +1917,7 @@ def observing(request):
         else:
             (lat, lon) = getLocationForIp(getClientIp(request))
 
-    limit = 10
+    limit = 25
     if 'limit' in request.GET:
         limit = int(request.GET['limit'])
 
