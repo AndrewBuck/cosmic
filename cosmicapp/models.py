@@ -1275,36 +1275,36 @@ class AstorbRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
         #TODO: Take into account the orbitCode, astrometryNeeded code, and criticalCode field.
         orbitCodeDict = {
             0: 1,      # 
-            1: 100,    # Earth-crossing asteroid (ECA).
-            2: 15,     # Orbit comes inside Earth's orbit but not specifically an ECA.
-            4: 5,      # Amor type asteroids.
-            8: 20,     # Mars crossers.
+            1: 10,    # Earth-crossing asteroid (ECA).
+            2: 1.5,     # Orbit comes inside Earth's orbit but not specifically an ECA.
+            4: 1.5,      # Amor type asteroids.
+            8: 2,     # Mars crossers.
             16: 2      # Outer planet crossers.
             }
 
         criticalCodeDict = {
             0: 1,      # 
             1: 0.2,  # Lost asteroid.
-            2: 100,    # Asteroids observed at only two apparitions.
-            3: 50,     # Asteroids observed at only three apparitions.
-            4: 50,     # Asteroids observed at four or more apparitions with the last more than 10 years ago.
-            5: 50,     # Asteroids observed at four or more apparitions only one night in last 10 years.
-            6: 20,     # Asteroids observed at four or more apparitions still poor data.
-            7: 50      # Not critical asteroid, however absolute magnitude poorly known.
+            2: 10,    # Asteroids observed at only two apparitions.
+            3: 5,     # Asteroids observed at only three apparitions.
+            4: 5,     # Asteroids observed at four or more apparitions with the last more than 10 years ago.
+            5: 5,     # Asteroids observed at four or more apparitions only one night in last 10 years.
+            6: 2,     # Asteroids observed at four or more apparitions still poor data.
+            7: 5      # Not critical asteroid, however absolute magnitude poorly known.
             }
 
         astrometryNeededCodeDict = {
-            10: 100,   # Space mission targets and occultation candidates.
-            9: 70,     # Asteroids useful for mass determination.
-            8: 50,     # Asteroids for which a few observations would upgrade the orbital uncertainty.
-            7: 20,      # MPC Critical list asteroids with future low uncertainties.
-            6: 50,     # Planet crossers of type 6:5.
-            5: 50,     # Asteroids for which a few more observations would lead to numbering them.
-            4: 20,     # 
-            3: 8,      # 
-            2: 5,      # 
-            1: 3,      # 
-            0: 1       # 
+            10: 10,   # Space mission targets and occultation candidates.
+            9: 7,     # Asteroids useful for mass determination.
+            8: 5,     # Asteroids for which a few observations would upgrade the orbital uncertainty.
+            7: 2,      # MPC Critical list asteroids with future low uncertainties.
+            6: 5,     # Planet crossers of type 6:5.
+            5: 5,     # Asteroids for which a few more observations would lead to numbering them.
+            4: 2,     # 
+            3: 1.8,      # 
+            2: 1.5,      # 
+            1: 1.3,      # 
+            0: 1.1       # 
             }
 
         #TODO: Some of these importance codes are bitwise anded together and need to be properly parsed that way.
@@ -1316,7 +1316,7 @@ class AstorbRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
         #TODO: Calculate an ephemeris and use angle from opposition as part of the score.
         #body = computeSingleEphemeris(self, dateTime)
 
-        return 10 * multiplier
+        return multiplier
 
     def getDifficultyForTime(self, t):
         #TODO: Properly implement this function.
