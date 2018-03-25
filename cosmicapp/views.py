@@ -1883,6 +1883,7 @@ def observing(request):
     else:
         ele = 0
 
+    #TODO: Add a second, optional, filter to discard results within some buffer distance of a brighter than magnitude X object.  Use a spatial query for this, query for bright objects and then buffer/join them and query here or not in here on that geometry.
     if 'limitingMag' in request.GET:
         limitingMag = float(request.GET['limitingMag'])
     else:
