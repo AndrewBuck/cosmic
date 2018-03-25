@@ -1,6 +1,7 @@
 import hashlib
 import os
 import math
+import time
 from datetime import datetime, timedelta
 import dateparser
 
@@ -1963,12 +1964,20 @@ def observing(request):
     zenithNowDec = zenithNowDec * 180/math.pi
     zenithGeometry = GEOSGeometry('POINT({} {})'.format(zenithNowRA, zenithNowDec))
 
+    print('\n\nTiming:')
+    millis = int(round(time.time() * 1000))
+
     variableStars = GCVSRecord.objects.filter(
         geometry__dwithin=(zenithGeometry, windowSize),
         magMin__lt=limitingMag
         ).order_by('magMin')[:limit]
 
     context['variableStars'] = variableStars
+
+    newMillis = int(round(time.time() * 1000))
+    deltaT = newMillis - millis
+    print('VariableStars took {} milliseconds to execute.'.format(deltaT ))
+    millis = int(round(time.time() * 1000))
 
     exoplanets = ExoplanetRecord.objects.filter(
         geometry__dwithin=(zenithGeometry, windowSize),
@@ -1977,12 +1986,22 @@ def observing(request):
 
     context['exoplanets'] = exoplanets
 
+    newMillis = int(round(time.time() * 1000))
+    deltaT = newMillis - millis
+    print('exoplanets took {} milliseconds to execute.'.format(deltaT ))
+    millis = int(round(time.time() * 1000))
+
     messierObjects = MessierRecord.objects.filter(
         geometry__dwithin=(zenithGeometry, windowSize),
         magV__lt=limitingMag
         ).order_by('magV')[:limit]
 
     context['messierObjects'] = messierObjects
+
+    newMillis = int(round(time.time() * 1000))
+    deltaT = newMillis - millis
+    print('messierObjects took {} milliseconds to execute.'.format(deltaT ))
+    millis = int(round(time.time() * 1000))
 
     extendedSources = TwoMassXSCRecord.objects.filter(
         geometry__dwithin=(zenithGeometry, windowSize),
@@ -1991,11 +2010,21 @@ def observing(request):
 
     context['extendedSources'] = extendedSources
 
+    newMillis = int(round(time.time() * 1000))
+    deltaT = newMillis - millis
+    print('extendedSources took {} milliseconds to execute.'.format(deltaT ))
+    millis = int(round(time.time() * 1000))
+
     asteroids = getAsteroidsAroundGeometry(zenithGeometry, windowSize, currentTime, limitingMag, limit)
 
     #asteroids = sorted(asteroids, key = lambda x: x['record'].ceu, reverse=True)[:limit]
 
     context['asteroids'] = asteroids
+
+    newMillis = int(round(time.time() * 1000))
+    deltaT = newMillis - millis
+    print('asteroids took {} milliseconds to execute.'.format(deltaT ))
+    millis = int(round(time.time() * 1000))
 
     return render(request, "cosmicapp/observing.html", context)
 
