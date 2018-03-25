@@ -14,6 +14,20 @@ new questions are added to the database to be asked to users, this chart will
 automatically updated as well.
 </p>
 
+<p>
+There have been a total of {{numAnswers}} answers given to {{questionGroups.count}} questions.
+</p>
+
+<p>
+<table cellpadding=5px border=2px style="border-collapse: collapse; margin: 1em;">
+    <tr><th>Question ID</th><th>Num Answers</th></tr>
+
+    {% for questionGroup in questionGroups %}
+        <tr><td>{{questionGroup.question}}</td><td>{{questionGroup.count}}</td></tr>
+    {% endfor %}
+</table>
+</p>
+
 {% comment %}
 TODO: Add the results of some DB queries here to show how many times each question has been answered,
 users who have answered the most questions, etc.

@@ -15,7 +15,7 @@ from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponseRedirect
 from django.utils import timezone
 from django.conf import settings
-from django.db.models import Q, Max, Min, Avg, StdDev
+from django.db.models import Count, Q, Max, Min, Avg, StdDev
 from django.db import transaction
 from django.views.decorators.http import require_http_methods
 from django.contrib.gis.geos import GEOSGeometry, Point
@@ -937,6 +937,12 @@ def query(request):
 
 def questions(request):
     context = {"user" : request.user}
+
+    context['numanswers'] = answer.objects.all().count()
+    print(context['numanswers'])
+
+    context['questiongroups'] = answer.objects.all().values('question').annotate(count=count('question')).order_by('question')
+    print(context['questiongroups'])
 
     return render(request, "cosmicapp/questions.html", context)
 
