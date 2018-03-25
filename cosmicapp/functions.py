@@ -68,6 +68,10 @@ def getAsteroidsAroundGeometry(geometry, bufferSize, targetTime, limitingMag, li
         if separation > bufferSize or ephemeris.mag > limitingMag:
             continue
 
+        # Update the CEU on the record to the correct value for the time the query was
+        # for.  This should be close to the original value, but in some cases can get be different
+        asteroid.astorbRecord.ceu = asteroid.astorbRecord.getCeuForTime(targetTime)
+
         asteroids.append({
             'record': asteroid.astorbRecord,
             'ephem': ephemeris
