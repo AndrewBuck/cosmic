@@ -946,6 +946,13 @@ def questions(request):
 
     return render(request, "cosmicapp/questions.html", context)
 
+def imageGallery(request):
+    context = {"user" : request.user}
+
+    context['queryParams'] = request.GET['queryParams']
+    print(context['queryParams'])
+    return render(request, "cosmicapp/imageGallery.html", context)
+
 def equipment(request):
     def validateRequiredFields(reqFields):
         missingFields = []

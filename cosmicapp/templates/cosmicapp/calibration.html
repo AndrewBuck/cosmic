@@ -37,16 +37,16 @@ which can then be applied to a series of science frames to produced calibrated i
 
 <h3>Bias frames</h3>
 
-{% include "./imageTable.html" with queryParams="imageProperty=imageType=bias&user="|concat:user|safe imageOnclickFunction="handleBiasImageClick" galleryName="biasGallery" includeLinks="false" thumbnailSize="Medium" %}
+{% include "./imageTable.html" with queryParams="imageProperty=imageType=bias:user="|concat:user|safe imageOnclickFunction="handleBiasImageClick" galleryName="biasGallery" includeLinks="false" thumbnailSize="Medium" %}
 
 <h4>Master Bias frames</h4>
 
-{% include "./imageTable.html" with queryParams="imageProperty=imageType=masterBias&user="|concat:user|safe galleryName="masterBiasGallery" includeLinks="false" thumbnailSize="Medium" %}
+{% include "./imageTable.html" with queryParams="imageProperty=imageType=masterBias:user="|concat:user|safe galleryName="masterBiasGallery" includeLinks="false" thumbnailSize="Medium" %}
 
 {% comment %}
 <h3>Dark frames</h3>
 
-{% with "imageProperty=imageType=dark&user="|concat:user|safe as queryParams %}
+{% with "imageProperty=imageType=dark:user="|concat:user|safe as queryParams %}
 {% include "./imageTable.html" with galleryName="darkGallery" includeLinks="false" imageOnclickFunction="handleDarkImageClick" thumbnailSize="Medium" %}
 {% endwith %}
 

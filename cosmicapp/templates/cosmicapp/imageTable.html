@@ -44,7 +44,7 @@ function ImageGallery(galleryName, paramString, includeLinks, imageOnclickFuncti
         if(paramString === undefined || paramString == '')
             paramString = 'imageProperty=';
 
-        var params = paramString.split('&');
+        var params = paramString.split(':');
         for(i = 0; i < params.length; i++)
         {
             html = ''
