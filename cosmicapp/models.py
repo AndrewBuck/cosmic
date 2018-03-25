@@ -290,13 +290,17 @@ class Observatory(models.Model):
 
 
 
+class UploadSession(models.Model):
+    uploadingUser = models.ForeignKey(User, on_delete=models.CASCADE)
+    dateTime = models.DateTimeField(auto_now=True)
+
 class UploadedFileRecord(models.Model):
     """
     A record storing information about any type of file uploaded by a user to the site.  The original file name, size,
     hash, etc are stored here as well as onDiskFileName which is the name django assigns to our copy of the file (to handle
     multiple uploads of the same file, etc).
     """
-    uploadingUser = models.ForeignKey(User, on_delete=models.CASCADE)
+    uploadSession = models.ForeignKey(UploadSession, null=True, on_delete=models.CASCADE)
     unpackedFromFile = models.ForeignKey('self', null=True, on_delete=models.CASCADE)
     originalFileName = models.CharField(max_length=256)
     onDiskFileName = models.CharField(max_length=256)
