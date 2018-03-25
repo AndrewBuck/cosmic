@@ -75,6 +75,17 @@
     {% endif %}
 {% endif %}
 
+<p>
+Other useful queries:<br>
+
+Images for this user with failed astrometry.net plate solutions:
+<a href="/image/gallery/?queryParams=user={{foruser}}:imageProperty=astrometryNet=failure">Query</a><br>
+
+Images for this user with successful astrometry.net plate solutions:
+<a href="/image/gallery/?queryParams=user={{foruser}}:imageProperty=astrometryNet=success">Query</a><br>
+
+</p>
+
 {% with "user="|concat:foruser as queryParams %}
 {% include "./imageTable.html" with galleryName="userGallery" includeLinks="true" thumbnailSize="Medium" %}
 {% endwith %}

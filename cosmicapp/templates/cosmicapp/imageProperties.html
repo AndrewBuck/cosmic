@@ -23,7 +23,8 @@
 
     {% for property in properties %}
         <tr id="row_{{property.pk}}">
-            <td>{{property.key}}={{property.value}}</td>
+            {% comment %}TODO: If the key or value contains a ':' it will break the image gallery parsing.{% endcomment %}
+            <td><a href="/image/gallery/?queryParams=imageProperty={{property.key}}={{property.value}}">{{property.key}}={{property.value}}</a></td>
             <td>{{property.header.key}}</td>
             <td>{{property.header.value}}</td>
             <td>{{property.createDateTime}}</td>
