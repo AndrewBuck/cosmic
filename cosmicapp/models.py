@@ -923,8 +923,8 @@ class ScorableObject:
         Compute and return a difficulty score for how difficult this (stellar, or point like) object is to observe
         given a specific limiting magnitude or the dimmest point source the observer can meaningfully detect.
         """
-        if mag < (limitingMag - 4):
-            return max(mag/(limitingMag - 4), 0)
+        if mag < (limitingMag - 6):
+            return max(mag/(limitingMag - 6), 0)
         elif mag <= limitingMag:
             #TODO: Implement this as a function of magnitude.
             return 3.0
@@ -1067,7 +1067,7 @@ class GCVSRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
 
     def getValueForTime(self, t):
         #TODO: Properly implement this function.
-        return 10.0
+        return 3.0
 
     def getDifficultyForTime(self, t):
         #TODO: Properly implement this function.
@@ -1147,25 +1147,25 @@ class MessierRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
 
     def getValueForTime(self, t):
         typeValueDict = {
-            'GlC': (40.0, 'cluster'),           # Globular Cluster
-            'GiP': (6.0, 'galaxy'),             # Galaxy in Pair of Galaxies
-            'HII': (2.0, 'nebula'),             # HII (ionized) region
-            'AGN': (3.0, 'galaxy'),             # Active Galaxy Nucleus
+            'GlC': (8.0, 'cluster'),            # Globular Cluster
+            'GiP': (3.0, 'galaxy'),             # Galaxy in Pair of Galaxies
+            'HII': (1.4, 'nebula'),             # HII (ionized) region
+            'AGN': (2.0, 'galaxy'),             # Active Galaxy Nucleus
             'Cl*': (7.0, 'cluster'),            # Cluster of Stars
-            'As*': (3.0, 'cluster'),            # Association of Stars
-            'Sy2': (3.0, 'galaxy'),             # Seyfert 2 Galaxy
-            'OpC': (15.0, 'cluster'),           # Open (galactic) Cluster
-            'PN': (3.0, 'stellarRemnant'),      # Planetary Nebula
-            'H2G': (3.0, 'galaxy'),             # HII Galaxy
-            'RNe': (2.0, 'nebula'),             # Reflection Nebula
+            'As*': (1.8, 'cluster'),            # Association of Stars
+            'Sy2': (2.0, 'galaxy'),             # Seyfert 2 Galaxy
+            'OpC': (6.0, 'cluster'),            # Open (galactic) Cluster
+            'PN': (2.8, 'stellarRemnant'),      # Planetary Nebula
+            'H2G': (2.0, 'galaxy'),             # HII Galaxy
+            'RNe': (2.5, 'nebula'),             # Reflection Nebula
             '**': (3.0, 'cluster'),             # Double or multiple star
             'IG': (5.0, 'galaxy'),              # Interacting Galaxies
-            'SyG': (3.0, 'galaxy'),             # Seyfert Galaxy
-            'SNR': (5.0, 'stellarRemnant'),     # SuperNova Remnant
-            'GiG': (5.0, 'galaxy'),             # Galaxy in Group of Galaxies
+            'SyG': (2.0, 'galaxy'),             # Seyfert Galaxy
+            'SNR': (3.5, 'stellarRemnant'),     # SuperNova Remnant
+            'GiG': (3.0, 'galaxy'),             # Galaxy in Group of Galaxies
             'LIN': (3.0, 'galaxy'),             # LINER-type Active Galaxy Nucleus
-            'SBG': (10.0, 'galaxy'),            # Starburst Galaxy
-            'G': (3.0, 'galaxy')                # Galaxy
+            'SBG': (5.0, 'galaxy'),             # Starburst Galaxy
+            'G': (2.0, 'galaxy')                # Galaxy
             }
 
         valueList = typeValueDict[self.objectType]
@@ -1275,7 +1275,7 @@ class AstorbRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
         #TODO: Take into account the orbitCode, astrometryNeeded code, and criticalCode field.
         orbitCodeDict = {
             0: 1,      # 
-            1: 10,    # Earth-crossing asteroid (ECA).
+            1: 6,    # Earth-crossing asteroid (ECA).
             2: 1.5,     # Orbit comes inside Earth's orbit but not specifically an ECA.
             4: 1.5,      # Amor type asteroids.
             8: 2,     # Mars crossers.
@@ -1283,7 +1283,7 @@ class AstorbRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
             }
 
         criticalCodeDict = {
-            0: 1,      # 
+            0: 2,      # 
             1: 0.2,  # Lost asteroid.
             2: 10,    # Asteroids observed at only two apparitions.
             3: 5,     # Asteroids observed at only three apparitions.
@@ -1294,17 +1294,17 @@ class AstorbRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
             }
 
         astrometryNeededCodeDict = {
-            10: 10,   # Space mission targets and occultation candidates.
-            9: 7,     # Asteroids useful for mass determination.
-            8: 5,     # Asteroids for which a few observations would upgrade the orbital uncertainty.
-            7: 2,      # MPC Critical list asteroids with future low uncertainties.
-            6: 5,     # Planet crossers of type 6:5.
-            5: 5,     # Asteroids for which a few more observations would lead to numbering them.
+            10: 4,   # Space mission targets and occultation candidates.
+            9: 3,     # Asteroids useful for mass determination.
+            8: 2,     # Asteroids for which a few observations would upgrade the orbital uncertainty.
+            7: 1.5,      # MPC Critical list asteroids with future low uncertainties.
+            6: 2,     # Planet crossers of type 6:5.
+            5: 6,     # Asteroids for which a few more observations would lead to numbering them.
             4: 2,     # 
             3: 1.8,      # 
-            2: 1.5,      # 
-            1: 1.3,      # 
-            0: 1.1       # 
+            2: 1.6,      # 
+            1: 1.5,      # 
+            0: 1.4       # 
             }
 
         #TODO: Some of these importance codes are bitwise anded together and need to be properly parsed that way.
@@ -1322,12 +1322,12 @@ class AstorbRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
         #TODO: Properly implement this function.
         # Score increases with increasing error up until errorInDeg is reached and then it drops down from the peak
         # value for errors larger than this.
-        errorInDeg = 1.5
+        errorInArcsec = 5
         ceu = self.getCeuForTime(t)
-        if ceu < 3600*errorInDeg:
-            return 2.0 * max(3.0, math.pow(ceu/3600.0, 2))
+        if ceu < 2*errorInArcsec:
+            return 1.0 + min(8.0, math.pow(1+ceu/errorInArcsec, 1.5))
         else:
-            return max(2.0, 2.0 * math.pow(errorInDeg, 2) - 2.0 * math.pow(ceu/3600.0, 2))
+            return max(2.5, 8.0 - 2.0 * math.pow(1+ceu-2*errorInArcsec/errorInArcsec, 1.2))
 
     def getUserDifficultyForTime(self, t, user, observatory=None):
         #TODO: Properly implement this function.
@@ -1452,7 +1452,7 @@ class ExoplanetRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject)
 
             if periodFraction <= durationHalfFraction or periodFraction >= (1.0 - durationHalfFraction):
                 # The exoplanet is currently in a transit.
-                return 100
+                return 5
             else:
                 # The exoplanet is not in a transit.
                 transit1 = self.getTransitTime('next', t)
@@ -1468,12 +1468,12 @@ class ExoplanetRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject)
                 if dt1c1 < windowSizeTimedelta.total_seconds() or dt1c4 < windowSizeTimedelta.total_seconds() or \
                    dt2c1 < windowSizeTimedelta.total_seconds() or dt2c4 < windowSizeTimedelta.total_seconds():
                     # The exoplanet is ingressing or egressing from a transit, or near enough that we should be getting data.
-                    return 200
+                    return 10
                 else:
                     # The exoplanet is not in a transit.
-                    return 15
+                    return 2.5
 
-        return 10
+        return 3
 
     def getDifficultyForTime(self, t):
         #TODO: Properly implement this function.
