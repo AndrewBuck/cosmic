@@ -5,8 +5,8 @@
 {% block mainbody %}
 <h2>Upload</h2>
 
-<p>This page is for uploading images and observing notes to be shared on Cosmic.  Please only upload images of the sky
-and calibration images.  For uploading pictures of yourself or your equipment you can do that on your <a
+<p>This page is for uploading images and observing notes to be shared on Cosmic.  <i>Please only upload images of the sky
+and calibration images.</i>  For uploading pictures of yourself or your equipment you can do that on your <a
 href="/user/{{user}}">user
 page</a>.</p>
 
@@ -23,6 +23,15 @@ CALIBRATION IMAGES, AND OBSERVER NOTES WILL BE KEPT OTHER FILES WILL BE DELETED.
 
 <p>Once your images have been successfully uploaded they will be added to the processing queue where they will be plate
 solved, source extracted, and so forth.</p>
+
+<p>
+You can upload multiple files at once, and if you do a record is kept of all the files
+that were uploaded at the same time.  We recommend using this to upload files grouped by
+the location you took them from, or if you sometimes use different equipment you should
+upload them grouped by that, etc.  This will make it easy to add this information later on
+by adding the appropriate tags to all the files at once.  Do not bother manually grouping
+them by time, since the file headers almost always include this anyway.
+</p>
 
 <form method="post" enctype="multipart/form-data">
 {% csrf_token %}
