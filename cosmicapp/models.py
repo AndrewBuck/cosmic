@@ -1351,7 +1351,7 @@ class AstorbEphemeris(models.Model):
     endTime = models.DateTimeField(null=True)
     dimMag = models.FloatField(db_index=True, null=True)
     brightMag = models.FloatField(db_index=True, null=True)
-    geometry = models.LineStringField(srid=40000, geography=False, dim=2, null=True)
+    geometry = models.LineStringField(db_index=True, srid=40000, geography=False, dim=2, null=True)
 
 class ExoplanetRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     """
