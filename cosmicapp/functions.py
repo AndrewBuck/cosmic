@@ -45,7 +45,7 @@ def getAsteroidsAroundGeometry(geometry, bufferSize, targetTime, limitingMag, li
         largeBufferSize = bufferSize
 
     # We use a larger limit here since some will be discarded.
-    fakeLimit = min(limit*10, 100)
+    fakeLimit = max(limit*1.3, limit+25)
 
     # Start by performing a query which returns all asteroids that pass within the bufferDistance within a few months
     # of the targetTime
@@ -54,7 +54,7 @@ def getAsteroidsAroundGeometry(geometry, bufferSize, targetTime, limitingMag, li
         startTime__lte=targetTime,
         endTime__gte=targetTime,
         brightMag__lt=limitingMag
-        ).order_by('-astorbRecord__astrometryNeededCode', '-astorbRecord__ceu', 'astorbRecord_id').distinct('astorbRecord__astrometryNeededCode', 'astorbRecord__ceu', 'astorbRecord_id')[:fakeLimit]
+        ).order_by('astorbRecord_id').distinct('astorbRecord_id')[:fakeLimit]
 
     # Now that we have narrowed it down to a list of candidates, check through that list and calculate the exact
     # ephemeris at the desired targetTime for each candidate and discard any which don't actually fall within the
@@ -74,10 +74,12 @@ def getAsteroidsAroundGeometry(geometry, bufferSize, targetTime, limitingMag, li
 
         asteroids.append({
             'record': asteroid.astorbRecord,
-            'ephem': ephemeris
+            'ephem': ephemeris,
+            'separation': separation
             })
 
-    return asteroids
+    asteroids.sort(key=lambda x: x['separation'])
+    return asteroids[:limit]
 
 def formulateObservingPlan(user, observatory, targets, includeOtherTargets, startTime, endTime, minTimeBetween, maxTimeBetween, limitingMag, minimumScore):
     #TODO: Also include calibration images at the beginning, middle, and end of the observing session.
