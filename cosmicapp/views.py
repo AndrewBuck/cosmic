@@ -963,7 +963,7 @@ def questions(request):
 
     context['questionGroups'] = Answer.objects.all().values('question').annotate(count=Count('question')).order_by('question')
 
-    context['answerKVs'] = AnswerKV.objects.all().values('key', 'value').annotate(count=Count('key', 'value')).order_by('key', 'value')
+    context['answerKVs'] = AnswerKV.objects.all().values('key', 'value').annotate(count=Count('id')).order_by('key', 'value')
 
     return render(request, "cosmicapp/questions.html", context)
 
