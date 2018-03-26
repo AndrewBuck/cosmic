@@ -19,12 +19,28 @@ There have been a total of {{numAnswers}} answers given to {{questionGroups.coun
 </p>
 
 <p>
+<table>
+<tr>
+<td>
 <table cellpadding=5px border=2px style="border-collapse: collapse; margin: 1em;">
     <tr><th>Question ID</th><th>Num Answers</th></tr>
 
     {% for questionGroup in questionGroups %}
         <tr><td>{{questionGroup.question}}</td><td>{{questionGroup.count}}</td></tr>
     {% endfor %}
+</table>
+</td>
+
+<td>
+<table cellpadding=5px border=2px style="border-collapse: collapse; margin: 1em;">
+    <tr><th>Answer Key=value</th><th>Count</th></tr>
+
+    {% for answerKV in answerKVs %}
+        <tr><td><a href="/image/gallery/?queryParams=questionAnswer={{answerKV.key}}={{answerKV.value}}">{{answerKV.key}}={{answerKV.value}}</a></td><td>{{answerKV.count}}</td></tr>
+    {% endfor %}
+</table>
+</td>
+</tr>
 </table>
 </p>
 
