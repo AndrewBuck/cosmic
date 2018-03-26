@@ -40,7 +40,10 @@ them by time, since the file headers almost always include this anyway.
 </form>
 
 {% if upload_successful %}
-<p>File upload successfull.</p>
+<p>File upload successfull. A new upload session record has been created to group these
+files together for later use.  If you would like to set common properties of the uploaded
+files in this group, click <a href="/uploadSession/{{uploadSession.id}}">here</a>.</p>
+
 
     <table border="2px">
     <tr> <th>File name</th> <th>Size (bytes)</th> <th>sha256sum</th> </tr>

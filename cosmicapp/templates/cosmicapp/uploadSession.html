@@ -1,0 +1,24 @@
+{% extends "cosmicapp/base.html" %}
+
+{% load static %}
+{% load cosmicapp_extras %}
+
+{% block extratitle %} - Upload session {{uploadSession.id}} {% endblock extratitle %}
+
+{% block mainbody %}
+<h3>Upload session {{uploadSession.id}}</h3>
+
+<p>
+Uploaded by user: <a href="/user/{{uploadSession.uploadingUser}}/">{{uploadSession.uploadingUser}}</a><br>
+Uploaded on: {{uploadSession.dateTime}}<br><br>
+Upload consisted of {{uploadSession.uploadedFileRecords.count}} files:<br>
+
+{% for uploadedFileRecord in uploadSession.uploadedFileRecords.all %}
+    &emsp;{{uploadedFileRecord.originalFileName}} - {{uploadedFileRecord.uploadSize|filesizeformat}} -
+    {% for image in uploadedFileRecord.image.all %}
+        <a href="/image/{{image.id}}/">Image {{image.id}}</a>
+    {% endfor %}
+    - SHA256: {{uploadedFileRecord.fileSha256}}<br>
+{% endfor %}
+</p>
+{% endblock mainbody %}

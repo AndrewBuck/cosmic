@@ -91,6 +91,8 @@ def upload(request):
 
         uploadSession.save()
 
+        context['uploadSession'] = uploadSession
+
         records = []
         for myfile in request.FILES.getlist('myfiles'):
             fs = FileSystemStorage()
@@ -289,6 +291,8 @@ def userpage(request, username):
     if foruser.profile.defaultObservatory != None:
         context['otherObservatories'] = context['otherObservatories'].exclude(pk=foruser.profile.defaultObservatory.pk)
 
+    context['uploadSessions'] = UploadSession.objects.filter(uploadingUser=foruser).order_by('-dateTime')[:10]
+
     if request.method == 'POST':
         if 'edit' in request.POST:
             context['edit'] = request.POST['edit']
@@ -429,6 +433,16 @@ def objectInfo(request, method, pk):
         return render(request, "cosmicapp/object_info_" + method + ".html", context)
     else:
         return HttpResponse('Method "' + method + '" not found.', status=400, reason='not found.')
+
+def uploadSession(request, pk):
+    context = {"user" : request.user}
+
+    try:
+        context['uploadSession'] = UploadSession.objects.get(pk=pk)
+    except:
+        return HttpResponse('Upload session "' + pk + '" not found.', status=400, reason='not found.')
+
+    return render(request, "cosmicapp/uploadSession.html", context)
 
 def image(request, id):
     context = {"user" : request.user}
@@ -938,11 +952,11 @@ def query(request):
 def questions(request):
     context = {"user" : request.user}
 
-    context['numanswers'] = answer.objects.all().count()
-    print(context['numanswers'])
+    context['numAnswers'] = Answer.objects.all().count()
 
-    context['questiongroups'] = answer.objects.all().values('question').annotate(count=count('question')).order_by('question')
-    print(context['questiongroups'])
+    context['questionGroups'] = Answer.objects.all().values('question').annotate(count=Count('question')).order_by('question')
+
+    context['answerKVs'] = AnswerKV.objects.all().values('key', 'value').annotate(count=Count('key', 'value')).order_by('key', 'value')
 
     return render(request, "cosmicapp/questions.html", context)
 

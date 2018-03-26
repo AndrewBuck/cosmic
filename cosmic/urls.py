@@ -35,6 +35,7 @@ urlpatterns = [
     url(r'^catalogs/', views.catalogs),
     url(r'^catalog/(?P<method>.+)/(?P<pk>.+)', views.objectInfo),
     url(r'^detectedSource/(?P<method>.+)/(?P<pk>.+)', views.objectInfo),
+    url(r'^uploadSession/(?P<pk>.+)', views.uploadSession),
 
     url(r'^user/(?P<username>.+)/bookmarks/$', views.bookmarkPage),
     url(r'^user/(?P<username>.+)/', views.userpage),

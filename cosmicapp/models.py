@@ -300,7 +300,7 @@ class UploadedFileRecord(models.Model):
     hash, etc are stored here as well as onDiskFileName which is the name django assigns to our copy of the file (to handle
     multiple uploads of the same file, etc).
     """
-    uploadSession = models.ForeignKey(UploadSession, null=True, on_delete=models.CASCADE)
+    uploadSession = models.ForeignKey(UploadSession, null=True, on_delete=models.CASCADE, related_name='uploadedFileRecords')
     unpackedFromFile = models.ForeignKey('self', null=True, on_delete=models.CASCADE)
     originalFileName = models.CharField(max_length=256)
     onDiskFileName = models.CharField(max_length=256)
@@ -321,7 +321,7 @@ class Image(models.Model, SkyObject):
     Currently we cannot claim to handle files like this in any reasonable fashion, other than simply warehousing the file
     and parsing the first HDU in the file.
     """
-    fileRecord = models.ForeignKey(UploadedFileRecord, on_delete=models.PROTECT, null=True)
+    fileRecord = models.ForeignKey(UploadedFileRecord, on_delete=models.PROTECT, null=True, related_name='image')
     parentImages = models.ManyToManyField('self', symmetrical=False, related_name='childImages')
     instrument = models.ForeignKey(Instrument, on_delete=models.PROTECT, null=True)
     observatory = models.ForeignKey(Observatory, on_delete=models.PROTECT, null=True)
