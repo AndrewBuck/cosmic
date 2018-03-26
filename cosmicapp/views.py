@@ -737,6 +737,12 @@ def query(request):
                 if len(values) > 0:
                     results = results.filter(pk__in=values)
 
+        if 'uploadSessionId' in request.GET:
+            for valueString in request.GET.getlist('uploadSessionId'):
+                values = cleanupQueryValues(valueString, 'int')
+                if len(values) > 0:
+                    results = results.filter(fileRecord__uploadSession__pk__in=values)
+
         #TODO: Allow querying by uploaded filename.
 
         results = results.order_by(ascDesc + orderField)[offset:offset+limit]

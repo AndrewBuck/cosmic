@@ -21,4 +21,11 @@ Upload consisted of {{uploadSession.uploadedFileRecords.count}} files:<br>
     - SHA256: {{uploadedFileRecord.fileSha256}}<br>
 {% endfor %}
 </p>
+
+Images uploaded during this upload session:
+
+{% with "uploadSessionId="|concat:uploadSession.id as queryParams %}
+{% include "./imageTable.html" with galleryName="userGallery" includeLinks="true" thumbnailSize="Medium" %}
+{% endwith %}
+
 {% endblock mainbody %}
