@@ -81,6 +81,7 @@
 <p>
 </td>
 <td>
+{% if edit != 'true' %}
 {% if uploadSessions %}
     Your recent upload sessions:<br><br>
 
@@ -95,9 +96,12 @@
         This user has not yet uploaded<br>any images or observing notes.
     {% endif %}
 {% endif %}
+{% endif %}
 </td>
 </tr>
 </table>
+
+{% if edit != 'true' %}
 Other useful queries:<br>
 
 Images for this user with failed astrometry.net plate solutions:
@@ -112,6 +116,7 @@ Your uploaded images:<br>
 {% with "user="|concat:foruser as queryParams %}
 {% include "./imageTable.html" with galleryName="userGallery" includeLinks="true" thumbnailSize="Medium" %}
 {% endwith %}
+{% endif %}
 
 {% endblock %}
 
