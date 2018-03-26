@@ -147,8 +147,8 @@
             {% bookmark "asteroid" asteroid.record.pk "Observing Targets" "<td>" "</td>" %}
             <td>{% scoreForObject asteroid.record currentTime user %}</td>
             <td>{{asteroid.record.name}}</td>
-            <td>{{asteroid.ephem.ra|formatRA}}</td>
-            <td>{{asteroid.ephem.dec|formatDec}}</td>
+            <td>{{asteroid.ephem.ra|formatRA_rad}}</td>
+            <td>{{asteroid.ephem.dec|formatDec_rad}}</td>
             <td>{{asteroid.ephem.mag|floatformat:2}}</td>
             <td>{{asteroid.record.ceu|floatformat:3}}</td>
             <td>{{asteroid.record.astrometryNeededCode}}</td>

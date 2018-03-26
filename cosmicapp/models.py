@@ -970,8 +970,8 @@ class ScorableObject:
         if isinstance(self, SkyObject):
             ra, dec = self.getSkyCoords(t)
             body = ephem.FixedBody()
-            body._ra = ra*math.pi/180.0
-            body._dec = dec*math.pi/180.0
+            body._ra = ra
+            body._dec = dec
             body._epoch = '2000'  #TODO: Set this properly as elsewhere.
 
             body.compute(observer)
