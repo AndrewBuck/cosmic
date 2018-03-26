@@ -301,6 +301,7 @@ def userpage(request, username):
 
             if request.user.username == foruser.username and profileForm.is_valid():
                 foruser.profile.birthDate = profileForm.cleaned_data['birthDate']
+                foruser.profile.limitingMag = profileForm.cleaned_data['limitingMag']
                 foruser.profile.save()
 
                 return HttpResponseRedirect('/user/' + foruser.username + '/')
