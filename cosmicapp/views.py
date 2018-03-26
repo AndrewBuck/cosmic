@@ -1843,7 +1843,7 @@ def bookmark(request):
 
         #TODO: Make next_setting, etc, optionally run a while loop if it throws a circumpolar or never_rises error.
         if startTime == 'rightNow':
-            startTime = datetime.now()
+            startTime = dateparser.parse(str(datetime.now()))
             endTime = startTime + observingDurationDelta
 
         elif startTime == 'evening':
