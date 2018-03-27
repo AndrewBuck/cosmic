@@ -193,7 +193,7 @@ function updateBookmarkTable()
                     tableHTML += '\n<tr>';
                     tableHTML += '\n<td><input type=checkbox class=includeForObservation id="' + r['divID'] +
                                  '_includeCheckbox" ' + r['defaultSelected'] + '></td>';
-                    tableHTML += '\n<td>' + r['score'] + '</td>';
+                    tableHTML += '\n<td>' + Number(r['score']).toFixed(2) + '</td>';
                     tableHTML += '\n<td>' + r['type'] + '</td>';
                     //TODO: Should include a bookmark link here when we have a way to do so with a javascript function.
                     tableHTML += '\n<td>' + r['identifier'] + '</td>';
