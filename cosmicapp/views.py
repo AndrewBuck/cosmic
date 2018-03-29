@@ -1,6 +1,7 @@
 import hashlib
 import os
 import math
+import random
 import time
 from datetime import datetime, timedelta
 import dateparser
@@ -1077,13 +1078,24 @@ def equipment(request):
 @login_required
 def questionImage(request, id):
     context = {"user" : request.user}
-    context['id'] = id
+
+    id = int(id)
 
     try:
+        if(id == -1):
+            # Get a list of image id's in the database sorted by how many answers each one has.
+            pks = Image.objects.annotate(numAnswers=Count('answers')).order_by('numAnswers').values_list('pk', flat=True)[:100]
+
+            # Choose a random image id from this list with a bias towards the beginning
+            # (i.e. images which have no, or few, answers).
+            index = math.floor(math.sqrt(random.Random().randint(0, math.pow(len(pks)-1, 2))))
+            id = pks[index]
+
         image = Image.objects.get(pk=id)
     except Image.DoesNotExist:
         return render(request, "cosmicapp/imagenotfound.html", context)
 
+    context['id'] = id
     context['image'] = image
 
     if request.method == 'POST':
