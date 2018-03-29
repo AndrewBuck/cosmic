@@ -26,6 +26,20 @@ function ImageGallery(galleryName, paramString, includeLinks, imageOnclickFuncti
     this.lastParamString = '';
     this.offset = 0;
 
+    this.images = [];
+
+    this.getImageById = function(id)
+    {
+        var i;
+        for(i = 0; i < this.images.length; i++)
+        {
+            if(this.images[i].id == id)
+                return this.images[i];
+        }
+
+        return null;
+    };
+
     this.initImageGallery = function()
     {
         $(window).on('resize', this.handleWindowResize)
@@ -142,14 +156,10 @@ function ImageGallery(galleryName, paramString, includeLinks, imageOnclickFuncti
     {
         var html = '';
 
-        //TODO: Replace this function?
-        thumbUrl = $.ajax(
-            {url: '/image/' + id + '/thumbnail/full/',
-            async: false}
-            ).responseText;
+        var image = this.getImageById(id);
 
         html += '<div class="imageGalleryZoomWindow ' + this.name + '">';
-        html += '<img src="' + thumbUrl + '">';
+        html += '<img src="' + image.thumbUrlFull + '">';
         html += '</div>';
 
         $(document.body).append(html);
@@ -214,6 +224,7 @@ function ImageGallery(galleryName, paramString, includeLinks, imageOnclickFuncti
 
         for(i = 0; i < response.length; i++)
         {
+            this.images[this.images.length] = response[i];
             var imageId = response[i].id;
 
             html += '<div class="responsive ' + this.name + '" id="' + imageId + '">'
@@ -230,12 +241,10 @@ function ImageGallery(galleryName, paramString, includeLinks, imageOnclickFuncti
                 html += '<img onclick="' + this.imageOnclickFunction + '(' + imageId + ')" src="' + response[i]['thumbUrl'+this.thumbnailSize] + '">';
             }
 
-            var questionLink = '/image/' + imageId + '/question/';
             html += '<div class="desc ' + this.name + '">'
             //TODO: Make these <a> links an image icon instead of the placeholder text link that is here now.
-            html += '<a style="cursor: pointer" class="hideLink ' + this.name + '" id="hideButton' + imageId + '">Hide</a>&nbsp;';
-            html += '<a href="' + questionLink + '" class="questionLink ' + this.name + '">Ques</a>&nbsp;';
-            html += '<a style="cursor: pointer" class="zoomLink ' + this.name + '" onclick="gallery_' + this.galleryName + '.zoomImage(' + imageId + ')">Zoom</a>';
+            html += '<a style="cursor: pointer" class="hideLink ' + this.name + '" id="hideButton' + imageId + '">Hide</a>&nbsp;&nbsp;';
+            html += '<a style="cursor: pointer" class="zoomLink ' + this.name + '" onclick="gallery_' + this.name + '.zoomImage(' + imageId + ')">Zoom</a>';
             html += '</div>';
             html += '</div>';
             html += '</div>';
