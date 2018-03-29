@@ -9,6 +9,7 @@
 <table>
 <tr>
 <td>
+
 {% if user.username == foruser.username and edit == 'true' %}
     <form action="/user/{{user.username}}/" method="POST">
         {% csrf_token %}
@@ -17,6 +18,8 @@
     </form>
 {% else %}
     <ul>
+        <p>User Joined: {{foruser.date_joined}}</p>
+        <p>Last Login: {{foruser.last_login}}</p>
         <p>Birth Date: {{foruser.profile.birthDate}}</p>
         <p>Limiting Magnitude: {{foruser.profile.limitingMag}}</p>
 
