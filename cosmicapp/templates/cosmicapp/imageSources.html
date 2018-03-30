@@ -1161,10 +1161,10 @@ function drawSources()
         drawSource(context, userSubmittedHotPixels[i].pixelX, userSubmittedHotPixels[i].pixelY, 1.0, 5, 2);
 
     for(i = 0; i < userCreatedResults.length && !lmbDown; i++)
-        drawReticle(context, userCreatedResults[i].x, userCreatedResults[i].y, 10, userCreatedColor, 0.8);
+        drawReticle(context, userCreatedResults[i].pixelX, userCreatedResults[i].pixelY, 10, userCreatedColor, 0.8);
 
     for(i = 0; i < userCreatedHotPixels.length && !lmbDown; i++)
-        drawReticle(context, userCreatedHotPixels[i].x, userCreatedHotPixels[i].y, 5, userCreatedColor, 0.8);
+        drawReticle(context, userCreatedHotPixels[i].pixelX, userCreatedHotPixels[i].pixelY, 5, userCreatedColor, 0.8);
 
     labelSize = 16
     context.font = labelSize + 'px sans-serif'
@@ -1599,9 +1599,9 @@ function handleMouseButtonUp(event)
         var yPos = mouseY - reticlePrecision*deltaY;
 
         if(lmbDown && mode == 'stars')
-            userCreatedResults[userCreatedResults.length] = {x: xPos, y: yPos, confidence: 1.0};
+            userCreatedResults[userCreatedResults.length] = {pixelX: xPos, pixelY: yPos, confidence: 1.0};
         else if(lmbDown && mode == 'hotpixels')
-            userCreatedHotPixels[userCreatedHotPixels.length] = {x: xPos, y: yPos, confidence: 1.0};
+            userCreatedHotPixels[userCreatedHotPixels.length] = {pixelX: xPos, pixelY: yPos, confidence: 1.0};
 
         lmbDown = false;
         drawSources();
