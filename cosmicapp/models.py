@@ -528,7 +528,7 @@ class ImageProperty(models.Model):
     file, e.g. frame type, seeing conditions, etc).
     """
     image = models.ForeignKey(Image, db_index=True, on_delete=models.CASCADE, related_name='properties')
-    header = models.ForeignKey(ImageHeaderField, db_index=True, on_delete=models.CASCADE, null=True)  #TODO: Make this many to many?
+    header = models.ForeignKey(ImageHeaderField, db_index=True, on_delete=models.CASCADE, null=True, related_name='properties')  #TODO: Make this many to many?
     key = models.TextField()
     value = models.TextField()
     createDateTime = models.DateTimeField(auto_now=True)

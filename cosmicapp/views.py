@@ -539,6 +539,21 @@ def imageProperties(request, id):
 
     return render(request, "cosmicapp/imageProperties.html", context)
 
+def allImageProperties(request):
+    context = {"user" : request.user}
+
+    properties = ImageProperty.objects.all().values('key', 'value').annotate(count=Count('id')).order_by('-count')
+    context['properties'] = properties
+
+    headers = ImageHeaderField.objects.all()\
+        .values('key', 'value')\
+        .annotate(countOccurrences=Count('id'), countLinks=Count('properties__id'))\
+        .order_by('countLinks', '-countOccurrences')
+
+    context['headers'] = headers
+
+    return render(request, "cosmicapp/allImageProperties.html", context)
+
 #TODO: This can probably be removed.
 """
 def imageThumbnailUrl(request, id, size):

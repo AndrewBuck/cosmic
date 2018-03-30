@@ -44,6 +44,7 @@ urlpatterns = [
     url(r'^image/(?P<id>[0-9]+)/$', views.image),
     url(r'^image/(?P<id>[0-9]+)/sources/$', views.imageSources),
     url(r'^image/(?P<id>[0-9]+)/properties/$', views.imageProperties),
+    url(r'^imageProperties/$', views.allImageProperties),
 
     url(r'^query/$', views.query),
 
