@@ -243,8 +243,8 @@ function ImageGallery(galleryName, paramString, includeLinks, imageOnclickFuncti
 
             html += '<div class="desc ' + this.name + '">'
             //TODO: Make these <a> links an image icon instead of the placeholder text link that is here now.
-            html += '<a style="cursor: pointer" class="hideLink ' + this.name + '" id="hideButton' + imageId + '">Hide</a>&nbsp;&nbsp;';
-            html += '<a style="cursor: pointer" class="zoomLink ' + this.name + '" onclick="gallery_' + this.name + '.zoomImage(' + imageId + ')">Zoom</a>';
+            html += '<a class="functionLink hideLink ' + this.name + '" id="hideButton' + imageId + '">Hide</a>&nbsp;&nbsp;';
+            html += '<a class="functionLink zoomLink ' + this.name + '" onclick="gallery_' + this.name + '.zoomImage(' + imageId + ')">Zoom</a>';
             html += '</div>';
             html += '</div>';
             html += '</div>';
