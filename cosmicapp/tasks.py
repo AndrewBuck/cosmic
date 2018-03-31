@@ -1218,7 +1218,7 @@ def parseHeaders(imageId):
                 key = 'width'
                 value = header.value.split()[0]
 
-            elif header.key == ['fits:naxis2', 'fits:imageh']:
+            elif header.key in ['fits:naxis2', 'fits:imageh']:
                 key = 'height'
                 value = header.value.split()[0]
 
