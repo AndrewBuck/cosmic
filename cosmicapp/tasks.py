@@ -13,6 +13,7 @@ import re
 import itertools
 import math
 import dateparser
+from datetime import timedelta
 
 from astropy import wcs
 from astropy.io import fits
