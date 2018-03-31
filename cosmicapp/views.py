@@ -463,7 +463,9 @@ def image(request, id):
     imagePlateArea = None
     if plateSolution != None:
         imagePlateArea = plateSolution.geometry.area
-        overlappingPlatesObjects = PlateSolution.objects.filter(geometry__overlaps=plateSolution.geometry).distinct('image').exclude(image_id=image.pk)
+        overlappingPlatesObjects = PlateSolution.objects.filter(geometry__overlaps=plateSolution.geometry)\
+            .distinct('image').exclude(image_id=image.pk)
+
         for plate in overlappingPlatesObjects:
             overlappingRegion = plateSolution.geometry.intersection(plate.geometry)
             overlappingPlates.append({
@@ -543,7 +545,11 @@ def imageProperties(request, id):
 def allImageProperties(request):
     context = {"user" : request.user}
 
-    properties = ImageProperty.objects.all().values('key', 'value').annotate(count=Count('id')).order_by('-count')
+    properties = ImageProperty.objects.all().\
+        values('key', 'value').\
+        annotate(count=Count('id')).\
+        order_by('-count', 'key', 'value')
+
     context['properties'] = properties
 
     headers = ImageHeaderField.objects.all()\
@@ -1111,7 +1117,8 @@ def questionImage(request, id):
     try:
         if(id == -1):
             # Get a list of image id's in the database sorted by how many answers each one has.
-            pks = Image.objects.annotate(numAnswers=Count('answers')).order_by('numAnswers').values_list('pk', flat=True)[:100]
+            pks = Image.objects.annotate(numAnswers=Count('answers'))\
+                .order_by('numAnswers').values_list('pk', flat=True)[:100]
 
             # Choose a random image id from this list with a bias towards the beginning
             # (i.e. images which have no, or few, answers).
