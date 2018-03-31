@@ -62,6 +62,7 @@ urlpatterns = [
     url(r'^save/userOwnedEquipment/$', views.saveUserOwnedEquipment),
     url(r'^save/instrumentConfigurationLink/$', views.saveInstrumentConfigurationLink),
     url(r'^save/newInstrumentConfiguration/$', views.saveNewInstrumentConfiguration),
+    url(r'^save/query/$', views.saveQuery),
     url(r'^delete/userOwnedEquipment/$', views.deleteUserOwnedEquipment),
     url(r'^delete/instrumentConfigurationLink/$', views.deleteInstrumentConfigurationLink),
     url(r'^delete/instrumentConfiguration/$', views.deleteInstrumentConfiguration),

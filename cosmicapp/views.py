@@ -20,6 +20,7 @@ from django.db.models import Count, Q, Max, Min, Avg, StdDev
 from django.db import transaction
 from django.views.decorators.http import require_http_methods
 from django.contrib.gis.geos import GEOSGeometry, Point
+from django.db.utils import IntegrityError
 
 from lxml import etree
 import ephem
@@ -987,8 +988,18 @@ def questions(request):
 def imageGallery(request):
     context = {"user" : request.user}
 
-    context['queryParams'] = request.GET['queryParams']
-    print(context['queryParams'])
+    queryId = request.GET.get('queryId', None)
+    savedQuery = request.GET.get('savedQuery', None)
+
+    if savedQuery is not None:
+        context['query'] = SavedQuery.objects.get(name=savedQuery)
+
+    elif queryId is not None:
+        context['query'] = SavedQuery.objects.get(pk=queryId)
+
+    if 'query' in context:
+        context['queryParams'] = context['query'].queryParams
+
     return render(request, "cosmicapp/imageGallery.html", context)
 
 def equipment(request):
@@ -1657,6 +1668,52 @@ def saveNewInstrumentConfiguration(request):
     instrumentConfiguration.save()
 
     responseDict['message'] = 'New instrument configuration created.'
+
+    return HttpResponse(json.dumps(responseDict), status=200)
+
+@login_required
+@require_http_methods(['POST'])
+def saveQuery(request):
+    responseDict = {}
+    queryName = request.POST.get('queryName', None)
+    queryText = request.POST.get('queryText', '')
+    queryHeaderText = request.POST.get('queryHeaderText', '')
+    queryParams = request.POST.get('queryParams', '')
+
+    if queryName == '':
+        queryName = None
+
+    if queryParams == '':
+        response = 'Error: No queryParams given.'
+        return HttpResponse(response, status=400)
+
+    try:
+        textBlob = TextBlob(
+            user = request.user,
+            markdownText = queryText
+            )
+
+        textBlob.save()
+
+        savedQuery = SavedQuery(
+            name = queryName,
+            user = request.user,
+            text = textBlob,
+            header = queryHeaderText,
+            queryParams = queryParams
+            )
+
+        savedQuery.save()
+    except IntegrityError:
+        textBlob.delete()
+        response = 'Error: A saved query with that name already exists.'
+        return HttpResponse(response, status=400)
+
+    responseDict['message'] = 'Query saved.'
+    if savedQuery.name is not None:
+        responseDict['url'] = '/image/gallery?savedQuery=' + str(savedQuery.name)
+    else:
+        responseDict['url'] = '/image/gallery?queryId=' + str(savedQuery.id)
 
     return HttpResponse(json.dumps(responseDict), status=200)
 

@@ -4,6 +4,7 @@ import pytz
 import ephem
 import numpy
 from astropy import wcs
+import markdown
 
 from django.contrib.gis.db import models
 from django.contrib.auth.models import User
@@ -1634,4 +1635,20 @@ class AnswerPreconditionCondition(models.Model):
     invert = models.BooleanField()
     key = models.TextField()
     value = models.TextField()
+
+class TextBlob(models.Model):
+    user = models.ForeignKey(User, null=True, db_index=True, on_delete=models.CASCADE)
+    dateTime = models.DateTimeField(auto_now=True)
+    markdownText = models.TextField()
+
+    def __str__(self):
+        return markdown.markdown(self.markdownText)
+
+class SavedQuery(models.Model):
+    name = models.TextField(null=True, db_index=True, unique=True)
+    user = models.ForeignKey(User, null=True, db_index=True, on_delete=models.CASCADE)
+    dateTime = models.DateTimeField(auto_now=True)
+    text = models.ForeignKey(TextBlob, on_delete=models.CASCADE)
+    header = models.TextField()
+    queryParams = models.TextField()
 
