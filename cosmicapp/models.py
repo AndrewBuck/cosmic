@@ -340,23 +340,23 @@ class Image(models.Model, SkyObject):
         ps = self.getBestPlateSolution()
         return (ps.centerRA, ps.centerDec)
 
-    """
-    Returns the URL (relative to the website root) of a thumbnail for an image on the site.  If called with just a size
-    string only, that size thumbnail will be returned directly.  If hintWidth or hintHeight are given then the
-    thumbnail returned will be the smallest one which is larger than both the hintWidth and hintHeight.  If the
-    'stretch' parameter is set to true, the behaviour will be nearly the same with the thumbnails being checked in
-    increasing size, but the one returned will be the last one before the size hints are exceeded.  I.E. the largest
-    thumbnail that is smaller than the requested size hints (suitable to be stretched to fit the space or to leave
-    empty space around if desired).
-
-    If you only care about the hint in one dimension but not the other, set the hint for the dimension you don't care
-    about to 0, so that any image which matches the criteria for the hint you do care about will also match the ignored
-    dimension.  Leaving either hint at -1 will cause the hint checking code to be skipped and just return the
-    sizeString sized thumbnail directly.
-    """
     #TODO: Include image channel in the thumbnail selection.  Make this a pipe char separated list to allow multiple
     # channels to be returned at once to save on requests.
     def getThumbnailUrl(self, sizeString, hintWidth=-1, hintHeight=-1, stretch='false'):
+        """
+        Returns the URL (relative to the website root) of a thumbnail for an image on the site.  If called with just a size
+        string only, that size thumbnail will be returned directly.  If hintWidth or hintHeight are given then the
+        thumbnail returned will be the smallest one which is larger than both the hintWidth and hintHeight.  If the
+        'stretch' parameter is set to true, the behaviour will be nearly the same with the thumbnails being checked in
+        increasing size, but the one returned will be the last one before the size hints are exceeded.  I.E. the largest
+        thumbnail that is smaller than the requested size hints (suitable to be stretched to fit the space or to leave
+        empty space around if desired).
+
+        If you only care about the hint in one dimension but not the other, set the hint for the dimension you don't care
+        about to 0, so that any image which matches the criteria for the hint you do care about will also match the ignored
+        dimension.  Leaving either hint at -1 will cause the hint checking code to be skipped and just return the
+        sizeString sized thumbnail directly.
+        """
         #TODO: Specify an image with something like "thumbnail not found" to display in place of this thumbnail.
         thumbnailNotFound = ""
 
