@@ -1066,7 +1066,7 @@ def astrometryNet(filename):
         table.write(tableFilename, format='fits')
     except OSError:
         errorText += 'ERROR: Could not open file for writing: ' + tableFilename + "\n"
-        return False
+        return constructProcessOutput(outputText, errorText)
 
     outputText += "Chose {} objects to use in plate solution.".format(len(table)) + "\n"
 
