@@ -26,6 +26,8 @@ from .tasks import computeSingleEphemeris
 
 #TODO: Check all DateTime and similar type fields to see if they should be auto_now=True.
 
+#TODO: Check all TextField and CharField and remove null=True so you only have to check for empty string as null, not both empty string and null.
+
 class CosmicVariable(models.Model):
     name = models.CharField(db_index=True, unique=True, max_length=64)
     variableType = models.CharField(max_length=32)

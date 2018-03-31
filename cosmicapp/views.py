@@ -634,6 +634,7 @@ def cleanupQueryValues(valueString, parseAs):
     return values
 
 def query(request):
+    #TODO: Returned results should be unique on pk.
     jsonResponse = None
     root = etree.Element("queryresult")
 
