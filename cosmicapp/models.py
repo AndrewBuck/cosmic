@@ -27,7 +27,7 @@ from .tasks import computeSingleEphemeris
 #TODO: Check all DateTime and similar type fields to see if they should be auto_now=True.
 
 class CosmicVariable(models.Model):
-    name = models.CharField(db_index=True, max_length=32)
+    name = models.CharField(db_index=True, unique=True, max_length=64)
     variableType = models.CharField(max_length=32)
     value = models.TextField(null=True)
 

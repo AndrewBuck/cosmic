@@ -38,17 +38,17 @@ def getAsteroidsAroundGeometry(geometry, bufferSize, targetTime, limitingMag, li
 
     geometry = GEOSGeometry(geometry)
 
-    #TODO: Move this '10' into a global variable or something to force it to be the same as what is used in the compute ephemerides routines.
-    if bufferSize < 10:
-        largeBufferSize = 10
+    tolerance = models.CosmicVariable.getVariable('asteroidEphemerideTolerance')
+    if bufferSize < tolerance:
+        largeBufferSize = tolerance
     else:
         largeBufferSize = bufferSize
 
     # We use a larger limit here since some will be discarded.
     fakeLimit = max(limit*1.3, limit+25)
 
-    # Start by performing a query which returns all asteroids that pass within the bufferDistance within a few months
-    # of the targetTime
+    # Start by performing a query which returns all asteroids that pass within the
+    # bufferDistance around the targetTime.
     asteroidsApprox = AstorbEphemeris.objects.filter(
         geometry__dwithin=(geometry, largeBufferSize),
         startTime__lte=targetTime,

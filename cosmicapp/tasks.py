@@ -1414,7 +1414,11 @@ def computeSingleEphemerisRange(asteroid, ephemTimeStart, ephemTimeEnd, toleranc
 
     return ephemerideList
 
-def computeAsteroidEphemerides(ephemTimeStart, ephemTimeEnd, tolerance, timeTolerance, clearFirst):
+def computeAsteroidEphemerides(ephemTimeStart, ephemTimeEnd, clearFirst):
+    tolerance = models.CosmicVariable.getVariable('asteroidEphemerideTolerance')
+    timeTolerance = timedelta(days=models.CosmicVariable.getVariable('asteroidEphemerideTimeTolerance'))
+    maxAngularDistance = models.CosmicVariable.getVariable('asteroidEphemerideMaxAngularDistance')
+
     def writeAstorbEphemerisToDB(astorbRecord, startTime, endTime, dimMag, brightMag, geometry):
         #print("saving " + str(startTime) + "       " + str(endTime) + "     " + geometry)
         record = models.AstorbEphemeris(
@@ -1504,7 +1508,7 @@ def computeAsteroidEphemerides(ephemTimeStart, ephemTimeEnd, tolerance, timeTole
                     # would handle objects passing very close to the earth as well.  Not sure if this would make sense or not.
                     # The only code change required to implement this is adding an 'or' statement to the 'if' statement below.
                     angularDistance += (180/math.pi)*ephem.separation(previousElement[1], element[1])
-                    if angularDistance > 60 or meridianCross:
+                    if angularDistance > maxAngularDistance or meridianCross:
                         geometryString += ')'
 
                         #TODO: When there is a meridian cross the start and end times of the two line segments are
