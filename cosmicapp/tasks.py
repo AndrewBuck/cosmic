@@ -189,7 +189,9 @@ def imagestats(filename):
             else:
                 continue
 
-            if (key == None and value == None) or (key == "" and value == "") or (key == "" and value == None):
+            ignoredKeys = ['date:modify', 'date:create']
+
+            if key == "" or value == "" or key in ignoredKeys:
                 continue
 
             headerField = models.ImageHeaderField(
