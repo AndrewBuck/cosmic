@@ -561,23 +561,6 @@ def allImageProperties(request):
 
     return render(request, "cosmicapp/allImageProperties.html", context)
 
-#TODO: This can probably be removed.
-"""
-def imageThumbnailUrl(request, id, size):
-    context = {"user" : request.user}
-
-    try:
-        image = Image.objects.get(pk=id)
-    except Image.DoesNotExist:
-        return render(request, "cosmicapp/imagenotfound.html", context)
-
-    hintWidth = int(request.GET.get('hintWidth', -1))
-    hintHeight = int(request.GET.get('hintHeight', -1))
-    stretch = request.GET.get('stretch', 'false')
-
-    return HttpResponse(image.getThumbnailUrl(size, hintWidth, hintHeight, stretch))
-"""
-
 def parseQueryOrderBy(request, mappingDict, fallbackEntry, fallbackAscDesc):
     if 'order' in request.GET:
         orderSplit = request.GET['order'].split('_', 1)
