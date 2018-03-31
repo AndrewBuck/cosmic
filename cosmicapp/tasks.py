@@ -1185,6 +1185,24 @@ def parseHeaders(imageId):
                 key = 'bitDepth'
                 value = str(abs(int(header.value.split()[0])))
 
+            elif header.key == 'fits:simple':
+                #TODO: Some images appear to have the image creation time, or something like it as a
+                # comment in this header.  See if the is standard, and if so parse it appropriately.
+                key = 'simpleFits'
+                value = header.value.split()[0]
+
+            elif header.key == 'fits:extend':
+                key = 'extendedFits'
+                value = header.value.split()[0]
+
+            elif header.key == 'fits:encoding':
+                key = 'fitsEncoding'
+                value = header.value.split()[0].strip("'")
+
+            elif header.key == 'fits:pedestal':
+                key = 'pedestal'
+                value = header.value.split()[0]
+
             elif header.key in ['fits:date_obs', 'fits:date-obs']:
                 key = 'dateObs'
                 value = header.value.split('/')[0].strip().strip("'")
