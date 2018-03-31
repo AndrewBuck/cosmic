@@ -1339,8 +1339,8 @@ def saveUserSubmittedSourceResults(request):
         userSubmittedResult = UserSubmittedResult(
             user = request.user,
             image = image,
-            pixelX = float(result['x']),
-            pixelY = float(result['y']),
+            pixelX = float(result['pixelX']),
+            pixelY = float(result['pixelY']),
             pixelZ = None,  #TODO: Handle multi extension files.
             confidence = 0.8
             )
@@ -1352,8 +1352,8 @@ def saveUserSubmittedSourceResults(request):
         userSubmittedHotPixel = UserSubmittedHotPixel(
             user = request.user,
             image = image,
-            pixelX = float(result['x']),
-            pixelY = float(result['y']),
+            pixelX = float(result['pixelX']),
+            pixelY = float(result['pixelY']),
             pixelZ = None,  #TODO: Handle multi extension files.
             confidence = 0.8
             )
