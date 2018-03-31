@@ -45,7 +45,8 @@ def getAsteroidsAroundGeometry(geometry, bufferSize, targetTime, limitingMag, li
         largeBufferSize = bufferSize
 
     # We use a larger limit here since some will be discarded.
-    fakeLimit = max(limit*1.3, limit+25)
+    #TODO: Need to refine this method and/or come up with some better system.
+    fakeLimit = max(limit*1.3, limit+500)
 
     # Start by performing a query which returns all asteroids that pass within the
     # bufferDistance around the targetTime.
