@@ -35,7 +35,8 @@ function getNextQuestion()
                 {
                     attr = nextImage[0].attributes;
                     html = '<tr><td>No more questions for this image.  ';
-                    html += '<a href="/image/' + attr.getNamedItem('id').nodeValue + '/question/">Next of your images</a></td></tr>';
+                    html += '<a href="/image/' + attr.getNamedItem('id').nodeValue + '/question/">Next of your images</a><br><br>';
+                    html += 'Or answer questions on a <a href="/image/-1/question/">random</a> image.</td></tr>';
                     table.innerHTML = html
                 }
                 else
