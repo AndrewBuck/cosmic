@@ -553,6 +553,7 @@ def allImageProperties(request):
     context['properties'] = properties
 
     headers = ImageHeaderField.objects.all()\
+        .exclude(key__in=settings.NON_PROPERTY_KEYS)\
         .values('key', 'value')\
         .annotate(countOccurrences=Count('id'), countLinks=Count('properties__id'))\
         .order_by('countLinks', '-countOccurrences')

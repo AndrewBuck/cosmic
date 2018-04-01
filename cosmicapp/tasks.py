@@ -190,9 +190,7 @@ def imagestats(filename):
             else:
                 continue
 
-            ignoredKeys = ['date:modify', 'date:create']
-
-            if key == "" or value == "" or key in ignoredKeys:
+            if key == "" or value == "" or key in settings.IGNORED_KEYS:
                 continue
 
             headerField = models.ImageHeaderField(
@@ -1196,6 +1194,10 @@ def parseHeaders(imageId):
                 key = 'extendedFits'
                 value = header.value.split()[0]
 
+            elif header.key == 'fits:sbstdver':
+                key = 'extendedFits'
+                value = header.value.split()[0].strip().strip("'")
+
             elif header.key == 'fits:encoding':
                 key = 'fitsEncoding'
                 value = header.value.split()[0].strip("'")
@@ -1203,6 +1205,52 @@ def parseHeaders(imageId):
             elif header.key == 'fits:pedestal':
                 key = 'pedestal'
                 value = header.value.split()[0]
+
+            elif header.key == 'fits:bzero':
+                key = 'bzero'
+                value = header.value.split()[0]
+
+            elif header.key == 'fits:bscale':
+                key = 'bscale'
+                value = header.value.split()[0]
+
+            elif header.key == 'fits:cblack':
+                key = 'displayBlackLevel'
+                value = header.value.split()[0].strip().strip("'")
+
+            elif header.key == 'fits:cwhite':
+                key = 'displayWhiteLevel'
+                value = header.value.split()[0].strip().strip("'")
+
+            elif header.key == 'fits:cstretch':
+                key = 'displayStretchMode'
+                value = header.value.split()[0].strip().strip("'")
+
+            elif header.key == 'fits:jd':
+                key = 'julianDate'
+                value = header.value.split()[0]
+
+            elif header.key == 'fits:jd-helio':
+                key = 'julianDateHeliocentric'
+                value = header.value.split()[0]
+
+            elif header.key in ['fits:date-avg']:
+                key = 'dateAverage'
+                value = header.value.split('/')[0].strip().strip("'")
+                try:
+                    image.dateTime = dateparser.parse(value)
+                    image.save()
+                except ValueError:
+                    outputError += "ERROR: Could not parse dateHDU: " + value + "\n"
+
+            elif header.key in ['fits:date']:
+                key = 'dateHDU'
+                value = header.value.split('/')[0].strip().strip("'")
+                try:
+                    image.dateTime = dateparser.parse(value)
+                    image.save()
+                except ValueError:
+                    outputError += "ERROR: Could not parse dateHDU: " + value + "\n"
 
             elif header.key in ['fits:date_obs', 'fits:date-obs']:
                 key = 'dateObs'
@@ -1221,12 +1269,28 @@ def parseHeaders(imageId):
                 key = 'exposureTime'
                 value = header.value.split()[0]
 
+            elif header.key in ['fits:traktime']:
+                key = 'autoguiderExposureTime'
+                value = header.value.split()[0]
+
+            elif header.key == 'fits:telescop':
+                key = 'telescope'
+                value = header.value.split('/')[0].strip().strip("'")
+
             elif header.key == 'fits:instrume':
                 key = 'instrument'
                 value = header.value.split('/')[0].strip().strip("'")
 
             elif header.key in ['fits:swcreate', 'fits:creator', 'fits:origin']:
                 key = 'createdBySoftware'
+                value = header.value.split('/')[0].strip().strip("'")
+
+            elif header.key in ['fits:swowner']:
+                key = 'createdBySoftwareOwner'
+                value = header.value.split('/')[0].strip().strip("'")
+
+            elif header.key in ['fits:swserial']:
+                key = 'createdBySoftwareSerialNumber'
                 value = header.value.split('/')[0].strip().strip("'")
 
             elif header.key == 'fits:naxis':
@@ -1253,6 +1317,14 @@ def parseHeaders(imageId):
                 key = 'binningY'
                 value = header.value.split()[0]
 
+            elif header.key == 'fits:xorgsubf':
+                key = 'subframeX'
+                value = header.value.split()[0]
+
+            elif header.key == 'fits:yorgsubf':
+                key = 'subframeY'
+                value = header.value.split()[0]
+
             #TODO: Pixel size is supposed to be after binning however this does not appear to be correct in binned frames.
             elif header.key == 'fits:xpixsz':
                 key = 'pixelSizeX'
@@ -1263,7 +1335,15 @@ def parseHeaders(imageId):
                 key = 'pixelSizeY'
                 value = header.value.split()[0]
 
-            elif header.key == 'fits:ccd-temp':
+            elif header.key == 'fits:readoutm':
+                key = 'readoutMode'
+                value = header.value.split()[0].strip().strip("'")
+
+            elif header.key == 'fits:egain':
+                key = 'ePerADU'
+                value = header.value.split()[0]
+
+            elif header.key in ['fits:ccd-temp', 'fits:temperat']:
                 key = 'ccdTemp'
                 value = header.value.split()[0]
 
@@ -1271,7 +1351,19 @@ def parseHeaders(imageId):
                 key = 'ccdSetTemp'
                 value = header.value.split()[0]
 
-            elif header.key == 'fits:imagtyp':
+            elif header.key == 'fits:focusssz':
+                key = 'focuserSizeStep'
+                value = header.value.split()[0]
+
+            elif header.key == 'fits:focuspos':
+                key = 'focuserPosition'
+                value = header.value.split()[0]
+
+            elif header.key == 'fits:focustem':
+                key = 'focuserTemp'
+                value = header.value.split()[0]
+
+            elif header.key in ['fits:imagtyp', 'fits:imagetyp']:
                 key = 'imageType'
                 value = header.value.split('/')[0].strip().strip("'").lower()
 
@@ -1287,8 +1379,77 @@ def parseHeaders(imageId):
                 image.frameType = value
                 image.save()
 
-            elif header.key == 'fits:aperture':
+            elif header.key in ['fits:observer']:
+                key = 'observerName'
+                value = header.value.split()[0].strip().strip("'").lower()
+
+            elif header.key in ['fits:sitelat']:
+                key = 'observerLat'
+                value = header.value.split()[0].strip().strip("'").lower()
+
+            elif header.key in ['fits:sitelong']:
+                key = 'observerLon'
+                value = header.value.split()[0].strip().strip("'").lower()
+
+            elif header.key in ['fits:pierside']:
+                key = 'pierSide'
+                value = header.value.split()[0].strip().strip("'").lower()
+
+            elif header.key in ['fits:object']:
+                key = 'object'
+                value = header.value.split()[0].strip().strip("'").lower()
+
+            #TODO: Check if there is a declination component for hour angle or if it just uses regular declination.
+            elif header.key in ['fits:objctha']:
+                key = 'objectHA'
+                value = header.value.split()[0].strip().strip("'").lower()
+
+            elif header.key in ['fits:objctra']:
+                key = 'objectRA'
+                value = header.value.split()[0].strip().strip("'").lower()
+
+            elif header.key in ['fits:objctdec']:
+                key = 'objectDec'
+                value = header.value.split()[0].strip().strip("'").lower()
+
+            elif header.key in ['fits:equinox']:
+                key = 'equinox'
+                value = header.value.split()[0]
+
+            elif header.key in ['fits:objctalt']:
+                key = 'objectAlt'
+                value = header.value.split()[0].strip().strip("'").lower()
+
+            elif header.key in ['fits:objctaz']:
+                key = 'objectAz'
+                value = header.value.split()[0].strip().strip("'").lower()
+
+            elif header.key in ['fits:airmass']:
+                key = 'airmass'
+                value = header.value.split()[0]
+
+            elif header.key in ['fits:notes']:
+                key = 'notes'
+                value = header.value
+
+            elif header.key in ['fits:comment']:
+                key = 'comment'
+                value = header.value
+
+            elif header.key in ['fits:history']:
+                key = 'history'
+                value = header.value
+
+            elif header.key in ['fits:aperture', 'fits:aptdia']:
                 key = 'aperture'
+                value = header.value.split()[0].strip().strip("'").lower()
+
+            elif header.key in ['fits:aptarea']:
+                key = 'apertureArea'
+                value = header.value.split()[0].strip().strip("'").lower()
+
+            elif header.key in ['fits:focallen']:
+                key = 'focalLength'
                 value = header.value.split()[0].strip().strip("'").lower()
 
             elif header.key == 'fits:filter':
@@ -1313,6 +1474,7 @@ def parseHeaders(imageId):
         timeObsResult = models.ImageProperty.objects.filter(image=image, key='timeObs').first()
         if dateObsResult != None and timeObsResult != None:
             try:
+                #TODO: Need to check that dateObs does not already include the time value, some do, some don't.
                 image.dateTime = dateparser.parse(dateObsResult.value + ' ' + timeObsResult.value)
                 image.save()
             except ValueError:

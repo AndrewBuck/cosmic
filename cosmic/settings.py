@@ -147,3 +147,22 @@ CELERY_RESULT_BACKEND = 'django-db'
 
 SUPPORTED_IMAGE_TYPES = [".fit", ".fits"]
 
+# When running parseHeaders these keys are not written into the database at all.
+IGNORED_KEYS = ['date:modify', 'date:create']
+
+# These keys are written into the database as ImageHeader entries, but are not turned into ImageProperty entries.
+NON_PROPERTY_KEYS = [
+    'fits:wcsaxes', 'fits:crpix1', 'fits:crpix2', 'fits:cunit1', 'fits:cunit2',
+    'fits:crval1', 'fits:crval1',
+    'fits:crota1', 'fits:crota2',
+    'fits:latpole', 'fits:lonpole',
+    'fits:a_0_0', 'fits:a_0_1', 'fits:a_1_0', 'fits:a_1_1', 'fits:a_0_2', 'fits:a_2_0',
+    'fits:b_0_0', 'fits:b_0_1', 'fits:b_1_0', 'fits:b_1_1', 'fits:b_0_2', 'fits:b_2_0',
+    'fits:cd1_1', 'fits:cd1_2', 'fits:cd2_1', 'fits:cd2_2',
+    'fits:cd001001', 'fits:cd001002', 'fits:cd002001', 'fits:cd002002',
+    'fits:cdelt1', 'fits:cdelt2',
+    'fits:ap_0_0', 'fits:ap_0_1', 'fits:ap_1_0', 'fits:ap_1_1', 'fits:ap_0_2', 'fits:ap_2_0',
+    'fits:bp_0_0', 'fits:bp_0_1', 'fits:bp_1_0', 'fits:bp_1_1', 'fits:bp_0_2', 'fits:bp_2_0',
+    'fits:ap_order', 'fits:bp_order', 'fits:a_order', 'fits:b_order'
+    ]
+
