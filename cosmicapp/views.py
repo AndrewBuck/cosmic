@@ -978,17 +978,20 @@ def questions(request):
 def imageGallery(request):
     context = {"user" : request.user}
 
-    queryId = request.GET.get('queryId', None)
-    savedQuery = request.GET.get('savedQuery', None)
+    queryId = request.GET.get('queryId', "")
+    savedQuery = request.GET.get('savedQuery', "")
+    queryParams = request.GET.get('queryParams', "")
 
-    if savedQuery is not None:
+    if savedQuery != "":
         context['query'] = SavedQuery.objects.get(name=savedQuery)
 
-    elif queryId is not None:
+    elif queryId != "":
         context['query'] = SavedQuery.objects.get(pk=queryId)
 
     if 'query' in context:
         context['queryParams'] = context['query'].queryParams
+    elif queryParams != "":
+        context['queryParams'] = queryParams
 
     return render(request, "cosmicapp/imageGallery.html", context)
 
