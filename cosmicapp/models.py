@@ -282,6 +282,12 @@ class SkyObject:
         """
         return None
 
+    #TODO: Alt text as third item returned for each?
+    # Returns an array of tuples, the first being the URL to link to and the second being the text to display in the link.
+    @property
+    def getLinks(self):
+        return []
+
 class Observatory(models.Model):
     """
     A record storing the location and other basic information for an observing location.
@@ -1087,6 +1093,16 @@ class GCVSRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
         #TODO: Properly implement this function.
         return ScorableObject.limitingStellarMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
 
+    @property
+    def getLinks(self):
+        links =  [
+            ("https://www.aavso.org/apps/webobs/results/?star="+self.identifier+"&num_results=50", "AAVSO"),
+            ("https://www.aavso.org/apps/vsp/chart/?star="+self.identifier+"&fov=60&maglimit=14.5&resolution=150&north=up&east=left", "VSP"),
+            ("http://simbad.u-strasbg.fr/simbad/sim-id?Ident="+self.identifier, "SIMBAD")
+            ]
+
+        return links
+
 class TwoMassXSCRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     """
     A record storing a single entry from the 2MASS Extended Source Catalog of "extended", i.e. non point source, objects.
@@ -1125,6 +1141,14 @@ class TwoMassXSCRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject
         #TODO: Allow fainter magnitudes for galaxies since the goal of observing them is mainly to check for supernovas which might be quite bright.
         #TODO: Properly implement this function.
         return ScorableObject.limitingDSOMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
+
+    @property
+    def getLinks(self):
+        links =  [
+            ("http://simbad.u-strasbg.fr/simbad/sim-id?Ident="+self.identifier, "SIMBAD")
+            ]
+
+        return links
 
 class MessierRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     """
@@ -1215,6 +1239,14 @@ class MessierRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     def getUserDifficultyForTime(self, t, user, observatory=None):
         #TODO: Properly implement this function.
         return ScorableObject.limitingDSOMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
+
+    @property
+    def getLinks(self):
+        links =  [
+            ("http://simbad.u-strasbg.fr/simbad/sim-id?Ident="+self.identifier, "SIMBAD")
+            ]
+
+        return links
 
 class AstorbRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     """
@@ -1341,6 +1373,20 @@ class AstorbRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     def getUserDifficultyForTime(self, t, user, observatory=None):
         #TODO: Properly implement this function.
         return ScorableObject.limitingStellarMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
+
+    @property
+    def getLinks(self):
+        #TODO: Link to (post only)   http://alcdef.org/alcdef_GenerateALCDEFPage.php
+        #TODO: Link to (post only) http://www.minorplanet.info/PHP/GenerateLCDBHTMLPages.php
+        links =  [
+            ("https://www.minorplanetcenter.net/db_search/show_object?utf8=✓&object_id="+self.name, "MPC"),
+            ("https://ssd.jpl.nasa.gov/sbdb.cgi?sstr="+self.name, "JPL")
+            ]
+
+        if self.number is not None:
+            links.append( ("http://astro.troja.mff.cuni.cz/projects/asteroids3D/web.php?page=db_asteroid_detail&asteroid_id="+str(self.number), "DAMIT") )
+
+        return links
 
 #TODO: This should probably inherit from SkyObject as well, need to add that and implement the function if it is deemed appropriate.
 class AstorbEphemeris(models.Model):
@@ -1492,6 +1538,19 @@ class ExoplanetRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject)
         #TODO: Properly implement this function.
         return ScorableObject.limitingStellarMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
 
+    @property
+    def getLinks(self):
+        links = [
+            ("http://exoplanets.org/detail/"+self.identifier, "Exoplanet.org"),
+            ("https://exoplanetarchive.ipac.caltech.edu/cgi-bin/DisplayOverview/nph-DisplayOverview?objname="+self.identifier, "NASA"),
+            ("http://exoplanet.eu/catalog/"+self.identifier, "Exoplanet.eu"),
+            ("http://simbad.u-strasbg.fr/simbad/sim-id?Ident="+self.identifier, "SIMBAD")
+            ]
+
+        if self.transitDepth is not None:
+            links.append( ("http://var2.astro.cz/ETD/etd.php?STARNAME="+self.starIdentifier+"&PLANET="+self.component, "Transit") )
+
+        return links
 
 
 class GeoLiteLocation(models.Model):
