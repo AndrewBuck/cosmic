@@ -55,8 +55,6 @@ def storeImageLocation(image, w, sourceString):
 
     geometryString += '))'
 
-    print(geometryString)
-
     #TODO: Store image.centerRot
     ps = models.PlateSolution(
         image = image,
