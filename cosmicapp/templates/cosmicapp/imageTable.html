@@ -227,6 +227,7 @@ function ImageGallery(galleryName, paramString, displayType, includeLinks, image
         $('#newResultsDivider.' + this.name).remove();
         if(!this.firstLoadOfGallery)
         {
+            html += '<div class="clearfix"></div>';
             html += '<div id=newResultsDivider class="responsive ' + this.name;
             html += '" style="text-align: center; width: 95%; border: 1px solid blue">';
             if(response.length > 0)
