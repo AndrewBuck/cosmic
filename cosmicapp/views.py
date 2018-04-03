@@ -445,6 +445,7 @@ def uploadSession(request, pk):
     except:
         return HttpResponse('Upload session "' + pk + '" not found.', status=400, reason='not found.')
 
+    context['displayType'] = 'table'
     return render(request, "cosmicapp/uploadSession.html", context)
 
 def image(request, id):
