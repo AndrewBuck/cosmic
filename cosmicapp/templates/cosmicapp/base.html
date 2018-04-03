@@ -14,6 +14,7 @@
 	<div class="dropdown-content">
 		<a href="/processqueue">Queue</a>
 		<a href="/questions">Questions</a>
+		<a href="/imageProperties">Image Properties</a>
 		<a href="/catalogs">Catalogs</a>
 	</div>
 	</li>
@@ -26,6 +27,28 @@
 		<a href="/calibration">Calibration Library</a>
 		<a href="/mosaic">Mosaic Images</a>
 		<a href="/equipment">Equipment Editor</a>
+	</div>
+	</li>
+
+	<li class="dropdown">
+	<a class="dropbtn">Analyze</a>
+	<div class="dropdown-content">
+		<a href="/image/-1/question/">Answer Questions About Images</a>
+		<a href="/image/gallery/?savedQuery=helpFindPlateSolutions">Help Find Plate Solutions</a>
+	</div>
+	</li>
+
+	<li class="dropdown">
+	<a class="dropbtn">Browse</a>
+	<div class="dropdown-content">
+		<a href="/image/gallery/">Image Gallery</a>
+	</div>
+	</li>
+
+	<li class="dropdown">
+	<a class="dropbtn">Learn</a>
+	<div class="dropdown-content">
+		<!-- <a href="/image/gallery/">Image Gallery</a> -->
 	</div>
 	</li>
 
@@ -42,7 +65,12 @@
 
 	<li style="float:right"><a href="/upload">Upload</a></li>
 	<li style="float:right"><a href="/donate">Donate</a></li>
-	<li style="float:right"><a href="/about">About</a></li>
+	<li class=dropdown style="float:right">
+    <a href="/about">About</a>
+	<div class="dropdown-content">
+        <a href="/about/processes">Processes</a>
+    </div>
+    </li>
 </ul>
 
 {% block topSection %}{% endblock %}

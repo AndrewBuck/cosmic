@@ -11,5 +11,14 @@
 {% endblock extrahead %}
 
 {% block mainbody %}
-{% include "./imageTable.html" with galleryName="userGallery" includeLinks="true" thumbnailSize="Medium" %}
+
+{% if query %}
+    <h2>{{query.header}}</h2>
+    {{query.text|safe}}
+
+    <h2>Query Results</h2>
+{% endif %}
+
+{% include "./imageTable.html" with galleryName="imageGallery" includeLinks="true" thumbnailSize="Medium" %}
+
 {% endblock mainbody %}

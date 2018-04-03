@@ -1,6 +1,7 @@
 import hashlib
 import os
 import math
+import random
 import time
 from datetime import datetime, timedelta
 import dateparser
@@ -19,6 +20,7 @@ from django.db.models import Count, Q, Max, Min, Avg, StdDev
 from django.db import transaction
 from django.views.decorators.http import require_http_methods
 from django.contrib.gis.geos import GEOSGeometry, Point
+from django.db.utils import IntegrityError
 
 from lxml import etree
 import ephem
@@ -91,6 +93,8 @@ def upload(request):
 
         uploadSession.save()
 
+        context['uploadSession'] = uploadSession
+
         records = []
         for myfile in request.FILES.getlist('myfiles'):
             fs = FileSystemStorage()
@@ -121,6 +125,7 @@ def upload(request):
 
             fileBase, fileExtension = os.path.splitext(record.onDiskFileName)
 
+            #TODO: Do a better job of checking the file type here and take appropriate action.
             if fileExtension.lower() in settings.SUPPORTED_IMAGE_TYPES:
                 with transaction.atomic():
                     imageRecord = Image(
@@ -289,6 +294,8 @@ def userpage(request, username):
     if foruser.profile.defaultObservatory != None:
         context['otherObservatories'] = context['otherObservatories'].exclude(pk=foruser.profile.defaultObservatory.pk)
 
+    context['uploadSessions'] = UploadSession.objects.filter(uploadingUser=foruser).order_by('-dateTime')[:10]
+
     if request.method == 'POST':
         if 'edit' in request.POST:
             context['edit'] = request.POST['edit']
@@ -297,6 +304,7 @@ def userpage(request, username):
 
             if request.user.username == foruser.username and profileForm.is_valid():
                 foruser.profile.birthDate = profileForm.cleaned_data['birthDate']
+                foruser.profile.limitingMag = profileForm.cleaned_data['limitingMag']
                 foruser.profile.save()
 
                 return HttpResponseRedirect('/user/' + foruser.username + '/')
@@ -430,6 +438,17 @@ def objectInfo(request, method, pk):
     else:
         return HttpResponse('Method "' + method + '" not found.', status=400, reason='not found.')
 
+def uploadSession(request, pk):
+    context = {"user" : request.user}
+
+    try:
+        context['uploadSession'] = UploadSession.objects.get(pk=pk)
+    except:
+        return HttpResponse('Upload session "' + pk + '" not found.', status=400, reason='not found.')
+
+    context['displayType'] = 'table'
+    return render(request, "cosmicapp/uploadSession.html", context)
+
 def image(request, id):
     context = {"user" : request.user}
     context['id'] = id
@@ -446,7 +465,9 @@ def image(request, id):
     imagePlateArea = None
     if plateSolution != None:
         imagePlateArea = plateSolution.geometry.area
-        overlappingPlatesObjects = PlateSolution.objects.filter(geometry__overlaps=plateSolution.geometry).distinct('image').exclude(image_id=image.pk)
+        overlappingPlatesObjects = PlateSolution.objects.filter(geometry__overlaps=plateSolution.geometry)\
+            .distinct('image').exclude(image_id=image.pk)
+
         for plate in overlappingPlatesObjects:
             overlappingRegion = plateSolution.geometry.intersection(plate.geometry)
             overlappingPlates.append({
@@ -523,22 +544,25 @@ def imageProperties(request, id):
 
     return render(request, "cosmicapp/imageProperties.html", context)
 
-#TODO: This can probably be removed.
-"""
-def imageThumbnailUrl(request, id, size):
+def allImageProperties(request):
     context = {"user" : request.user}
 
-    try:
-        image = Image.objects.get(pk=id)
-    except Image.DoesNotExist:
-        return render(request, "cosmicapp/imagenotfound.html", context)
+    properties = ImageProperty.objects.all().\
+        values('key', 'value').\
+        annotate(count=Count('id')).\
+        order_by('-count', 'key', 'value')
 
-    hintWidth = int(request.GET.get('hintWidth', -1))
-    hintHeight = int(request.GET.get('hintHeight', -1))
-    stretch = request.GET.get('stretch', 'false')
+    context['properties'] = properties
 
-    return HttpResponse(image.getThumbnailUrl(size, hintWidth, hintHeight, stretch))
-"""
+    headers = ImageHeaderField.objects.all()\
+        .exclude(key__in=settings.NON_PROPERTY_KEYS)\
+        .values('key', 'value')\
+        .annotate(countOccurrences=Count('id'), countLinks=Count('properties__id'))\
+        .order_by('countLinks', '-countOccurrences')
+
+    context['headers'] = headers
+
+    return render(request, "cosmicapp/allImageProperties.html", context)
 
 def parseQueryOrderBy(request, mappingDict, fallbackEntry, fallbackAscDesc):
     if 'order' in request.GET:
@@ -603,6 +627,7 @@ def cleanupQueryValues(valueString, parseAs):
     return values
 
 def query(request):
+    #TODO: Returned results should be unique on pk.
     jsonResponse = None
     root = etree.Element("queryresult")
 
@@ -722,6 +747,12 @@ def query(request):
                 values = cleanupQueryValues(valueString, 'int')
                 if len(values) > 0:
                     results = results.filter(pk__in=values)
+
+        if 'uploadSessionId' in request.GET:
+            for valueString in request.GET.getlist('uploadSessionId'):
+                values = cleanupQueryValues(valueString, 'int')
+                if len(values) > 0:
+                    results = results.filter(fileRecord__uploadSession__pk__in=values)
 
         #TODO: Allow querying by uploaded filename.
 
@@ -938,19 +969,36 @@ def query(request):
 def questions(request):
     context = {"user" : request.user}
 
-    context['numanswers'] = answer.objects.all().count()
-    print(context['numanswers'])
+    context['numAnswers'] = Answer.objects.all().count()
 
-    context['questiongroups'] = answer.objects.all().values('question').annotate(count=count('question')).order_by('question')
-    print(context['questiongroups'])
+    context['questionGroups'] = Answer.objects.all().values('question').annotate(count=Count('question')).order_by('question')
+
+    context['answerKVs'] = AnswerKV.objects.all().values('key', 'value').annotate(count=Count('id')).order_by('key', 'value')
 
     return render(request, "cosmicapp/questions.html", context)
 
 def imageGallery(request):
     context = {"user" : request.user}
 
-    context['queryParams'] = request.GET['queryParams']
-    print(context['queryParams'])
+    queryId = request.GET.get('queryId', "")
+    savedQuery = request.GET.get('savedQuery', "")
+    queryParams = request.GET.get('queryParams', "")
+    displayType = request.GET.get('displayType', "")
+
+    if savedQuery != "":
+        context['query'] = SavedQuery.objects.get(name=savedQuery)
+
+    elif queryId != "":
+        context['query'] = SavedQuery.objects.get(pk=queryId)
+
+    if 'query' in context:
+        context['queryParams'] = context['query'].queryParams
+    elif queryParams != "":
+        context['queryParams'] = queryParams
+
+    if displayType in ['table', 'gallery']:
+        context['displayType'] = displayType
+
     return render(request, "cosmicapp/imageGallery.html", context)
 
 def equipment(request):
@@ -1056,13 +1104,25 @@ def equipment(request):
 @login_required
 def questionImage(request, id):
     context = {"user" : request.user}
-    context['id'] = id
+
+    id = int(id)
 
     try:
+        if(id == -1):
+            # Get a list of image id's in the database sorted by how many answers each one has.
+            pks = Image.objects.annotate(numAnswers=Count('answers'))\
+                .order_by('numAnswers').values_list('pk', flat=True)[:100]
+
+            # Choose a random image id from this list with a bias towards the beginning
+            # (i.e. images which have no, or few, answers).
+            index = math.floor(math.sqrt(random.Random().randint(0, math.pow(len(pks)-1, 2))))
+            id = pks[index]
+
         image = Image.objects.get(pk=id)
     except Image.DoesNotExist:
         return render(request, "cosmicapp/imagenotfound.html", context)
 
+    context['id'] = id
     context['image'] = image
 
     if request.method == 'POST':
@@ -1290,8 +1350,8 @@ def saveUserSubmittedSourceResults(request):
         userSubmittedResult = UserSubmittedResult(
             user = request.user,
             image = image,
-            pixelX = float(result['x']),
-            pixelY = float(result['y']),
+            pixelX = float(result['pixelX']),
+            pixelY = float(result['pixelY']),
             pixelZ = None,  #TODO: Handle multi extension files.
             confidence = 0.8
             )
@@ -1303,8 +1363,8 @@ def saveUserSubmittedSourceResults(request):
         userSubmittedHotPixel = UserSubmittedHotPixel(
             user = request.user,
             image = image,
-            pixelX = float(result['x']),
-            pixelY = float(result['y']),
+            pixelX = float(result['pixelX']),
+            pixelY = float(result['pixelY']),
             pixelZ = None,  #TODO: Handle multi extension files.
             confidence = 0.8
             )
@@ -1613,6 +1673,52 @@ def saveNewInstrumentConfiguration(request):
 
 @login_required
 @require_http_methods(['POST'])
+def saveQuery(request):
+    responseDict = {}
+    queryName = request.POST.get('queryName', None)
+    queryText = request.POST.get('queryText', '')
+    queryHeaderText = request.POST.get('queryHeaderText', '')
+    queryParams = request.POST.get('queryParams', '')
+
+    if queryName == '':
+        queryName = None
+
+    if queryParams == '':
+        response = 'Error: No queryParams given.'
+        return HttpResponse(response, status=400)
+
+    try:
+        textBlob = TextBlob(
+            user = request.user,
+            markdownText = queryText
+            )
+
+        textBlob.save()
+
+        savedQuery = SavedQuery(
+            name = queryName,
+            user = request.user,
+            text = textBlob,
+            header = queryHeaderText,
+            queryParams = queryParams
+            )
+
+        savedQuery.save()
+    except IntegrityError:
+        textBlob.delete()
+        response = 'Error: A saved query with that name already exists.'
+        return HttpResponse(response, status=400)
+
+    responseDict['message'] = 'Query saved.'
+    if savedQuery.name is not None:
+        responseDict['url'] = '/image/gallery?savedQuery=' + str(savedQuery.name)
+    else:
+        responseDict['url'] = '/image/gallery?queryId=' + str(savedQuery.id)
+
+    return HttpResponse(json.dumps(responseDict), status=200)
+
+@login_required
+@require_http_methods(['POST'])
 def deleteInstrumentConfiguration(request):
     responseDict = {}
     id = int(request.POST.get('id', '-1000'))
@@ -1822,7 +1928,7 @@ def bookmark(request):
 
         #TODO: Make next_setting, etc, optionally run a while loop if it throws a circumpolar or never_rises error.
         if startTime == 'rightNow':
-            startTime = datetime.now()
+            startTime = dateparser.parse(str(datetime.now()))
             endTime = startTime + observingDurationDelta
 
         elif startTime == 'evening':

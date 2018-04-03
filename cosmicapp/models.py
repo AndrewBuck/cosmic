@@ -4,6 +4,7 @@ import pytz
 import ephem
 import numpy
 from astropy import wcs
+import markdown
 
 from django.contrib.gis.db import models
 from django.contrib.auth.models import User
@@ -26,8 +27,10 @@ from .tasks import computeSingleEphemeris
 
 #TODO: Check all DateTime and similar type fields to see if they should be auto_now=True.
 
+#TODO: Check all TextField and CharField and remove null=True so you only have to check for empty string as null, not both empty string and null.
+
 class CosmicVariable(models.Model):
-    name = models.CharField(max_length=32)
+    name = models.CharField(db_index=True, unique=True, max_length=64)
     variableType = models.CharField(max_length=32)
     value = models.TextField(null=True)
 
@@ -71,8 +74,8 @@ class InstrumentComponent(models.Model):
     """
     An Optical tube assembly that forms the core of the optical path of an instrument.
     """
-    make = models.CharField(max_length=64, null=True, blank=True)
-    model = models.CharField(max_length=64, null=True, blank=True)
+    make = models.CharField(db_index=True, max_length=64, null=True, blank=True)
+    model = models.CharField(db_index=True, max_length=64, null=True, blank=True)
 
     def __str__(self):
         return type(self).__name__ + ": " + self.make + " - " + self.model
@@ -91,18 +94,18 @@ class ComponentInstance(models.Model):
     object_id = models.PositiveIntegerField(null=True)
     instrumentComponent = GenericForeignKey('content_type', 'object_id')
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, db_index=True, on_delete=models.CASCADE)
     serialNumber = models.TextField(null=True)
     dateOnline = models.DateField(null=True, blank=True)
     dateOffline = models.DateField(null=True, blank=True)
     cost = models.FloatField(null=True, blank=True)
 
 class InstrumentConfiguration(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, db_index=True, on_delete=models.CASCADE)
     name = models.TextField(null=True)
 
 class InstrumentConfigurationLink(models.Model):
-    configuration = models.ForeignKey("InstrumentConfiguration", on_delete=models.CASCADE, related_name="configurationLinks")
+    configuration = models.ForeignKey("InstrumentConfiguration", db_index=True, on_delete=models.CASCADE, related_name="configurationLinks")
 
     attachedFrom = models.ForeignKey("ComponentInstance", on_delete=models.CASCADE, related_name="attachedFromLinks")
     attachedTo = models.ForeignKey("ComponentInstance", null=True, on_delete=models.CASCADE, related_name="attachedToLinks")
@@ -183,7 +186,7 @@ class Profile(models.Model):
     make sure User updates are done through the standard Django methods to ensure that these receiver functions get called
     and the tables are kept in sync.  I.E. no raw sql queries to the User table, etc.
     """
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, db_index=True, on_delete=models.CASCADE)
     defaultObservatory = models.ForeignKey('Observatory', on_delete=models.CASCADE, null=True)
     birthDate = models.DateField(null=True, blank=True)
     limitingMag = models.FloatField(null=True, blank=True)
@@ -201,13 +204,13 @@ class Bookmark(models.Model):
     """
     A class storing a GenericForeignKey relation to an object to act as a bookmark.
     """
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, db_index=True, on_delete=models.CASCADE)
     folders = models.ManyToManyField('BookmarkFolder', symmetrical=False, related_name='folderItems', through='BookmarkFolderLink')
 
     #Generic FK to image or object or whatever the bookmark is linking to.
     #TODO: Add a reverse generic relation to the relevant classes this will link to (image, asteroid, star, etc).
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField()
+    content_type = models.ForeignKey(ContentType, db_index=True, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField(db_index=True)
     content_object = GenericForeignKey('content_type', 'object_id')
 
     @property
@@ -220,6 +223,7 @@ class Bookmark(models.Model):
             'twomassxscrecord': '2MassXSC'
             }
 
+        #TODO: Rework these queries to use _id instead of .pk and do this everywhere.
         t = ContentType.objects.get(pk=self.content_type.pk)
 
         return stringDict[t.model]
@@ -239,13 +243,13 @@ class Bookmark(models.Model):
         return stringDict[t.model]
 
 class BookmarkFolder(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, db_index=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=256, null=True)
     dateTime = models.DateTimeField(auto_now=True)
 
 class BookmarkFolderLink(models.Model):
-    bookmark = models.ForeignKey(Bookmark, on_delete=models.CASCADE)
-    folder = models.ForeignKey(BookmarkFolder, on_delete=models.CASCADE)
+    bookmark = models.ForeignKey(Bookmark, db_index=True, on_delete=models.CASCADE)
+    folder = models.ForeignKey(BookmarkFolder, db_index=True, on_delete=models.CASCADE)
     dateTime = models.DateTimeField(auto_now=True)
 
 class BookmarkableItem:
@@ -278,20 +282,26 @@ class SkyObject:
         """
         return None
 
+    #TODO: Alt text as third item returned for each?
+    # Returns an array of tuples, the first being the URL to link to and the second being the text to display in the link.
+    @property
+    def getLinks(self):
+        return []
+
 class Observatory(models.Model):
     """
     A record storing the location and other basic information for an observing location.
     """
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, db_index=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=256, null=True)
-    lat = models.FloatField(null=True, blank=True)
-    lon = models.FloatField(null=True, blank=True)
+    lat = models.FloatField(db_index=True)
+    lon = models.FloatField(db_index=True)
     elevation = models.FloatField(null=True, blank=True)
 
 
 
 class UploadSession(models.Model):
-    uploadingUser = models.ForeignKey(User, on_delete=models.CASCADE)
+    uploadingUser = models.ForeignKey(User, db_index=True, on_delete=models.CASCADE)
     dateTime = models.DateTimeField(auto_now=True)
 
 class UploadedFileRecord(models.Model):
@@ -300,11 +310,11 @@ class UploadedFileRecord(models.Model):
     hash, etc are stored here as well as onDiskFileName which is the name django assigns to our copy of the file (to handle
     multiple uploads of the same file, etc).
     """
-    uploadSession = models.ForeignKey(UploadSession, null=True, on_delete=models.CASCADE)
+    uploadSession = models.ForeignKey(UploadSession, db_index=True, null=True, on_delete=models.CASCADE, related_name='uploadedFileRecords')
     unpackedFromFile = models.ForeignKey('self', null=True, on_delete=models.CASCADE)
-    originalFileName = models.CharField(max_length=256)
-    onDiskFileName = models.CharField(max_length=256)
-    fileSha256 = models.CharField(max_length=64)
+    originalFileName = models.CharField(db_index=True, max_length=256)
+    onDiskFileName = models.CharField(db_index=True, max_length=256)
+    fileSha256 = models.CharField(db_index=True, max_length=64)
     uploadDateTime = models.DateTimeField()
     uploadSize = models.IntegerField()
 
@@ -321,7 +331,7 @@ class Image(models.Model, SkyObject):
     Currently we cannot claim to handle files like this in any reasonable fashion, other than simply warehousing the file
     and parsing the first HDU in the file.
     """
-    fileRecord = models.ForeignKey(UploadedFileRecord, on_delete=models.PROTECT, null=True)
+    fileRecord = models.ForeignKey(UploadedFileRecord, db_index=True, on_delete=models.PROTECT, null=True, related_name='image')
     parentImages = models.ManyToManyField('self', symmetrical=False, related_name='childImages')
     instrument = models.ForeignKey(Instrument, on_delete=models.PROTECT, null=True)
     observatory = models.ForeignKey(Observatory, on_delete=models.PROTECT, null=True)
@@ -330,30 +340,30 @@ class Image(models.Model, SkyObject):
     dimZ = models.IntegerField(null=True)
     bitDepth = models.IntegerField(null=True)
     frameType = models.CharField(max_length=32)
-    dateTime = models.DateTimeField(null=True)
+    dateTime = models.DateTimeField(db_index=True, null=True)
     answers = GenericRelation('Answer')
 
     def getSkyCoords(self, dateTime):
         ps = self.getBestPlateSolution()
         return (ps.centerRA, ps.centerDec)
 
-    """
-    Returns the URL (relative to the website root) of a thumbnail for an image on the site.  If called with just a size
-    string only, that size thumbnail will be returned directly.  If hintWidth or hintHeight are given then the
-    thumbnail returned will be the smallest one which is larger than both the hintWidth and hintHeight.  If the
-    'stretch' parameter is set to true, the behaviour will be nearly the same with the thumbnails being checked in
-    increasing size, but the one returned will be the last one before the size hints are exceeded.  I.E. the largest
-    thumbnail that is smaller than the requested size hints (suitable to be stretched to fit the space or to leave
-    empty space around if desired).
-
-    If you only care about the hint in one dimension but not the other, set the hint for the dimension you don't care
-    about to 0, so that any image which matches the criteria for the hint you do care about will also match the ignored
-    dimension.  Leaving either hint at -1 will cause the hint checking code to be skipped and just return the
-    sizeString sized thumbnail directly.
-    """
     #TODO: Include image channel in the thumbnail selection.  Make this a pipe char separated list to allow multiple
     # channels to be returned at once to save on requests.
     def getThumbnailUrl(self, sizeString, hintWidth=-1, hintHeight=-1, stretch='false'):
+        """
+        Returns the URL (relative to the website root) of a thumbnail for an image on the site.  If called with just a size
+        string only, that size thumbnail will be returned directly.  If hintWidth or hintHeight are given then the
+        thumbnail returned will be the smallest one which is larger than both the hintWidth and hintHeight.  If the
+        'stretch' parameter is set to true, the behaviour will be nearly the same with the thumbnails being checked in
+        increasing size, but the one returned will be the last one before the size hints are exceeded.  I.E. the largest
+        thumbnail that is smaller than the requested size hints (suitable to be stretched to fit the space or to leave
+        empty space around if desired).
+
+        If you only care about the hint in one dimension but not the other, set the hint for the dimension you don't care
+        about to 0, so that any image which matches the criteria for the hint you do care about will also match the ignored
+        dimension.  Leaving either hint at -1 will cause the hint checking code to be skipped and just return the
+        sizeString sized thumbnail directly.
+        """
         #TODO: Specify an image with something like "thumbnail not found" to display in place of this thumbnail.
         thumbnailNotFound = ""
 
@@ -486,7 +496,7 @@ class ImageThumbnail(models.Model):
     A record containing details about an individual thumbnail for an image on the site.  Each uploaded image gets multiple
     size thumbnails made of it, each with its own ImageThumbnail record.
     """
-    image = models.ForeignKey(Image, on_delete=models.CASCADE)
+    image = models.ForeignKey(Image, db_index=True, on_delete=models.CASCADE)
     size = models.CharField(max_length=10)
     width = models.IntegerField()
     height = models.IntegerField()
@@ -513,7 +523,7 @@ class ImageHeaderField(models.Model):
     out, however the order it gives (at least for fits files) differs from other tools to list headers.  So this index
     number may not be trustworthy without changing to a different tool for the actual reading of the headers.
     """
-    image = models.ForeignKey(Image, on_delete=models.CASCADE)
+    image = models.ForeignKey(Image, db_index=True, on_delete=models.CASCADE)
     index = models.IntegerField(null=True)
     key = models.TextField(null=True)
     value = models.TextField(null=True)
@@ -526,8 +536,8 @@ class ImageProperty(models.Model):
     of metadata added by the site itself or by a user on the site for information that was not present in the uploaded
     file, e.g. frame type, seeing conditions, etc).
     """
-    image = models.ForeignKey(Image, on_delete=models.CASCADE, related_name='properties')
-    header = models.ForeignKey(ImageHeaderField, on_delete=models.CASCADE, null=True)  #TODO: Make this many to many?
+    image = models.ForeignKey(Image, db_index=True, on_delete=models.CASCADE, related_name='properties')
+    header = models.ForeignKey(ImageHeaderField, db_index=True, on_delete=models.CASCADE, null=True, related_name='properties')  #TODO: Make this many to many?
     key = models.TextField()
     value = models.TextField()
     createDateTime = models.DateTimeField(auto_now=True)
@@ -540,7 +550,7 @@ class ImageChannelInfo(models.Model):
     (mean, median, and standard deviation) of the channel as well as the same statistics for just the background (i.e.
     after source removal by sigma clipping or other methods).
     """
-    image = models.ForeignKey(Image, on_delete=models.CASCADE)
+    image = models.ForeignKey(Image, db_index=True, on_delete=models.CASCADE)
     index = models.IntegerField()
     channelType = models.CharField(max_length=16)
     mean = models.FloatField(null=True)
@@ -555,7 +565,7 @@ class ImageChannelInfo(models.Model):
 
 class ImageHistogramBin(models.Model):
     image = models.ForeignKey(Image, on_delete=models.CASCADE)
-    binCenter = models.FloatField()
+    binFloor = models.FloatField()
     binCount = models.FloatField()
 
 class ImageTransform(models.Model):
@@ -568,9 +578,9 @@ class ImageTransform(models.Model):
     field is the user who created the transform in the mosaic tool, allowing multiple users to store their own transforms
     in case not every one agrees on the proper shift to be applied.
     """
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    referenceImage = models.ForeignKey(Image, on_delete=models.CASCADE, related_name='transformReferences')
-    subjectImage = models.ForeignKey(Image, on_delete=models.CASCADE, related_name='transformSubjects')
+    user = models.ForeignKey(User, db_index=True, on_delete=models.CASCADE)
+    referenceImage = models.ForeignKey(Image, db_index=True, on_delete=models.CASCADE, related_name='transformReferences')
+    subjectImage = models.ForeignKey(Image, db_index=True, on_delete=models.CASCADE, related_name='transformSubjects')
     m00 = models.FloatField()
     m01 = models.FloatField()
     m02 = models.FloatField()
@@ -589,7 +599,7 @@ class PlateSolution(models.Model):
     where we got the specific WCS from, i.e. was it from the original image, or computed by our astrometry.net plate
     solver, or by some other method like mosaic approximation, etc.
     """
-    image = models.ForeignKey(Image, on_delete=models.CASCADE, related_name='plateSolutions')
+    image = models.ForeignKey(Image, db_index=True, on_delete=models.CASCADE, related_name='plateSolutions')
     wcsHeader = models.TextField()
     source = models.CharField(max_length=32)
     centerRA = models.FloatField(null=True)
@@ -597,7 +607,7 @@ class PlateSolution(models.Model):
     centerRot = models.FloatField(null=True)
     resolutionX = models.FloatField(null=True)
     resolutionY = models.FloatField(null=True)
-    geometry = models.PolygonField(srid=40000, geography=False, dim=2, null=True)
+    geometry = models.PolygonField(srid=40000, db_index=True, geography=False, dim=2, null=True)
     area = models.FloatField(null=True)
 
 
@@ -614,9 +624,9 @@ class ProcessPriority(models.Model):
     priorities in a table makes it easy to compare and set them as well as to easily
     display them on a page so users can see what the numbers mean.
     """
-    name = models.CharField(max_length=64)
+    name = models.CharField(db_index=True, max_length=64)
+    priorityClass = models.CharField(db_index=True, max_length=64)
     priority = models.FloatField(null=True)
-    priorityClass = models.CharField(max_length=64)
     setDateTime = models.DateTimeField(auto_now=True, null=True)
 
     @staticmethod
@@ -627,6 +637,7 @@ class ProcessPriority(models.Model):
             return 1
 
         return priority.priority
+
 class ProcessInput(models.Model):
     """
     A record storing parameters for a queued process to be run at a later time by the website.  The 'process' field is a
@@ -644,9 +655,9 @@ class ProcessInput(models.Model):
 
     #TODO: Document how negative priorities will be handled by the dispatcher, i.e. how do we want to use this.
     """
-    prerequisites = models.ManyToManyField('self', symmetrical=False)
+    prerequisites = models.ManyToManyField('self', db_index=True, symmetrical=False)
     process = models.CharField(max_length=32)
-    requestor = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
+    requestor = models.ForeignKey(User, db_index=True, null=True, on_delete=models.CASCADE)
     submittedDateTime = models.DateTimeField(auto_now=True)
     startedDateTime = models.DateTimeField(null=True)
     priority = models.FloatField(null=True)
@@ -654,7 +665,7 @@ class ProcessInput(models.Model):
     estCostBandwidth = models.BigIntegerField(null=True)
     estCostStorage = models.BigIntegerField(null=True)
     estCostIO = models.BigIntegerField(null=True)
-    completed = models.TextField(null=True, default=None)
+    completed = models.TextField(db_index=True, null=True, default=None)
     #NOTE: We may want to add a field or an auto computed field for whether the process can be run now or not.  I.E.
     # whether it has any unmet prerequisites.
 
@@ -674,7 +685,7 @@ class ProcessInput(models.Model):
             i += 1
 
 class ProcessOutput(models.Model):
-    processInput = models.ForeignKey(ProcessInput, on_delete=models.CASCADE, related_name='processOutput')
+    processInput = models.ForeignKey(ProcessInput, db_index=True, on_delete=models.CASCADE, related_name='processOutput')
     finishedDateTime = models.DateTimeField(auto_now=True, null=True)
     actualCostCPU = models.FloatField(null=True)
     actualCostBandwidth = models.FloatField(null=True)
@@ -693,12 +704,12 @@ class ProcessArgument(models.Model):
     2, allowing the use of positional parameters which act more like named parameters.  I.E. a particular positional index
     always contains one specific argument for the task.
     """
-    processInput = models.ForeignKey(ProcessInput, on_delete=models.CASCADE)
+    processInput = models.ForeignKey(ProcessInput, db_index=True, on_delete=models.CASCADE)
     argIndex = models.IntegerField()
     arg = models.CharField(max_length=256)
 
 class ProcessOutputFile(models.Model):
-    processInput = models.ForeignKey(ProcessInput, on_delete=models.CASCADE)
+    processInput = models.ForeignKey(ProcessInput, db_index=True, on_delete=models.CASCADE)
     onDiskFileName = models.CharField(max_length=256)
     fileSha256 = models.CharField(max_length=64)
     size = models.IntegerField()
@@ -716,7 +727,7 @@ class SourceFindResult(models.Model):
     manipulating those results to have a guarantee that certain fields are present on any of the found sources, no matter
     the algorithm used to detect them.
     """
-    image = models.ForeignKey(Image, on_delete=models.CASCADE)
+    image = models.ForeignKey(Image, db_index=True, on_delete=models.CASCADE)
     pixelX = models.FloatField(null=True)
     pixelY = models.FloatField(null=True)
     pixelZ = models.FloatField(null=True)
@@ -781,10 +792,10 @@ class StarfindResult(SourceFindResult):
 
 #TODO: We should create another model to tie a bunch of results submitted at the same time to a single session.
 class UserSubmittedResult(SourceFindResult):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, db_index=True, on_delete=models.CASCADE)
 
 class UserSubmittedHotPixel(SourceFindResult):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, db_index=True, on_delete=models.CASCADE)
 
 class SourceFindMatch(SourceFindResult):
     """
@@ -968,8 +979,8 @@ class ScorableObject:
         if isinstance(self, SkyObject):
             ra, dec = self.getSkyCoords(t)
             body = ephem.FixedBody()
-            body._ra = ra*math.pi/180.0
-            body._dec = dec*math.pi/180.0
+            body._ra = ra
+            body._dec = dec
             body._epoch = '2000'  #TODO: Set this properly as elsewhere.
 
             body.compute(observer)
@@ -986,8 +997,8 @@ class ScorableObject:
 class DataTimePoint(models.Model):
     #Generic FK to image or whatever the question is about.
     #TODO: Add a reverse generic relation to the relevant classes this will link to (image, observer notes, etc).
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField()
+    content_type = models.ForeignKey(ContentType, db_index=True, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField(db_index=True)
     scoreableObject = GenericForeignKey('content_type', 'object_id')
 
     dateTime = models.DateTimeField()
@@ -1000,7 +1011,7 @@ class UCAC4Record(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     identifier = models.CharField(max_length=10, null=True)
     ra = models.FloatField(null=True)
     dec = models.FloatField(null=True)
-    geometry = models.PointField(srid=40000, geography=False, dim=2, null=True)
+    geometry = models.PointField(db_index=True, srid=40000, geography=False, dim=2, null=True)
     pmra = models.FloatField(null=True)     # proper motion in ra (mas/yr)      #TODO: Units
     pmdec = models.FloatField(null=True)    # proper motion in dec (mas/yr)     #TODO: Units
     magFit = models.FloatField(null=True)   # magnitude by fitting a psf 
@@ -1038,16 +1049,16 @@ class GCVSRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     identifier = models.CharField(max_length=10, null=True)
     ra = models.FloatField(null=True, db_index=True)
     dec = models.FloatField(null=True, db_index=True)
-    geometry = models.PointField(srid=40000, geography=False, dim=2, null=True)
+    geometry = models.PointField(db_index=True, srid=40000, geography=False, dim=2, null=True)
     pmRA = models.FloatField(null=True)
     pmDec = models.FloatField(null=True)
     variableType = models.CharField(max_length=10, null=True)
     variableType2 = models.CharField(max_length=10, null=True)
-    magMax = models.FloatField(null=True)
+    magMax = models.FloatField(db_index=True, null=True)
     magMaxFlag = models.CharField(max_length=1, null=True)
-    magMin = models.FloatField(null=True)
+    magMin = models.FloatField(db_index=True, null=True)
     magMinFlag = models.CharField(max_length=1, null=True)
-    magMin2 = models.FloatField(null=True)
+    magMin2 = models.FloatField(db_index=True, null=True)
     magMin2Flag = models.CharField(max_length=1, null=True)
     epochMaxMag = models.FloatField(null=True)  #NOTE: This can be a max or a min depending on the variable type.
     outburstYear = models.FloatField(null=True)
@@ -1080,6 +1091,16 @@ class GCVSRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
         #TODO: Properly implement this function.
         return ScorableObject.limitingStellarMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
 
+    @property
+    def getLinks(self):
+        links =  [
+            ("https://www.aavso.org/apps/webobs/results/?star="+self.identifier+"&num_results=50", "AAVSO"),
+            ("https://www.aavso.org/apps/vsp/chart/?star="+self.identifier+"&fov=60&maglimit=14.5&resolution=150&north=up&east=left", "VSP"),
+            ("http://simbad.u-strasbg.fr/simbad/sim-id?Ident="+self.identifier, "SIMBAD")
+            ]
+
+        return links
+
 class TwoMassXSCRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     """
     A record storing a single entry from the 2MASS Extended Source Catalog of "extended", i.e. non point source, objects.
@@ -1088,7 +1109,7 @@ class TwoMassXSCRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject
     ra = models.FloatField(db_index=True)
     dec = models.FloatField(db_index=True)
     #TODO: Should probably make this geometry field a polygon, or add a second geometry field for the polygon and leave this as a point.  Not sure which would be better.
-    geometry = models.PointField(srid=40000, geography=False, dim=2, null=True)
+    geometry = models.PointField(db_index=True, srid=40000, geography=False, dim=2, null=True)
     isophotalKSemiMajor = models.FloatField(null=True)
     isophotalKMinorMajor = models.FloatField(null=True)
     isophotalKAngle = models.FloatField(null=True)
@@ -1119,6 +1140,14 @@ class TwoMassXSCRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject
         #TODO: Properly implement this function.
         return ScorableObject.limitingDSOMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
 
+    @property
+    def getLinks(self):
+        links =  [
+            ("http://simbad.u-strasbg.fr/simbad/sim-id?Ident="+self.identifier, "SIMBAD")
+            ]
+
+        return links
+
 class MessierRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     """
     A record storing a single entry from the Messier Catalog.
@@ -1126,14 +1155,14 @@ class MessierRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     identifier = models.CharField(max_length=24)
     ra = models.FloatField()
     dec = models.FloatField()
-    geometry = models.PointField(srid=40000, geography=False, dim=2, null=True)
+    geometry = models.PointField(db_index=True, srid=40000, geography=False, dim=2, null=True)
     objectType = models.CharField(max_length=3)
     spectralType = models.CharField(max_length=10, null=True)
-    magU = models.FloatField(null=True)
-    magB = models.FloatField(null=True)
-    magV = models.FloatField(null=True)
-    magR = models.FloatField(null=True)
-    magI = models.FloatField(null=True)
+    magU = models.FloatField(db_index=True, null=True)
+    magB = models.FloatField(db_index=True, null=True)
+    magV = models.FloatField(db_index=True, null=True)
+    magR = models.FloatField(db_index=True, null=True)
+    magI = models.FloatField(db_index=True, null=True)
     numReferences = models.IntegerField()
     bookmarks = GenericRelation('Bookmark')
 
@@ -1208,6 +1237,14 @@ class MessierRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     def getUserDifficultyForTime(self, t, user, observatory=None):
         #TODO: Properly implement this function.
         return ScorableObject.limitingDSOMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
+
+    @property
+    def getLinks(self):
+        links =  [
+            ("http://simbad.u-strasbg.fr/simbad/sim-id?Ident="+self.identifier, "SIMBAD")
+            ]
+
+        return links
 
 class AstorbRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     """
@@ -1335,6 +1372,20 @@ class AstorbRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
         #TODO: Properly implement this function.
         return ScorableObject.limitingStellarMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
 
+    @property
+    def getLinks(self):
+        #TODO: Link to (post only)   http://alcdef.org/alcdef_GenerateALCDEFPage.php
+        #TODO: Link to (post only) http://www.minorplanet.info/PHP/GenerateLCDBHTMLPages.php
+        links =  [
+            ("https://www.minorplanetcenter.net/db_search/show_object?utf8=✓&object_id="+self.name, "MPC"),
+            ("https://ssd.jpl.nasa.gov/sbdb.cgi?sstr="+self.name, "JPL")
+            ]
+
+        if self.number is not None:
+            links.append( ("http://astro.troja.mff.cuni.cz/projects/asteroids3D/web.php?page=db_asteroid_detail&asteroid_id="+str(self.number), "DAMIT") )
+
+        return links
+
 #TODO: This should probably inherit from SkyObject as well, need to add that and implement the function if it is deemed appropriate.
 class AstorbEphemeris(models.Model):
     """
@@ -1345,8 +1396,8 @@ class AstorbEphemeris(models.Model):
     stored.
     """
     astorbRecord = models.ForeignKey(AstorbRecord, on_delete=models.CASCADE)
-    startTime = models.DateTimeField(null=True)
-    endTime = models.DateTimeField(null=True)
+    startTime = models.DateTimeField(db_index=True, null=True)
+    endTime = models.DateTimeField(db_index=True, null=True)
     dimMag = models.FloatField(db_index=True, null=True)
     brightMag = models.FloatField(db_index=True, null=True)
     geometry = models.LineStringField(db_index=True, srid=40000, geography=False, dim=2, null=True)
@@ -1362,7 +1413,7 @@ class ExoplanetRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject)
     numComponents = models.IntegerField(null=True)
     ra = models.FloatField(db_index=True)
     dec = models.FloatField(db_index=True)
-    geometry = models.PointField(srid=40000, geography=False, dim=2, null=True)
+    geometry = models.PointField(srid=40000, db_index=True, geography=False, dim=2, null=True)
     dist = models.FloatField(null=True)
 
     magBMinusV = models.FloatField(null=True)
@@ -1485,6 +1536,19 @@ class ExoplanetRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject)
         #TODO: Properly implement this function.
         return ScorableObject.limitingStellarMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
 
+    @property
+    def getLinks(self):
+        links = [
+            ("http://exoplanets.org/detail/"+self.identifier, "Exoplanet.org"),
+            ("https://exoplanetarchive.ipac.caltech.edu/cgi-bin/DisplayOverview/nph-DisplayOverview?objname="+self.identifier, "NASA"),
+            ("http://exoplanet.eu/catalog/"+self.identifier, "Exoplanet.eu"),
+            ("http://simbad.u-strasbg.fr/simbad/sim-id?Ident="+self.identifier, "SIMBAD")
+            ]
+
+        if self.transitDepth is not None:
+            links.append( ("http://var2.astro.cz/ETD/etd.php?STARNAME="+self.starIdentifier+"&PLANET="+self.component, "Transit") )
+
+        return links
 
 
 class GeoLiteLocation(models.Model):
@@ -1494,7 +1558,7 @@ class GeoLiteLocation(models.Model):
     The GeoLite database consists of two tables.  This one stores locations and city names, and then these entries are
     linked to from GeoLiteBlock records, which are IP block ranges.
     """
-    id = models.IntegerField(primary_key=True)
+    id = models.IntegerField(db_index=True, primary_key=True)
     country = models.CharField(max_length=2)
     region = models.CharField(max_length=2)
     city = models.CharField(max_length=255)
@@ -1539,7 +1603,7 @@ class Question(models.Model):
     descriptionText = models.TextField(null=True)
     titleText = models.TextField(null=True)
     aboutType = models.CharField(max_length=24)
-    priority = models.IntegerField()
+    priority = models.IntegerField(db_index=True)
     previousVersion = models.ForeignKey('self', null=True, on_delete=models.CASCADE, related_name='laterVersion')
     prerequisites = models.ManyToManyField('self', symmetrical=False, through='AnswerPrecondition',
         through_fields=('firstQuestion', 'secondQuestion'))
@@ -1553,7 +1617,7 @@ class QuestionResponse(models.Model):
     with this response (checkbox, radiobutton, etc).  Lastly, the keyToSet and valueToSet fields describe the key-value
     components of an AnswerKV record which will be created and stored linking (indirectly) to the object the question was about.
     """
-    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    question = models.ForeignKey(Question, db_index=True, on_delete=models.CASCADE)
     index = models.IntegerField()
     inputType = models.TextField(null=True)
     text = models.TextField(null=True)
@@ -1578,8 +1642,8 @@ class Answer(models.Model):
 
     #Generic FK to image or whatever the question is about.
     #TODO: Add a reverse generic relation to the relevant classes this will link to (image, observer notes, etc).
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField()
+    content_type = models.ForeignKey(ContentType, db_index=True, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField(db_index=True)
     content_object = GenericForeignKey('content_type', 'object_id')
 
 class AnswerKV(models.Model):
@@ -1588,7 +1652,7 @@ class AnswerKV(models.Model):
     The record links back to an Answer record containing the metadata for the answer.  Both the key and value fields are
     text fields of arbitrary length.
     """
-    answer = models.ForeignKey(Answer, on_delete=models.CASCADE, related_name='kvs')
+    answer = models.ForeignKey(Answer, db_index=True, on_delete=models.CASCADE, related_name='kvs')
     key = models.TextField(null=True)
     value = models.TextField(null=True)
 
@@ -1602,8 +1666,8 @@ class AnswerPrecondition(models.Model):
     if there are not actually any galaxies visible in the image.
     """
     descriptionText = models.TextField(null=True)
-    firstQuestion = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='dependantQuestions')
-    secondQuestion = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='dependsOnQuestions')
+    firstQuestion = models.ForeignKey(Question, db_index=True, on_delete=models.CASCADE, related_name='dependantQuestions')
+    secondQuestion = models.ForeignKey(Question, db_index=True, on_delete=models.CASCADE, related_name='dependsOnQuestions')
 
 class AnswerPreconditionCondition(models.Model):
     """
@@ -1624,8 +1688,24 @@ class AnswerPreconditionCondition(models.Model):
     condition so that a=b becomes a!=b.  Note that you need to properly apply De Morgan's Law yourself to make sure any
     preconditions utilizing the 'or' operator have the correct meaning when applied.
     """
-    answerPrecondition = models.ForeignKey(AnswerPrecondition, on_delete=models.CASCADE)
+    answerPrecondition = models.ForeignKey(AnswerPrecondition, db_index=True, on_delete=models.CASCADE)
     invert = models.BooleanField()
     key = models.TextField()
     value = models.TextField()
+
+class TextBlob(models.Model):
+    user = models.ForeignKey(User, null=True, db_index=True, on_delete=models.CASCADE)
+    dateTime = models.DateTimeField(auto_now=True)
+    markdownText = models.TextField()
+
+    def __str__(self):
+        return markdown.markdown(self.markdownText)
+
+class SavedQuery(models.Model):
+    name = models.TextField(null=True, db_index=True, unique=True)
+    user = models.ForeignKey(User, null=True, db_index=True, on_delete=models.CASCADE)
+    dateTime = models.DateTimeField(auto_now=True)
+    text = models.ForeignKey(TextBlob, on_delete=models.CASCADE)
+    header = models.TextField()
+    queryParams = models.TextField()
 

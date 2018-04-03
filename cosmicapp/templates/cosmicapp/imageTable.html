@@ -1,16 +1,23 @@
 {% include "./jquery.html" %}
 
 <script>
+//TODO: Add a parameter with an array of links to include in the hide/zoom div.
+
 //TODO: Try setting a flag after this code is included once and then don't include the parts that shouldn't be
 //duplicated.  This may fix the multiple gallery bugs without too much trouble refactoring.
 
 //TODO: Need to finish refactoring this code to work for multiple galleries on a page.  This class declaration should
 //be moved to a separate file that is included only once and the gallery instantiation needs to be made into some kind
 //of a function call that takes an additional parameter which is the id of a div to fill in on the page.
-function ImageGallery(galleryName, paramString, includeLinks, imageOnclickFunction, thumbnailSize)
+function ImageGallery(galleryName, paramString, displayType, includeLinks, imageOnclickFunction, thumbnailSize)
 {
     this.name = galleryName;
     this.initParamString = paramString;
+    if(displayType != '')
+        this.displayType = displayType;
+    else
+        this.displayType = 'gallery';
+
     this.includeLinks = includeLinks;
     this.imageOnclickFunction = imageOnclickFunction;
     this.thumbnailSize = thumbnailSize;
@@ -25,6 +32,20 @@ function ImageGallery(galleryName, paramString, includeLinks, imageOnclickFuncti
 
     this.lastParamString = '';
     this.offset = 0;
+
+    this.images = [];
+
+    this.getImageById = function(id)
+    {
+        var i;
+        for(i = 0; i < this.images.length; i++)
+        {
+            if(this.images[i].id == id)
+                return this.images[i];
+        }
+
+        return null;
+    };
 
     this.initImageGallery = function()
     {
@@ -60,6 +81,7 @@ function ImageGallery(galleryName, paramString, includeLinks, imageOnclickFuncti
             html += '<option value="id">Image ID</option>'
             html += '<option value="imageProperty">Image Property</option>'
             html += '<option value="questionAnswer">Question Answer</option>'
+            html += '<option value="uploadSessionId">Upload Session ID</option>'
             html += '</select>&nbsp;'
 
             kv = params[i].split('=');
@@ -141,14 +163,10 @@ function ImageGallery(galleryName, paramString, includeLinks, imageOnclickFuncti
     {
         var html = '';
 
-        //TODO: Replace this function?
-        thumbUrl = $.ajax(
-            {url: '/image/' + id + '/thumbnail/full/',
-            async: false}
-            ).responseText;
+        var image = this.getImageById(id);
 
         html += '<div class="imageGalleryZoomWindow ' + this.name + '">';
-        html += '<img src="' + thumbUrl + '">';
+        html += '<img src="' + image.thumbUrlFull + '">';
         html += '</div>';
 
         $(document.body).append(html);
@@ -157,6 +175,21 @@ function ImageGallery(galleryName, paramString, includeLinks, imageOnclickFuncti
         {
             $(this).remove();
         });
+    };
+
+    this.getParamArray = function()
+    {
+        var params = document.getElementsByClassName('imageGalleryParameter ' + this.name);
+        var paramArray = [];
+        for(i = 0; i < params.length; i++)
+        {
+            var paramId = params[i].getAttribute('id').split('_')[1];
+            var key = document.getElementById('paramSelect' + paramId).value;
+            var value = document.getElementById('paramTextbox' + paramId).value;
+            paramArray[paramArray.length] = key + "=" + value
+        }
+
+        return paramArray;
     };
 
     this.loadImageGalleryResults = function()
@@ -169,29 +202,19 @@ function ImageGallery(galleryName, paramString, includeLinks, imageOnclickFuncti
             var currentHTML = gallery.innerHTML;
             $('#imageGalleryDiv.' + this.name).append('<div id="imageGalleryLoadingMessage" class="' + this.name + '"><p>Loading...</p><div>');
 
-            var params = document.getElementsByClassName('imageGalleryParameter ' + this.name);
-            var paramArray = [];
-            for(i = 0; i < params.length; i++)
-            {
-                var paramId = params[i].getAttribute('id').split('_')[1];
-                var key = document.getElementById('paramSelect' + paramId).value;
-                var value = document.getElementById('paramTextbox' + paramId).value;
-                paramArray[paramArray.length] = key + "=" + value
-            }
-
+            var paramArray = this.getParamArray();
             var paramString = paramArray.join('&');
             if(paramString != this.lastParamString)
                 this.offset = 0;
 
             this.lastParamString = paramString;
 
-            var parseFunction = this.parseGalleryLoadResponse;
             $.ajax({
                 url: '/query/?queryfor=image&' + paramString + '&order=time_desc&limit=' + this.numRows*this.numCols +
                         '&offset=' + this.offset,
                 context: this,
                 dataType: 'json',
-                success: parseFunction
+                success: this.parseGalleryLoadResponse
                 });
         }
     };
@@ -204,7 +227,9 @@ function ImageGallery(galleryName, paramString, includeLinks, imageOnclickFuncti
         $('#newResultsDivider.' + this.name).remove();
         if(!this.firstLoadOfGallery)
         {
-            html += '<div id=newResultsDivider class="responsive ' + this.name + '" style="text-align: center; width: 95%; border: 1em solid blue">'
+            html += '<div class="clearfix"></div>';
+            html += '<div id=newResultsDivider class="responsive ' + this.name;
+            html += '" style="text-align: center; width: 95%; border: 1px solid blue">';
             if(response.length > 0)
                 html += 'New Results:</div>'
             else
@@ -213,31 +238,46 @@ function ImageGallery(galleryName, paramString, includeLinks, imageOnclickFuncti
 
         for(i = 0; i < response.length; i++)
         {
-            var imageId = response[i].id;
+            var res = response[i];
 
-            html += '<div class="responsive ' + this.name + '" id="' + imageId + '">'
-            html += '<div class="gallery">'
+            this.images[this.images.length] = res;
+            var imageId = res.id;
 
-            if(this.includeLinks)
+            if(this.displayType == 'gallery')
             {
-                html += '<a href="/image/' + imageId + '/">'
-                html += '<img src="' + response[i]['thumbUrl'+this.thumbnailSize] + '">';
-                html += '</a>';
-            }
-            else
-            {
-                html += '<img onclick="' + this.imageOnclickFunction + '(' + imageId + ')" src="' + response[i]['thumbUrl'+this.thumbnailSize] + '">';
-            }
+                html += '<div class="responsive ' + this.name + '" id="' + imageId + '">'
+                html += '<div class="gallery">'
 
-            var questionLink = '/image/' + imageId + '/question/';
-            html += '<div class="desc ' + this.name + '">'
-            //TODO: Make these <a> links an image icon instead of the placeholder text link that is here now.
-            html += '<a style="cursor: pointer" class="hideLink ' + this.name + '" id="hideButton' + imageId + '">Hide</a>&nbsp;';
-            html += '<a href="' + questionLink + '" class="questionLink ' + this.name + '">Ques</a>&nbsp;';
-            html += '<a style="cursor: pointer" class="zoomLink ' + this.name + '" onclick="gallery_' + this.galleryName + '.zoomImage(' + imageId + ')">Zoom</a>';
-            html += '</div>';
-            html += '</div>';
-            html += '</div>';
+                if(this.includeLinks)
+                {
+                    html += '<a href="/image/' + imageId + '/">'
+                    html += '<img src="' + res['thumbUrl'+this.thumbnailSize] + '">';
+                    html += '</a>';
+                }
+                else
+                {
+                    html += '<img onclick="' + this.imageOnclickFunction + '(' + imageId + ')" src="' + res['thumbUrl'+this.thumbnailSize] + '">';
+                }
+
+                html += '<div class="desc ' + this.name + '">'
+                //TODO: Make these <a> links an image icon instead of the placeholder text link that is here now.
+                html += '<a class="functionLink hideLink ' + this.name + '" id="hideButton' + imageId + '">Hide</a>&nbsp;&nbsp;';
+                html += '<a class="functionLink zoomLink ' + this.name + '" onclick="gallery_' + this.name + '.zoomImage(' + imageId + ')">Zoom</a>';
+                html += '</div>';
+                html += '</div>';
+                html += '</div>';
+            }
+            else if(this.displayType == 'table')
+            {
+                html += '<table class="responsive ' + this.name + '"cellpadding=5px border=2px style="border-collapse: collapse; margin: 1em;">';
+                html += '<tr>';
+                html += '<td> <a href="/image/' + res.id + '"><img src="' + res.thumbUrlSmall + '"><br>Image ' + res.id + '</a> </td>';
+                html += '<td> ' + res.dimX + 'x' + res.dimY + 'x' + res.dimZ + ' ' + res.bitDepth + 'bits/pix<br>';
+                html += 'Frame Type: ' + res.frameType + '<br>' + res.dateTime + '<br>';
+                html += res.numPlateSolutions + ' Plate Solutions </td>';
+                html += '</tr>';
+                html += '</table>';
+            }
 
             this.offset += 1;
         }
@@ -276,19 +316,92 @@ function ImageGallery(galleryName, paramString, includeLinks, imageOnclickFuncti
         else { this.numCols = 1; this.numRows = 8; }
     };
 
+    this.saveQuery = function()
+    {
+        $('#' + this.name + '_saveQueryLink').hide();
+        $('#' + this.name + '_saveQueryDiv').show();
+    };
+
+    this.saveQuerySubmit = function()
+    {
+        var queryName = document.getElementsByName(this.name + '_queryName')[0].value;
+        var queryHeaderText = document.getElementsByName(this.name + '_queryHeaderText')[0].value;
+        var queryText = document.getElementsByName(this.name + '_queryText')[0].value;
+        var queryParams = this.getParamArray().join(':');
+
+        var name = this.name;
+
+        $.ajax({
+            url : "/save/query/",
+            type : "post",
+            async: true,
+            dataType: 'json',
+            data: {
+                queryName: queryName,
+                queryHeaderText: queryHeaderText,
+                queryText: queryText,
+                queryParams: queryParams
+            },
+            success : function(response)
+            {
+                $('#' + name + '_saveQueryDiv').hide();
+                $('#' + name + '_saveQueryLink').html('<a href="' + response.url + '">View your saved query</a>');
+                $('#' + name + '_saveQueryLink').show();
+            },
+            error : function(response)
+            {
+                alert(response.responseText);
+            }
+        });
+    };
+
+    this.saveQueryCancel = function()
+    {
+        $('#' + this.name + '_saveQueryLink').show();
+        $('#' + this.name + '_saveQueryDiv').hide();
+    };
 };
 
 $(document).ready(function()
 {
-    gallery_{{galleryName}} = new ImageGallery('{{galleryName}}', '{{queryParams}}', {{includeLinks}},
-        '{{imageOnclickFunction}}', '{{thumbnailSize}}');
+    gallery_{{galleryName}} = new ImageGallery('{{galleryName}}', '{{queryParams}}', '{{displayType}}',
+        {{includeLinks}}, '{{imageOnclickFunction}}', '{{thumbnailSize}}');
     gallery_{{galleryName}}.initImageGallery();
 });
 
 </script>
 
 <div id=imageGalleryQueryDiv>
-    <p>Query Parameters</p>
+    <p>
+    Query Parameters:
+    <span id={{galleryName}}_saveQueryLink>
+        (<a class=functionLink onclick="gallery_{{galleryName}}.saveQuery()">Save query</a>)
+    </span>
+    </p>
+
+    <div id={{galleryName}}_saveQueryDiv hidden>
+        <table>
+            <tr>
+                <td>Name:<br>(optional)</td>
+                <td><input type=text name={{galleryName}}_queryName value="{{query.name|default_if_none:""}}"></td>
+            </tr>
+            <tr>
+                <td>Header:<br>(optional)</td>
+                <td><input type=text name={{galleryName}}_queryHeaderText value="{{query.header|default_if_none:""}}"></td>
+            </tr>
+            <tr>
+                <td>Text/Instructions:<br>(optional)<br><br>You can use markdown<br>text in this box to
+                    leave<br>notes for yourself or for<br>others who you share the<br>query with.</td>
+                <td><textarea rows=10 cols=50 name={{galleryName}}_queryText>{{query.text.markdownText|default_if_none:""}}</textarea></td>
+            </tr>
+            <tr>
+                <td colspan=2>
+                <input type=button class=button onclick="gallery_{{galleryName}}.saveQuerySubmit()" value=Save>
+                <input type=button class=button onclick="gallery_{{galleryName}}.saveQueryCancel()" value=Cancel>
+                </td>
+            </tr>
+        </table>
+    </div>
 
     <div id=imageGalleryQueriesDiv class="{{galleryName}}"></div>
 

@@ -22,6 +22,7 @@ Create new folder:
 <input type=submit value="Create New Folder">
 </form>
 
+{% comment %} TODO: Need to hide the create/delete buttons if foruser != user. {% endcomment %}
 <h3>Folders</h3>
 {% for folder in folders %}
     <div id="bookmarkFolder_{{folder.name.split|join:"_"}}" class="bookmarkFolder" data-folderName="{{folder.name}}">

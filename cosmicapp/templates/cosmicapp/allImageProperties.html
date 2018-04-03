@@ -1,0 +1,59 @@
+{% extends "cosmicapp/base.html" %}
+
+{% load static %}
+{% load cosmicapp_extras %}
+
+{% block extratitle %} - Image Properties {% endblock extratitle %}
+
+{% block extrahead %}
+{% endblock extrahead %}
+
+{% block mainbody %}
+<h2>Image Properties</h2>
+
+<p>
+Below is a table of the parsed (and cleaned/normalized) <i>image properties</i> that are
+stored in the database.  Clicking on a Key=Value pair will take you to a query for all of
+the images which have that specific image property.  The <i>count</i> field lists how many
+images in the database have that specific Key=Value pair.  Although some image properties
+are set by the website itself during image processing, most are cleaned up, sanitized
+versions of the header data in the original image file that was uploaded from the site.
+</p>
+
+<table>
+    <tr><th>Key=Value</th> <th>Count</th></tr>
+    {% for property in properties %}
+        <tr>
+        <td><a href="/image/gallery/?queryParams=imageProperty={{property.key}}={{property.value}}">{{property.key}}={{property.value}}</a></td>
+        <td>{{property.count}}</td>
+        </tr>
+    {% endfor %}
+</table>
+
+<p>
+The table below lists the image header fields originally read in from uploaded image
+files.  The <i>Key=Value</i> column lists the specific header that was read in.  The <i>Num
+Occurreces</i> column lists how many times that header has been seen in the uploaded
+images, and the <i>Num Links</i> column lists how many <i>image properties</i> from the
+table above link to the specific image header in this table.  Image headers which are
+frequently seen, but are not linked to by properties (shown in red) are things which should probably be
+added to the <a href="/about/processes/parseHeaders">parseHeaders</a> task.
+</p>
+
+<table>
+    <tr><th>Key=Value</th> <th>Num Occurences</th> <th>Num Links</th></tr>
+    {% for header in headers %}
+        
+        <tr>
+        <td>
+            <font {% if header.countOccurrences != header.countLinks %} color=red {% endif %}>
+            {{header.key}}={{header.value}}
+            </font>
+        </td>
+        <td>{{header.countOccurrences}}</td>
+        <td>{{header.countLinks}}</td>
+        </tr>
+    {% endfor %}
+</table>
+
+{% endblock mainbody %}

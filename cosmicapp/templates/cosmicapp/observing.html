@@ -11,6 +11,7 @@
 
 {% block mainbody %}
 
+{% comment %} TODO: Need to pass the observatory in the scoreForObject template so observatory corrections are taken into account. {% endcomment %}
 <h2>Observing suggestions for tonight</h2>
 
 {% if user.is_authenticated %}
@@ -123,7 +124,7 @@
 
 <h3>Now</h3>
 
-<p>Your current zenith is at:&emsp;{{zenithNowRA|formatRA}}&emsp;{{zenithNowDec|formatDec}}</p>
+<p>Your current zenith is at:&emsp;{{zenithNowRA|formatRA_rad}}&emsp;{{zenithNowDec|formatDec_rad}}</p>
 
 <p>
 <a href="#asteroidDiv">Jump to Asteroid Results</a><br>
@@ -146,19 +147,15 @@
             {% bookmark "asteroid" asteroid.record.pk "Observing Targets" "<td>" "</td>" %}
             <td>{% scoreForObject asteroid.record currentTime user %}</td>
             <td>{{asteroid.record.name}}</td>
-            <td>{{asteroid.ephem.ra|formatRA}}</td>
-            <td>{{asteroid.ephem.dec|formatDec}}</td>
+            <td>{{asteroid.ephem.ra|formatRA_rad}}</td>
+            <td>{{asteroid.ephem.dec|formatDec_rad}}</td>
             <td>{{asteroid.ephem.mag|floatformat:2}}</td>
             <td>{{asteroid.record.ceu|floatformat:3}}</td>
             <td>{{asteroid.record.astrometryNeededCode}}</td>
             <td>
-            <a href="https://www.minorplanetcenter.net/db_search/show_object?utf8=✓&object_id={{asteroid.record.name}}">MPC</a>
-            <a href="https://ssd.jpl.nasa.gov/sbdb.cgi?sstr={{asteroid.record.name}}">JPL</a>
-            {% comment %} TODO: Link to (post only)   http://alcdef.org/alcdef_GenerateALCDEFPage.php {% endcomment %}
-            {% comment %} TODO: Link to (post only)   http://www.minorplanet.info/PHP/GenerateLCDBHTMLPages.php {% endcomment %}
-            {% if asteroid.record.number %}
-            <a href="http://astro.troja.mff.cuni.cz/projects/asteroids3D/web.php?page=db_asteroid_detail&asteroid_id={{asteroid.record.number}}">DAMIT</a>
-            {% endif %}
+            {% for link in asteroid.record.getLinks %}
+                <a href="{{link.0}}">{{link.1}}</a>
+            {% endfor %}
             </td>
             <tr>
         {% endfor %}
@@ -182,13 +179,9 @@
             <td>{{exoplanet.dec|formatDec}}</td>
             <td>{{exoplanet.magV|floatformat:2}}</td>
             <td>
-            {% if exoplanet.transitDepth %}
-            <a href="http://var2.astro.cz/ETD/etd.php?STARNAME={{exoplanet.starIdentifier}}&PLANET={{exoplanet.component}}">Transit</a>
-            {% endif %}
-            <a href="http://exoplanets.org/detail/{{exoplanet.identifier}}">Exoplanet.org</a>
-            <a href="https://exoplanetarchive.ipac.caltech.edu/cgi-bin/DisplayOverview/nph-DisplayOverview?objname={{exoplanet.identifier}}">NASA</a>
-            <a href="http://exoplanet.eu/catalog/{{exoplanet.identifier}}">Exoplanet.eu</a>
-            <a href="http://simbad.u-strasbg.fr/simbad/sim-id?Ident={{exoplanet.identifier}}">SIMBAD</a>
+            {% for link in exoplanet.getLinks %}
+                <a href="{{link.0}}">{{link.1}}</a>
+            {% endfor %}
             </td>
             <tr>
         {% endfor %}
@@ -218,9 +211,9 @@
             <td>{{variableStar.variableType2}}</td>
             <td>{{variableStar.spectralType}}</td>
             <td>
-            <a href="https://www.aavso.org/apps/webobs/results/?star={{variableStar.identifier}}&num_results=50">AAVSO</a>
-            <a href="https://www.aavso.org/apps/vsp/chart/?star={{variableStar.identifier}}&fov=60&maglimit=14.5&resolution=150&north=up&east=left">VSP</a>
-            <a href="http://simbad.u-strasbg.fr/simbad/sim-id?Ident={{variableStar.identifier}}">SIMBAD</a>
+            {% for link in variableStar.getLinks %}
+                <a href="{{link.0}}">{{link.1}}</a>
+            {% endfor %}
             </td>
             </tr>
         {% endfor %}
@@ -245,7 +238,9 @@
             <td>{{messierObject.objectType}}</td>
             <td>{{messierObject.magV|floatformat:2}}</td>
             <td>
-            <a href="http://simbad.u-strasbg.fr/simbad/sim-id?Ident={{messierObject.identifier}}">SIMBAD</a>
+            {% for link in messierObject.getLinks %}
+                <a href="{{link.0}}">{{link.1}}</a>
+            {% endfor %}
             </td>
             <tr>
         {% endfor %}
@@ -271,7 +266,9 @@
             <td>{{extendedSource.isophotalKSemiMajor|floatformat:2}}</td>
             <td>{{extendedSource.isophotalKMinorMajor|floatformat:2}}</td>
             <td>
-            <a href="http://simbad.u-strasbg.fr/simbad/sim-basic?Ident={{extendedSource.identifier|urlencode}}&submit=SIMBAD+search">SIMBAD</a>
+            {% for link in extendedSource.getLinks %}
+                <a href="{{link.0}}">{{link.1}}</a>
+            {% endfor %}
             </td>
             <tr>
         {% endfor %}

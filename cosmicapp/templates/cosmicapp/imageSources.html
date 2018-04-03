@@ -16,11 +16,41 @@
     <script src="/static/cosmicapp/bokeh-0.12.9.min.js"></script>
     <script src="/static/cosmicapp/bokeh-api-0.12.9.min.js"></script>
 
-{% endblock %}
+{% include "./jquery.html" %}
+
+{% endblock extrahead %}
 
 {% block mainbody %}
 
-{% include "./jquery.html" %}
+<p>
+This page displays the bright sources (mostly stars) that were detected by the automatic
+source detection algorithms in use on Cosmic.  There are currently four methods used:
+</p>
+
+<ul>
+    <li> Source Extractor (Sextractor) </li>
+    <li> Image2xy </li>
+    <li> Daofind </li>
+    <li> Starfind </li>
+</ul>
+
+<p>
+Each method runs independantly, and then after all four have been run the results are
+compared with each other (as well as with user submitted results) and the combined results
+are recorded in the <i>multiple matches</i> category.  You can enable or disable the
+display of each method by clicking the first checkbox under the name.  Other display
+settings are set in a similar fashion.
+</p>
+
+<p>
+If Some methods find <i>too many</i> or <i>too few</i> stars you can click on the
+<i>feedback</i> button to tell Cosmic how many objects a given method should have found.
+The number of objects found for that method and your feedback will be used to determine
+which of the four methods should be re-run with different detection thresholds.  For
+<a href="">images which do not plate solve</a> you can help us out by giving this kind of
+feedback, and the plate solver will automatically be re-run after the source detection
+algortithms have been re-run with your feedback.
+</p>
 
 <table border=2px style="border-collapse: collapse; margin: 1em;">
 <tr>
@@ -191,27 +221,47 @@ colors are defined in javascript, we need to do this in the window.onload functi
 </tr>
 </table>
 
-<p><div id=uploadResultsDiv>
-    Move your mouse over the image to examine the detected sources.  If there are dim
-    stars that were not detected by the automatic search routines you can mark a few of
-    them yourself.  Left click and hold the mouse button to carefully center on a star and
-    then release the mouse button.  You only need to mark 5 to 10 stars manually in any given
-    image, however, you should mark some of the <i>dimmest</i> stars you can
-    <i>reliably</i> see.  After you have marked some dim stars we can then re-calibrate
-    the detection algorithms to the stars you marked and re-run them to automatically mark
-    all the rest.
-    <br><br>
+<div id=uploadResultsDiv>
+    <p>
+    Move your mouse over the image to examine the detected sources.  You can <i>shift+left
+    click</i> on an object to display a page of information about all of the objects
+    listed in the mouseover text.
+    </p>
+
+    <p>
+    If there are dim stars that were not detected by the automatic search routines you can
+    mark a few of them yourself.  Left click and hold the mouse button to carefully center
+    on a star and then release the mouse button.  Keep in mind however that marking stars
+    manually should only be used as a last resort after you have tried using the
+    <i>feedback</i> buttons above several times and letting it run through the queue each
+    time to re-run the platesolver.
+    </p>
+
+    <p>
+    If you do decide to manually mark objects, the most useful thing to do is mark hot
+    pixels (if there are any) with <i>ctrl+left click</i>.  If there are entire columns of
+    hot pixels you can mark them by holding down <i>ctrl+c</i> while you click on the bad
+    column, or <i>ctrl+x</i> to mark bad lines of bad pixels.  Marking stars that were
+    missed by the automatic algorithms can be done by just <i>left-clicking</i> on them
+    (but you should never have to mark more than a few this way, and only after using the
+    <i>feedback</i> buttons above).
+    </p>
+
     <div id=uploadResultsButtonDiv>
-        You have marked <div id=uploadResultsNumDiv style="display: inline-block">0</div> of the <i>dimmest</i> stars
-        you can <i>reliably</i> see in the image below:
+        <p>
+        You have marked <span id=uploadResultsNumDiv>0</span> stars in the image below:
         <input id=uploadMarkedStarsButton type=button value="Upload marked objects." onclick="submitUserResults()">
-        <br>
+        </p>
+
+        <p>
         You have also marked
-        <div style="display: inline-block" id=hotPixelsNumDiv>0</div> hot pixels (<i>ctrl</i>),
-        <div style="display: inline-block" id=hotLinesNumDiv>0</div> bad lines (<i>ctrl + x</i>), and
-        <div style="display: inline-block" id=hotColumnsNumDiv>0</div> bad columns (<i>ctrl + c</i>).
+        <span id=hotPixelsNumDiv>0</span> hot pixels (<i>ctrl</i>),
+        <span id=hotLinesNumDiv>0</span> bad lines (<i>ctrl + x</i>), and
+        <span id=hotColumnsNumDiv>0</span> bad columns (<i>ctrl + c</i>).
+        </p>
+
     </div>
-</div></p>
+</div>
 
 <input type=button class=button value="-" onclick="adjustSliderValue('objectsLimitingMagSlider', -1)">
 <input type=button class=button value="+" onclick="adjustSliderValue('objectsLimitingMagSlider', 1)">
@@ -1161,10 +1211,10 @@ function drawSources()
         drawSource(context, userSubmittedHotPixels[i].pixelX, userSubmittedHotPixels[i].pixelY, 1.0, 5, 2);
 
     for(i = 0; i < userCreatedResults.length && !lmbDown; i++)
-        drawReticle(context, userCreatedResults[i].x, userCreatedResults[i].y, 10, userCreatedColor, 0.8);
+        drawReticle(context, userCreatedResults[i].pixelX, userCreatedResults[i].pixelY, 10, userCreatedColor, 0.8);
 
     for(i = 0; i < userCreatedHotPixels.length && !lmbDown; i++)
-        drawReticle(context, userCreatedHotPixels[i].x, userCreatedHotPixels[i].y, 5, userCreatedColor, 0.8);
+        drawReticle(context, userCreatedHotPixels[i].pixelX, userCreatedHotPixels[i].pixelY, 5, userCreatedColor, 0.8);
 
     labelSize = 16
     context.font = labelSize + 'px sans-serif'
@@ -1599,9 +1649,9 @@ function handleMouseButtonUp(event)
         var yPos = mouseY - reticlePrecision*deltaY;
 
         if(lmbDown && mode == 'stars')
-            userCreatedResults[userCreatedResults.length] = {x: xPos, y: yPos, confidence: 1.0};
+            userCreatedResults[userCreatedResults.length] = {pixelX: xPos, pixelY: yPos, confidence: 1.0};
         else if(lmbDown && mode == 'hotpixels')
-            userCreatedHotPixels[userCreatedHotPixels.length] = {x: xPos, y: yPos, confidence: 1.0};
+            userCreatedHotPixels[userCreatedHotPixels.length] = {pixelX: xPos, pixelY: yPos, confidence: 1.0};
 
         lmbDown = false;
         drawSources();
@@ -1721,5 +1771,5 @@ window.onload = function()
 };
 </script>
 
-{% endblock %}
+{% endblock mainbody %}
 

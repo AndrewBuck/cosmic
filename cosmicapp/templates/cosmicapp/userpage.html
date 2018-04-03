@@ -6,6 +6,10 @@
 {% block mainbody %}
 <h2>User profile for {{foruser.username}}</h2>
 
+<table>
+<tr>
+<td>
+
 {% if user.username == foruser.username and edit == 'true' %}
     <form action="/user/{{user.username}}/" method="POST">
         {% csrf_token %}
@@ -14,6 +18,8 @@
     </form>
 {% else %}
     <ul>
+        <p>User Joined: {{foruser.date_joined}}</p>
+        <p>Last Login: {{foruser.last_login}}</p>
         <p>Birth Date: {{foruser.profile.birthDate}}</p>
         <p>Limiting Magnitude: {{foruser.profile.limitingMag}}</p>
 
@@ -76,6 +82,29 @@
 {% endif %}
 
 <p>
+</td>
+<td>
+{% if edit != 'true' %}
+{% if uploadSessions %}
+    Your recent upload sessions:<br><br>
+
+    {% for uploadSession in uploadSessions %}
+        <a href="/uploadSession/{{uploadSession.id}}">{{uploadSession.dateTime}}&emsp;{{uploadSession.uploadedFileRecords.count}} files</a><br>
+    {% endfor %}
+{% else %}
+    {% if user == foruser %}
+        You have not yet uploaded any images or observing notes.<br>
+        You can upload these on the <a href="/upload/">upload</a> page.
+    {% else %}
+        This user has not yet uploaded<br>any images or observing notes.
+    {% endif %}
+{% endif %}
+{% endif %}
+</td>
+</tr>
+</table>
+
+{% if edit != 'true' %}
 Other useful queries:<br>
 
 Images for this user with failed astrometry.net plate solutions:
@@ -86,9 +115,11 @@ Images for this user with successful astrometry.net plate solutions:
 
 </p>
 
+Your uploaded images:<br>
 {% with "user="|concat:foruser as queryParams %}
 {% include "./imageTable.html" with galleryName="userGallery" includeLinks="true" thumbnailSize="Medium" %}
 {% endwith %}
+{% endif %}
 
 {% endblock %}
 

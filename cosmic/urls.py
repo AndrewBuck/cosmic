@@ -35,6 +35,7 @@ urlpatterns = [
     url(r'^catalogs/', views.catalogs),
     url(r'^catalog/(?P<method>.+)/(?P<pk>.+)', views.objectInfo),
     url(r'^detectedSource/(?P<method>.+)/(?P<pk>.+)', views.objectInfo),
+    url(r'^uploadSession/(?P<pk>.+)', views.uploadSession),
 
     url(r'^user/(?P<username>.+)/bookmarks/$', views.bookmarkPage),
     url(r'^user/(?P<username>.+)/', views.userpage),
@@ -43,10 +44,11 @@ urlpatterns = [
     url(r'^image/(?P<id>[0-9]+)/$', views.image),
     url(r'^image/(?P<id>[0-9]+)/sources/$', views.imageSources),
     url(r'^image/(?P<id>[0-9]+)/properties/$', views.imageProperties),
+    url(r'^imageProperties/$', views.allImageProperties),
 
     url(r'^query/$', views.query),
 
-    url(r'^image/(?P<id>[0-9]+)/question/$', views.questionImage),
+    url(r'^image/(?P<id>[-0-9]+)/question/$', views.questionImage),
     url(r'^image/(?P<id>[0-9]+)/getquestion/$', views.getQuestionImage),
     url(r'^image/gallery/$', views.imageGallery),
     url(r'^questions/$', views.questions),
@@ -60,6 +62,7 @@ urlpatterns = [
     url(r'^save/userOwnedEquipment/$', views.saveUserOwnedEquipment),
     url(r'^save/instrumentConfigurationLink/$', views.saveInstrumentConfigurationLink),
     url(r'^save/newInstrumentConfiguration/$', views.saveNewInstrumentConfiguration),
+    url(r'^save/query/$', views.saveQuery),
     url(r'^delete/userOwnedEquipment/$', views.deleteUserOwnedEquipment),
     url(r'^delete/instrumentConfigurationLink/$', views.deleteInstrumentConfigurationLink),
     url(r'^delete/instrumentConfiguration/$', views.deleteInstrumentConfiguration),
