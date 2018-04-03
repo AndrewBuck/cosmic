@@ -981,6 +981,7 @@ def imageGallery(request):
     queryId = request.GET.get('queryId', "")
     savedQuery = request.GET.get('savedQuery', "")
     queryParams = request.GET.get('queryParams', "")
+    displayType = request.GET.get('displayType', "")
 
     if savedQuery != "":
         context['query'] = SavedQuery.objects.get(name=savedQuery)
@@ -992,6 +993,9 @@ def imageGallery(request):
         context['queryParams'] = context['query'].queryParams
     elif queryParams != "":
         context['queryParams'] = queryParams
+
+    if displayType in ['table', 'gallery']:
+        context['displayType'] = displayType
 
     return render(request, "cosmicapp/imageGallery.html", context)
 

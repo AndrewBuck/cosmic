@@ -9,10 +9,15 @@
 //TODO: Need to finish refactoring this code to work for multiple galleries on a page.  This class declaration should
 //be moved to a separate file that is included only once and the gallery instantiation needs to be made into some kind
 //of a function call that takes an additional parameter which is the id of a div to fill in on the page.
-function ImageGallery(galleryName, paramString, includeLinks, imageOnclickFunction, thumbnailSize)
+function ImageGallery(galleryName, paramString, displayType, includeLinks, imageOnclickFunction, thumbnailSize)
 {
     this.name = galleryName;
     this.initParamString = paramString;
+    if(displayType != '')
+        this.displayType = displayType;
+    else
+        this.displayType = 'gallery';
+
     this.includeLinks = includeLinks;
     this.imageOnclickFunction = imageOnclickFunction;
     this.thumbnailSize = thumbnailSize;
@@ -204,13 +209,12 @@ function ImageGallery(galleryName, paramString, includeLinks, imageOnclickFuncti
 
             this.lastParamString = paramString;
 
-            var parseFunction = this.parseGalleryLoadResponse;
             $.ajax({
                 url: '/query/?queryfor=image&' + paramString + '&order=time_desc&limit=' + this.numRows*this.numCols +
                         '&offset=' + this.offset,
                 context: this,
                 dataType: 'json',
-                success: parseFunction
+                success: this.parseGalleryLoadResponse
                 });
         }
     };
@@ -223,7 +227,8 @@ function ImageGallery(galleryName, paramString, includeLinks, imageOnclickFuncti
         $('#newResultsDivider.' + this.name).remove();
         if(!this.firstLoadOfGallery)
         {
-            html += '<div id=newResultsDivider class="responsive ' + this.name + '" style="text-align: center; width: 95%; border: 1em solid blue">'
+            html += '<div id=newResultsDivider class="responsive ' + this.name;
+            html += '" style="text-align: center; width: 95%; border: 1px solid blue">';
             if(response.length > 0)
                 html += 'New Results:</div>'
             else
@@ -232,30 +237,46 @@ function ImageGallery(galleryName, paramString, includeLinks, imageOnclickFuncti
 
         for(i = 0; i < response.length; i++)
         {
-            this.images[this.images.length] = response[i];
-            var imageId = response[i].id;
+            var res = response[i];
 
-            html += '<div class="responsive ' + this.name + '" id="' + imageId + '">'
-            html += '<div class="gallery">'
+            this.images[this.images.length] = res;
+            var imageId = res.id;
 
-            if(this.includeLinks)
+            if(this.displayType == 'gallery')
             {
-                html += '<a href="/image/' + imageId + '/">'
-                html += '<img src="' + response[i]['thumbUrl'+this.thumbnailSize] + '">';
-                html += '</a>';
-            }
-            else
-            {
-                html += '<img onclick="' + this.imageOnclickFunction + '(' + imageId + ')" src="' + response[i]['thumbUrl'+this.thumbnailSize] + '">';
-            }
+                html += '<div class="responsive ' + this.name + '" id="' + imageId + '">'
+                html += '<div class="gallery">'
 
-            html += '<div class="desc ' + this.name + '">'
-            //TODO: Make these <a> links an image icon instead of the placeholder text link that is here now.
-            html += '<a class="functionLink hideLink ' + this.name + '" id="hideButton' + imageId + '">Hide</a>&nbsp;&nbsp;';
-            html += '<a class="functionLink zoomLink ' + this.name + '" onclick="gallery_' + this.name + '.zoomImage(' + imageId + ')">Zoom</a>';
-            html += '</div>';
-            html += '</div>';
-            html += '</div>';
+                if(this.includeLinks)
+                {
+                    html += '<a href="/image/' + imageId + '/">'
+                    html += '<img src="' + res['thumbUrl'+this.thumbnailSize] + '">';
+                    html += '</a>';
+                }
+                else
+                {
+                    html += '<img onclick="' + this.imageOnclickFunction + '(' + imageId + ')" src="' + res['thumbUrl'+this.thumbnailSize] + '">';
+                }
+
+                html += '<div class="desc ' + this.name + '">'
+                //TODO: Make these <a> links an image icon instead of the placeholder text link that is here now.
+                html += '<a class="functionLink hideLink ' + this.name + '" id="hideButton' + imageId + '">Hide</a>&nbsp;&nbsp;';
+                html += '<a class="functionLink zoomLink ' + this.name + '" onclick="gallery_' + this.name + '.zoomImage(' + imageId + ')">Zoom</a>';
+                html += '</div>';
+                html += '</div>';
+                html += '</div>';
+            }
+            else if(this.displayType == 'table')
+            {
+                html += '<table class="responsive ' + this.name + '"cellpadding=5px border=2px style="border-collapse: collapse; margin: 1em;">';
+                html += '<tr>';
+                html += '<td> <a href="/image/' + res.id + '"><img src="' + res.thumbUrlSmall + '"><br>Image ' + res.id + '</a> </td>';
+                html += '<td> ' + res.dimX + 'x' + res.dimY + 'x' + res.dimZ + ' ' + res.bitDepth + 'bits/pix<br>';
+                html += 'Frame Type: ' + res.frameType + '<br>' + res.dateTime + '<br>';
+                html += res.numPlateSolutions + ' Plate Solutions </td>';
+                html += '</tr>';
+                html += '</table>';
+            }
 
             this.offset += 1;
         }
@@ -342,8 +363,8 @@ function ImageGallery(galleryName, paramString, includeLinks, imageOnclickFuncti
 
 $(document).ready(function()
 {
-    gallery_{{galleryName}} = new ImageGallery('{{galleryName}}', '{{queryParams}}', {{includeLinks}},
-        '{{imageOnclickFunction}}', '{{thumbnailSize}}');
+    gallery_{{galleryName}} = new ImageGallery('{{galleryName}}', '{{queryParams}}', '{{displayType}}',
+        {{includeLinks}}, '{{imageOnclickFunction}}', '{{thumbnailSize}}');
     gallery_{{galleryName}}.initImageGallery();
 });
 
