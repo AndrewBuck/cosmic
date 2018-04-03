@@ -549,15 +549,13 @@ class ImageChannelInfo(models.Model):
     bgMean = models.FloatField(null=True)
     bgMedian = models.FloatField(null=True)
     bgStdDev = models.FloatField(null=True)
-    numValidHistogramPixels = models.IntegerField(null=True)
-    histogramBinWidth = models.FloatField(null=True)
 
     def getHistogramUrl(self):
         return '/static/cosmicapp/images/histogramData_{}_{}.gnuplot.svg'.format(self.image.pk, self.index)
 
 class ImageHistogramBin(models.Model):
     image = models.ForeignKey(Image, on_delete=models.CASCADE)
-    binFloor = models.FloatField()
+    binCenter = models.FloatField()
     binCount = models.FloatField()
 
 class ImageTransform(models.Model):

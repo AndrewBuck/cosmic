@@ -12,15 +12,18 @@ import os
 import re
 import itertools
 import math
+import random
 import dateparser
+import scipy
+import ephem
 
 from astropy import wcs
 from astropy.io import fits
 from astropy.stats import sigma_clipped_stats
 from astropy.table import Table
 from photutils import make_source_mask, DAOStarFinder, IRAFStarFinder
-
-import ephem
+from collections import Counter
+from sortedcontainers import SortedList, SortedDict
 
 from cosmicapp import models
 
@@ -212,6 +215,19 @@ def imagestats(filename):
         else:
             outputText += "WCS not found in header" + "\n"
 
+
+    # TODO: Perform image processing.
+    #   1: Detect and mark non-data pixels: cosmic rays, hot pixels, dead pixels,
+    #   over-exposed pixels, under-exposed pixels, artificial satellite.
+    #       NOTE: Check if pixels adjacent to non-data pixels can be used, or should be
+    #       discarded.
+    #       TODO: Figure out how to use this data
+    #           a: cosmic rays
+    #
+    #   2: Generate and apply bias, dark, flat, air mass, moonlight scatter, light
+    #   pollution
+    #   3: Detect haze and clouds
+
     outputText += "imagestats:background: " + filename + "\n"
     if os.path.splitext(filename)[-1].lower() in ['.fit', '.fits']:
         hdulist = fits.open(settings.MEDIA_ROOT + filename)
@@ -229,34 +245,225 @@ def imagestats(filename):
 
                 for frame in frames:
                     outputText += "imagestats:histogram:\n"
-                    # Compute min/max of data values and count valid pixels.
-                    minValue = frame[0][0]
-                    maxValue = frame[0][0]
-                    numValidPixels = 0
-                    for i in frame:
-                        for j in i:
-                            #TODO: Need to check that the pixel is not a hot pixel, etc.
-                            numValidPixels += 1
+                    # TODO: Need to filter all non-data pixels
 
-                            if j < minValue:
-                                minValue = j
+                    # Generate a histogram for initial image analysis.
 
-                            if j > maxValue:
-                                maxValue = j
+                    # Due to the nature of the data, naive histogram approaches with even
+                    # very many fixed width bins often fail to produce satisfactory
+                    # results.
 
-                    # Fill the bins array with zero count for every bin.
-                    numBins = 10000
-                    binWidth = (maxValue-minValue)/float(numBins)
-                    bins = []
-                    for i in range(numBins+1):
-                        bins.append(0)
+                    # Here we count every pixel value.  An individual pixel value count
+                    # represents samples of the image in the neighborhood of that value.
+                    # The neighborhood of a pixel value is the interval half way to the
+                    # next lowest and highest value.
 
-                    # Now that we know the data range, compute the bin values and then
-                    # loop over again to sort the pixels into bins.
-                    for i in frame:
-                        for j in i:
-                            binIndex = math.floor( (j-minValue)/binWidth )
-                            bins[binIndex] += 1
+                    # The histogram is constructed from the counts by dividing the counts
+                    # by the width of the neighborhood for each pixel value found.
+
+                    # Compression of the histogram is accomplished by the following process:
+                    #   1: Select a pixel value at random
+                    #       1a: Generate a random sequence of the indexes
+                    #       1b: Subtract from the index the count of deleted indices less
+                    #       than the generated index to generate an index to the squozen
+                    #       data.
+                    #   2: Perform a trial deletion of the pixel value, where the nearest
+                    #   two values and counts are adjusted minimize distortion of the
+                    #   histogram and preserve total count.
+                    #   3: Accept deletion randomly based on percent error of histogram
+                    #   introduced by the deletion.
+                    #       3a: Record the index of deleted value/count pairs.
+                    #   4: Repeat above until all pixel values have been tested exactly
+                    #   once.  Note that a pixel value and count changed by a deletion
+                    #   process may still be selected for trial deletion if it had not yet
+                    #   been selected.
+                    #   5: If histogram is still too large, loosen acception criteria and
+                    #   repeat.
+
+                    # TODO: There are known bugs for some images like M51-B_r.fit
+                    # Resolve by including jacobian, fixing the bounding, and generally
+                    # making the method faster.
+
+                    def histogramFromBinCounts(counts):
+                        """ Takes a SortedDict: key = bin center, value = count
+                        Returns a SortedDict:
+                        key = bin center,
+                        value = count density = count / bin neighborhood width """
+                        # Calculate histogram for interior
+                        # NOTE: Do we want to use fromkeys method here?
+                        histogram = SortedDict( zip(
+                            counts.islice(1,-1),
+                            map( lambda i : 2.0 * counts.values()[i] / (counts.keys()[i+1] - counts.keys()[i-1]), range(1, len(counts)-1) )
+                            ) )
+
+                        # Handle boundaries
+                        histogram[counts.values()[0]] = 1.0 * counts.values()[0] / (counts.keys()[1] - counts.keys()[0])
+                        histogram[counts.values()[-1]] = 1.0 * counts.values()[-1] / (counts.keys()[-1] - counts.keys()[-2])
+                        return(histogram)
+
+                    def overlapError(x, a):
+                        """ Takes two histograms as SortedDicts and returns the percent
+                        error of their overlap """
+                        b = SortedDict()
+                        b[a.peekitem(0)[0]] = a.peekitem(0)[1]
+                        b[x[0]] = x[1]
+                        b[x[2]] = x[3]
+                        b[a.peekitem(4)[0]] = a.peekitem(4)[1]
+                        if len(b) + 1 != len(a):
+                            print(a)
+                            print(b)
+                            print(x)
+                        assert(len(b) + 1 == len(a))
+
+                        aHist = histogramFromBinCounts(a)
+                        bHist = histogramFromBinCounts(b)
+
+                        initialArea = 0.0
+                        overlapArea = 0.0
+                        for i in range(1, len(aHist) - 1):
+                            leftBoundaryA = (aHist.peekitem(i-1)[0] + aHist.peekitem(i)[0]) / 2
+                            rightBoundaryA = (aHist.peekitem(i)[0] + aHist.peekitem(i+1)[0]) / 2
+                            heightA = aHist.peekitem(i)[1]
+
+                            initialArea += heightA*(rightBoundaryA - leftBoundaryA)
+
+                            for j in range(1, len(bHist) - 1):
+                                leftBoundaryB = (bHist.peekitem(j-1)[0] + bHist.peekitem(j)[0]) / 2
+                                rightBoundaryB = (bHist.peekitem(j)[0] + bHist.peekitem(j+1)[0]) / 2
+                                heightB = bHist.peekitem(j)[1]
+
+                                overlapHeight = max(0, min(heightA, heightB))
+                                overlapWidth = max(0, min(rightBoundaryA, rightBoundaryB) - max(leftBoundaryA, leftBoundaryB))
+
+                                overlapArea += overlapWidth * overlapHeight
+
+                        fitness = ((initialArea - overlapArea)*(initialArea - overlapArea))/(initialArea*initialArea)
+                        if fitness < 1.0e-10:
+                            fitness = 0
+                        return fitness
+
+                    def conserveTotalPixelCountConstraint(x, total):
+                        return (x[1] + x[3]) - total
+
+                    # Count all pixel values into a sorted dict with key of the pixel
+                    # value and the value is the number of pixels with that value.
+                    #TODO: This one line statement should replace this if statement, currently throws an error.
+                    #pixelCounts = SortedDict(Counter(frame))
+                    pixelCounts = SortedDict()
+                    for pixelRow in frame:
+                        for pixel in pixelRow:
+                            if pixel in pixelCounts:
+                                pixelCounts[pixel] += 1
+                            else:
+                                pixelCounts[pixel] = 1
+
+                    outputText += str(len(pixelCounts)) + " unique values, approx bits:" + str(math.log(len(pixelCounts), 2)) + "\n"
+
+                    # This will correspond to the maximum number of histogram bins
+                    uniqueValuesLimit = models.CosmicVariable.getVariable('histogramMaxBins')
+
+                    # Replacement rejection exponent, lower this to accept more disruptive
+                    # deletions.  This will automatically adjust if one pass is not
+                    # sufficient to reduce the number of unique values.
+                    rejectionExponent = models.CosmicVariable.getVariable('histogramRejectionExponent')
+
+                    while len(pixelCounts) > uniqueValuesLimit:
+                        initialUniqueValues = len(pixelCounts)
+
+                        # Initialize the list of deleted indices
+                        deletedIndices = SortedList()
+
+                        # Select in random order (almost) all unique pixel values to test
+                        # for trial deletion.
+                        for rawIndex in random.sample(range(2, initialUniqueValues - 2), initialUniqueValues - 4):
+                            # Adjust index to account for any deleted indices
+                            index = rawIndex - deletedIndices.bisect_left(rawIndex)
+
+                            # NOTE: Feel free to remove asserts if no errors occur
+                            currentLength = len(pixelCounts)
+                            assert(currentLength == initialUniqueValues - len(deletedIndices))
+                            assert(index > 0)
+                            assert(index < currentLength - 1)
+
+                            indexStart = index - 2
+                            indexEnd = index + 3
+
+                            a = SortedDict(itertools.islice(pixelCounts.items(), indexStart, indexEnd))
+                            assert(len(a) == 5)
+                            removedKey = a.peekitem(2)[0]
+                            removedCount = a.peekitem(2)[1]
+                            newCount1 = a.peekitem(1)[1] + removedCount/2.0
+                            newCount2 = a.peekitem(3)[1] + removedCount/2.0
+                            conservedCount = newCount1 + newCount2
+
+                            x0 = [
+                                a.peekitem(1)[0],
+                                newCount1,
+                                a.peekitem(3)[0],
+                                newCount2
+                                ]
+
+                            bounds = [
+                                (0.99*a.peekitem(0)[0] + 0.01*a.peekitem(1)[0],
+                                0.01*a.peekitem(1)[0] + 0.99*a.peekitem(2)[0] ),
+                                (a.peekitem(1)[1], None),
+                                (0.99*a.peekitem(2)[0] + 0.01*a.peekitem(3)[0],
+                                0.01*a.peekitem(3)[0] + 0.99*a.peekitem(4)[0]),
+                                (a.peekitem(3)[1], None)
+                                ]
+
+                            constraints = ({
+                                'type': 'eq',
+                                'fun' : conserveTotalPixelCountConstraint,
+                                'args': [conservedCount]
+                                })
+
+                            # TODO: Jacobian
+                            jacobian = []
+
+                            result = scipy.optimize.minimize(overlapError, x0, args=(a),
+                            bounds=bounds, constraints=constraints, method='SLSQP')
+                            if result.success:
+                                if result.fun < math.pow(random.uniform(0, 1), rejectionExponent):
+                                    deletedIndices.add(rawIndex)
+                                    pixelCounts.pop(removedKey)
+                                    pixelCounts.pop(x0[0])
+                                    pixelCounts.pop(x0[2])
+                                    pixelCounts[result.x[0]] = result.x[1]
+                                    pixelCounts[result.x[2]] = result.x[3]
+                            else:
+                                outputText += 'Minimization failed:\n\n' + str(result)
+
+                        deletionsThisCycle = initialUniqueValues - len(pixelCounts)
+                        deletionsNeeded = len(pixelCounts) - uniqueValuesLimit
+
+                        outputText += "Reduction step complete." +\
+                            " deletions: " + str(deletionsThisCycle) +\
+                            " , values: " + str(len(pixelCounts)) +\
+                            " , bits: " + str(math.ceil(math.log(len(pixelCounts), 2))) +\
+                            " , rejection exponent: " + str(rejectionExponent) +\
+                            " , deletions needed: " + str(deletionsNeeded) + "\n"
+
+                        # Adjust rejection exponent based on results
+                        if deletionsNeeded > 0:
+                            if (deletionsNeeded > deletionsThisCycle):
+                                rejectionExponent *= 1.0 - math.log(deletionsNeeded / deletionsThisCycle, rejectionExponent)
+                            else:
+                                if deletionsThisCycle > 0:
+                                    rejectionExponent *= 1.0 - math.log(deletionsNeeded / deletionsThisCycle, rejectionExponent)
+                                else:
+                                    rejectionExponent *= 2;
+
+                    sortedHistogramDict = histogramFromBinCounts(pixelCounts)
+
+                    for x in sortedHistogramDict:
+                        histogramBin = models.ImageHistogramBin(
+                            image = image,
+                            binCenter = x,
+                            binCount = sortedHistogramDict[x]
+                            )
+
+                        histogramBin.save()
 
                     plotFilename = "histogramData_{}_{}.gnuplot".format(image.pk, channelIndex)
                     binFilename = "histogramData_{}_{}.txt".format(image.pk, channelIndex)
@@ -272,36 +479,23 @@ def imagestats(filename):
                                          )
 
                     # Write the 2 column data to be read in by gnuplot.
-                    cumulativePixelFraction = 0.0
+                    totalCount = sum(sortedHistogramDict.itervalues())
+                    cumulativeCount = 0.0
                     with open("/cosmicmedia/" + binFilename, "w") as outputFile:
-                        for binCount, binNumber in zip(bins, range(len(bins))):
-                            if binCount == 0.0:
-                                continue
-
-
-                            binFloor = minValue + binNumber*binWidth
-                            binCount = binCount/numValidPixels
-                            cumulativePixelFraction += binCount
-
+                        for (binCenter, binCount) in sortedHistogramDict.iteritems():
                             # Skip writing values for up 0.05% of the darkest and
                             # brightest pixels. This is to match the parameters used in
                             # generating thumnails.
+                            cumulativeCount += binCount
+                            cumulativeFraction = cumulativeCount / totalCount
                             ignoreLower = 0.0005
                             ignoreUpper = 0.0005
-                            if cumulativePixelFraction <= ignoreLower:
+                            if cumulativeFraction <= ignoreLower:
                                 continue
-                            if cumulativePixelFraction - binCount >= 1.0 - ignoreLower:
+                            if cumulativeFraction - binCount >= 1.0 - ignoreLower:
                                 continue
 
-                            histogramBin = models.ImageHistogramBin(
-                                image = image,
-                                binFloor = binFloor,
-                                binCount = binCount
-                                )
-
-                            histogramBin.save()
-
-                            outputFile.write("{} {}\n".format(binFloor, binCount))
+                            outputFile.write("{} {}\n".format(binCenter, binCount))
 
                     outputText += "Running gnuplot:\n\n"
                     proc = subprocess.Popen(['gnuplot', "/cosmicmedia/" + plotFilename],
@@ -317,6 +511,7 @@ def imagestats(filename):
 
                     outputText += output
                     errorText += error
+
                     outputText += '\n ==================== End of process output ====================\n\n'
                     errorText += '\n ==================== End of process error =====================\n\n'
 
@@ -338,8 +533,6 @@ def imagestats(filename):
                     channelInfo.bgMean = bgMean
                     channelInfo.bgMedian = bgMedian
                     channelInfo.bgStdDev = bgStdDev
-                    channelInfo.numValidHistogramPixels = numValidPixels
-                    channelInfo.histogramBinWidth = binWidth
                     channelInfo.save()
 
                     channelIndex += 1

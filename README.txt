@@ -44,7 +44,8 @@ needed for a production site:
 
 sudo pip3 install pyinotify
 
-
+# SortedContainers - does what it says on the tin
+sudo pip3 install sortedcontainers
 
 Astropy is used for various calculations and data reductions on the server and
 on the celery worker nodes:

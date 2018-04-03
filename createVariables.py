@@ -18,3 +18,5 @@ CosmicVariable.setVariable('sextractorThreshold', 'float', '2.0')
 CosmicVariable.setVariable('daofindThreshold', 'float', '3.0')
 CosmicVariable.setVariable('starfindThreshold', 'float', '3.0')
 
+CosmicVariable.setVariable('histogramMaxBins', 'int', '255')
+CosmicVariable.setVariable('histogramRejectionExponent', 'float', '1000.0')
