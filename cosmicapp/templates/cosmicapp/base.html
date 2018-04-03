@@ -38,6 +38,20 @@
 	</div>
 	</li>
 
+	<li class="dropdown">
+	<a class="dropbtn">Browse</a>
+	<div class="dropdown-content">
+		<a href="/image/gallery/">Image Gallery</a>
+	</div>
+	</li>
+
+	<li class="dropdown">
+	<a class="dropbtn">Learn</a>
+	<div class="dropdown-content">
+		<!-- <a href="/image/gallery/">Image Gallery</a> -->
+	</div>
+	</li>
+
 {% if user.is_authenticated %}
   <li class="dropdown" style="float:right;">
     <a href="/user/{{user}}" class="dropbtn">{{user}}</a>
