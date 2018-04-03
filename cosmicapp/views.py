@@ -125,6 +125,7 @@ def upload(request):
 
             fileBase, fileExtension = os.path.splitext(record.onDiskFileName)
 
+            #TODO: Do a better job of checking the file type here and take appropriate action.
             if fileExtension.lower() in settings.SUPPORTED_IMAGE_TYPES:
                 with transaction.atomic():
                     imageRecord = Image(
