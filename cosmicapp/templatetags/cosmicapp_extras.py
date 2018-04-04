@@ -1,6 +1,7 @@
 from django import template
 import math
 import ephem
+import markdown
 from datetime import timedelta
 
 register = template.Library()
@@ -66,6 +67,10 @@ def percentage(value, arg, rangeMin=0, rangeMax=100):
 @register.filter
 def invert(value):
     return 1.0/value
+
+@register.filter
+def markdownParse(value):
+    return markdown.markdown(value)
 
 @register.inclusion_tag('cosmicapp/bookmarkDiv.html', takes_context=True)
 def bookmark(context, targetType, targetID, folderName, prefix=None, postfix=None):
