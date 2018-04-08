@@ -1572,15 +1572,23 @@ def parseHeaders(imageId):
 
             elif header.key in ['fits:observer']:
                 key = 'observerName'
-                value = header.value.split()[0].strip().strip("'").lower()
+                value = header.value.split('/')[0].strip().strip("'").lower()
 
-            elif header.key in ['fits:sitelat']:
+            elif header.key in ['fits:observat']:
+                key = 'observatoryName'
+                value = header.value.split('/')[0].strip().strip("'").lower()
+
+            elif header.key in ['fits:sitelat', 'fits:lat-obs']:
                 key = 'observerLat'
-                value = header.value.split()[0].strip().strip("'").lower()
+                value = header.value.split('/')[0].strip().strip("'").lower()
 
-            elif header.key in ['fits:sitelong']:
+            elif header.key in ['fits:sitelong', 'fits:long-obs']:
                 key = 'observerLon'
-                value = header.value.split()[0].strip().strip("'").lower()
+                value = header.value.split('/')[0].strip().strip("'").lower()
+
+            elif header.key in ['fits:alt-obs']:
+                key = 'observerAlt'
+                value = header.value.split('/')[0].strip().strip("'").lower()
 
             elif header.key in ['fits:pierside']:
                 key = 'pierSide'
@@ -1593,15 +1601,15 @@ def parseHeaders(imageId):
             #TODO: Check if there is a declination component for hour angle or if it just uses regular declination.
             elif header.key in ['fits:objctha']:
                 key = 'objectHA'
-                value = header.value.split()[0].strip().strip("'").lower()
+                value = header.value.split('/')[0].strip().strip("'").lower()
 
-            elif header.key in ['fits:objctra']:
+            elif header.key in ['fits:objctra', 'fits:ra']:
                 key = 'objectRA'
-                value = header.value.split()[0].strip().strip("'").lower()
+                value = header.value.split('/')[0].strip().strip("'").lower()
 
-            elif header.key in ['fits:objctdec']:
+            elif header.key in ['fits:objctdec', 'fits:dec']:
                 key = 'objectDec'
-                value = header.value.split()[0].strip().strip("'").lower()
+                value = header.value.split('/')[0].strip().strip("'").lower()
 
             elif header.key in ['fits:equinox']:
                 key = 'equinox'
@@ -1658,7 +1666,8 @@ def parseHeaders(imageId):
             key = key.strip()
             value = value.strip()
 
-            image.addImageProperty(key, value, False, header)
+            if key != "" and value != "":
+                image.addImageProperty(key, value, False, header)
 
         # Handle data split across multiple header fields like dateObs and timeObs.
         dateObsResult = models.ImageProperty.objects.filter(image=image, key='dateObs').first()
