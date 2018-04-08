@@ -58,6 +58,16 @@ r, created = QuestionResponse.objects.get_or_create(
     question = qImageProblems,
     index = 2,
     inputType = 'checkbox',
+    text = 'Streaks or lines across at odd angles',
+    descriptionText = 'Bright lines running across the image from airplanes, satelites, meteors, or from mosaicing multiple images together.',
+    keyToSet = 'badStreaks',
+    valueToSet = 'yes'
+    )
+
+r, created = QuestionResponse.objects.get_or_create(
+    question = qImageProblems,
+    index = 3,
+    inputType = 'checkbox',
     text = 'Bad lines',
     descriptionText = 'More than a few scatterered bad lines, several large clusters of many bad lines near eachother.',
     keyToSet = 'badLines',
@@ -66,7 +76,7 @@ r, created = QuestionResponse.objects.get_or_create(
 
 r, created = QuestionResponse.objects.get_or_create(
     question = qImageProblems,
-    index = 3,
+    index = 4,
     inputType = 'checkbox',
     text = 'Bad pixels',
     descriptionText = 'More than a few scatterered bad pixels, several large clusters of many bad pixels near eachother.',
@@ -76,7 +86,7 @@ r, created = QuestionResponse.objects.get_or_create(
 
 r, created = QuestionResponse.objects.get_or_create(
     question = qImageProblems,
-    index = 4,
+    index = 5,
     inputType = 'checkbox',
     text = 'Not full frame',
     descriptionText = 'The image data does not completely fill the image file.',
@@ -86,7 +96,7 @@ r, created = QuestionResponse.objects.get_or_create(
 
 r, created = QuestionResponse.objects.get_or_create(
     question = qImageProblems,
-    index = 5,
+    index = 6,
     inputType = 'checkbox',
     text = 'Not science',
     descriptionText = 'The image is not science data (or calibration data), it is a picture of a person, a telescope, or anything else.',
