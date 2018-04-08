@@ -525,8 +525,8 @@ class ImageHeaderField(models.Model):
     """
     image = models.ForeignKey(Image, db_index=True, on_delete=models.CASCADE)
     index = models.IntegerField(null=True)
-    key = models.TextField(null=True)
-    value = models.TextField(null=True)
+    key = models.TextField()
+    value = models.TextField()
 
 class ImageProperty(models.Model):
     """
