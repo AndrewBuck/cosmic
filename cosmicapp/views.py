@@ -528,7 +528,7 @@ def imageProperties(request, id):
 
     context['image'] = image
 
-    properties = ImageProperty.objects.filter(image_id=image.pk)
+    properties = ImageProperty.objects.filter(image_id=image.pk).order_by('key', 'value')
     context['properties'] = properties
 
     hduList = fits.open(settings.MEDIA_ROOT + image.fileRecord.onDiskFileName)
