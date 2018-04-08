@@ -1287,6 +1287,8 @@ def astrometryNet(filename):
             ]
 
     ra, dec = image.getBestRaDec()
+    objectRA = image.getImageProperty('objectRA')
+    objectDec = image.getImageProperty('objectDec')
     if ra is not None:
         argArray.append('--ra')
         argArray.append(str(ra))
@@ -1295,7 +1297,23 @@ def astrometryNet(filename):
         argArray.append('--radius')
         argArray.append(str(models.CosmicVariable.getVariable('astrometryNetRadius')))
 
+        outputText += 'Image has a previous plate solution.\n'
         outputText += 'Searching a {} degree radius around the ra, dec of ({}, {})\n'.format(models.CosmicVariable.getVariable('astrometryNetRadius'), ra, dec)
+
+    elif objectRA != None and objectDec != None:
+        #TODO: These are in 'H M S' / 'D M S' format, the split statement only looks at the first part, this is ok since it is only approximate anyway, but this could be done better.
+        objectRA = 15*int(objectRA.split()[0])
+        objectDec = int(objectDec.split()[0])
+
+        argArray.append('--ra')
+        argArray.append(str(objectRA))
+        argArray.append('--dec')
+        argArray.append(str(objectDec))
+        argArray.append('--radius')
+        argArray.append(str(models.CosmicVariable.getVariable('astrometryNetRadius')))
+
+        outputText += 'Image has target RA and Dec in the image header.\n'
+        outputText += 'Searching a {} degree radius around the ra, dec of ({}, {})\n'.format(models.CosmicVariable.getVariable('astrometryNetRadius'), objectRA, objectDec)
 
     else:
         outputText += 'Image has no plate solution or header data indicating where to search, searching the whole sky.\n'
