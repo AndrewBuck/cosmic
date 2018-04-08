@@ -230,7 +230,7 @@ def imagestats(filename):
     #   3: Detect haze and clouds
 
     outputText += "imagestats:background: " + filename + "\n"
-    if os.path.splitext(filename)[-1].lower() in ['.fit', '.fits']:
+    if os.path.splitext(filename)[-1].lower() in settings.SUPPORTED_IMAGE_TYPES:
         hdulist = fits.open(settings.MEDIA_ROOT + filename)
         with transaction.atomic():
             channelIndex = 0
