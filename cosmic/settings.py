@@ -145,7 +145,7 @@ MEDIA_ROOT = '/cosmicmedia/'
 
 CELERY_RESULT_BACKEND = 'django-db'
 
-SUPPORTED_IMAGE_TYPES = [".fit", ".fits"]
+SUPPORTED_IMAGE_TYPES = [".fit", ".fits", ".fts"]
 
 # When running parseHeaders these keys are not written into the database at all.
 IGNORED_KEYS = ['date:modify', 'date:create']
