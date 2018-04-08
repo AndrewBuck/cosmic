@@ -1236,9 +1236,11 @@ def astrometryNet(filename):
             'outputErrorText': errorText
             }
 
+        image.addImageProperty('astrometryNet', 'skippedCalibration')
         return processOutput
 
 
+    #TODO: Move this to after we know if the task actually has to run or not.
     superMatches = models.SourceFindMatch.objects.filter(image=image)
 
     xValues = []
