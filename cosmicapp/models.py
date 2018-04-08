@@ -565,7 +565,7 @@ class ImageChannelInfo(models.Model):
 
 class ImageHistogramBin(models.Model):
     image = models.ForeignKey(Image, on_delete=models.CASCADE)
-    binFloor = models.FloatField()
+    binCenter = models.FloatField()
     binCount = models.FloatField()
 
 class ImageTransform(models.Model):
