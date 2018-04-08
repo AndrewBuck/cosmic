@@ -57,6 +57,11 @@ def processes(request, process=None):
     else:
         return HttpResponse('Process "' + process + '" not found.', status=400, reason='Parameters missing.')
 
+def learn(request, process=None):
+    context = {"user" : request.user}
+
+    return render(request, "cosmicapp/learn.html", context)
+
 def createuser(request):
     context = {"user" : request.user}
 

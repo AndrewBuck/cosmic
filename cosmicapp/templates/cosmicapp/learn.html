@@ -1,0 +1,20 @@
+{% extends "cosmicapp/base.html" %}
+
+{% load static %}
+{% load cosmicapp_extras %}
+
+{% block extratitle %} - Learn {% endblock extratitle %}
+
+{% block extrahead %}
+{% endblock extrahead %}
+
+{% block mainbody %}
+
+{% filter markdownParse %}
+## Learn ##
+
+Here you will find resources to learn about astronomy in general, but with a focus toward
+observational astronomy and the science done using measurements submitted by amateurs.
+{% endfilter %}
+
+{% endblock mainbody %}

@@ -63,6 +63,7 @@ urlpatterns = [
     url(r'^save/instrumentConfigurationLink/$', views.saveInstrumentConfigurationLink),
     url(r'^save/newInstrumentConfiguration/$', views.saveNewInstrumentConfiguration),
     url(r'^save/query/$', views.saveQuery),
+
     url(r'^delete/userOwnedEquipment/$', views.deleteUserOwnedEquipment),
     url(r'^delete/instrumentConfigurationLink/$', views.deleteInstrumentConfigurationLink),
     url(r'^delete/instrumentConfiguration/$', views.deleteInstrumentConfiguration),
@@ -75,6 +76,8 @@ urlpatterns = [
     url(r'^about/$', views.about),
     url(r'^about/processes/$', views.processes),
     url(r'^about/processes/(?P<process>[a-zA-Z0-9]+)$', views.processes),
+
+    url(r'^learn/$', views.learn),
 
     url(r'^export/bookmarks/$', views.exportBookmarks),
 
