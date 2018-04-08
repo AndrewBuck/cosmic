@@ -1257,14 +1257,21 @@ def getQuestionImage(request, id):
         responsesHTML = ''
         responsesHTML += "<input type='hidden' name='csrfmiddlewaretoken' value='" + csrf.get_token(request) + "' />\n"
         responsesHTML += "<input type='hidden' name='questionID' value='" + str(question.pk) + "' />\n"
+        responsesHTML += "<table>\n"
         for response in responses:
+            responsesHTML += '<tr>'
+            responsesHTML += '<td>'
             if response.inputType == 'radioButton':
                 responsesHTML += '<input type="radio" name="' + response.keyToSet +'" value="' + response.valueToSet + '">'
-                responsesHTML += response.text + ' - <i>' + response.descriptionText + '</i><br>\n\n'
             elif response.inputType == 'checkbox':
                 responsesHTML += '<input type="checkbox" name="' + response.keyToSet +'" value="' + response.valueToSet + '">'
-                responsesHTML += response.text + ' - <i>' + response.descriptionText + '</i><br>\n\n'
 
+            responsesHTML += '</td><td>'
+            responsesHTML += response.text + ' - <i>' + response.descriptionText + '</i><br>\n\n'
+            responsesHTML += '</td>'
+            responsesHTML += '</tr>'
+
+        responsesHTML += "</table>\n"
         questionDict = {}
         questionDict['id'] = str(question.pk)
         questionDict['text'] = question.text
