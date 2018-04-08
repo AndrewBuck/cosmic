@@ -1,11 +1,164 @@
 {% extends "cosmicapp/processDescriptionTemplate.html" %}
+{% load cosmicapp_extras %}
 
 {% block extratitle %} - About astrometryNet {% endblock extratitle %}
 
 {% block processName %}astrometryNet{% endblock %}
 
 {% block synopsis %}
+{% filter markdownParse %}
+Astrometry.net is a suite of programs designed to calculate [plate solutions](/learn/plate_solution)
+for images with little or no information known about the images beforehand.
+{% endfilter %}
 {% endblock %}
 
 {% block description %}
+{% filter markdownParse %}
+On Cosmic, the Astrometry.net plate solver is the primary astrometry tool in use.  The
+plate solver is fed a custom generated list of detected stars which is produced by the
+source detection pipeline.  A short description of the way this list is generated is given
+below.
+
+#### Source Detection ####
+Here is an overview of the process outlined below:
+
+* Detect individual stars using several different detection algorithms
+* Flag sources near bad pixels or image edges
+* Match sources detected in different methods against eachother and against sources
+  manually marked by users.
+* Flag the sources a second time so that the matched results get flagged as well
+* Call the Astrometry.net plate solver using the *confidence* of each detetcted result as
+  the sort order instead of the default: sorting by *magnitude*
+
+To begin, the image is processed by multiple source detection methods (including
+[sextractor][] and [image2xy][] which are the normal options used by astrometry.net).  The
+reason for using multiple detection methods is that no method does well on all images,
+however they all seem to have trouble with different kinds of images, so for any given
+image, generally at least one of the methods will work well.
+
+After all the different individual source detection methods have run and stored their
+results in the database, they are then put through the [flagSources][] task to mark any
+sources near known hot pixels, bad lines, bad columns, or near edges.
+
+Next, the most important step in the reduction process, the matching of stars detected by different
+methods against eachother.  Currently the matching is done in a pretty naive way, any
+stars detected within 3 pixels of eachother are considered to be the same source.
+Although this does break down for very nearby stars, it works well enough overall to
+produce a good list of likely sources to feed to Astrometry.net.
+
+After the list of matches is computed and stored in the database it is run through the
+flagSources task a second time to flag the matched sources themselves.  This second
+running of the process is a bit redundant, since the flags can be derived from the
+individual linked sources, but for now we just run flagSources to do it automatically.
+
+Finally, the list of detected sources in the image has been prepared and can be fed to
+Astrometry.net to try to determine the proper plate solution.  The source results given to
+the plate solver are the ones taken from the *multiple source matches* table, which means
+that no matter how bright a detected source is, it won't be given to the plate solver
+unless at least 2 separate methods have detected it (objects marked by users are counted
+as two objects for this purpose so that they are always included).  Under normal
+operation, Astrometry.net will sort the detected sources by magnitude, choosing the
+brightest stars first since they are most likely to be in its indexes.  For Cosmic, we
+actually provide the results sorted by *confidence*, rather than *magnitude*.  The reason
+for this is that instrumental magnitudes from the different methods are difficult to
+compare directly.  Furthermore, the confidence is strongly correlated with the object's
+brightness, so the differences in the two sort orders will not be that great
+anyway; with the exception of sources flagged as having hot pixels near them, or sources
+marked by users (which are assumed to have high confidence).
+
+#### Solver Parameter Selection ####
+
+The parameters given to Astrometry.net when it runs are chosen by Cosmic each time it
+runs on a given image.  Whenever the solver is run we try to provide as much of a *hint*
+as we can about where on the sky the image might actually be.  The more we can tell the
+solver about a given image, the faster it will be able to find the exact plate solution.
+Since most users will only own one set of equipment (or at most a few diffferent setups)
+we generally have a very good sense of the image scale that the plate solution will end up
+with.  This, by itself, cuts down the number of indexes to search by quite a bit.  The
+simplest case is when the uploaded image already has a high quality plate solution: in
+this case we can tell Astrometry.net exactly where to look and very quickly confirm the
+validity of the solution.
+
+In general, however, the problem of finding a plate solution reduces to finding the answer to
+several questions.  These questions are listed below, along with the kinds of hints about
+the answer to that question that are reaonable to assume, and how Cosmic can aid
+Astrometry.net in answering these questions:
+
+* Where on the sky is the image?
+
+    * *(Not yet implemented)* If we assume the user uploading the image took it, we can reasonably guess it was taken
+      from the same location as their other images and the portion of the sky imaged must
+      have been visible from there at that time.  *This cuts the search space roughly in half.*
+
+    * *(Not yet implemented)* If other images uploaded by the same user were taken around the same time, they
+      likely are of the same object (or one fairly close to it).  *For time series
+      sequences of a given object, this heuristic will narrow the search space to almost
+      nothing.*
+
+    * If the software used to produce the images listed a target object, or target RA/Dec,
+      in the image header, *we can narrow the position of the center of the image to almost nothing.*
+
+    * *(Not yet implemented)* If the user who uploaded the image created an observing plan for the time the image
+      was taken, we can reasonably assume they were following the plan we gave them (at
+      least if they have done so in the past).  *In this case we can narrow the seach space
+      to almost nothing.*
+
+* What scale (in both x and y axes) is the image?
+
+    * *(Not yet implemented)* If we have a good understanding of what equipment a user owns, we know the maximum
+      range of scale they could possibly have (assuming the image in question was taken
+      with equipment we know about).  *For user with only a single set of equipment, or
+      similar equipment, this narrows the search space to a very small range of scales.*
+      If we know the specific equipment used to take an image (i.e. from looking at image
+      headers, etc) *we can narrow the search space to almost nothing.*
+
+    * *(Not yet implemented)* If the image looks like it was from a telescope we can reasonably assume that the
+      size of stars in the image is somthing on the order of a few arcseconds (from seeing
+      distortion and diffraction effects).  *This narrows the search space signifigantly,
+      but is only reliable if the image is seeing/diffraction limited.*
+
+* How is the image rotated and/or flipped on the sky?
+
+    * *Note: Astrometry.net does not currently have a way to specify a range of image
+      rotations so none of these can be implemented, they are included here for
+      completeness.*
+
+    * For users with polar mounted telescopes, the field rotation should be nearly
+      identical across all images (unless the telecope is re-assembled with the camera
+      rotated on the telecope OTA).
+
+    * For users with alt-azimuth mounted telescopes, the field rotation is a function of
+      where on the sky they are imaging and the time of the image.  Because the field
+      rotation depends on the sky position of the image (which we are trying to solve for)
+      *this method cannot meaningfully add to the guess of the field rotation.*
+
+    * For images taken from handheld cameras or from unknown equipment, *almost nothing
+      can be inferred about the image rotation.*
+
+After considering all of these hints about what part of the sky an image covers we
+determine the smallest portion of the search space (in position and scale) we can
+resonably restrict the image to.  These parameters are then fed to Astrometry.net, along
+with the detected sources from above in an attempt to find an exact plate solution.
+
+After Astrometry.net has finished running it writes the plate solution (if one was found)
+to the database as an additional plate solution for that image (since an image can have
+more than one plate solution).  The plate solution is written with a *source* field entry
+set to *astrometry.net* to indicate that it was found by Cosmic, after the image was
+uploaded, using Astrometry.net with our own settings and sources.
+
+If a plate solution was successfully found the image will have an image property added to it with
+[astrometryNet=success](/image/gallery/?queryParams=imageProperty=astrometryNet=success&displayType=table)
+and for images which do not find a valid solution (for whatever reason) will have the property
+[astrometryNet=failure](/image/gallery/?queryParams=imageProperty=astrometryNet=failure&displayType=table)
+added to them.  If the plate solver was skipped entirely because the image is a *dark
+frame*, *bias frame*, or *flat field frame* then the image will have the property
+[astrometryNet=skippedCalibration](/image/gallery/?queryParams=imageProperty=astrometryNet=skippedCalibration&displayType=table)
+set on it.
+
+[flagSources]: /about/processes/flagSources
+[sextractor]: /about/processes/sextractor
+[image2xy]: /about/processes/image2xy
+{% endfilter %}
+
 {% endblock %}
+
