@@ -58,7 +58,17 @@ r, created = QuestionResponse.objects.get_or_create(
     question = qImageProblems,
     index = 2,
     inputType = 'checkbox',
-    text = 'Streaks or lines across at odd angles',
+    text = 'Needs cropping',
+    descriptionText = 'There is a region around the perimeter of the image (or just along some edges) that needs to be trimmed off as it contains bad data (or calibration data).',
+    keyToSet = 'needsCropping',
+    valueToSet = 'yes'
+    )
+
+r, created = QuestionResponse.objects.get_or_create(
+    question = qImageProblems,
+    index = 3,
+    inputType = 'checkbox',
+    text = 'Streaks',
     descriptionText = 'Bright lines running across the image from airplanes, satelites, meteors, or from mosaicing multiple images together.',
     keyToSet = 'badStreaks',
     valueToSet = 'yes'
@@ -66,7 +76,7 @@ r, created = QuestionResponse.objects.get_or_create(
 
 r, created = QuestionResponse.objects.get_or_create(
     question = qImageProblems,
-    index = 3,
+    index = 4,
     inputType = 'checkbox',
     text = 'Bad lines',
     descriptionText = 'More than a few scatterered bad lines, several large clusters of many bad lines near eachother.',
@@ -76,7 +86,7 @@ r, created = QuestionResponse.objects.get_or_create(
 
 r, created = QuestionResponse.objects.get_or_create(
     question = qImageProblems,
-    index = 4,
+    index = 5,
     inputType = 'checkbox',
     text = 'Bad pixels',
     descriptionText = 'More than a few scatterered bad pixels, several large clusters of many bad pixels near eachother.',
@@ -86,7 +96,7 @@ r, created = QuestionResponse.objects.get_or_create(
 
 r, created = QuestionResponse.objects.get_or_create(
     question = qImageProblems,
-    index = 5,
+    index = 6,
     inputType = 'checkbox',
     text = 'Not full frame',
     descriptionText = 'The image data does not completely fill the image file.',
@@ -96,7 +106,7 @@ r, created = QuestionResponse.objects.get_or_create(
 
 r, created = QuestionResponse.objects.get_or_create(
     question = qImageProblems,
-    index = 6,
+    index = 7,
     inputType = 'checkbox',
     text = 'Not science',
     descriptionText = 'The image is not science data (or calibration data), it is a picture of a person, a telescope, or anything else.',
@@ -106,7 +116,7 @@ r, created = QuestionResponse.objects.get_or_create(
 
 r, created = QuestionResponse.objects.get_or_create(
     question = qImageProblems,
-    index = 6,
+    index = 7,
     inputType = 'checkbox',
     text = 'Spam',
     descriptionText = 'The image is an advertisement, etc.',
@@ -116,7 +126,7 @@ r, created = QuestionResponse.objects.get_or_create(
 
 r, created = QuestionResponse.objects.get_or_create(
     question = qImageProblems,
-    index = 7,
+    index = 8,
     inputType = 'checkbox',
     text = 'xxx',
     descriptionText = 'The image contains adult content, or otherwise obscene material that should not be shown to non-moderators.',
