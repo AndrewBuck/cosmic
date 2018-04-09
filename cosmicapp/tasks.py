@@ -27,9 +27,18 @@ from collections import Counter
 from sortedcontainers import SortedList, SortedDict
 
 from cosmicapp import models
-from .functions import longestCommonPrefix
 
 staticDirectory = os.path.dirname(os.path.realpath(__file__)) + "/static/cosmicapp/"
+
+def longestCommonPrefix(string1, string2):
+    length = 0
+    for a, b in zip(string1, string2):
+        if a == b:
+            length += 1
+        else:
+            break
+
+    return str(string1)[0:length]
 
 def sigmoid(x):
     return 1 / (1 + math.exp(-x))
