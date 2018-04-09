@@ -535,7 +535,7 @@ def imagestats(filename):
                             ignoreUpper = 0.0005
                             if cumulativeFraction <= ignoreLower:
                                 continue
-                            if cumulativeFraction - binCount >= 1.0 - ignoreLower:
+                            if cumulativeFraction - binCount >= 1.0 - ignoreUpper:
                                 continue
 
                             outputFile.write("{} {}\n".format(binCenter, binCount))
