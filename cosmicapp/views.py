@@ -1115,7 +1115,9 @@ def questionImage(request, id):
     try:
         if(id == -1):
             # Get a list of image id's in the database sorted by how many answers each one has.
-            pks = Image.objects.annotate(numAnswers=Count('answers'))\
+            # We consider a plate solution to be worth 3 question answers so we tend to
+            # focus on answering questions about unsolved plates first.
+            pks = Image.objects.annotate(numAnswers=Count('answers')+3*Count('plateSolutions'))\
                 .order_by('numAnswers').values_list('pk', flat=True)[:100]
 
             # Choose a random image id from this list with a bias towards the beginning
