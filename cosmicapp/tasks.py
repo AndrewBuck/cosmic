@@ -1680,6 +1680,7 @@ def parseHeaders(imageId):
                 value = str(abs(int(header.value.split()[0].strip())))
 
             else:
+                errorText += 'Warning: Unhandled header key: ' + header.key + '\n'
                 continue
 
             # Many of these are stripped already, but strip them once more just to be sure no extra whitespace got included.
