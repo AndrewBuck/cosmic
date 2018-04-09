@@ -532,6 +532,10 @@ class ImageHeaderField(models.Model):
     key = models.TextField()
     value = models.TextField()
 
+class ImageHeaderFieldCommonEnding(models.Model):
+    key = models.TextField(db_index=True)
+    ending = models.TextField()
+
 class ImageProperty(models.Model):
     """
     A record storing sanitized and normalized image metadata key value pairs.  Most of these records will be derived from

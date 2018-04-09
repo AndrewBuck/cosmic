@@ -27,6 +27,7 @@ from collections import Counter
 from sortedcontainers import SortedList, SortedDict
 
 from cosmicapp import models
+from .functions import longestCommonPrefix
 
 staticDirectory = os.path.dirname(os.path.realpath(__file__)) + "/static/cosmicapp/"
 
@@ -1390,7 +1391,58 @@ def parseHeaders(imageId):
     headers = models.ImageHeaderField.objects.filter(image=imageId)
 
     with transaction.atomic():
+        # Loop over all the headers for this image, determine if their ending comment is
+        # the same as another previously seen header.  Then parse the key=value pair into
+        # an ImageProperty that is more standardized than the dizzying variety of formats
+        # used in fits headers in the wild.
         for header in headers:
+            # Look for comments at the end of the 'value' portion of the header to build
+            # up a list of commonly used comments.  By enumerating as many as we can
+            # automatically and manually flagging a few others that get missed, we should
+            # be able to build a very large dataset of comments used in different fields.
+            # Then, data-mining this dataset could help us discover alternate keys for the
+            # same field, and other things like that.  It will also help in building
+            # regular expressions which help capture this text to strip it from the
+            # headers before parsing below.  This will make it signifigantly easier to
+            # refactor the parsing code to group common parsing code since the format of
+            # the actual data is much more standard than the comments (which could
+            # literally contain any string of characters which confuses the parser).
+            commonEndings = models.ImageHeaderFieldCommonEnding.objects.filter(key=header.key)
+
+            # Check to see that there is exactly one comment identifier in the string (a
+            # bit overly strict for now but prevents a lot of false positives).
+            count = header.value.count(' /')
+            if count == 1:
+                idx = header.value.find(' /')
+                reversedValue = header.value[:idx-1:-1]
+            else:
+                reversedValue = ""
+
+            # Loop over all the other ImageHeaderFields that are already in the database for this same key.
+            keys = models.ImageHeaderField.objects.filter(key=header.key).distinct('value')
+            for otherKey in keys:
+                #TODO: Consider adding value__contains to the db query to avoid this if statement.
+                idx = otherKey.value.find(' /')
+                if idx != -1:
+                    reversedOtherValue = otherKey.value[:idx-1:-1]
+                else:
+                    continue
+
+                # Check the two reversed strings and find the longest string that is
+                # common to both as a prefix (or a suffix in this case since they are reversed).
+                suffix = longestCommonPrefix(reversedValue, reversedOtherValue)[::-1]
+                #TODO: This 'startswith' clause is a bit of a hack, should not be needed, try to fix this.
+                if len(suffix) > 3 and suffix.startswith(' /'):
+                    commonEnding, created = models.ImageHeaderFieldCommonEnding.objects.get_or_create(
+                        key = header.key,
+                        ending = suffix
+                        )
+
+            # Re-run the query to pick up any new common endings that were just added to the database.
+            # NOTE: This is commented out for now because we don't do anything with the query anyway.
+            # It is here to be uncommented in the future if we actually want to use these for something.
+            #commonEndings = models.ImageHeaderFieldCommonEnding.objects.filter(key=header.key)
+
             if header.key == 'fits:bitpix':
                 key = 'bitDepth'
                 value = str(abs(int(header.value.split()[0])))

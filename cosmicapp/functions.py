@@ -6,6 +6,16 @@ from .models import *
 from .tasks import *
 from .templatetags.cosmicapp_extras import formatRA, formatDec
 
+def longestCommonPrefix(string1, string2):
+    length = 0
+    for a, b in zip(string1, string2):
+        if a == b:
+            length += 1
+        else:
+            break
+
+    return str(string1)[0:length]
+
 def formatSqlQuery(query):
     s = query.query.__str__()
     return sqlparse.format(s, reindent=True, keyword_case='upper')
