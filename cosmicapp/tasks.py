@@ -15,6 +15,7 @@ import math
 import random
 import dateparser
 import scipy
+import numpy
 import ephem
 from datetime import timedelta
 
@@ -281,10 +282,6 @@ def imagestats(filename):
                     #   5: If histogram is still too large, loosen acception criteria and
                     #   repeat.
 
-                    # TODO: There are known bugs for some images like M51-B_r.fit
-                    # Resolve by including jacobian, fixing the bounding, and generally
-                    # making the method faster.
-
                     def histogramFromBinCounts(counts):
                         """ Takes a SortedDict: key = bin center, value = count
                         Returns a SortedDict:
@@ -303,44 +300,75 @@ def imagestats(filename):
                         return(histogram)
 
                     def overlapError(x, a):
-                        """ Takes two histograms as SortedDicts and returns the percent
-                        error of their overlap """
-                        b = SortedDict()
-                        b[a.peekitem(0)[0]] = a.peekitem(0)[1]
-                        b[x[0]] = x[1]
-                        b[x[2]] = x[3]
-                        b[a.peekitem(4)[0]] = a.peekitem(4)[1]
-                        if len(b) + 1 != len(a):
-                            print(a)
-                            print(b)
-                            print(x)
-                        assert(len(b) + 1 == len(a))
+                        """ Computes the percent overlap of the histogram defined by two
+                        sets of bin center / bin count pairs. """
+                        aCenters = numpy.array(a.keys())
+                        aCounts = numpy.array(a.values())
+                        bCenters = numpy.array([ aCenters[0], x[0], x[2], aCenters[4] ])
+                        bCounts = numpy.array([ aCounts[0], x[1], x[3], aCounts[4] ])
+                        assert( len(bCenters) + 1 == len(aCenters) )
 
-                        aHist = histogramFromBinCounts(a)
-                        bHist = histogramFromBinCounts(b)
+                        aLeft = numpy.array([
+                            1.5*aCenters[0] - 0.5*aCenters[1],
+                            0.5*(aCenters[0] + aCenters[1]),
+                            0.5*(aCenters[1] + aCenters[2]),
+                            0.5*(aCenters[2] + aCenters[3]),
+                            0.5*(aCenters[3] + aCenters[4])
+                            ])
 
-                        initialArea = 0.0
-                        overlapArea = 0.0
-                        for i in range(1, len(aHist) - 1):
-                            leftBoundaryA = (aHist.peekitem(i-1)[0] + aHist.peekitem(i)[0]) / 2
-                            rightBoundaryA = (aHist.peekitem(i)[0] + aHist.peekitem(i+1)[0]) / 2
-                            heightA = aHist.peekitem(i)[1]
+                        bLeft = numpy.array([
+                            1.5*bCenters[0] - 0.5*bCenters[1],
+                            0.5*(bCenters[0] + bCenters[1]),
+                            0.5*(bCenters[1] + bCenters[2]),
+                            0.5*(bCenters[2] + bCenters[3])
+                            ])
 
-                            initialArea += heightA*(rightBoundaryA - leftBoundaryA)
+                        aRight = numpy.array([
+                            0.5*(aCenters[0] + aCenters[1]),
+                            0.5*(aCenters[1] + aCenters[2]),
+                            0.5*(aCenters[2] + aCenters[3]),
+                            0.5*(aCenters[3] + aCenters[4]),
+                            1.5*aCenters[4] - 0.5*aCenters[3]
+                            ])
 
-                            for j in range(1, len(bHist) - 1):
-                                leftBoundaryB = (bHist.peekitem(j-1)[0] + bHist.peekitem(j)[0]) / 2
-                                rightBoundaryB = (bHist.peekitem(j)[0] + bHist.peekitem(j+1)[0]) / 2
-                                heightB = bHist.peekitem(j)[1]
+                        bRight = numpy.array([
+                            0.5*(bCenters[0] + bCenters[1]),
+                            0.5*(bCenters[1] + bCenters[2]),
+                            0.5*(bCenters[2] + bCenters[3]),
+                            1.5*bCenters[3] - 0.5*bCenters[2],
+                            ])
 
-                                overlapHeight = max(0, min(heightA, heightB))
-                                overlapWidth = max(0, min(rightBoundaryA, rightBoundaryB) - max(leftBoundaryA, leftBoundaryB))
+                        aWidth = aRight - aLeft
+                        bWidth = bRight - bLeft
 
-                                overlapArea += overlapWidth * overlapHeight
+                        aHistogram = aCounts / aWidth
+                        bHistogram = bCounts / bWidth
 
-                        fitness = ((initialArea - overlapArea)*(initialArea - overlapArea))/(initialArea*initialArea)
-                        if fitness < 1.0e-10:
-                            fitness = 0
+                        overlapHeightMins = numpy.empty([5,4])
+                        overlapHeightMins.flat = list( min(x,y) for (x,y) in
+                            itertools.product(aHistogram,bHistogram) )
+
+                        overlapLeftMaxs = numpy.empty([5,4])
+                        overlapLeftMaxs.flat = list( max(x,y) for (x,y) in
+                            itertools.product(aLeft,bLeft) )
+
+                        overlapRightMins = numpy.empty([5,4])
+                        overlapRightMins.flat = list( min(x,y) for (x,y) in
+                            itertools.product(aRight,bRight) )
+
+                        overlapWidths = overlapRightMins - overlapLeftMaxs
+
+                        overlapMask = overlapRightMins > overlapLeftMaxs
+
+                        overlapAreas = overlapMask * overlapHeightMins * overlapWidths
+
+                        initialArea = sum(aCounts)
+                        totalOverlapArea = sum(overlapAreas.flat)
+                        fitness = (initialArea - totalOverlapArea) / initialArea
+                        fitness *= fitness
+
+                        fitnessJacobian = numpy.zeros([4])
+
                         return fitness
 
                     def conserveTotalPixelCountConstraint(x, total):
@@ -348,49 +376,61 @@ def imagestats(filename):
 
                     # Count all pixel values into a sorted dict with key of the pixel
                     # value and the value is the number of pixels with that value.
-                    #TODO: This one line statement should replace this if statement, currently throws an error.
-                    #pixelCounts = SortedDict(Counter(frame))
-                    pixelCounts = SortedDict()
-                    for pixelRow in frame:
-                        for pixel in pixelRow:
-                            if pixel in pixelCounts:
-                                pixelCounts[pixel] += 1
-                            else:
-                                pixelCounts[pixel] = 1
+                    pixelCounts = SortedDict(Counter(frame.flat))
+                    initialUniqueValues = len(pixelCounts)
+                    initialBitDepth = round(math.log(initialUniqueValues, 2),2)
 
-                    outputText += str(len(pixelCounts)) + " unique values, approx bits:" + str(math.log(len(pixelCounts), 2)) + "\n"
+                    outputText += str(initialUniqueValues) + " unique values, approx bits:" + str(initialBitDepth) + "\n"
 
                     # This will correspond to the maximum number of histogram bins
                     uniqueValuesLimit = models.CosmicVariable.getVariable('histogramMaxBins')
+
+                    # If we have way too many values, do some rough binning.
+                    uniqueValuesStart = uniqueValuesLimit * 10
+                    if initialUniqueValues > uniqueValuesStart:
+                        tempPixelCounts = SortedDict()
+                        roughStride = 1 + (initialUniqueValues // uniqueValuesStart)
+                        roughBins = initialUniqueValues // roughStride
+                        outputText += "Performing initial rough binning.  Goal values: " + str(roughBins) + "\n"
+                        for i in range(roughBins):
+                            roughKey = 0.0
+                            roughValue = 0.0
+                            for j in range(roughStride):
+                                key, value = pixelCounts.popitem()
+                                roughKey += key*value
+                                roughValue += value
+                            roughKey /= roughValue
+                            tempPixelCounts[roughKey] = roughValue
+                        # Check for leftovers and throw them in the last key/value
+                        if len(pixelCounts) > 0:
+                            roughKey = numpy.average(list(pixelCounts.iterkeys()),
+                                weights = list(pixelCounts.itervalues()) )
+                            roughValue = numpy.sum(list(pixelCounts.itervalues()))
+                            tempPixelCounts[roughKey] = roughValue
+                        pixelCounts.update(tempPixelCounts)
+
 
                     # Replacement rejection exponent, lower this to accept more disruptive
                     # deletions.  This will automatically adjust if one pass is not
                     # sufficient to reduce the number of unique values.
                     rejectionExponent = models.CosmicVariable.getVariable('histogramRejectionExponent')
 
-                    while len(pixelCounts) > uniqueValuesLimit:
-                        initialUniqueValues = len(pixelCounts)
+                    currentUniqueValues = len(pixelCounts)
+                    while currentUniqueValues > uniqueValuesLimit:
 
                         # Initialize the list of deleted indices
                         deletedIndices = SortedList()
 
                         # Select in random order (almost) all unique pixel values to test
                         # for trial deletion.
-                        for rawIndex in random.sample(range(2, initialUniqueValues - 2), initialUniqueValues - 4):
+                        for rawIndex in random.sample(range(2, currentUniqueValues - 2), currentUniqueValues - 4):
                             # Adjust index to account for any deleted indices
                             index = rawIndex - deletedIndices.bisect_left(rawIndex)
-
-                            # NOTE: Feel free to remove asserts if no errors occur
-                            currentLength = len(pixelCounts)
-                            assert(currentLength == initialUniqueValues - len(deletedIndices))
-                            assert(index > 0)
-                            assert(index < currentLength - 1)
 
                             indexStart = index - 2
                             indexEnd = index + 3
 
                             a = SortedDict(itertools.islice(pixelCounts.items(), indexStart, indexEnd))
-                            assert(len(a) == 5)
                             removedKey = a.peekitem(2)[0]
                             removedCount = a.peekitem(2)[1]
                             newCount1 = a.peekitem(1)[1] + removedCount/2.0
@@ -420,7 +460,7 @@ def imagestats(filename):
                                 })
 
                             # TODO: Jacobian
-                            jacobian = []
+                            jacobian = False
 
                             result = scipy.optimize.minimize(overlapError, x0, args=(a),
                             bounds=bounds, constraints=constraints, method='SLSQP')
@@ -432,10 +472,12 @@ def imagestats(filename):
                                     pixelCounts.pop(x0[2])
                                     pixelCounts[result.x[0]] = result.x[1]
                                     pixelCounts[result.x[2]] = result.x[3]
+                                    if len(pixelCounts) == uniqueValuesLimit:
+                                        break
                             else:
                                 outputText += 'Minimization failed:\n\n' + str(result)
 
-                        deletionsThisCycle = initialUniqueValues - len(pixelCounts)
+                        deletionsThisCycle = currentUniqueValues - len(pixelCounts)
                         deletionsNeeded = len(pixelCounts) - uniqueValuesLimit
 
                         outputText += "Reduction step complete." +\
@@ -447,13 +489,13 @@ def imagestats(filename):
 
                         # Adjust rejection exponent based on results
                         if deletionsNeeded > 0:
-                            if (deletionsNeeded > deletionsThisCycle):
-                                rejectionExponent *= 1.0 - math.log(deletionsNeeded / deletionsThisCycle, rejectionExponent)
+                            if deletionsThisCycle > 0:
+                                rejectionExponent *= 1.0 - 1.5*math.log(deletionsNeeded / deletionsThisCycle, rejectionExponent)
                             else:
-                                if deletionsThisCycle > 0:
-                                    rejectionExponent *= 1.0 - math.log(deletionsNeeded / deletionsThisCycle, rejectionExponent)
-                                else:
-                                    rejectionExponent *= 2;
+                                rejectionExponent /= 2.0
+
+                        currentUniqueValues = len(pixelCounts)
+                    # end of while
 
                     sortedHistogramDict = histogramFromBinCounts(pixelCounts)
 
