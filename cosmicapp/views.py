@@ -1122,6 +1122,8 @@ def questionImage(request, id):
             # (i.e. images which have no, or few, answers).
             index = math.floor(math.sqrt(random.Random().randint(0, math.pow(len(pks)-1, 2))))
             id = pks[index]
+            redirectUrl = '/image/' + str(id) + '/question/'
+            return HttpResponseRedirect(redirectUrl)
 
         image = Image.objects.get(pk=id)
     except Image.DoesNotExist:
