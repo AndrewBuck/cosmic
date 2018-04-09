@@ -1301,14 +1301,14 @@ def astrometryNet(filename):
         outputText += 'Searching a {} degree radius around the ra, dec of ({}, {})\n'.format(models.CosmicVariable.getVariable('astrometryNetRadius'), ra, dec)
 
     elif objectRA != None and objectDec != None:
-        #TODO: These are in 'H M S' / 'D M S' format, the split statement only looks at the first part, this is ok since it is only approximate anyway, but this could be done better.
-        objectRA = 15*int(objectRA.split()[0])
-        objectDec = int(objectDec.split()[0])
+        # Change the spaces into ':' symbols in the HMS and DMS positions which is what solve-field expects.
+        formattedRA = ':'.join(objectRA.split())
+        formattedDec = ':'.join(objectDec.split())
 
         argArray.append('--ra')
-        argArray.append(str(objectRA))
+        argArray.append(str(formattedRA))
         argArray.append('--dec')
-        argArray.append(str(objectDec))
+        argArray.append(str(formattedDec))
         argArray.append('--radius')
         argArray.append(str(models.CosmicVariable.getVariable('astrometryNetRadius')))
 
