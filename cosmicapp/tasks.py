@@ -31,6 +31,16 @@ from cosmicapp import models
 
 staticDirectory = os.path.dirname(os.path.realpath(__file__)) + "/static/cosmicapp/"
 
+def longestCommonPrefix(string1, string2):
+    length = 0
+    for a, b in zip(string1, string2):
+        if a == b:
+            length += 1
+        else:
+            break
+
+    return str(string1)[0:length]
+
 def sigmoid(x):
     return 1 / (1 + math.exp(-x))
 
@@ -231,7 +241,7 @@ def imagestats(filename):
     #   3: Detect haze and clouds
 
     outputText += "imagestats:background: " + filename + "\n"
-    if os.path.splitext(filename)[-1].lower() in ['.fit', '.fits']:
+    if os.path.splitext(filename)[-1].lower() in settings.SUPPORTED_IMAGE_TYPES:
         hdulist = fits.open(settings.MEDIA_ROOT + filename)
         with transaction.atomic():
             channelIndex = 0
@@ -1278,9 +1288,11 @@ def astrometryNet(filename):
             'outputErrorText': errorText
             }
 
+        image.addImageProperty('astrometryNet', 'skippedCalibration')
         return processOutput
 
 
+    #TODO: Move this to after we know if the task actually has to run or not.
     superMatches = models.SourceFindMatch.objects.filter(image=image)
 
     xValues = []
@@ -1327,6 +1339,8 @@ def astrometryNet(filename):
             ]
 
     ra, dec = image.getBestRaDec()
+    objectRA = image.getImageProperty('objectRA')
+    objectDec = image.getImageProperty('objectDec')
     if ra is not None:
         argArray.append('--ra')
         argArray.append(str(ra))
@@ -1335,7 +1349,23 @@ def astrometryNet(filename):
         argArray.append('--radius')
         argArray.append(str(models.CosmicVariable.getVariable('astrometryNetRadius')))
 
+        outputText += 'Image has a previous plate solution.\n'
         outputText += 'Searching a {} degree radius around the ra, dec of ({}, {})\n'.format(models.CosmicVariable.getVariable('astrometryNetRadius'), ra, dec)
+
+    elif objectRA != None and objectDec != None:
+        # Change the spaces into ':' symbols in the HMS and DMS positions which is what solve-field expects.
+        formattedRA = ':'.join(objectRA.split())
+        formattedDec = ':'.join(objectDec.split())
+
+        argArray.append('--ra')
+        argArray.append(str(formattedRA))
+        argArray.append('--dec')
+        argArray.append(str(formattedDec))
+        argArray.append('--radius')
+        argArray.append(str(models.CosmicVariable.getVariable('astrometryNetRadius')))
+
+        outputText += 'Image has target RA and Dec in the image header.\n'
+        outputText += 'Searching a {} degree radius around the ra, dec of ({}, {})\n'.format(models.CosmicVariable.getVariable('astrometryNetRadius'), objectRA, objectDec)
 
     else:
         outputText += 'Image has no plate solution or header data indicating where to search, searching the whole sky.\n'
@@ -1412,7 +1442,58 @@ def parseHeaders(imageId):
     headers = models.ImageHeaderField.objects.filter(image=imageId)
 
     with transaction.atomic():
+        # Loop over all the headers for this image, determine if their ending comment is
+        # the same as another previously seen header.  Then parse the key=value pair into
+        # an ImageProperty that is more standardized than the dizzying variety of formats
+        # used in fits headers in the wild.
         for header in headers:
+            # Look for comments at the end of the 'value' portion of the header to build
+            # up a list of commonly used comments.  By enumerating as many as we can
+            # automatically and manually flagging a few others that get missed, we should
+            # be able to build a very large dataset of comments used in different fields.
+            # Then, data-mining this dataset could help us discover alternate keys for the
+            # same field, and other things like that.  It will also help in building
+            # regular expressions which help capture this text to strip it from the
+            # headers before parsing below.  This will make it signifigantly easier to
+            # refactor the parsing code to group common parsing code since the format of
+            # the actual data is much more standard than the comments (which could
+            # literally contain any string of characters which confuses the parser).
+            commonEndings = models.ImageHeaderFieldCommonEnding.objects.filter(key=header.key)
+
+            # Check to see that there is exactly one comment identifier in the string (a
+            # bit overly strict for now but prevents a lot of false positives).
+            count = header.value.count(' /')
+            if count == 1:
+                idx = header.value.find(' /')
+                reversedValue = header.value[:idx-1:-1]
+            else:
+                reversedValue = ""
+
+            # Loop over all the other ImageHeaderFields that are already in the database for this same key.
+            keys = models.ImageHeaderField.objects.filter(key=header.key).distinct('value')
+            for otherKey in keys:
+                #TODO: Consider adding value__contains to the db query to avoid this if statement.
+                idx = otherKey.value.find(' /')
+                if idx != -1:
+                    reversedOtherValue = otherKey.value[:idx-1:-1]
+                else:
+                    continue
+
+                # Check the two reversed strings and find the longest string that is
+                # common to both as a prefix (or a suffix in this case since they are reversed).
+                suffix = longestCommonPrefix(reversedValue, reversedOtherValue)[::-1]
+                #TODO: This 'startswith' clause is a bit of a hack, should not be needed, try to fix this.
+                if len(suffix) > 3 and suffix.startswith(' /'):
+                    commonEnding, created = models.ImageHeaderFieldCommonEnding.objects.get_or_create(
+                        key = header.key,
+                        ending = suffix
+                        )
+
+            # Re-run the query to pick up any new common endings that were just added to the database.
+            # NOTE: This is commented out for now because we don't do anything with the query anyway.
+            # It is here to be uncommented in the future if we actually want to use these for something.
+            #commonEndings = models.ImageHeaderFieldCommonEnding.objects.filter(key=header.key)
+
             if header.key == 'fits:bitpix':
                 key = 'bitDepth'
                 value = str(abs(int(header.value.split()[0])))
@@ -1614,15 +1695,23 @@ def parseHeaders(imageId):
 
             elif header.key in ['fits:observer']:
                 key = 'observerName'
-                value = header.value.split()[0].strip().strip("'").lower()
+                value = header.value.split('/')[0].strip().strip("'").lower()
 
-            elif header.key in ['fits:sitelat']:
+            elif header.key in ['fits:observat']:
+                key = 'observatoryName'
+                value = header.value.split('/')[0].strip().strip("'").lower()
+
+            elif header.key in ['fits:sitelat', 'fits:lat-obs']:
                 key = 'observerLat'
-                value = header.value.split()[0].strip().strip("'").lower()
+                value = header.value.split('/')[0].strip().strip("'").lower()
 
-            elif header.key in ['fits:sitelong']:
+            elif header.key in ['fits:sitelong', 'fits:long-obs']:
                 key = 'observerLon'
-                value = header.value.split()[0].strip().strip("'").lower()
+                value = header.value.split('/')[0].strip().strip("'").lower()
+
+            elif header.key in ['fits:alt-obs']:
+                key = 'observerAlt'
+                value = header.value.split('/')[0].strip().strip("'").lower()
 
             elif header.key in ['fits:pierside']:
                 key = 'pierSide'
@@ -1635,15 +1724,15 @@ def parseHeaders(imageId):
             #TODO: Check if there is a declination component for hour angle or if it just uses regular declination.
             elif header.key in ['fits:objctha']:
                 key = 'objectHA'
-                value = header.value.split()[0].strip().strip("'").lower()
+                value = header.value.split('/')[0].strip().strip("'").lower()
 
-            elif header.key in ['fits:objctra']:
+            elif header.key in ['fits:objctra', 'fits:ra']:
                 key = 'objectRA'
-                value = header.value.split()[0].strip().strip("'").lower()
+                value = header.value.split('/')[0].strip().strip("'").lower()
 
-            elif header.key in ['fits:objctdec']:
+            elif header.key in ['fits:objctdec', 'fits:dec']:
                 key = 'objectDec'
-                value = header.value.split()[0].strip().strip("'").lower()
+                value = header.value.split('/')[0].strip().strip("'").lower()
 
             elif header.key in ['fits:equinox']:
                 key = 'equinox'
@@ -1694,13 +1783,15 @@ def parseHeaders(imageId):
                 value = str(abs(int(header.value.split()[0].strip())))
 
             else:
+                errorText += 'Warning: Unhandled header key: ' + header.key + '\n'
                 continue
 
             # Many of these are stripped already, but strip them once more just to be sure no extra whitespace got included.
             key = key.strip()
             value = value.strip()
 
-            image.addImageProperty(key, value, False, header)
+            if key != "" and value != "":
+                image.addImageProperty(key, value, False, header)
 
         # Handle data split across multiple header fields like dateObs and timeObs.
         dateObsResult = models.ImageProperty.objects.filter(image=image, key='dateObs').first()

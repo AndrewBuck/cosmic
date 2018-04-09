@@ -1,13 +1,41 @@
 {% extends "cosmicapp/processDescriptionTemplate.html" %}
+{% load cosmicapp_extras %}
 
 {% block extratitle %} - About generateThumbnails {% endblock extratitle %}
 
 {% block processName %}generateThumbnails{% endblock %}
 
 {% block synopsis %}
+
+{% filter markdownParse %}
+The generateThumbnails task pre-generates thumbnail images of different sizes for each
+uploaded image.  The images are contrast stretched to make objects in them as visible as
+possible for display on the site.
+{% endfilter %}
+
 {% endblock %}
 
 {% block description %}
+
+{% filter markdownParse %}
+Currently for every image uploaded we produce 4 different sizes of thumbnail.
+
+* Small - A 100x100 pixel thumbnail used for displaying large tables of image results.  [example](/image/gallery/?displayType=table)
+* Medium - A 300x300 pixel thumbnail used for the default image gallery display (making it
+  the most commonly used size).  [example](/image/gallery/?displayType=gallery)
+* Large - A 900x900 pixel thumbnail used when we need a largish, but constant, sized image
+  for things like the image question page.  [example](/image/-1/question/)
+* Full - The full sized image, with no scaling.
+
+For each thumbnail size we call the *convert* program which is part of *ImageMagick* to
+actually generate the given thumbnail.  The generated thumbnails are output as 8-bit png
+images, regardless of the input bit depth (since most monitors only display in 8 bits per
+color channel anyway).  This loss of colorspace fidelity is ok, since the thumbnails are
+only for display on the website, and are never used for actual processing of scientific
+data.
+
+{% endfilter %}
+
 {% endblock %}
 
 

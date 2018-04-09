@@ -12,43 +12,43 @@
 	<li class="dropdown">
 	<a href="/" class="dropbtn">Cosmic</a>
 	<div class="dropdown-content">
-		<a href="/processqueue">Queue</a>
-		<a href="/questions">Questions</a>
-		<a href="/imageProperties">Image Properties</a>
-		<a href="/catalogs">Catalogs</a>
+		<a class="topbarButton" href="/processqueue">Queue</a>
+		<a class="topbarButton" href="/questions">Questions</a>
+		<a class="topbarButton" href="/imageProperties">Image Properties</a>
+		<a class="topbarButton" href="/catalogs">Catalogs</a>
 	</div>
 	</li>
 
 	<li class="dropdown">
 	<a class="dropbtn">Tools</a>
 	<div class="dropdown-content">
-		<a href="/observing">Observing Suggestions</a>
-		<a href="/export/bookmarks">Export Bookmarks</a>
-		<a href="/calibration">Calibration Library</a>
-		<a href="/mosaic">Mosaic Images</a>
-		<a href="/equipment">Equipment Editor</a>
+		<a class="topbarButton" href="/observing">Observing Suggestions</a>
+		<a class="topbarButton" href="/export/bookmarks">Export Bookmarks</a>
+		<a class="topbarButton" href="/calibration">Calibration Library</a>
+		<a class="topbarButton" href="/mosaic">Mosaic Images</a>
+		<a class="topbarButton" href="/equipment">Equipment Editor</a>
 	</div>
 	</li>
 
 	<li class="dropdown">
 	<a class="dropbtn">Analyze</a>
 	<div class="dropdown-content">
-		<a href="/image/-1/question/">Answer Questions About Images</a>
-		<a href="/image/gallery/?savedQuery=helpFindPlateSolutions">Help Find Plate Solutions</a>
+		<a class="topbarButton" href="/image/-1/question/">Answer Questions About Images</a>
+		<a class="topbarButton" href="/image/gallery/?savedQuery=helpFindPlateSolutions">Help Find Plate Solutions</a>
 	</div>
 	</li>
 
 	<li class="dropdown">
 	<a class="dropbtn">Browse</a>
 	<div class="dropdown-content">
-		<a href="/image/gallery/">Image Gallery</a>
+		<a class="topbarButton" href="/image/gallery/">Image Gallery</a>
 	</div>
 	</li>
 
 	<li class="dropdown">
-	<a class="dropbtn">Learn</a>
+	<a href="/learn/" class="dropbtn">Learn</a>
 	<div class="dropdown-content">
-		<!-- <a href="/image/gallery/">Image Gallery</a> -->
+		<a class="topbarButton" href="/learn/plate_solution/">Plate Solution</a>
 	</div>
 	</li>
 
@@ -56,19 +56,20 @@
   <li class="dropdown" style="float:right;">
     <a href="/user/{{user}}" class="dropbtn">{{user}}</a>
     <div class="dropdown-content" style="right:0;">
-      <a href="/logout">Logout</a>
+      <a class="topbarButton" href="/logout">Logout</a>
     </div>
   </li>
 {% else %}
-	<li style="float:right;"><a href="/login">Log in / Create account</a></li>
+	<li class="dropdown" style="float:right;"><a class="dropbtn" href="/login">Log in / Create account</a></li>
 {% endif %}
 
-	<li style="float:right"><a href="/upload">Upload</a></li>
-	<li style="float:right"><a href="/donate">Donate</a></li>
-	<li class=dropdown style="float:right">
-    <a href="/about">About</a>
+	<li class="dropdown" style="float:right"><a class="dropbtn" href="/upload">Upload</a></li>
+	<li class="dropdown" style="float:right"><a class="dropbtn" href="/donate">Donate</a></li>
+	<li class="dropdown" style="float:right">
+    <a class="dropbtn" href="/about">About</a>
 	<div class="dropdown-content">
-        <a href="/about/processes">Processes</a>
+        <a class="topbarButton" href="/about/processes">Processes</a>
+        <a class="topbarButton" href="/about/scoring">Observation Scoring</a>
     </div>
     </li>
 </ul>

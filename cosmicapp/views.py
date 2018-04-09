@@ -57,6 +57,11 @@ def processes(request, process=None):
     else:
         return HttpResponse('Process "' + process + '" not found.', status=400, reason='Parameters missing.')
 
+def learn(request, process=None):
+    context = {"user" : request.user}
+
+    return render(request, "cosmicapp/learn.html", context)
+
 def createuser(request):
     context = {"user" : request.user}
 
@@ -528,7 +533,7 @@ def imageProperties(request, id):
 
     context['image'] = image
 
-    properties = ImageProperty.objects.filter(image_id=image.pk)
+    properties = ImageProperty.objects.filter(image_id=image.pk).order_by('key', 'value')
     context['properties'] = properties
 
     hduList = fits.open(settings.MEDIA_ROOT + image.fileRecord.onDiskFileName)
@@ -1110,13 +1115,17 @@ def questionImage(request, id):
     try:
         if(id == -1):
             # Get a list of image id's in the database sorted by how many answers each one has.
-            pks = Image.objects.annotate(numAnswers=Count('answers'))\
+            # We consider a plate solution to be worth 3 question answers so we tend to
+            # focus on answering questions about unsolved plates first.
+            pks = Image.objects.annotate(numAnswers=Count('answers')+3*Count('plateSolutions'))\
                 .order_by('numAnswers').values_list('pk', flat=True)[:100]
 
             # Choose a random image id from this list with a bias towards the beginning
             # (i.e. images which have no, or few, answers).
             index = math.floor(math.sqrt(random.Random().randint(0, math.pow(len(pks)-1, 2))))
             id = pks[index]
+            redirectUrl = '/image/' + str(id) + '/question/'
+            return HttpResponseRedirect(redirectUrl)
 
         image = Image.objects.get(pk=id)
     except Image.DoesNotExist:
@@ -1252,14 +1261,21 @@ def getQuestionImage(request, id):
         responsesHTML = ''
         responsesHTML += "<input type='hidden' name='csrfmiddlewaretoken' value='" + csrf.get_token(request) + "' />\n"
         responsesHTML += "<input type='hidden' name='questionID' value='" + str(question.pk) + "' />\n"
+        responsesHTML += "<table>\n"
         for response in responses:
+            responsesHTML += '<tr>'
+            responsesHTML += '<td>'
             if response.inputType == 'radioButton':
                 responsesHTML += '<input type="radio" name="' + response.keyToSet +'" value="' + response.valueToSet + '">'
-                responsesHTML += response.text + ' - <i>' + response.descriptionText + '</i><br>\n\n'
             elif response.inputType == 'checkbox':
                 responsesHTML += '<input type="checkbox" name="' + response.keyToSet +'" value="' + response.valueToSet + '">'
-                responsesHTML += response.text + ' - <i>' + response.descriptionText + '</i><br>\n\n'
 
+            responsesHTML += '</td><td>'
+            responsesHTML += response.text + ' - <i>' + response.descriptionText + '</i><br>\n\n'
+            responsesHTML += '</td>'
+            responsesHTML += '</tr>'
+
+        responsesHTML += "</table>\n"
         questionDict = {}
         questionDict['id'] = str(question.pk)
         questionDict['text'] = question.text

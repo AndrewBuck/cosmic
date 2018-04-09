@@ -179,6 +179,10 @@ class Instrument(models.Model):
 #TODO: Add a class for an observing session storing details about equipment used, weather, seeing, goals, etc.
 
 
+#TODO: Determine a list of questions to ask a user when they join the site that will
+# narrow down very quickly what kind of user they are.  I.E. Do they observe from one
+# location, or many, do they have lots of old data already that can be uploaded, do they
+# only own one telescope, none, or many, etc.  Store these responses as fields in their profile.
 class Profile(models.Model):
     """
     Extra user profile information not stored by the default Django User record.  The two 'reciever' functions below hook
@@ -525,8 +529,12 @@ class ImageHeaderField(models.Model):
     """
     image = models.ForeignKey(Image, db_index=True, on_delete=models.CASCADE)
     index = models.IntegerField(null=True)
-    key = models.TextField(null=True)
-    value = models.TextField(null=True)
+    key = models.TextField()
+    value = models.TextField()
+
+class ImageHeaderFieldCommonEnding(models.Model):
+    key = models.TextField(db_index=True)
+    ending = models.TextField()
 
 class ImageProperty(models.Model):
     """
@@ -565,7 +573,7 @@ class ImageChannelInfo(models.Model):
 
 class ImageHistogramBin(models.Model):
     image = models.ForeignKey(Image, on_delete=models.CASCADE)
-    binFloor = models.FloatField()
+    binCenter = models.FloatField()
     binCount = models.FloatField()
 
 class ImageTransform(models.Model):
