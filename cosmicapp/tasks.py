@@ -485,7 +485,7 @@ def imagestats(filename):
                                     if len(pixelCounts) == uniqueValuesLimit:
                                         break
                             else:
-                                outputText += 'Minimization failed:\n\n' + str(result)
+                                errorText += 'Minimization failed:\n\n' + str(result) + '\n'
 
                         deletionsThisCycle = currentUniqueValues - len(pixelCounts)
                         deletionsNeeded = len(pixelCounts) - uniqueValuesLimit
