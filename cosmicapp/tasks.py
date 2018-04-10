@@ -500,7 +500,13 @@ def imagestats(filename):
                         # Adjust rejection exponent based on results
                         if deletionsNeeded > 0:
                             if deletionsThisCycle > 0:
-                                rejectionExponent *= 1.0 - 1.5*math.log(deletionsNeeded / deletionsThisCycle, rejectionExponent)
+                                try:
+                                    rejectionExponent *= 1.0 - 1.5*math.log(deletionsNeeded / deletionsThisCycle, rejectionExponent)
+                                except ValueError:
+                                    outputText += '\nValueError exception in math.log(deletionsNeeded / deletionsThisCycle, rejectionExponent):\n' +\
+                                        'deletionsNeeded = ' + str(deletionsNeeded) +\
+                                        ', deletionsThisCycle = ' + str(deletionsThisCycle) +\
+                                        ', rejectionExponent = ' + str(rejectionExponent) + '\n'
                             else:
                                 rejectionExponent /= 2.0
 
