@@ -529,7 +529,7 @@ class ImageHeaderField(models.Model):
     """
     image = models.ForeignKey(Image, db_index=True, on_delete=models.CASCADE)
     index = models.IntegerField(null=True)
-    key = models.TextField()
+    key = models.TextField(db_index=True)
     value = models.TextField()
 
 class ImageHeaderFieldCommonEnding(models.Model):
@@ -546,7 +546,7 @@ class ImageProperty(models.Model):
     """
     image = models.ForeignKey(Image, db_index=True, on_delete=models.CASCADE, related_name='properties')
     header = models.ForeignKey(ImageHeaderField, db_index=True, on_delete=models.CASCADE, null=True, related_name='properties')  #TODO: Make this many to many?
-    key = models.TextField()
+    key = models.TextField(db_index=True)
     value = models.TextField()
     createDateTime = models.DateTimeField(auto_now=True)
 
