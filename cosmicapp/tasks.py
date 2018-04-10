@@ -1547,6 +1547,10 @@ def parseHeaders(imageId):
                 key = 'pedestal'
                 value = header.value.split()[0]
 
+            elif header.key == 'fits:ccdmean':
+                key = 'headerCCDMean'
+                value = header.value.split()[0]
+
             elif header.key == 'fits:bzero':
                 key = 'bzero'
                 value = header.value.split()[0]
@@ -1566,6 +1570,18 @@ def parseHeaders(imageId):
             elif header.key == 'fits:cstretch':
                 key = 'displayStretchMode'
                 value = header.value.split()[0].strip().strip("'")
+
+            elif header.key == 'fits:timesys':
+                key = 'headerTimeSystem'
+                value = header.value.split('/')[0].strip().strip("'")
+
+            elif header.key == 'fits:radecsys':
+                key = 'headerCoordinateSystem'
+                value = header.value.split('/')[0].strip().strip("'")
+
+            elif header.key == 'fits:photsys':
+                key = 'photometryFilterSystem'
+                value = header.value.split('/')[0].strip().strip("'")
 
             elif header.key == 'fits:jd':
                 key = 'julianDate'
@@ -1602,8 +1618,12 @@ def parseHeaders(imageId):
                 except ValueError:
                     outputError += "ERROR: Could not parse dateObs: " + value + "\n"
 
-            elif header.key in ['fits:time_obs', 'fits:time-obs']:
+            elif header.key in ['fits:time_obs', 'fits:time-obs', 'fits:ut']:
                 key = 'timeObs'
+                value = header.value.split('/')[0].strip().strip("'")
+
+            elif header.key in ['fits:st']:
+                key = 'localApparentSiderialTime'
                 value = header.value.split('/')[0].strip().strip("'")
 
             elif header.key in ['fits:exptime', 'fits:exposure']:
@@ -1632,6 +1652,10 @@ def parseHeaders(imageId):
 
             elif header.key in ['fits:swserial']:
                 key = 'createdBySoftwareSerialNumber'
+                value = header.value.split('/')[0].strip().strip("'")
+
+            elif header.key in ['fits:iraf-tlm']:
+                key = 'irafTimeOfLastModification'
                 value = header.value.split('/')[0].strip().strip("'")
 
             elif header.key == 'fits:naxis':
@@ -1708,6 +1732,7 @@ def parseHeaders(imageId):
                 key = 'imageType'
                 value = header.value.split('/')[0].strip().strip("'").lower()
 
+                #NOTE: If values are added here they need to be added to stackedTypeDict at the end of this function as well.
                 if 'light' in value:
                     value = 'light'
                 elif 'dark' in value:
@@ -1719,6 +1744,29 @@ def parseHeaders(imageId):
 
                 image.frameType = value
                 image.save()
+
+            elif header.key in ['fits:ncombine']:
+                key = 'numCombinedImages'
+                value = header.value.split('/')[0].strip().strip("'")
+
+            elif header.key.startswith('fits:imcmb'):
+                num = header.key[len('fits:imcmb'):]
+                key = 'combinedImage' + num
+                value = header.value.strip().strip("'")
+
+            elif header.key in ['fits:darksub']:
+                key = 'darkSubtracted'
+                value = header.value.split('/')[0].strip().strip("'")
+
+            elif header.key in ['fits:flatted']:
+                key = 'flatCorrected'
+                value = header.value.split('/')[0].strip().strip("'")
+
+            #TODO: Find out what this is and maybe change the key we set for it.  It was found
+            # in an image with 'darksub' and 'flatted' headers and all three had values of 1
+            elif header.key in ['fits:replace']:
+                key = 'replace'
+                value = header.value.split('/')[0].strip().strip("'")
 
             elif header.key in ['fits:observer']:
                 key = 'observerName'
@@ -1742,11 +1790,11 @@ def parseHeaders(imageId):
 
             elif header.key in ['fits:pierside']:
                 key = 'pierSide'
-                value = header.value.split()[0].strip().strip("'").lower()
+                value = header.value.split('/')[0].strip().strip("'").lower()
 
             elif header.key in ['fits:object']:
                 key = 'object'
-                value = header.value.split()[0].strip().strip("'").lower()
+                value = header.value.split('/')[0].strip().strip("'")
 
             #TODO: Check if there is a declination component for hour angle or if it just uses regular declination.
             elif header.key in ['fits:objctha']:
@@ -1781,7 +1829,7 @@ def parseHeaders(imageId):
                 key = 'notes'
                 value = header.value
 
-            elif header.key in ['fits:comment']:
+            elif header.key in ['comment', 'fits:comment']:
                 key = 'comment'
                 value = header.value
 
@@ -1804,6 +1852,10 @@ def parseHeaders(imageId):
             elif header.key == 'fits:filter':
                 key = 'filter'
                 value = header.value.split()[0].strip().strip("'").lower()
+
+            elif header.key == 'fits:clrband':
+                key = 'colorBand'
+                value = header.value.split('/')[0].strip().strip("'").lower()
 
             elif header.key == 'fits:iso':
                 key = 'iso'
@@ -1830,6 +1882,48 @@ def parseHeaders(imageId):
                 image.save()
             except ValueError:
                 errorText += "ERROR: Could not parse dateObs: " + value + "\n"
+
+        # If this image was stacked from multiple images we need to set/modify some ImageProperties.
+        numCombinedImages = models.ImageProperty.objects.filter(image=image, key='numCombinedImages').first()
+        if numCombinedImages is not None:
+            image.addImageProperty('imageIsStacked', 'yes', False, None)
+
+            stackedTypeDict = {
+                'light': 'stackedLight',
+                'dark': 'masterDark',
+                'bias': 'masterBias',
+                'flat': 'masterFlat',
+                }
+
+            imageType = image.getImageProperty('imageType')
+
+            try:
+                newImageType = stackedTypeDict[imageType]
+            except KeyError:
+                errorText += 'Unknown stacked image type: ' + str(imageType)
+                newImageType = imageType
+
+            image.addImageProperty('imageType', newImageType, True)
+            image.frameType = newImageType
+            image.save()
+
+
+        # If this image has one or more 'object' tags we should examine them to see what we can determine.
+        for obj in image.getImageProperty('object', True):
+            imageTypeObjectDict = {
+                'master bias frame': 'masterBias',
+                'master dark frame': 'masterDark',
+                'master flat frame': 'masterFlat'
+                }
+
+            if obj.value.lower() in imageTypeObjectDict:
+                newImageType = imageTypeObjectDict[obj.value.lower()]
+                image.addImageProperty('imageType', newImageType, True)
+                image.frameType = newImageType
+                image.save()
+            else:
+                #TODO: Try to look up the object in the various catalogs we have in the database.
+                pass
 
     return constructProcessOutput(outputText, errorText)
 

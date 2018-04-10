@@ -152,7 +152,7 @@ IGNORED_KEYS = ['date:modify', 'date:create']
 
 # These keys are written into the database as ImageHeader entries, but are not turned into ImageProperty entries.
 NON_PROPERTY_KEYS = [
-    'fits:wcsaxes', 'fits:crpix1', 'fits:crpix2', 'fits:cunit1', 'fits:cunit2',
+    'fits:wcsdim', 'fits:wcsaxes', 'fits:crpix1', 'fits:crpix2', 'fits:cunit1', 'fits:cunit2',
     'fits:crval1', 'fits:crval1',
     'fits:crota1', 'fits:crota2',
     'fits:latpole', 'fits:lonpole',
@@ -163,6 +163,9 @@ NON_PROPERTY_KEYS = [
     'fits:cdelt1', 'fits:cdelt2',
     'fits:ap_0_0', 'fits:ap_0_1', 'fits:ap_1_0', 'fits:ap_1_1', 'fits:ap_0_2', 'fits:ap_2_0',
     'fits:bp_0_0', 'fits:bp_0_1', 'fits:bp_1_0', 'fits:bp_1_1', 'fits:bp_0_2', 'fits:bp_2_0',
-    'fits:ap_order', 'fits:bp_order', 'fits:a_order', 'fits:b_order'
+    'fits:ap_order', 'fits:bp_order', 'fits:a_order', 'fits:b_order',
+    'fits:wat0_001', 'fits:wat1_001', 'fits:wat2_001', 'fits:wat3_001',
+    'fits:ltm1_1', 'fits:ltm2_2', 'fits:ltm3_3',
+    'fits:ltv1', 'fits:ltv2', 'fits:ltv3'
     ]
 
