@@ -65,7 +65,25 @@ function ImageGallery(galleryName, paramString, displayType, includeLinks, image
         if(paramString === undefined || paramString == '')
             paramString = 'imageProperty=';
 
-        var params = paramString.split(':');
+        //TODO: This is just undoing the doubleEscape of the : symbol and splitting on :, see if there is a library function to do this.
+        var params = [];
+        var startIndex = 0;
+        for(i = 0; i < paramString.length-1; i++)
+        {
+            if(paramString[i] == ':' && paramString[i+1] != ':' && paramString[i-1] != ':')
+            {
+                params[params.length] = paramString.substring(startIndex, i-1);
+                startIndex = i+1;
+            }
+
+            if(paramString[i] == ':' && paramString[i-1] == ':')
+            {
+                paramString = paramString.replace('::', ':');
+                i--;
+            }
+        }
+        params[params.length] = paramString.substring(startIndex, paramString.length);
+
         for(i = 0; i < params.length; i++)
         {
             html = ''

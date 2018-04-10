@@ -7,6 +7,18 @@ from datetime import timedelta
 register = template.Library()
 
 @register.filter
+def doubleEscape(arg1, arg2):
+    """Search through arg1 and replace all instances of arg2 with 2 copies of arg2."""
+    output = ''
+    for c in arg1:
+        if c == arg2:
+            output += arg2 + arg2
+        else:
+            output += c
+
+    return output
+
+@register.filter
 def concat(arg1, arg2):
     """concatenate arg1 & arg2"""
     return str(arg1) + str(arg2)

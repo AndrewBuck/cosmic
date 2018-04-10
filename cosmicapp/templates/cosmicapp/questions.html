@@ -1,5 +1,6 @@
 {% extends "cosmicapp/base.html" %}
 {% load static %}
+{% load cosmicapp_extras %}
 
 {% block extratitle %} - Questions {% endblock %}
 
@@ -36,7 +37,7 @@ There have been a total of {{numAnswers}} answers given to {{questionGroups.coun
     <tr><th>Answer Key=value</th><th>Count</th></tr>
 
     {% for answerKV in answerKVs %}
-        <tr><td><a href="/image/gallery/?queryParams=questionAnswer={{answerKV.key}}={{answerKV.value}}">{{answerKV.key}}={{answerKV.value}}</a></td><td>{{answerKV.count}}</td></tr>
+        <tr><td><a href="/image/gallery/?queryParams=questionAnswer={{answerKV.key|doubleEscape:':'|urlencode}}={{answerKV.value|doubleEscape:':'|urlencode}}">{{answerKV.key}}={{answerKV.value}}</a></td><td>{{answerKV.count}}</td></tr>
     {% endfor %}
 </table>
 </td>

@@ -24,7 +24,7 @@ versions of the header data in the original image file that was uploaded from th
     <tr><th>Key=Value</th> <th>Count</th></tr>
     {% for property in properties %}
         <tr>
-        <td><a href="/image/gallery/?queryParams=imageProperty={{property.key}}={{property.value}}">{{property.key}}={{property.value}}</a></td>
+        <td><a href="/image/gallery/?queryParams=imageProperty={{property.key|doubleEscape:':'|urlencode}}={{property.value|doubleEscape:':'|urlencode}}">{{property.key}}={{property.value}}</a></td>
         <td>{{property.count}}</td>
         </tr>
     {% endfor %}
