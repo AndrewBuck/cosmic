@@ -761,6 +761,16 @@ def initSourcefind(method, image):
 
     outputText += "Running {}.\n\n".format(method)
 
+    # If this is a calibration image we do not need to run this task.
+    shouldReturn, retText = checkIfCalibrationImage(image, method, 'skippedCalibration')
+    outputText += retText
+    if shouldReturn:
+        return (1, shouldReturn, outputText, errorText)
+
+    # For image2xy there is no detectThresholdMultiplier to compute so we just return early.
+    if method == 'image2xy':
+        return (1, False, outputText, errorText)
+
     # Check to see if we have run this task before and adjust the sensitivity higher or lower
     # Start by seeing if we have a previously saved value, if not then load the default.
     detectThresholdMultiplier = image.getImageProperty(method + 'Multiplier')
@@ -819,6 +829,18 @@ def initSourcefind(method, image):
     image.addImageProperty(method + 'Multiplier', str(detectThresholdMultiplier))
 
     return (detectThresholdMultiplier, shouldReturn, outputText, errorText)
+
+def checkIfCalibrationImage(image, propertyKeyToSet, propertyValueToSet):
+    outputText = ''
+    imageType = image.getImageProperty('imageType')
+    outputText += "Image type is: " + str(imageType) + "\n"
+    if imageType in ('bias', 'dark', 'flat', 'masterBias', 'masterDark', 'masterFlat'):
+        outputText += "\n\n\nReturning, do not need to run this task on calibration images (bias, dark, flat, etc)\n"
+
+        image.addImageProperty(propertyKeyToSet, propertyValueToSet)
+        return (True, outputText)
+    else:
+        return (False, outputText)
 
 @shared_task
 def sextractor(filename):
@@ -972,6 +994,13 @@ def image2xy(filename):
 
     # Get the image record
     image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
+
+    # Image2xy does not use the detectThresholdMultiplier, but we still call this just so
+    # any additional init routines are still run for this task.
+    detectThresholdMultiplier, shouldReturn, outputText, errorText = initSourcefind('image2xy', image)
+
+    if shouldReturn:
+        return constructProcessOutput(outputText, errorText)
 
     #TODO: Use the -P option to handle images with multiple planes.  Also has support for multi-extension fits built in if called with appropriate params.
     #TODO: Consider using the -d option to downsample by a given factor before running.
@@ -1145,6 +1174,12 @@ def starmatch(filename):
 
     image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
 
+    # If this is a calibration image we do not need to run this task.
+    shouldReturn, retText = checkIfCalibrationImage(image, 'astrometryNet', 'skippedCalibration')
+    outputText += retText
+    if shouldReturn:
+        return constructProcessOutput(outputText, errorText)
+
     models.SourceFindMatch.objects.filter(image=image).delete()
 
     #NOTE: It may be faster if these dictionary 'name' entries were shortened or changed to 'ints', maybe an enum.
@@ -1278,19 +1313,11 @@ def astrometryNet(filename):
 
     image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
 
-    imageType = image.getImageProperty('imageType')
-    outputText += "Image type is: " + str(imageType) + "\n"
-    if imageType in ('bias', 'dark', 'flat'):
-        outputText += "\n\n\nReturning, do not need to plate solve calibration images (bias, dark, flat)\n"
-
-        processOutput = {
-            'outputText': outputText,
-            'outputErrorText': errorText
-            }
-
-        image.addImageProperty('astrometryNet', 'skippedCalibration')
-        return processOutput
-
+    # If this is a calibration image we do not need to run this task.
+    shouldReturn, retText = checkIfCalibrationImage(image, 'astrometryNet', 'skippedCalibration')
+    outputText += retText
+    if shouldReturn:
+        return constructProcessOutput(outputText, errorText)
 
     #TODO: Move this to after we know if the task actually has to run or not.
     superMatches = models.SourceFindMatch.objects.filter(image=image)
@@ -1815,6 +1842,12 @@ def flagSources(imageIdString):
 
     imageId = int(imageIdString)
     image = models.Image.objects.get(pk=imageId)
+
+    # If this is a calibration image we do not need to run this task.
+    shouldReturn, retText = checkIfCalibrationImage(image, 'astrometryNet', 'skippedCalibration')
+    outputText += retText
+    if shouldReturn:
+        return constructProcessOutput(outputText, errorText)
 
     hotPixels = models.UserSubmittedHotPixel.objects.filter(image_id=imageId)
     numHotPixels = hotPixels.count()
