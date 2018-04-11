@@ -1577,6 +1577,14 @@ def parseHeaders(imageId):
                 key = 'displayStretchMode'
                 value = header.value.split()[0].strip().strip("'")
 
+            elif header.key == 'fits:resolutn':
+                key = 'resolutionPerUnit'
+                value = header.value.split()[0].strip().strip("'")
+
+            elif header.key == 'fits:resounit':
+                key = 'resolutionUnit'
+                value = header.value.split()[0].strip().strip("'")
+
             elif header.key == 'fits:timesys':
                 key = 'headerTimeSystem'
                 value = header.value.split('/')[0].strip().strip("'")
@@ -1648,7 +1656,7 @@ def parseHeaders(imageId):
                 key = 'instrument'
                 value = header.value.split('/')[0].strip().strip("'")
 
-            elif header.key in ['fits:swcreate', 'fits:creator', 'fits:origin']:
+            elif header.key in ['fits:swcreate', 'fits:creator', 'fits:origin', 'fits:software', 'fits:program']:
                 key = 'createdBySoftware'
                 value = header.value.split('/')[0].strip().strip("'")
 
@@ -1658,6 +1666,26 @@ def parseHeaders(imageId):
 
             elif header.key in ['fits:swserial']:
                 key = 'createdBySoftwareSerialNumber'
+                value = header.value.split('/')[0].strip().strip("'")
+
+            elif header.key in ['fits:iraftype']:
+                key = 'irafPixelType'
+                value = header.value.split('/')[0].strip().strip("'")
+
+            elif header.key in ['fits:irafname']:
+                key = 'irafImageFileName'
+                value = header.value.split('/')[0].strip().strip("'")
+
+            elif header.key in ['fits:iraf-min']:
+                key = 'irafDataMin'
+                value = header.value.split('/')[0].strip().strip("'")
+
+            elif header.key in ['fits:iraf-max']:
+                key = 'irafDataMax'
+                value = header.value.split('/')[0].strip().strip("'")
+
+            elif header.key in ['fits:iraf-bpx']:
+                key = 'irafBitsPerPixel'
                 value = header.value.split('/')[0].strip().strip("'")
 
             elif header.key in ['fits:iraf-tlm']:
@@ -1821,11 +1849,11 @@ def parseHeaders(imageId):
 
             elif header.key in ['fits:objctalt']:
                 key = 'objectAlt'
-                value = header.value.split()[0].strip().strip("'").lower()
+                value = header.value.split('/')[0].strip().strip("'").lower()
 
             elif header.key in ['fits:objctaz']:
                 key = 'objectAz'
-                value = header.value.split()[0].strip().strip("'").lower()
+                value = header.value.split('/')[0].strip().strip("'").lower()
 
             elif header.key in ['fits:airmass']:
                 key = 'airmass'
@@ -1863,12 +1891,17 @@ def parseHeaders(imageId):
                 key = 'colorBand'
                 value = header.value.split('/')[0].strip().strip("'").lower()
 
+            elif header.key == 'fits:colorspc':
+                key = 'colorSpace'
+                value = header.value.split('/')[0].strip().strip("'").lower()
+
             elif header.key == 'fits:iso':
                 key = 'iso'
                 value = str(abs(int(header.value.split()[0].strip())))
 
             else:
-                errorText += 'Warning: Unhandled header key: ' + header.key + '\n'
+                if header.key not in settings.NON_PROPERTY_KEYS:
+                    errorText += 'Warning: Unhandled header key: ' + header.key + '\n'
                 continue
 
             # Many of these are stripped already, but strip them once more just to be sure no extra whitespace got included.
@@ -1909,9 +1942,10 @@ def parseHeaders(imageId):
                 errorText += 'Unknown stacked image type: ' + str(imageType)
                 newImageType = imageType
 
-            image.addImageProperty('imageType', newImageType, True)
-            image.frameType = newImageType
-            image.save()
+            if newImageType is not None:
+                image.addImageProperty('imageType', newImageType, True)
+                image.frameType = newImageType
+                image.save()
 
 
         # If this image has one or more 'object' tags we should examine them to see what we can determine.
