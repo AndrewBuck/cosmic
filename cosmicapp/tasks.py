@@ -607,11 +607,11 @@ def imagestats(filename):
                     outputText += '\n ==================== End of process output ====================\n\n'
                     errorText += '\n ==================== End of process error =====================\n\n'
 
-                    #try:
-                    channelInfo = models.ImageChannelInfo.objects.get(image=image, index=channelIndex)
-                    #except:
-                        #outputText += 'ERROR: continuing loop because channel info not found. id: {} index: {}'.format(image.pk, channelIndex)
-                        #continue
+                    try:
+                        channelInfo = models.ImageChannelInfo.objects.get(image=image, index=channelIndex)
+                    except:
+                        outputText += 'ERROR: continuing loop because channel info not found. id: {} index: {}'.format(image.pk, channelIndex)
+                        continue
 
                     #TODO: Look into this masking and potentially record the masked pixel data as a stored thing which can be accessed later on.
                     #mask = make_source_mask(frame, snr=10, npixels=5, dilate_size=11)
