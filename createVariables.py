@@ -20,6 +20,8 @@ CosmicVariable.setVariable('starfindThreshold', 'float', '3.0')
 
 CosmicVariable.setVariable('histogramMaxBins', 'int', '255')
 CosmicVariable.setVariable('histogramRejectionExponent', 'float', '1000.0')
+CosmicVariable.setVariable('histogramIgnoreLower', 'float', '.25')
+CosmicVariable.setVariable('histogramIgnoreUpper', 'float', '.25')
 
 CosmicVariable.setVariable('asteroidEphemerideTolerance', 'float', '5')
 CosmicVariable.setVariable('asteroidEphemerideTimeTolerance', 'float', '90')

@@ -218,6 +218,12 @@ def imagestats(filename):
 
     outputText += "imagestats:wcs: " + filename + "\n"
     if os.path.splitext(filename)[-1].lower() in ['.fit', '.fits']:
+        # FIXME: Bug with image from DSLR with astronomy.net plate solution
+        """FITS WCS distortion paper lookup tables and SIP distortions only work in 2
+        dimensions. However, WCSLIB has detected 3 dimensions in the core WCS keywords. To
+        use core WCS in conjunction with FITS WCS distortion paper lookup tables or SIP
+        distortion, you must select or reduce these to 2 dimensions using the naxis
+        kwarg.""" 
         w = wcs.WCS(settings.MEDIA_ROOT + filename)
 
         if w.has_celestial:
@@ -292,23 +298,6 @@ def imagestats(filename):
                     #   5: If histogram is still too large, loosen acception criteria and
                     #   repeat.
 
-                    def histogramFromBinCounts(counts):
-                        """ Takes a SortedDict: key = bin center, value = count
-                        Returns a SortedDict:
-                        key = bin center,
-                        value = count density = count / bin neighborhood width """
-                        # Calculate histogram for interior
-                        # NOTE: Do we want to use fromkeys method here?
-                        histogram = SortedDict( zip(
-                            counts.islice(1,-1),
-                            map( lambda i : 2.0 * counts.values()[i] / (counts.keys()[i+1] - counts.keys()[i-1]), range(1, len(counts)-1) )
-                            ) )
-
-                        # Handle boundaries
-                        histogram[counts.values()[0]] = 1.0 * counts.values()[0] / (counts.keys()[1] - counts.keys()[0])
-                        histogram[counts.values()[-1]] = 1.0 * counts.values()[-1] / (counts.keys()[-1] - counts.keys()[-2])
-                        return(histogram)
-
                     def overlapError(x, a):
                         """ Computes the percent overlap of the histogram defined by two
                         sets of bin center / bin count pairs. """
@@ -320,31 +309,31 @@ def imagestats(filename):
 
                         aLeft = numpy.array([
                             1.5*aCenters[0] - 0.5*aCenters[1],
-                            0.5*(aCenters[0] + aCenters[1]),
-                            0.5*(aCenters[1] + aCenters[2]),
-                            0.5*(aCenters[2] + aCenters[3]),
-                            0.5*(aCenters[3] + aCenters[4])
+                            0.5*aCenters[0] + 0.5*aCenters[1],
+                            0.5*aCenters[1] + 0.5*aCenters[2],
+                            0.5*aCenters[2] + 0.5*aCenters[3],
+                            0.5*aCenters[3] + 0.5*aCenters[4]
                             ])
 
                         bLeft = numpy.array([
                             1.5*bCenters[0] - 0.5*bCenters[1],
-                            0.5*(bCenters[0] + bCenters[1]),
-                            0.5*(bCenters[1] + bCenters[2]),
-                            0.5*(bCenters[2] + bCenters[3])
+                            0.5*bCenters[0] + 0.5*bCenters[1],
+                            0.5*bCenters[1] + 0.5*bCenters[2],
+                            0.5*bCenters[2] + 0.5*bCenters[3]
                             ])
 
                         aRight = numpy.array([
-                            0.5*(aCenters[0] + aCenters[1]),
-                            0.5*(aCenters[1] + aCenters[2]),
-                            0.5*(aCenters[2] + aCenters[3]),
-                            0.5*(aCenters[3] + aCenters[4]),
+                            0.5*aCenters[0] + 0.5*aCenters[1],
+                            0.5*aCenters[1] + 0.5*aCenters[2],
+                            0.5*aCenters[2] + 0.5*aCenters[3],
+                            0.5*aCenters[3] + 0.5*aCenters[4],
                             1.5*aCenters[4] - 0.5*aCenters[3]
                             ])
 
                         bRight = numpy.array([
-                            0.5*(bCenters[0] + bCenters[1]),
-                            0.5*(bCenters[1] + bCenters[2]),
-                            0.5*(bCenters[2] + bCenters[3]),
+                            0.5*bCenters[0] + 0.5*bCenters[1],
+                            0.5*bCenters[1] + 0.5*bCenters[2],
+                            0.5*bCenters[2] + 0.5*bCenters[3],
                             1.5*bCenters[3] - 0.5*bCenters[2],
                             ])
 
@@ -493,15 +482,15 @@ def imagestats(filename):
                         outputText += "Reduction step complete." +\
                             " deletions: " + str(deletionsThisCycle) +\
                             " , values: " + str(len(pixelCounts)) +\
-                            " , bits: " + str(math.ceil(math.log(len(pixelCounts), 2))) +\
-                            " , rejection exponent: " + str(rejectionExponent) +\
+                            " , bits: " + str(round(math.log(len(pixelCounts),2),2)) +\
+                            " , rejection exponent: " + str(round(rejectionExponent,2)) +\
                             " , deletions needed: " + str(deletionsNeeded) + "\n"
 
                         # Adjust rejection exponent based on results
                         if deletionsNeeded > 0:
                             if deletionsThisCycle > 0:
                                 try:
-                                    rejectionExponent *= 1.0 - 1.5*math.log(deletionsNeeded / deletionsThisCycle, rejectionExponent)
+                                    rejectionExponent *= 0.5 + 1.5*math.exp( -1.0*deletionsNeeded/deletionsThisCycle )
                                 except ValueError:
                                     outputText += '\nValueError exception in math.log(deletionsNeeded / deletionsThisCycle, rejectionExponent):\n' +\
                                         'deletionsNeeded = ' + str(deletionsNeeded) +\
@@ -513,48 +502,92 @@ def imagestats(filename):
                         currentUniqueValues = len(pixelCounts)
                     # end of while
 
-                    sortedHistogramDict = histogramFromBinCounts(pixelCounts)
+                    # This will injest the pixel count and histogram dicts into some numpy arrays
+                    histogramLength = len(pixelCounts)
+                    binCenters = numpy.empty([histogramLength])
+                    histPixels = numpy.empty([histogramLength])
+                    cumulativePixels = numpy.empty([histogramLength])
+                    totalCount = 0
+                    for i in range(histogramLength):
+                        (binCenters[i], histPixels[i]) = pixelCounts.popitem(last=False)
+                        totalCount += histPixels[i]
+                        cumulativePixels[i] = totalCount
 
-                    for x in sortedHistogramDict:
+                    assert(totalCount == sum(histPixels))
+
+                    binLefts = numpy.empty([histogramLength])
+                    binRights = numpy.empty([histogramLength])
+                    binLefts[0] = 1.5 * binCenters[0] - 0.5 * binCenters[1]
+                    for i in range(1,histogramLength):
+                        binLefts[i] = 0.5 * (binCenters[i-1] + binCenters[i])
+                        binRights[i-1] = binLefts[i]
+                    binRights[histogramLength-1] = 1.5 * binCenters[histogramLength-1] - 0.5 * binCenters[histogramLength-2]
+
+                    histCounts = numpy.empty([histogramLength])
+                    for i in range(histogramLength):
+                        histCounts[i] = histPixels[i] / (1.0*binRights[i] - 1.0*binLefts[i])
+
+                    for i in range(histogramLength):
                         histogramBin = models.ImageHistogramBin(
                             image = image,
-                            binCenter = x,
-                            binCount = sortedHistogramDict[x]
+                            binCenter = binCenters[i],
+                            binCount = histCounts[i]
                             )
 
                         histogramBin.save()
 
+                    mean, median, stdDev = sigma_clipped_stats(frame, sigma=7, iters=3)
+
                     plotFilename = "histogramData_{}_{}.gnuplot".format(image.pk, channelIndex)
                     binFilename = "histogramData_{}_{}.txt".format(image.pk, channelIndex)
 
+                    # Write the column data to be read in by gnuplot.
+                    lowerBound = binLefts[0]
+                    upperBound = binRights[histogramLength-1]
+                    cumulativeCount = 0.0
+                    cumulativeFraction = cumulativeCount / totalCount
+                    with open("/cosmicmedia/" + binFilename, "w") as outputFile:
+                        ignoreLower = models.CosmicVariable.getVariable('histogramIgnoreLower') / 100.0
+                        ignoreUpper = models.CosmicVariable.getVariable('histogramIgnoreUpper') / 100.0
+                        for i in range(histogramLength):
+                            binCount = histCounts[i]
+                            binCenter = binCenters[i]
+                            # Skip writing values for up 0.25% of the darkest and
+                            # brightest pixels. This is to match the parameters used in
+                            # generating thumnails.
+                            pixelCount = histPixels[i]
+                            pixelCountFraction = histPixels[i] / totalCount
+                            if cumulativeFraction < ignoreLower:
+                                if cumulativeFraction + pixelCountFraction >= ignoreLower:
+                                    overageFraction = cumulativeFraction + pixelCountFraction - ignoreLower
+                                    includeFraction = overageFraction / pixelCountFraction
+                                    lowerBound = includeFraction*binLefts[i]  + (1.0 - includeFraction)*binRights[i]
+                            cumulativeCount += histPixels[i]
+                            cumulativeFraction = cumulativeCount / totalCount
+                            if cumulativeFraction > 1.0 - ignoreUpper:
+                                if binCenter < upperBound:
+                                    overageFraction = cumulativeFraction - 1.0 + ignoreUpper
+                                    countFraction = histPixels[i] / totalCount
+                                    includeFraction = 1.0 - overageFraction / countFraction
+                                    upperBound = (1.0 - includeFraction)*binLefts[i] + includeFraction*binRights[i]
+
+                            outputFile.write("{} {} {}\n".format(binLefts[i], histCounts[i], (cumulativePixels[i]/totalCount) ) )
+                            outputFile.write("{} {} {}\n".format(binRights[i], histCounts[i], (cumulativePixels[i]/totalCount) ) )
+
+                    targetMean = 0.8*lowerBound + 0.2*upperBound
+                    meanFrac = (mean - lowerBound)/(upperBound - lowerBound)
+                    targetMeanFrac = (targetMean - lowerBound)/(upperBound - lowerBound)
+                    gammaCorrection = math.log(meanFrac, 10)/math.log(targetMeanFrac, 10)
                     # Write the gnuplot script file.
                     with open("/cosmicmedia/" + plotFilename, "w") as outputFile:
                         outputFile.write("set terminal svg size 400,300 dynamic mouse standalone\n" +
                                          "set output '{}/{}.svg'\n".format(staticDirectory + "images", plotFilename) +
                                          "set key off\n" +
                                          "set logscale y\n" +
+                                         "set xrange ["+str(lowerBound)+":"+str(upperBound)+"]\n" +
                                          "set style line 1 linewidth 3 linecolor 'blue'\n" +
                                          "plot '/cosmicmedia/{}' using 1:2 with lines linestyle 1\n".format(binFilename)
                                          )
-
-                    # Write the 2 column data to be read in by gnuplot.
-                    totalCount = sum(sortedHistogramDict.itervalues())
-                    cumulativeCount = 0.0
-                    with open("/cosmicmedia/" + binFilename, "w") as outputFile:
-                        for (binCenter, binCount) in sortedHistogramDict.iteritems():
-                            # Skip writing values for up 0.05% of the darkest and
-                            # brightest pixels. This is to match the parameters used in
-                            # generating thumnails.
-                            cumulativeCount += binCount
-                            cumulativeFraction = cumulativeCount / totalCount
-                            ignoreLower = 0.0005
-                            ignoreUpper = 0.0005
-                            if cumulativeFraction <= ignoreLower:
-                                continue
-                            if cumulativeFraction - binCount >= 1.0 - ignoreUpper:
-                                continue
-
-                            outputFile.write("{} {}\n".format(binCenter, binCount))
 
                     outputText += "Running gnuplot:\n\n"
                     proc = subprocess.Popen(['gnuplot', "/cosmicmedia/" + plotFilename],
@@ -574,12 +607,11 @@ def imagestats(filename):
                     outputText += '\n ==================== End of process output ====================\n\n'
                     errorText += '\n ==================== End of process error =====================\n\n'
 
-                    try:
-                        channelInfo = models.ImageChannelInfo.objects.get(image=image, index=channelIndex)
-                    except:
-                        continue
-
-                    mean, median, stdDev = sigma_clipped_stats(frame, sigma=10, iters=0)
+                    #try:
+                    channelInfo = models.ImageChannelInfo.objects.get(image=image, index=channelIndex)
+                    #except:
+                        #outputText += 'ERROR: continuing loop because channel info not found. id: {} index: {}'.format(image.pk, channelIndex)
+                        #continue
 
                     #TODO: Look into this masking and potentially record the masked pixel data as a stored thing which can be accessed later on.
                     #mask = make_source_mask(frame, snr=10, npixels=5, dilate_size=11)
@@ -592,6 +624,12 @@ def imagestats(filename):
                     channelInfo.bgMean = bgMean
                     channelInfo.bgMedian = bgMedian
                     channelInfo.bgStdDev = bgStdDev
+                    channelInfo.uniqueValues = initialUniqueValues
+                    channelInfo.approximateBits = initialBitDepth
+                    channelInfo.thumbnailBlackPoint = lowerBound
+                    channelInfo.thumbnailWhitePoint = upperBound
+                    channelInfo.thumbnailGamma = gammaCorrection
+
                     channelInfo.save()
 
                     channelIndex += 1
@@ -636,6 +674,8 @@ def generateThumbnails(filename):
     filenameLarge = os.path.splitext(filename)[0] + "_thumb_large.png"
 
     image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
+
+    imageChannels = models.ImageChannelInfo.objects.filter(image=image)
 
     # NOTE: For setting black-point, white-point, and gamma, we will apply a naive ideal
     # model for the thumbnail histogram.  See notebook for more details.  We will use the
@@ -701,11 +741,16 @@ def generateThumbnails(filename):
         #TODO: Play around with the 'convolve' kernel here to see what the best one to use is.
         # Consider bad horiz/vert lines, also bad pixels, and finally noise.
         # For bad lines use low/negative values along the middle row/col in the kernel.
-        proc = subprocess.Popen(['convert', "-gamma", "0.8", "-convolve", "1,2,4,2,1,2,4,6,4,2,3,5,10,5,3,2,4,6,4,2,1,2,4,2,1",
-                "-contrast-stretch", ".1%x.1%", "-strip", "-filter", "spline", "-resize",
-                sizeArg, "-verbose", settings.MEDIA_ROOT + filename, "-depth", "8", staticDirectory + "images/" + tempFilename],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
+        proc = subprocess.Popen(['convert',
+            #TODO: Only looking at the first channel here, need to loop and add all channels if it is an RGB image, etc.
+            "-contrast-stretch", "{}%x{}%".format(
+                models.CosmicVariable.getVariable('histogramIgnoreLower'),
+                models.CosmicVariable.getVariable('histogramIgnoreUpper')),
+            "-gamma", str(imageChannels[0].thumbnailGamma),
+            "-strip", "-filter", "spline", "-resize",
+            sizeArg, "-verbose", settings.MEDIA_ROOT + filename, "-depth", "8", staticDirectory + "images/" + tempFilename],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE)
 
         output, error = proc.communicate()
         output = output.decode('utf-8')

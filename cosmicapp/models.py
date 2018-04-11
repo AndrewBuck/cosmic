@@ -569,6 +569,11 @@ class ImageChannelInfo(models.Model):
     bgMean = models.FloatField(null=True)
     bgMedian = models.FloatField(null=True)
     bgStdDev = models.FloatField(null=True)
+    thumbnailGamma = models.FloatField(null=True)
+    uniqueValues = models.FloatField(null=True)
+    approximateBits = models.FloatField(null=True)
+    thumbnailBlackPoint = models.FloatField(null=True)
+    thumbnailWhitePoint = models.FloatField(null=True)
 
     def getHistogramUrl(self):
         return '/static/cosmicapp/images/histogramData_{}_{}.gnuplot.svg'.format(self.image.pk, self.index)
