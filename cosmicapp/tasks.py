@@ -668,6 +668,8 @@ def generateThumbnails(filename):
 
     image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
 
+    imageChannels = models.ImageChannelInfo.objects.filter(image=image)
+
     # NOTE: For setting black-point, white-point, and gamma, we will apply a naive ideal
     # model for the thumbnail histogram.  See notebook for more details.  We will use the
     # range of [0:1] for intensity values.
@@ -732,11 +734,16 @@ def generateThumbnails(filename):
         #TODO: Play around with the 'convolve' kernel here to see what the best one to use is.
         # Consider bad horiz/vert lines, also bad pixels, and finally noise.
         # For bad lines use low/negative values along the middle row/col in the kernel.
-        proc = subprocess.Popen(['convert', "-gamma", "0.8", "-convolve", "1,2,4,2,1,2,4,6,4,2,3,5,10,5,3,2,4,6,4,2,1,2,4,2,1",
-                "-contrast-stretch", ".1%x.1%", "-strip", "-filter", "spline", "-resize",
-                sizeArg, "-verbose", settings.MEDIA_ROOT + filename, "-depth", "8", staticDirectory + "images/" + tempFilename],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
+        proc = subprocess.Popen(['convert',
+            #TODO: Only looking at the first channel here, need to loop and add all channels if it is an RGB image, etc.
+            "-contrast-stretch", "{}%x{}%".format(
+                models.CosmicVariable.getVariable('histogramIgnoreLower'),
+                models.CosmicVariable.getVariable('histogramIgnoreUpper')),
+            "-gamma", str(imageChannels[0].thumbnailGamma),
+            "-strip", "-filter", "spline", "-resize",
+            sizeArg, "-verbose", settings.MEDIA_ROOT + filename, "-depth", "8", staticDirectory + "images/" + tempFilename],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE)
 
         output, error = proc.communicate()
         output = output.decode('utf-8')
