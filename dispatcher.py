@@ -60,7 +60,10 @@ while not quit:
 
     print("checking prerequisistes for:  ", pi.process)
     pi = getFirstPrerequisite(pi)
-    print("prerequisiste is:  ", pi.process)
+    argList = ''
+    for arg in pi.processargument_set.all():
+        argList += ' "{}"'.format(arg.arg)
+    print("prerequisiste is:  {} {}".format(pi.process, argList))
     if pi == None:
         pi.completed = 'failed_prerequisite'
         pi.save()
