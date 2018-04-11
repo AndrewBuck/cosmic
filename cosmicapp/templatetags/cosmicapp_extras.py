@@ -65,13 +65,17 @@ def multiply(value, arg):
     return value*arg
 
 @register.filter
+def average(value, arg):
+    return (float(value)+float(arg))/2.0
+
+@register.filter
 def divide(value, arg):
     return value/arg
 
 @register.inclusion_tag('cosmicapp/tag_singleValue.html', takes_context=False)
 def percentage(value, arg, rangeMin=0, rangeMax=100):
     if arg == 0:
-        return { 'singleValue': rangeMax }
+        return { 'singleValue': 'Undefined' }
 
     tempDict = { 'singleValue': rangeMin + (rangeMax - rangeMin)*(value/arg) }
     return tempDict
@@ -83,6 +87,10 @@ def invert(value):
 @register.filter
 def markdownParse(value):
     return markdown.markdown(value)
+
+@register.filter
+def sha256summary(value):
+    return value[0:6] + "..." + value[-6:]
 
 @register.inclusion_tag('cosmicapp/bookmarkDiv.html', takes_context=True)
 def bookmark(context, targetType, targetID, folderName, prefix=None, postfix=None):

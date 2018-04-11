@@ -24,130 +24,95 @@ td.numMatchResults
 {% block mainbody %}
 <h2>Image {{id}}</h2>
 
-    <table border=2px style="border-collapse: collapse; margin: 1em;">
-        <tr>
-        <th> Uploaded By <br> (username) </th>
-        <th> Date / Time </th>
-        <th> Instrument <br> (telescope) </th>
-        <th> Observatory <br> (location) </th>
-        <th> X Dim <br> (pixels) </th>
-        <th> Y Dim <br> (pixels) </th>
-        <th> Z Dim <br> (layers) </th>
-        <th> Bit Depth <br> (bits / px) </th>
-        <th> Frame Type <br> (light/flat/etc) </th>
-        </tr>
+<a href="{{image.getThumbnailUrlFull|safe}}">
+<img style="float; right;" src="{{image.getThumbnailUrlLarge|safe}}"></a>
 
+    <table border=2px style="float: left; border-collapse: collapse; margin: 1em;">
         <tr>
-        <td> <a
-        href="/user/{{image.fileRecord.uploadSession.uploadingUser}}">{{image.fileRecord.uploadSession.uploadingUser}}</a> </td>
-        <td> {{image.dateTime}} </td>
-        <td> {{image.instrument}} </td>
-        <td> {{image.observatory.name}} </td>
-        <td> {{image.dimX}} </td>
-        <td> {{image.dimY}} </td>
-        <td> {{image.dimZ}} </td>
-        <td> {{image.bitDepth}} </td>
-        <td> {{image.frameType}} </td>
+            <td>
+            Uploaded by user:
+            <a href="/user/{{image.fileRecord.uploadSession.uploadingUser}}">{{image.fileRecord.uploadSession.uploadingUser}}</a>
+
+            <br> Filename: {{image.fileRecord.originalFileName}}
+            <br> Sha-256: <a title="Click to copy to clipboard: {{image.fileRecord.fileSha256}}">{{image.fileRecord.fileSha256|sha256summary}}</a>
+            <br>
+            Taken on: {{image.dateTime|default_if_none:"Unknown date/time"}}
+            <br>
+            Uploaded:
+            <a href="/uploadSession/{{image.fileRecord.uploadSession.id}}">
+            {{image.fileRecord.uploadSession.dateTime|default_if_none:"Unknown date/time"}}</a>
+            <br>
+            <br> Has <a href="/image/{{id}}/properties/">{{image.properties.all.count}} image properties</a>.
+            <br> Has <a href="/image/{{id}}/question/">{{image.answers.all.count}} questions answered</a> about it.
+            <br>
+            <br>
+            Using instrument:
+            {% if image.instrument %}
+                {{image.instrument}}
+            {% else %}
+                Unknown
+            {% endif %}
+            <br>
+            From observatory:
+            {% if image.observatory %}
+                {{image.observatory.name}}
+            {% else %}
+                Unknown
+            {% endif %}
+            <br>
+            <br> Image dimensions: {{image.dimX}}x{{image.dimY}}x{{image.dimZ}}
+            <br> Bit depth: {{image.bitDepth}}&nbsp;bits/pixel
+            <br>
+            Frame type:
+            {% if image.frameType %}
+                <a href="/image/gallery/?queryParams=imageProperty=imageType={{image.frameType}}">{{image.frameType}}</a>
+            {% else %}
+                Unknown
+            {% endif %}
+            <br>
+            <br> This image has {{image.plateSolutions.count}} plate solutions.
+
+            {% for ps in image.plateSolutions.all %}
+            <br>&emsp;<b>{{ps.source}}:</b>
+            <br>&emsp;&emsp;{{ps.centerRA|formatRA}} {{ps.centerDec|formatDec}}
+            <br>&emsp;&emsp;{{ps.resolutionX|floatformat:2}}x{{ps.resolutionY|floatformat:2}} arcsec/pixel
+            <br>&emsp;&emsp;{{ps.area|floatformat:2}} square deg
+            <br>&emsp;&emsp;1 / {{ps.area|divide:41253|invert|floatformat:0|intcomma}} of the whole sky
+            {% endfor %}
+            </td>
+
+            <!--TODO: Include num valid pixels for each channel and other histogram stats.  -->
+            {% for channel in image.imagechannelinfo_set.all %}
+                <tr>
+                <td>
+                Channel {{channel.index}}: {{channel.channelType}}
+                <table>
+                    <tr><th></th> <th>mean</th> <th>median</th> <th>stdev</th></tr>
+                    <tr>
+                        <td><b>Image</b></td>
+                        <td>{{channel.mean|floatformat:2}}</td>
+                        <td>{{channel.median|floatformat:2}}</td>
+                        <td>{{channel.stdDev|floatformat:2}}</td>
+                    </tr>
+                    <tr>
+                        <td><b>Background</b></td>
+                        <td>{{channel.bgMean|floatformat:2}}</td>
+                        <td>{{channel.bgMedian|floatformat:2}}</td>
+                        <td>{{channel.bgStdDev|floatformat:2}}</td>
+                    </tr>
+
+                </table>
+                <a href="{{channel.getHistogramUrl}}"><img src="{{channel.getHistogramUrl}}"></a>
+                </td>
+                </tr>
+            {% endfor %}
         </tr>
     </table>
-
-<table border=2px style="border-collapse: collapse; margin: 1em;">
-<tr>
-<th>Channel</th>
-<th>Type</th>
-<th>Mean</th>
-<th>Medain</th>
-<th>StdDev</th>
-<th>Background<br>Mean</th>
-<th>Background<br>Median</th>
-<th>Background<br>StdDev</th>
-<th>Num Pixels</th>
-<th width=200px>Histogram</th>
-</tr>
-{% for channel in image.imagechannelinfo_set.all %}
-<tr>
-<td>{{channel.index}}</td>
-<td>{{channel.channelType}}</td>
-<td>{{channel.mean|floatformat:3}}</td>
-<td>{{channel.median|floatformat:3}}</td>
-<td>{{channel.stdDev|floatformat:3}}</td>
-<td>{{channel.bgMean|floatformat:3}}</td>
-<td>{{channel.bgMedian|floatformat:3}}</td>
-<td>{{channel.bgStdDev|floatformat:3}}</td>
-<td>{{channel.numValidHistogramPixels|intcomma}}</td>
-<td><a href="{{channel.getHistogramUrl}}"><img src="{{channel.getHistogramUrl}}"></a></td>
-</tr>
-{% endfor %}
-</table>
-
-<p>This image has {{image.plateSolutions.count}} plate solutions assosciated with it.</p>
-
-{% if image.plateSolutions.count > 0 %}
-    <table border=2px style="border-collapse: collapse; margin: 1em;">
-        <th>Source<br>of WCS</th>
-        <th>Center RA<br>(H:M:S)</th>
-        <th>Center Dec<br>(D:M:S)</th>
-        <th>Rotation<br>(deg)</th>
-        <th>Resolution X<br>(arcsec/px)</th>
-        <th>Resolution Y<br>(arcsec/px)</th>
-        <th>Area<br>(sq deg)</th>
-        <th>Fraction of<br>Whole Sky</th>
-
-    {% for ps in image.plateSolutions.all %}
-        <tr>
-        <td>{{ps.source}}</td>
-        <td>{{ps.centerRA|formatRA}}</td>
-        <td>{{ps.centerDec|formatDec}}</td>
-        <td>{{ps.rotation|floatformat:2}}</td>
-        <td>{{ps.resolutionX|floatformat:2}}</td>
-        <td>{{ps.resolutionY|floatformat:2}}</td>
-        <td>{{ps.area|floatformat:4}}</td>
-        <td>1&nbsp;/&nbsp;{{ps.area|divide:41253|invert|floatformat:0|intcomma}}</td>
-        </tr>
-    {% endfor %}
-    </table>
-
-    <p>This image overlaps with {{overlappingPlates|length}} other images.</p>
-
-    <table border=2px style="border-collapse: collapse; margin: 1em;">
-        <tr>
-        <th>Image</th>
-        <th>Resolution X<br>(arcsec/px)</th>
-        <th>Resolution Y<br>(arcsec/px)</th>
-        <th>Image Area<br>(sq deg)</th>
-        <th>Overlapping Area<br>(sq deg)</th>
-        <th>Thumbnail</th>
-        </tr>
-        <tr>
-        <td>This<br>image</td>
-        <td>{{image.getBestPlateSolution.resolutionX|floatformat:2}}</td>
-        <td>{{image.getBestPlateSolution.resolutionY|floatformat:2}}</td>
-        <td>{{imagePlateArea|floatformat:2}}</td>
-        <td>{{imagePlateArea|floatformat:2}}</td>
-        <td>{{image.getThumbnailSmall|safe}}</td>
-        </tr>
-
-        <tr>
-        <td colspan=4 height=30></td>
-        </tr>
-
-        {% for ps in overlappingPlates %}
-            <tr>
-            <td><a href="/image/{{ps.plate.image.pk}}/">Image<br>{{ps.plate.image.pk}}</a></td>
-            <td>{{ps.plate.resolutionX|floatformat:2}}</td>
-            <td>{{ps.plate.resolutionY|floatformat:2}}</td>
-            <td>{{ps.plateArea|floatformat:4}}</td>
-            <td>{{ps.overlapArea|floatformat:4}}</td>
-            <td>{{ps.plate.image.getThumbnailSmall|safe}}</td>
-            </tr>
-        {% endfor %}
-    </table>
-{% endif %}
 
 <br>
-    <table border=2px style="border-collapse: collapse; margin: 1em;">
+    <table border=2px style="float: left; border-collapse: collapse; margin: 1em;">
         <tr>
-        <th rowspan=2 colspan=2> <a href="/image/{{id}}/sources/">View sources</a></p> </th>
+        <th rowspan=2 colspan=2> <a href="/image/{{id}}/sources/">View<br>Sources</a> </th>
         <th>Sextractor</th>
         <th>Image2xy</th>
         <th>Daofind</th>
@@ -198,21 +163,40 @@ td.numMatchResults
         </tr>
     </table>
 
-<p>This image has {{numProperties}} property tags assosciatied with it.  <a href="/image/{{id}}/properties/">View properties</a></p>
+{% if image.plateSolutions.count > 0 %}
+    <span style="min-width: 300px; max-width: 60%; float: left">
+    <p>This image overlaps with {{overlappingPlates|length}} other images.</p>
 
-<p>Answer questions about this image.  <a href="/image/{{id}}/question/">Answer questions</a></p>
+    <div style="margin: .3em; float: left; display: inline-block;">
+    <img src={{image.getThumbnailUrlSmall|safe}}>
+    <font size=-1>
+    <br> This image.
+    <br>
+    {{image.getBestPlateSolution.resolutionX|floatformat:2}} x {{image.getBestPlateSolution.resolutionY|floatformat:2}}
+    <br>arcsec/pixel
+    </font>
+    </div>
 
-<p>Original uploaded filename: <b>{{image.fileRecord.originalFileName}}</b></p>
-<p>SHA 256 hash of original file: <b>{{image.fileRecord.fileSha256}}</b></p>
+    {% for ps in overlappingPlates %}
+    <div style="margin: .3em; float: left; display: inline-block;">
+    <a href="/image/{{ps.plate.image.pk}}/">
+    <img src="{{image.getThumbnailUrlSmall|safe}}">
+    <font size=-1>
+    <br>Image {{ps.plate.image.pk}}</a>
+    <br>
+    {% filter floatformat:0 %}{% percentage image.getBestPlateSolution.resolutionX ps.plate.resolutionX %}{% endfilter %}% x
+    {% filter floatformat:0 %}{% percentage image.getBestPlateSolution.resolutionY ps.plate.resolutionY %}{% endfilter %}%
+    <br> Overlap:
+    {% filter floatformat:0 %}{% percentage ps.overlapArea imagePlateArea %}{% endfilter %}%
+    </font>
+    </div>
+    {% endfor %}
+
+    </span>
+{% endif %}
 
 <!-- <h3>Processing<h3> -->
 <!-- TODO: Add processing queue jobs for this image. -->
-
-<h3>Image thumbnail</h3>
-
-<p>
-{{image.getThumbnailLarge|safe}}
-</p>
 
 {% endblock %}
 

@@ -504,9 +504,6 @@ def image(request, id):
     context['numSextractorImage2xyMatches'] = matches.filter(sextractorResult__isnull=False, image2xyResult__isnull=False).count()
     context['numSextractorStarfindMatches'] = matches.filter(sextractorResult__isnull=False, starfindResult__isnull=False).count()
 
-    numProperties = ImageProperty.objects.filter(image_id=image.pk).count()
-    context['numProperties'] = numProperties
-
     return render(request, "cosmicapp/image.html", context)
 
 def imageSources(request, id):
