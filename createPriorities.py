@@ -8,6 +8,8 @@ from cosmicapp.models import *
 
 #--------------------------------------------------------------------------------
 
+#TODO: This table needs a constraint that name/priority is unique for all rows.
+
 priority, created = ProcessPriority.objects.get_or_create(
     name = 'imagestats',
     priority = 10000,

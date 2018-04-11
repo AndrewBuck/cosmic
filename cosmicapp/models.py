@@ -27,6 +27,8 @@ from .tasks import computeSingleEphemeris
 
 #TODO: Check all DateTime and similar type fields to see if they should be auto_now=True.
 
+#TODO: Check all CharField fields to see if they should be TextFields instead.
+
 #TODO: Check all TextField and CharField and remove null=True so you only have to check for empty string as null, not both empty string and null.
 
 class CosmicVariable(models.Model):
@@ -760,6 +762,7 @@ class SextractorResult(SourceFindResult):
     """
     A record storing a single source detected in an image by the Source Extractor program.
     """
+    #TODO: Add in a bunch more fields here.
     fluxAuto = models.FloatField(null=True)
     fluxAutoErr = models.FloatField(null=True)
     flags = models.IntegerField(null=True)
