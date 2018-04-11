@@ -218,6 +218,12 @@ def imagestats(filename):
 
     outputText += "imagestats:wcs: " + filename + "\n"
     if os.path.splitext(filename)[-1].lower() in ['.fit', '.fits']:
+        # FIXME: Bug with image from DSLR with astronomy.net plate solution
+        """FITS WCS distortion paper lookup tables and SIP distortions only work in 2
+        dimensions. However, WCSLIB has detected 3 dimensions in the core WCS keywords. To
+        use core WCS in conjunction with FITS WCS distortion paper lookup tables or SIP
+        distortion, you must select or reduce these to 2 dimensions using the naxis
+        kwarg.""" 
         w = wcs.WCS(settings.MEDIA_ROOT + filename)
 
         if w.has_celestial:
@@ -303,31 +309,31 @@ def imagestats(filename):
 
                         aLeft = numpy.array([
                             1.5*aCenters[0] - 0.5*aCenters[1],
-                            0.5*(aCenters[0] + aCenters[1]),
-                            0.5*(aCenters[1] + aCenters[2]),
-                            0.5*(aCenters[2] + aCenters[3]),
-                            0.5*(aCenters[3] + aCenters[4])
+                            0.5*aCenters[0] + 0.5*aCenters[1],
+                            0.5*aCenters[1] + 0.5*aCenters[2],
+                            0.5*aCenters[2] + 0.5*aCenters[3],
+                            0.5*aCenters[3] + 0.5*aCenters[4]
                             ])
 
                         bLeft = numpy.array([
                             1.5*bCenters[0] - 0.5*bCenters[1],
-                            0.5*(bCenters[0] + bCenters[1]),
-                            0.5*(bCenters[1] + bCenters[2]),
-                            0.5*(bCenters[2] + bCenters[3])
+                            0.5*bCenters[0] + 0.5*bCenters[1],
+                            0.5*bCenters[1] + 0.5*bCenters[2],
+                            0.5*bCenters[2] + 0.5*bCenters[3]
                             ])
 
                         aRight = numpy.array([
-                            0.5*(aCenters[0] + aCenters[1]),
-                            0.5*(aCenters[1] + aCenters[2]),
-                            0.5*(aCenters[2] + aCenters[3]),
-                            0.5*(aCenters[3] + aCenters[4]),
+                            0.5*aCenters[0] + 0.5*aCenters[1],
+                            0.5*aCenters[1] + 0.5*aCenters[2],
+                            0.5*aCenters[2] + 0.5*aCenters[3],
+                            0.5*aCenters[3] + 0.5*aCenters[4],
                             1.5*aCenters[4] - 0.5*aCenters[3]
                             ])
 
                         bRight = numpy.array([
-                            0.5*(bCenters[0] + bCenters[1]),
-                            0.5*(bCenters[1] + bCenters[2]),
-                            0.5*(bCenters[2] + bCenters[3]),
+                            0.5*bCenters[0] + 0.5*bCenters[1],
+                            0.5*bCenters[1] + 0.5*bCenters[2],
+                            0.5*bCenters[2] + 0.5*bCenters[3],
                             1.5*bCenters[3] - 0.5*bCenters[2],
                             ])
 
