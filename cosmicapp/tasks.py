@@ -482,15 +482,15 @@ def imagestats(filename):
                         outputText += "Reduction step complete." +\
                             " deletions: " + str(deletionsThisCycle) +\
                             " , values: " + str(len(pixelCounts)) +\
-                            " , bits: " + str(math.ceil(math.log(len(pixelCounts), 2))) +\
-                            " , rejection exponent: " + str(rejectionExponent) +\
+                            " , bits: " + str(round(math.log(len(pixelCounts),2),2)) +\
+                            " , rejection exponent: " + str(round(rejectionExponent,2)) +\
                             " , deletions needed: " + str(deletionsNeeded) + "\n"
 
                         # Adjust rejection exponent based on results
                         if deletionsNeeded > 0:
                             if deletionsThisCycle > 0:
                                 try:
-                                    rejectionExponent *= 1.0 - 1.5*math.log(deletionsNeeded / deletionsThisCycle, rejectionExponent)
+                                    rejectionExponent *= 0.5 + 1.5*math.exp( -1.0*deletionsNeeded/deletionsThisCycle )
                                 except ValueError:
                                     outputText += '\nValueError exception in math.log(deletionsNeeded / deletionsThisCycle, rejectionExponent):\n' +\
                                         'deletionsNeeded = ' + str(deletionsNeeded) +\
