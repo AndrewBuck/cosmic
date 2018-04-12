@@ -81,11 +81,14 @@ td.numMatchResults
             {% endfor %}
             </td>
 
-            <!--TODO: Include num valid pixels for each channel and other histogram stats.  -->
             {% for channel in image.imagechannelinfo_set.all %}
                 <tr>
                 <td>
                 Channel {{channel.index}}: {{channel.channelType}}
+                <br> Unique Values: {{channel.uniqueValues}}
+                <br> Black Point: {{channel.thumbnailBlackPoint|floatformat:2}}
+                <br> White Point: {{channel.thumbnailWhitePoint|floatformat:2}}
+                <br> Gamma: {{channel.thumbnailGamma|floatformat:2}}
                 <table>
                     <tr><th></th> <th>mean</th> <th>median</th> <th>stdev</th></tr>
                     <tr>
