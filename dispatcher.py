@@ -16,8 +16,8 @@ quit = False
 
 # The time to wait between successive checks to the DB for tasks in the queue.  The first value is the time to wait
 # between tasks when there is more than one in the queue, subsequent values are used for a "backoff timer".
-sleepTimes = [0.1, 0.5, 1.5, 3, 3, 8, 8, 8, 8, 8, 8, 12, 12, 12, 12, 12, 12, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 30]
+sleepTimes = [0.1, 0.5, 1.5, 3, 3, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+    10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 15]
 sleepTimeIndex = 0
 
 def getFirstPrerequisite(pi):
@@ -122,13 +122,13 @@ while not quit:
     #TODO: This forces the task to complete before the next task is submitted to celery.  In the future when we have
     # multiple celery workers this should be expanded to pass out several jobs at a time and replace any completed
     # ones in order to keep the various celery nodes busy.
-    waitTime = 0.5
+    waitTime = 0.25
     while not celeryResult.ready():
         print("   Task running, waiting " + str(waitTime) + " seconds.")
         sys.stdout.flush()
         time.sleep(waitTime)
-        waitTime += 1
-        waitTime = min(waitTime, 30)
+        waitTime = waitTime*1.5 + 0.1
+        waitTime = min(waitTime, 5)
 
     # Write the result of the returned value back to the database, either success, failure, or error (early exit).
     #TODO: Pass the return result through directly as a string and modify the individual tasks to return more detailed strings.
