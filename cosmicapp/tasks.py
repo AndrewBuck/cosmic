@@ -636,6 +636,9 @@ def imagestats(filename):
 
         hdulist.close()
 
+        numChannels = models.ImageChannelInfo.objects.filter(image=image).count()
+        image.addImageProperty('totalNumChannels', numChannels)
+
     return constructProcessOutput(outputText, errorText)
 
 # TODO: Histogram of FITS data (count vs adu) in linear and logarithmic (if possible?).
