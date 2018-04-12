@@ -217,7 +217,7 @@ def imagestats(filename):
             i += 1
 
     outputText += "imagestats:wcs: " + filename + "\n"
-    if os.path.splitext(filename)[-1].lower() in ['.fit', '.fits']:
+    if os.path.splitext(filename)[-1].lower() in settings.SUPPORTED_IMAGE_TYPES:
         # FIXME: Bug with image from DSLR with astronomy.net plate solution
         """FITS WCS distortion paper lookup tables and SIP distortions only work in 2
         dimensions. However, WCSLIB has detected 3 dimensions in the core WCS keywords. To
