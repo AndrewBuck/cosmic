@@ -719,7 +719,7 @@ class ProcessArgument(models.Model):
     2, allowing the use of positional parameters which act more like named parameters.  I.E. a particular positional index
     always contains one specific argument for the task.
     """
-    processInput = models.ForeignKey(ProcessInput, db_index=True, on_delete=models.CASCADE)
+    processInput = models.ForeignKey(ProcessInput, db_index=True, on_delete=models.CASCADE, related_name='arguments')
     argIndex = models.IntegerField()
     arg = models.CharField(max_length=256)
 

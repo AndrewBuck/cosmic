@@ -9,7 +9,60 @@
 {% endblock extrahead %}
 
 {% block mainbody %}
+<a href=/processoutput/{{processOutput.pk|add:-1}}>&lt; #{{processOutput.pk|add:-1}}</a>&emsp;&emsp;
+<a href=/processoutput/{{processOutput.pk|add:1}}>#{{processOutput.pk|add:1}} &gt;</a>
 <h2>Process Output #{{processOutput.pk}}</h2>
+
+<span style="float: right; border: 2px solid black; padding: 5px;">
+Run for user: <a href="/user/{{processOutput.processInput.requestor}}">{{processOutput.processInput.requestor}}</a>
+<br> Process name: {{processOutput.processInput.process}} (priority: {{processOutput.processInput.priority|floatformat:2}})
+<br> Process Arguments:
+
+{% for arg in processOutput.processInput.arguments.all %}
+    <br>&emsp;{{arg.arg}}
+{% endfor %}
+
+<br>
+<br>
+<table>
+<tr> <td>Process submitted:</td> <td>{{processOutput.processInput.submittedDateTime}}</td> </tr>
+<tr> <td>Process started:</td> <td>{{processOutput.processInput.startedDateTime}}</td> </tr>
+<tr> <td>Process completed:</td> <td>{{processOutput.finishedDateTime}}</td> </tr>
+</table>
+<br>
+Resource Costs:
+<table>
+<tr>
+    <th>Resource</th>
+    <th>Estimated Cost</th>
+    <th>Actual Cost</th>
+</tr>
+
+<tr>
+    <td>CPU</td>
+    <td>{{processOutput.processInput.estCostCPU|default_if_none:"Not recorded"}} seconds</td>
+    <td>{{processOutput.actualCostCPU|default_if_none:"Not recorded"}}</td>
+</tr>
+
+<tr>
+    <td>Bandwidth</td>
+    <td>{{processOutput.processInput.estCostBandwidth|default_if_none:"Not recorded"|filesizeformat}}</td>
+    <td>{{processOutput.actualCostBandwidth|default_if_none:"Not recorded"|filesizeformat}}</td>
+</tr>
+
+<tr>
+    <td>Storage</td>
+    <td>{{processOutput.processInput.estCostStorage|default_if_none:"Not recorded"|filesizeformat}}</td>
+    <td>{{processOutput.actualCostStorage|default_if_none:"Not recorded"|filesizeformat}}</td>
+</tr>
+
+<tr>
+    <td>IO</td>
+    <td>{{processOutput.processInput.estCostIO|default_if_none:"Not recorded"|filesizeformat}}</td>
+    <td>{{processOutput.actualCostIO|default_if_none:"Not recorded"|filesizeformat}}</td>
+</tr>
+</table>
+</span>
 
 <h3>Output Text</h3>
 <p>
