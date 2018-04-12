@@ -180,7 +180,7 @@ td.numMatchResults
     {% for ps in overlappingPlates %}
     <div style="margin: .3em; float: left; display: inline-block;">
     <a href="/image/{{ps.plate.image.pk}}/">
-    <img src="{{image.getThumbnailUrlSmall|safe}}">
+    <img src="{{ps.plate.image.getThumbnailUrlSmall|safe}}">
     <font size=-1>
     <br>Image {{ps.plate.image.pk}}</a>
     <br>
