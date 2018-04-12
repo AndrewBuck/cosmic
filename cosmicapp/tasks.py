@@ -1030,6 +1030,7 @@ def sextractor(filename):
             meanFluxAuto = records.aggregate(Avg('fluxAuto'))['fluxAuto__avg']
             stdDevFluxAuto = records.aggregate(StdDev('fluxAuto'))['fluxAuto__stddev']
 
+            outputText += "Found {} sources.\n".format(records.count())
             for record in records:
                 record.confidence = sigmoid((record.fluxAuto-meanFluxAuto)/stdDevFluxAuto)
                 record.save()
@@ -1103,6 +1104,7 @@ def image2xy(filename):
         meanFlux = records.aggregate(Avg('flux'))['flux__avg']
         stdDevFlux = records.aggregate(StdDev('flux'))['flux__stddev']
 
+        outputText += "Found {} sources.\n".format(records.count())
         for record in records:
             record.confidence = sigmoid((record.flux-meanFlux)/stdDevFlux)
             record.save()
@@ -1163,6 +1165,7 @@ def daofind(filename):
         meanMag = records.aggregate(Avg('mag'))['mag__avg']
         stdDevMag = records.aggregate(StdDev('mag'))['mag__stddev']
 
+        outputText += "Found {} sources.\n".format(records.count())
         for record in records:
             #TODO: Incorporate sharpness, sround, and ground into the calculation.
             record.confidence = sigmoid((meanMag-record.mag)/stdDevMag)
@@ -1220,6 +1223,7 @@ def starfind(filename):
         meanMag = records.aggregate(Avg('mag'))['mag__avg']
         stdDevMag = records.aggregate(StdDev('mag'))['mag__stddev']
 
+        outputText += "Found {} sources.\n".format(records.count())
         for record in records:
             #TODO: Incorporate sharpness, roundness, etc, into the calculation.
             record.confidence = sigmoid((meanMag-record.mag)/stdDevMag)
