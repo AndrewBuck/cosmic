@@ -61,7 +61,7 @@ while not quit:
     print("checking prerequisistes for:  ", pi.process)
     pi = getFirstPrerequisite(pi)
     argList = ''
-    for arg in pi.processargument_set.all():
+    for arg in pi.arguments.all():
         argList += ' "{}"'.format(arg.arg)
     print("prerequisiste is:  {} {}".format(pi.process, argList))
     if pi == None:
@@ -70,43 +70,43 @@ while not quit:
         continue
 
     if pi.process == 'imagestats':
-        arg = pi.processargument_set.all()[0].arg
+        arg = pi.arguments.all()[0].arg
         celeryResult = imagestats.delay(arg)
 
     elif pi.process == 'generateThumbnails':
-        arg = pi.processargument_set.all()[0].arg
+        arg = pi.arguments.all()[0].arg
         celeryResult = generateThumbnails.delay(arg)
 
     elif pi.process == 'sextractor':
-        arg = pi.processargument_set.all()[0].arg
+        arg = pi.arguments.all()[0].arg
         celeryResult = sextractor.delay(arg)
 
     elif pi.process == 'image2xy':
-        arg = pi.processargument_set.all()[0].arg
+        arg = pi.arguments.all()[0].arg
         celeryResult = image2xy.delay(arg)
 
     elif pi.process == 'daofind':
-        arg = pi.processargument_set.all()[0].arg
+        arg = pi.arguments.all()[0].arg
         celeryResult = daofind.delay(arg)
 
     elif pi.process == 'starfind':
-        arg = pi.processargument_set.all()[0].arg
+        arg = pi.arguments.all()[0].arg
         celeryResult = starfind.delay(arg)
 
     elif pi.process == 'starmatch':
-        arg = pi.processargument_set.all()[0].arg
+        arg = pi.arguments.all()[0].arg
         celeryResult = starmatch.delay(arg)
 
     elif pi.process == 'astrometryNet':
-        arg = pi.processargument_set.all()[0].arg
+        arg = pi.arguments.all()[0].arg
         celeryResult = astrometryNet.delay(arg)
 
     elif pi.process == 'parseHeaders':
-        arg = pi.processargument_set.all()[0].arg
+        arg = pi.arguments.all()[0].arg
         celeryResult = parseHeaders.delay(arg)
 
     elif pi.process == 'flagSources':
-        arg = pi.processargument_set.all()[0].arg
+        arg = pi.arguments.all()[0].arg
         celeryResult = flagSources.delay(arg)
 
     else:
