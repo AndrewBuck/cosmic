@@ -2,3 +2,5 @@ migrations/
 __pycache__/
 .*.swp
 .*.swo
+*.pyc
+

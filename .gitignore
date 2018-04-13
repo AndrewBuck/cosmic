@@ -3,6 +3,7 @@ db.sqlite3
 plot_db_histogram.plotdata
 .*.swp
 .*.swo
+*.pyc
 
 file
 models.png
