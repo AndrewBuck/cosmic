@@ -9,6 +9,7 @@ import subprocess
 import json
 import sys
 import os
+import time
 import re
 import itertools
 import math
@@ -25,11 +26,13 @@ from astropy.stats import sigma_clipped_stats
 from astropy.table import Table
 from photutils import make_source_mask, DAOStarFinder, IRAFStarFinder
 from collections import Counter
-from sortedcontainers import SortedList, SortedDict
+from sortedcontainers import SortedList, SortedDict, SortedListWithKey
 
 from cosmicapp import models
 
 staticDirectory = os.path.dirname(os.path.realpath(__file__)) + "/static/cosmicapp/"
+
+#TODO: Find out if django has a faster method of writing many objects to the database all at once, instead of calling .save() on each one individually.
 
 def longestCommonPrefix(string1, string2):
     length = 0
@@ -189,6 +192,7 @@ def imagestats(filename):
 
     with transaction.atomic():
         i = 0
+        #TODO: Long lines starting with 'HISTORY' in the fits headers do not seem to be output by ImageMagick in the same way that 'COMMENT' lines are.  We may need to submit a ticket about this or something.
         for line in output2.splitlines():
             split = line.split('=', 1)
             key = None
@@ -1258,25 +1262,32 @@ def starmatch(filename):
         { 'name': 'userSubmitted2', 'model': models.UserSubmittedResult }
         ]
 
+    print('\n\nTiming:')
+    millis = int(round(time.time() * 1000))
+
+    for method in inputs:
+        method['query'] = SortedListWithKey(method['model'].objects.filter(image=image), key=lambda x: x.pixelX)
+
     # Loop over all the pairs of source extraction methods listed in 'inputs'.
     matchedResults = []
     for i1, i2 in itertools.combinations(inputs, 2):
-        results1 = i1['model'].objects.filter(image=image)
-        results2 = i2['model'].objects.filter(image=image)
+        results1 = i1['query']
+        results2 = i2['query']
 
         outputText += 'Matching {} {} results with {} {} results'.format(len(results1), i1['name'], len(results2), i2['name']) + "\n"
 
         # Loop over all the pairs of results in the two current methods and record
         # any match pairs that are within 3 pixels of eachother.
-        #TODO: Sort stars into bins first to cut down on the n^2 growth.
         matches = []
+        maxAllowedDistance = 3.0
         for r1 in results1:
-            nearestDist = 3.0
+            nearestDist = maxAllowedDistance
             nearestDistSq = nearestDist * nearestDist
             nearestResult = None
             x1 = r1.pixelX
             y1 = r1.pixelY
-            for r2 in results2:
+
+            for r2 in results2.irange_key(r1.pixelX - maxAllowedDistance, r1.pixelX + maxAllowedDistance):
                 dx = r2.pixelX - x1
                 dy = r2.pixelY - y1
                 dSq = dx*dx + dy*dy
@@ -1292,29 +1303,56 @@ def starmatch(filename):
         outputText += '   Found {} matches.'.format(len(matches)) + "\n"
         matchedResults.append( (i1, i2, matches) )
 
+    newMillis = int(round(time.time() * 1000))
+    deltaT = newMillis - millis
+    print('pairwise took {} ms.'.format(deltaT ))
+    millis = int(round(time.time() * 1000))
+
+    def sortKeyForSuperMatch(superMatch):
+        average = 0.0
+        for entry in superMatch.values():
+            average += entry.pixelX
+
+        return average/len(superMatch.values())
+
     # Now that we have all the matches between every two individual methods, combine them into 'superMatches' where 3
     # or more different match types all agree on the same star.
     outputText += 'Calculating super matches:' + "\n"
-    superMatches = []
+    superMatches = SortedListWithKey(key=lambda x: sortKeyForSuperMatch(x))
     for i1, i2, matches in matchedResults:
         for match in matches:
-            # Check to see if either of the matched pair in the current match exist anyhere in the super matches already
-            for superMatch in superMatches:
+            # Check to see if either of the matched pair in the current match exist
+            # anyhere in the super matches already.  Since the superMatches list is sorted
+            # on pixelX we can limit our checking to only the range of ones within the
+            # maxAllowedDistance away in pixelX.  The factor of 2 is bit of a hack since
+            # the average position of the match is not completely stable as new detections
+            # are added to it.  In any case, it does not affect the accuracy of the
+            # results, it only results in checking a few extra objects before the correct
+            # one is found.
+            for superMatch in superMatches.irange_key(match[0].pixelX - 2*maxAllowedDistance, match[0].pixelX + 2*maxAllowedDistance):
+                # Check to see if the superMatch has an entry for the detection method in i1.
                 if i1['name'] in superMatch:
+                    # Check to see if the actual detection object is the one we are looking at currently.
                     if superMatch[i1['name']] == match[0]:
+                        # We found that i1 is part of this superMatch so now we add i2 to it as well.
                         superMatch[i2['name']] = match[1]
                         break
                 if i2['name'] in superMatch:
                     if superMatch[i2['name']] == match[1]:
                         superMatch[i1['name']] = match[0]
                         break
-            # Nether of the current match pair exists anywhere in the superMatch array already, so create a new entry
+            # Neither of the current match pair exists anywhere in the superMatch array already, so create a new entry
             # containing the current match pair.
             else:
                 d = {}
                 d[i1['name']] = match[0]
                 d[i2['name']] = match[1]
-                superMatches.append(d)
+                superMatches.add(d)
+
+    newMillis = int(round(time.time() * 1000))
+    deltaT = newMillis - millis
+    print('superMatches took {} ms.'.format(deltaT ))
+    millis = int(round(time.time() * 1000))
 
     # Loop over all the superMatch entries and create a database entry for each one.
     outputText += 'Found {} super matches.  Writing them to the DB...'.format(len(superMatches)) + "\n"
@@ -1367,6 +1405,11 @@ def starmatch(filename):
             record.save()
 
     outputText += 'Done.' + "\n"
+
+    newMillis = int(round(time.time() * 1000))
+    deltaT = newMillis - millis
+    print('write to db took {} ms.'.format(deltaT ))
+    millis = int(round(time.time() * 1000))
 
     return constructProcessOutput(outputText, errorText)
 
