@@ -1574,7 +1574,12 @@ def parseHeaders(imageId):
     outputText = ""
     errorText = ""
 
-    image = models.Image.objects.get(pk=imageId)
+    try:
+        image = models.Image.objects.get(pk=imageId)
+    except:
+        errorText += "Image {} does not exist".format(imageId)
+        return constructProcessOutput(outputText, errorText)
+
     headers = models.ImageHeaderField.objects.filter(image=imageId)
 
     with transaction.atomic():
