@@ -1896,12 +1896,24 @@ def parseHeaders(imageId):
                 key = 'combinedImage' + num
                 value = header.value.strip().strip("'")
 
-            elif header.key in ['fits:darksub']:
-                key = 'darkSubtracted'
+            elif header.key in ['fits:ccdproc']:
+                key = 'ccdProcessing'
                 value = header.value.split('/')[0].strip().strip("'")
 
-            elif header.key in ['fits:flatted']:
+            elif header.key in ['fits:zerocor']:
+                key = 'biasCorrected'
+                value = header.value.split('/')[0].strip().strip("'")
+
+            elif header.key in ['fits:darksub', 'fits:darkcor']:
+                key = 'darkCorrected'
+                value = header.value.split('/')[0].strip().strip("'")
+
+            elif header.key in ['fits:flatted', 'fits:flatcor']:
                 key = 'flatCorrected'
+                value = header.value.split('/')[0].strip().strip("'")
+
+            elif header.key in ['fits:ccdsec']:
+                key = 'ccdDataSection'
                 value = header.value.split('/')[0].strip().strip("'")
 
             #TODO: Find out what this is and maybe change the key we set for it.  It was found
