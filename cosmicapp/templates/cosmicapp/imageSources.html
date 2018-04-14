@@ -1032,7 +1032,7 @@ function drawReticle(c, x, y, size, color='#A02020', opacity=-1, forceDraw=false
     context.globalAlpha = oldGlobalAlpha;
 };
 
-function drawSources(forceDraw=false)
+function drawSources(forceDraw=true)
 {
     var i;
 
@@ -1591,7 +1591,7 @@ function handleMouseMove(event)
     else
         mouseoverTextActive = false;
 
-    drawSources();
+    drawSources(false);
 };
 
 function handleMouseButtonDown(event)
@@ -1741,7 +1741,7 @@ window.onload = function()
     $(document).mouseup(handleMouseButtonUp);
     $("#sourcesCanvas").mouseenter(function(){document.body.style.cursor = 'none';});
     $("#sourcesCanvas").mouseleave(function(){document.body.style.cursor = oldMouseCursor;
-        mouseX = undefined; mouseY = undefined; drawSources(true);});
+        mouseX = undefined; mouseY = undefined; drawSources();});
     $(document).keydown(handleKeyDown);
     $(document).keyup(handleKeyUp);
     countKeysPressed();
