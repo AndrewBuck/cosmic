@@ -9,6 +9,12 @@ hardware profiles they create for that equipment and automatically create them f
 Currently the 'zoom' button in the image galleries is not working, need to fix this.
 
 
+
+We should have a javascript function that highlights an object by id on the page (for
+example, by setting its css background color to something temporarily).  This could be
+used for the tutorial to highlight one item on the page after the other, etc.
+
+
 solve-field - potentially useful commandline options:
 --depth      try just 10 or so objects first then if it fails re-queue later with a deeper depth.
 --cpulimit
