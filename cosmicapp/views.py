@@ -645,7 +645,6 @@ def query(request):
             d = result.__dict__
             del d['_state']
             for key in d:
-                print(type(d[key]))
                 if type(d[key]) == datetime:
                     d[key] = str(d[key])
             d['ra'] = ra
@@ -664,7 +663,6 @@ def query(request):
             d = result.__dict__
             del d['_state']
             for key in d:
-                print(type(d[key]))
                 if type(d[key]) == datetime:
                     d[key] = str(d[key])
             d['pixelX'] = x
@@ -678,7 +676,6 @@ def query(request):
         for result in results:
             d = result.__dict__
             for key in d:
-                print(type(d[key]))
                 if type(d[key]) == datetime:
                     d[key] = str(d[key])
             d['dateTime'] = str(d['dateTime'])
