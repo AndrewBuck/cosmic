@@ -644,6 +644,10 @@ def query(request):
             ra, dec = result.getRaDec()
             d = result.__dict__
             del d['_state']
+            for key in d:
+                print(type(d[key]))
+                if type(d[key]) == datetime:
+                    d[key] = str(d[key])
             d['ra'] = ra
             d['dec'] = dec
             resultList.append(d)
@@ -659,6 +663,10 @@ def query(request):
             y = numpy.asscalar(y)
             d = result.__dict__
             del d['_state']
+            for key in d:
+                print(type(d[key]))
+                if type(d[key]) == datetime:
+                    d[key] = str(d[key])
             d['pixelX'] = x
             d['pixelY'] = y
             resultList.append(d)
@@ -669,6 +677,10 @@ def query(request):
         resultList = []
         for result in results:
             d = result.__dict__
+            for key in d:
+                print(type(d[key]))
+                if type(d[key]) == datetime:
+                    d[key] = str(d[key])
             d['dateTime'] = str(d['dateTime'])
             d['numPlateSolutions'] = str(result.plateSolutions.count())
             #TODO: These next lines can be replaced by a direct db query which is faster than calling this function which does more calculation than we need here.
