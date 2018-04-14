@@ -1,0 +1,17 @@
+{% load cosmicapp_extras %}
+{{prefix|default_if_none:""}}
+<font color=blue size=+3><a id="commentToggle_{{comment.id}}" onclick="showHideComment('{{comment.id}}')">-</a></font>
+Posted by <a href="/user/{{comment.user}}">{{comment.user}}</a>
+on {{comment.dateTime}}
+<br>
+<div class=comment id="comment_{{comment.id}}">
+<div style="background: #eee;">{{comment|safe}}</div>
+<br>
+{% newComment "comment" comment.id "Reply" %}
+<br>
+{% for comment in comment.comments.all %}
+    {% displayComment comment %}
+{% endfor %}
+</div>
+<br>
+{{postfix|default_if_none:""}}

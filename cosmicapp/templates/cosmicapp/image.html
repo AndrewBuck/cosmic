@@ -6,6 +6,8 @@
 {% block extratitle %} - Image {{id}} {% endblock %}
 
 {% block extrahead %}
+{% include "./jquery.html" %}
+<script src="/static/cosmicapp/comment.js"></script>
 <style>
 td.numSourceResults
 {
@@ -200,6 +202,17 @@ td.numMatchResults
 
 <!-- <h3>Processing<h3> -->
 <!-- TODO: Add processing queue jobs for this image. -->
+
+<div class=clearfix></div>
+
+{% newComment "image" image.id "Comment on this image" "<p>" "</p>"%}
+
+<br>
+<br>
+
+{% for comment in image.comments.all %}
+    {% displayComment comment %}
+{% endfor %}
 
 {% endblock %}
 

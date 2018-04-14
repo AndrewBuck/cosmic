@@ -79,6 +79,8 @@ class InstrumentComponent(models.Model):
     make = models.CharField(db_index=True, max_length=64, null=True, blank=True)
     model = models.CharField(db_index=True, max_length=64, null=True, blank=True)
 
+    comments = GenericRelation('TextBlob')
+
     def __str__(self):
         return type(self).__name__ + ": " + self.make + " - " + self.model
 
@@ -102,9 +104,13 @@ class ComponentInstance(models.Model):
     dateOffline = models.DateField(null=True, blank=True)
     cost = models.FloatField(null=True, blank=True)
 
+    comments = GenericRelation('TextBlob')
+
 class InstrumentConfiguration(models.Model):
     user = models.ForeignKey(User, db_index=True, on_delete=models.CASCADE)
     name = models.TextField(null=True)
+
+    comments = GenericRelation('TextBlob')
 
 class InstrumentConfigurationLink(models.Model):
     configuration = models.ForeignKey("InstrumentConfiguration", db_index=True, on_delete=models.CASCADE, related_name="configurationLinks")
@@ -120,6 +126,8 @@ class OTA(InstrumentComponent):
     aperture = models.FloatField(null=True, blank=True)
     design = models.CharField(max_length=64, null=True, blank=True)
 
+    comments = GenericRelation('TextBlob')
+
 class OTAPort(models.Model):
     """
     A port for a camera or eyepiece to be attached to an OTA.
@@ -129,6 +137,8 @@ class OTAPort(models.Model):
     location = models.CharField(max_length=64, null=True, blank=True)
     extraOptics = models.CharField(max_length=64, null=True, blank=True)
 
+    comments = GenericRelation('TextBlob')
+
 class Eyepiece(models.Model):
     """
     An eyepiece to be inserted into a telescope for visual observations.
@@ -136,6 +146,8 @@ class Eyepiece(models.Model):
     diameter = models.FloatField(null=True, blank=True)
     focalLength = models.FloatField(null=True, blank=True)
     apparentFOV = models.FloatField(null=True, blank=True)
+
+    comments = GenericRelation('TextBlob')
 
 class Camera(InstrumentComponent):
     """
@@ -151,9 +163,13 @@ class Camera(InstrumentComponent):
     exposureMax = models.FloatField(null=True, blank=True)
     coolingCapacity = models.FloatField(null=True, blank=True)
 
+    comments = GenericRelation('TextBlob')
+
 class Pier(InstrumentComponent):
     pierType = models.CharField(max_length=64, null=True, blank=True)
     maxPayload = models.FloatField(null=True, blank=True)
+
+    comments = GenericRelation('TextBlob')
 
 class Mount(InstrumentComponent):
     """
@@ -163,6 +179,8 @@ class Mount(InstrumentComponent):
     maxWeight = models.FloatField(null=True, blank=True)
     autoguideCompatible = models.NullBooleanField()
     gotoCompatible = models.NullBooleanField()
+
+    comments = GenericRelation('TextBlob')
 
 #TODO: Delete this class.
 class Instrument(models.Model):
@@ -253,6 +271,8 @@ class BookmarkFolder(models.Model):
     name = models.CharField(max_length=256, null=True)
     dateTime = models.DateTimeField(auto_now=True)
 
+    comments = GenericRelation('TextBlob')
+
 class BookmarkFolderLink(models.Model):
     bookmark = models.ForeignKey(Bookmark, db_index=True, on_delete=models.CASCADE)
     folder = models.ForeignKey(BookmarkFolder, db_index=True, on_delete=models.CASCADE)
@@ -304,11 +324,14 @@ class Observatory(models.Model):
     lon = models.FloatField(db_index=True)
     elevation = models.FloatField(null=True, blank=True)
 
+    comments = GenericRelation('TextBlob')
 
 
 class UploadSession(models.Model):
     uploadingUser = models.ForeignKey(User, db_index=True, on_delete=models.CASCADE)
     dateTime = models.DateTimeField(auto_now=True)
+
+    comments = GenericRelation('TextBlob')
 
 class UploadedFileRecord(models.Model):
     """
@@ -347,7 +370,9 @@ class Image(models.Model, SkyObject):
     bitDepth = models.IntegerField(null=True)
     frameType = models.CharField(max_length=32)
     dateTime = models.DateTimeField(db_index=True, null=True)
+
     answers = GenericRelation('Answer')
+    comments = GenericRelation('TextBlob')
 
     def getSkyCoords(self, dateTime):
         ps = self.getBestPlateSolution()
@@ -534,9 +559,13 @@ class ImageHeaderField(models.Model):
     key = models.TextField(db_index=True)
     value = models.TextField()
 
+    comments = GenericRelation('TextBlob')
+
 class ImageHeaderFieldCommonEnding(models.Model):
     key = models.TextField(db_index=True)
     ending = models.TextField()
+
+    comments = GenericRelation('TextBlob')
 
 class ImageProperty(models.Model):
     """
@@ -551,6 +580,8 @@ class ImageProperty(models.Model):
     key = models.TextField(db_index=True)
     value = models.TextField()
     createDateTime = models.DateTimeField(auto_now=True)
+
+    comments = GenericRelation('TextBlob')
 
 class ImageChannelInfo(models.Model):
     """
@@ -625,6 +656,8 @@ class PlateSolution(models.Model):
     geometry = models.PolygonField(srid=40000, db_index=True, geography=False, dim=2, null=True)
     area = models.FloatField(null=True)
     createdDateTime = models.DateTimeField(auto_now=True, db_index=True, null=True)
+
+    comments = GenericRelation('TextBlob')
 
     def wcs(self):
         return wcs.WCS(self.wcsHeader)
@@ -752,6 +785,8 @@ class SourceFindResult(models.Model):
     flagBadColumn = models.NullBooleanField()
     flagEdge = models.NullBooleanField()
 
+    comments = GenericRelation('TextBlob')
+
     def getRaDec(self):
         plateSolution = self.image.getBestPlateSolution()
 
@@ -866,6 +901,8 @@ class Catalog(models.Model):
     cosmicNotes = models.TextField(null=True)
     importDateTime = models.DateTimeField(auto_now=True, null=True)
     importPeriod = models.FloatField(null=True)
+
+    comments = GenericRelation('TextBlob')
 
 class ScorableObject:
     """
@@ -1035,6 +1072,8 @@ class UCAC4Record(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     magError = models.FloatField(null=True)
     id2mass = models.CharField(max_length=10, null=True) # 2MASS identifier if present in 2MASS
 
+    comments = GenericRelation('TextBlob')
+
     def getSkyCoords(self, dateTime):
         return (self.ra, self.dec)
 
@@ -1081,7 +1120,9 @@ class GCVSRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     period = models.FloatField(null=True)
     periodRisingPercentage = models.FloatField(null=True)
     spectralType = models.CharField(max_length=17, null=True)
+
     bookmarks = GenericRelation('Bookmark')
+    comments = GenericRelation('TextBlob')
 
     def getSkyCoords(self, dateTime):
         return (self.ra, self.dec)
@@ -1131,7 +1172,9 @@ class TwoMassXSCRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject
     isophotalKAngle = models.FloatField(null=True)
     isophotalKMag = models.FloatField(null=True, db_index=True)
     isophotalKMagErr = models.FloatField(null=True)
+
     bookmarks = GenericRelation('Bookmark')
+    comments = GenericRelation('TextBlob')
 
     def getSkyCoords(self, dateTime):
         return (self.ra, self.dec)
@@ -1180,7 +1223,9 @@ class MessierRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     magR = models.FloatField(db_index=True, null=True)
     magI = models.FloatField(db_index=True, null=True)
     numReferences = models.IntegerField()
+
     bookmarks = GenericRelation('Bookmark')
+    comments = GenericRelation('TextBlob')
 
     def getSkyCoords(self, dateTime):
         return (self.ra, self.dec)
@@ -1296,6 +1341,7 @@ class AstorbRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     tenYearPEUDateIfObserved = models.DateField(null=True)   # The new 10 year PEU date if the above observations were done.
 
     bookmarks = GenericRelation('Bookmark')
+    comments = GenericRelation('TextBlob')
 
     def getSkyCoords(self, dateTime):
         ephemeris = computeSingleEphemeris(self, dateTime)
@@ -1477,6 +1523,7 @@ class ExoplanetRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject)
     simbadLink = models.TextField(null=True)
 
     bookmarks = GenericRelation('Bookmark')
+    comments = GenericRelation('TextBlob')
 
     def getTransitTime(self, transit, t=timezone.now()):
         """
@@ -1624,6 +1671,8 @@ class Question(models.Model):
     prerequisites = models.ManyToManyField('self', symmetrical=False, through='AnswerPrecondition',
         through_fields=('firstQuestion', 'secondQuestion'))
 
+    comments = GenericRelation('TextBlob')
+
 class QuestionResponse(models.Model):
     """
     A record containing a single response option for a question.  The record contains the text to be shown for the response,
@@ -1713,6 +1762,19 @@ class TextBlob(models.Model):
     user = models.ForeignKey(User, null=True, db_index=True, on_delete=models.CASCADE)
     dateTime = models.DateTimeField(auto_now=True)
     markdownText = models.TextField()
+
+    #Generic FK to the object this text blob is for.
+    #TODO: Add a reverse generic relation to the relevant classes this will link to (Image, etc).
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True)
+    object_id = models.PositiveIntegerField(null=True)
+    linkedObject = GenericForeignKey('content_type', 'object_id')
+
+    # This reverse relation links back to the class itself to allow comments on other
+    # comments (i.e. threaded comments).
+    comments = GenericRelation('TextBlob')
+
+    class Meta:
+        ordering = ['dateTime']
 
     def __str__(self):
         return markdown.markdown(self.markdownText)

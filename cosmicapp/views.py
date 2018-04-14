@@ -498,6 +498,9 @@ def image(request, id):
     numStarfindSources = StarfindResult.objects.filter(image_id=image.pk).count()
     context['numStarfindSources'] = numStarfindSources
 
+    numUserSubmittedSources = UserSubmittedResult.objects.filter(image_id=image.pk).count()
+    context['numUserSubmittedSources'] = numUserSubmittedSources
+
     matches = SourceFindMatch.objects.filter(image_id=image.pk)
     context['numDaofindStarfindMatches'] = matches.filter(daofindResult__isnull=False, starfindResult__isnull=False).count()
     context['numImage2xyDaofindMatches'] = matches.filter(image2xyResult__isnull=False, daofindResult__isnull=False).count()
@@ -1730,6 +1733,54 @@ def saveQuery(request):
     else:
         responseDict['url'] = '/image/gallery?queryId=' + str(savedQuery.id)
 
+    return HttpResponse(json.dumps(responseDict), status=200)
+
+@login_required
+@require_http_methods(['POST'])
+def saveComment(request):
+    responseDict = {}
+    targetType = request.POST.get('targetType', None)
+    targetID = int(request.POST.get('targetID', '-1'))
+    commentText = request.POST.get('commentText', '')
+    queryParams = request.POST.get('queryParams', '')
+
+    #TODO: Collapse these if statements into a function that loops over a list of required fields and returns an error message if necessary.  Use this same function elsewhere in these save functions as well.
+    if targetType == '':
+        responseDict['errorMessage'] = 'Error: No targetType given.'
+        return HttpResponse(json.dumps(responseDict), status=400)
+
+    if targetID == -1:
+        responseDict['errorMessage'] = 'Error: No targetID given.'
+        return HttpResponse(json.dumps(responseDict), status=400)
+
+    if commentText == '':
+        responseDict['errorMessage'] = 'Error: No commentText given.'
+        return HttpResponse(json.dumps(responseDict), status=400)
+
+    targetTypeDict = {
+        'image': Image,
+        'comment': TextBlob,
+        }
+
+    if targetType not in targetTypeDict:
+        responseDict['errorMessage'] = 'Error: Target type "{}" not found.'.format(targetType)
+        return HttpResponse(json.dumps(responseDict), status=400)
+
+    targetObject = targetTypeDict[targetType].objects.filter(pk=targetID).first()
+    if targetObject is None:
+        responseDict['errorMessage'] = 'Error: Target id number {} not found.'.format(targetID)
+        return HttpResponse(json.dumps(responseDict), status=400)
+
+    textBlob = TextBlob(
+        user = request.user,
+        markdownText = commentText,
+        linkedObject = targetObject
+        )
+
+    textBlob.save()
+
+    responseDict['message'] = 'Comment saved.'
+    responseDict['commentID'] = textBlob.id
     return HttpResponse(json.dumps(responseDict), status=200)
 
 @login_required

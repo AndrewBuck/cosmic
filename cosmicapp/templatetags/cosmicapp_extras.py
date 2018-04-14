@@ -115,3 +115,21 @@ def scoreForObject(obj, dateTime, user):
     tempDict['userDifficulty'] = userDifficulty
     return tempDict
 
+@register.inclusion_tag('cosmicapp/newCommentDiv.html', takes_context=True)
+def newComment(context, targetType, targetID, buttonText, prefix=None, postfix=None):
+    tempDict = context
+    tempDict['targetType'] = targetType
+    tempDict['targetID'] = targetID
+    tempDict['buttonText'] = buttonText
+    tempDict['prefix'] = prefix
+    tempDict['postfix'] = postfix
+    return tempDict
+
+@register.inclusion_tag('cosmicapp/displayComment.html', takes_context=True)
+def displayComment(context, comment, prefix=None, postfix=None):
+    tempDict = context
+    tempDict['comment'] = comment
+    tempDict['prefix'] = prefix
+    tempDict['postfix'] = postfix
+    return tempDict
+
