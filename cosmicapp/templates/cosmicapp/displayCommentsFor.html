@@ -1,6 +1,9 @@
 {% load cosmicapp_extras %}
 <h3> {{messageForComments}} </h3>
+<p>{{extraCommentText}}</p>
+<div>
 {% for comment in objectForComments.comments.all %}
     {% displayComment comment %}
 {% endfor %}
+</div>
 

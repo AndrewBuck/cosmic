@@ -5,7 +5,13 @@ Posted by <a href="/user/{{comment.user}}">{{comment.user}}</a>
 on {{comment.dateTime}}
 <br>
 <div class=comment id="comment_{{comment.id}}">
-<div style="background: #eee;">{{comment|safe}}</div>
+<div style="background: 
+{% if comment.user == highlightCommentsFromUser %}
+#bbe;
+{% else %}
+#eee;
+{% endif %}
+">{{comment|safe}}</div>
 <br>
 {% newComment "comment" comment.id "Reply" %}
 <br>
