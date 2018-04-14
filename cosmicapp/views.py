@@ -416,8 +416,9 @@ def objectInfo(request, method, pk):
     context['method'] = method
     context['pk'] = pk
 
+    #NOTE: Entries added here must be added to the targetTypeDict in views.saveComment.
     validPages = {
-        'user': UserSubmittedResult,
+        'usersubmittedresult': UserSubmittedResult,
         'sextractor': SextractorResult,
         'image2xy': Image2xyResult,
         'daofind': DaofindResult,
@@ -1748,7 +1749,7 @@ def saveQuery(request):
 @require_http_methods(['POST'])
 def saveComment(request):
     responseDict = {}
-    targetType = request.POST.get('targetType', None)
+    targetType = request.POST.get('targetType', '').lower()
     targetID = int(request.POST.get('targetID', '-1'))
     commentText = request.POST.get('commentText', '')
     queryParams = request.POST.get('queryParams', '')
@@ -1769,7 +1770,22 @@ def saveComment(request):
     targetTypeDict = {
         'image': Image,
         'comment': TextBlob,
-        'uploadSession': UploadSession,
+        'uploadsession': UploadSession,
+
+        # Entries included from validPages in views.objectInfo.
+        'usersubmittedresult': UserSubmittedResult,
+        'sextractor': SextractorResult,
+        'image2xy': Image2xyResult,
+        'daofind': DaofindResult,
+        'starfind': StarfindResult,
+        'multi': SourceFindMatch,
+        'userhotpixel': UserSubmittedHotPixel,
+        'ucac4': UCAC4Record,
+        'gcvs': GCVSRecord,
+        '2massxsc': TwoMassXSCRecord,
+        'messier': MessierRecord,
+        'asteroid': AstorbRecord,
+        'exoplanet': ExoplanetRecord
         }
 
     if targetType not in targetTypeDict:

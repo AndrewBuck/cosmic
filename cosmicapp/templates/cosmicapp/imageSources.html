@@ -1287,7 +1287,7 @@ function drawSources(forceDraw=true)
                 context.fillStyle = userCreatedColor;
                 break;
 
-            case 'user':
+            case 'userSubmittedResult':
                 context.strokeStyle = userCreatedColor;
                 context.fillStyle = userCreatedColor;
                 break;
@@ -1561,7 +1561,7 @@ function handleMouseMove(event)
 
     sourceLists[sourceLists.length] = [userCreatedResults, 'user - not uploaded'];
     sourceLists[sourceLists.length] = [userCreatedHotPixels, 'user - hot pixel - not uploaded'];
-    sourceLists[sourceLists.length] = [userSubmittedResults, 'user'];
+    sourceLists[sourceLists.length] = [userSubmittedResults, 'userSubmittedResult'];
     sourceLists[sourceLists.length] = [userSubmittedHotPixels, 'user - hot pixel'];
 
     for(var i = 0; i < sourceLists.length; i++)
@@ -1623,7 +1623,7 @@ function handleMouseButtonDown(event)
                 case 'daofind':
                 case 'starfind':
                 case 'multi':
-                case 'user':
+                case 'userSubmittedResult':
                     window.open('/detectedSource/' + mouseObjectsList[i].method + '/' + mouseObjectsList[i].id);
                     break;
 

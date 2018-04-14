@@ -1,6 +1,12 @@
 {% extends "cosmicapp/base.html" %}
+{% load cosmicapp_extras %}
 
 {% block extratitle %} - Object Info {% endblock extratitle %}
+
+{% block extrahead %}
+{% include "./jquery.html" %}
+<script src="/static/cosmicapp/comment.js"></script>
+{% endblock extrahead %}
 
 {% block topSection %}
 <h2>Object Info</h2>
@@ -8,3 +14,9 @@
 
 {% block mainbody %}{% endblock %}
 
+{% block bottomSection %}
+<br>
+{% newComment method obj.id "Comment on this object:" %}
+
+{% displayCommentsFor obj "Comments for this object:" %}
+{% endblock bottomSection %}
