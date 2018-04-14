@@ -5,8 +5,27 @@
 
 {% block extratitle %} - Upload session {{uploadSession.id}} {% endblock extratitle %}
 
+{% block extrahead %}
+{% include "./jquery.html" %}
+<script src="/static/cosmicapp/comment.js"></script>
+{% endblock extrahead %}
+
 {% block mainbody %}
+<a href="/uploadSession/{{uploadSession.id|add:-1}}">&lt;Upload session
+{{uploadSession.id|add:-1}}</a>&emsp;&emsp;
+<a href="/uploadSession/{{uploadSession.id|add:1}}">Upload session {{uploadSession.id|add:1}} &gt;</a>
+
 <h3>Upload session {{uploadSession.id}}</h3>
+
+<div style="float: right; border: 1px solid black; margin: 1em; padding: .5em;">
+{% newComment "uploadSession" uploadSession.id "Comment on this upload session" %}
+
+{% with uploadSession.uploadingUser as highlightCommentsFromUser %}
+{% with "Comments made by the user who uploaded these files<br>will be highlighted with a blue background." as extraCommentText %}
+{% displayCommentsFor uploadSession "Comments for this upload session:" %}
+{% endwith %}
+{% endwith %}
+</div>
 
 <p>
 Uploaded by user: <a href="/user/{{uploadSession.uploadingUser}}/">{{uploadSession.uploadingUser}}</a><br>
@@ -29,3 +48,4 @@ Images uploaded during this upload session:
 {% endwith %}
 
 {% endblock mainbody %}
+

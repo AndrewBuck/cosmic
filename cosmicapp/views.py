@@ -1772,6 +1772,7 @@ def saveComment(request):
     targetTypeDict = {
         'image': Image,
         'comment': TextBlob,
+        'uploadSession': UploadSession,
         }
 
     if targetType not in targetTypeDict:
