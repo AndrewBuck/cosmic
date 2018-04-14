@@ -1032,13 +1032,13 @@ function drawReticle(c, x, y, size, color='#A02020', opacity=-1, forceDraw=false
     context.globalAlpha = oldGlobalAlpha;
 };
 
-function drawSources()
+function drawSources(forceDraw=false)
 {
     var i;
 
     var d = new Date();
     var currentMilliseconds = d.getTime();
-    if(currentMilliseconds - lastDrawSourcesTime < 100)
+    if(!forceDraw && currentMilliseconds - lastDrawSourcesTime < 100)
     {
         //TODO: Need to start a timer or something to trigger a redraw after the timeout has expired.
         return;
@@ -1533,11 +1533,11 @@ function handleMouseMove(event)
 {
     var rect = canvas.getBoundingClientRect();
 
-    mouseX = event.clientX - rect.left;
-    mouseY = {{image.dimY}} - (event.clientY - rect.top);
-
     if(!lmbDown && (event.clientX < rect.left || event.clientX >  rect.right || event.clientY < rect.top || event.clientY > rect.bottom))
         return true;
+
+    mouseX = event.clientX - rect.left;
+    mouseY = {{image.dimY}} - (event.clientY - rect.top);
 
     oldMouseObjectsList = mouseObjectsList;
     mouseObjectsList = [];
@@ -1740,7 +1740,8 @@ window.onload = function()
     $(document).mousedown(handleMouseButtonDown);
     $(document).mouseup(handleMouseButtonUp);
     $("#sourcesCanvas").mouseenter(function(){document.body.style.cursor = 'none';});
-    $("#sourcesCanvas").mouseleave(function(){document.body.style.cursor = oldMouseCursor;});
+    $("#sourcesCanvas").mouseleave(function(){document.body.style.cursor = oldMouseCursor;
+        mouseX = undefined; mouseY = undefined; drawSources(true);});
     $(document).keydown(handleKeyDown);
     $(document).keyup(handleKeyUp);
     countKeysPressed();
