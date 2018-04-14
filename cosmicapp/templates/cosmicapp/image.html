@@ -29,7 +29,7 @@ td.numMatchResults
 <a href="{{image.getThumbnailUrlFull|safe}}">
 <img style="float; right;" src="{{image.getThumbnailUrlLarge|safe}}"></a>
 
-    <table border=2px style="float: left; border-collapse: collapse; margin: 1em;">
+    <table border=2px style="width: 300px; float: left; border-collapse: collapse; margin: 1em;">
         <tr>
             <td>
             Uploaded by user:
@@ -114,14 +114,15 @@ td.numMatchResults
         </tr>
     </table>
 
-<br>
+<div class=clearfix></div>
+
     <table border=2px style="float: left; border-collapse: collapse; margin: 1em;">
         <tr>
         <th rowspan=2 colspan=2> <a href="/image/{{id}}/sources/">View<br>Sources</a> </th>
-        <th>Sextractor</th>
-        <th>Image2xy</th>
-        <th>Daofind</th>
-        <th>Starfind</th>
+        <th><font size=-2>Sextractor</font></th>
+        <th><font size=-2>Image2xy</font></th>
+        <th><font size=-2>Daofind</font></th>
+        <th><font size=-2>Starfind</font></th>
         </tr>
 
         <tr>
@@ -132,7 +133,7 @@ td.numMatchResults
         </tr>
 
         <tr>
-        <th>Sextractor</th>
+        <th><font size=-2>Sextractor</font></th>
         <td class=numSourceResults>{{numSextractorSources}}</td>
         <td class=numMatchResults></td>
         <td style="background-color: rgb(50,{% percentage numSextractorImage2xyMatches numImage2xySources 50 255 %},50);">{{numSextractorImage2xyMatches}}</td>
@@ -141,7 +142,7 @@ td.numMatchResults
         </tr>
 
         <tr>
-        <th>Image2xy</th>
+        <th><font size=-2>Image2xy</font></th>
         <td class=numSourceResults>{{numImage2xySources}}</td>
         <td style="background-color: rgb(50,{% percentage numSextractorImage2xyMatches numSextractorSources 50 255 %},50);">{{numSextractorImage2xyMatches}}</td>
         <td class=numMatchResults></td>
@@ -150,7 +151,7 @@ td.numMatchResults
         </tr>
 
         <tr>
-        <th>Daofind</th>
+        <th><font size=-2>Daofind</font></th>
         <td class=numSourceResults>{{numDaofindSources}}</td>
         <td style="background-color: rgb(50,{% percentage numSextractorDaofindMatches numSextractorSources 50 255 %},50);">{{numSextractorDaofindMatches}}</td>
         <td style="background-color: rgb(50,{% percentage numImage2xyDaofindMatches numImage2xySources 50 255 %},50);">{{numImage2xyDaofindMatches}}</td>
@@ -159,7 +160,7 @@ td.numMatchResults
         </tr>
 
         <tr>
-        <th>Starfind</th>
+        <th><font size=-2>Starfind</font></th>
         <td class=numSourceResults>{{numStarfindSources}}</td>
         <td style="background-color: rgb(50,{% percentage numSextractorStarfindMatches numSextractorSources 50 255 %},50);">{{numSextractorStarfindMatches}}</td>
         <td style="background-color: rgb(50,{% percentage numImage2xyStarfindMatches numImage2xySources 50 255 %},50);">{{numImage2xyStarfindMatches}}</td>
