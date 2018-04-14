@@ -133,3 +133,12 @@ def displayComment(context, comment, prefix=None, postfix=None):
     tempDict['postfix'] = postfix
     return tempDict
 
+@register.inclusion_tag('cosmicapp/displayCommentsFor.html', takes_context=True)
+def displayCommentsFor(context, objectForComments, messageForComments='Comments:', prefix=None, postfix=None):
+    tempDict = context
+    tempDict['objectForComments'] = objectForComments
+    tempDict['messageForComments'] = messageForComments
+    tempDict['prefix'] = prefix
+    tempDict['postfix'] = postfix
+    return tempDict
+
