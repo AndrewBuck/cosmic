@@ -465,6 +465,8 @@ def image(request, id):
 
     context['image'] = image
 
+    context['plateSolutions'] = PlateSolution.objects.filter(image=image).order_by('createdDateTime')
+
     overlappingPlates = []
     plateSolution = image.getBestPlateSolution()
     imagePlateArea = None

@@ -450,7 +450,7 @@ class Image(models.Model, SkyObject):
 
     def getBestPlateSolution(self):
         #TODO: Add code to make a more informed choice about which plate solution to use if there is more than 1.
-        return self.plateSolutions.first()
+        return self.plateSolutions.all().order_by('-createdDateTime').first()
 
     def getBestRaDec(self):
         ps = self.getBestPlateSolution()
@@ -624,7 +624,7 @@ class PlateSolution(models.Model):
     resolutionY = models.FloatField(null=True)
     geometry = models.PolygonField(srid=40000, db_index=True, geography=False, dim=2, null=True)
     area = models.FloatField(null=True)
-
+    createdDateTime = models.DateTimeField(auto_now=True, db_index=True, null=True)
 
     def wcs(self):
         return wcs.WCS(self.wcsHeader)

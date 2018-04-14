@@ -70,9 +70,9 @@ td.numMatchResults
                 Unknown
             {% endif %}
             <br>
-            <br> This image has {{image.plateSolutions.count}} plate solutions.
+            <br> This image has {{plateSolutions.count}} plate solutions.
 
-            {% for ps in image.plateSolutions.all %}
+            {% for ps in plateSolutions %}
             <br>&emsp;<b>{{ps.source}}:</b>
             <br>&emsp;&emsp;{{ps.centerRA|formatRA}} {{ps.centerDec|formatDec}}
             <br>&emsp;&emsp;{{ps.resolutionX|floatformat:2}}x{{ps.resolutionY|floatformat:2}} arcsec/pixel
