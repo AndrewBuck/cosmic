@@ -1072,6 +1072,7 @@ class UCAC4Record(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     magError = models.FloatField(null=True)
     id2mass = models.CharField(max_length=10, null=True) # 2MASS identifier if present in 2MASS
 
+    bookmarks = GenericRelation('Bookmark')
     comments = GenericRelation('TextBlob')
 
     def getSkyCoords(self, dateTime):
