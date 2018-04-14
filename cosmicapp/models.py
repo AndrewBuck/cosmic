@@ -1778,7 +1778,7 @@ class TextBlob(models.Model):
         ordering = ['dateTime']
 
     def __str__(self):
-        return markdown.markdown(self.markdownText)
+        return markdown.markdown(self.markdownText, safe_mode='escape')
 
 class SavedQuery(models.Model):
     name = models.TextField(null=True, db_index=True, unique=True)
