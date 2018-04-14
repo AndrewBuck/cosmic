@@ -1915,7 +1915,7 @@ def parseHeaders(imageId):
 
             elif header.key in ['fits:ccdsec']:
                 key = 'ccdDataSection'
-                value = header.value.split('/')[0].strip().strip("'")
+                value = header.value.strip("'")
 
             #TODO: Find out what this is and maybe change the key we set for it.  It was found
             # in an image with 'darksub' and 'flatted' headers and all three had values of 1
