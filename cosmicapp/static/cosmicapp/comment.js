@@ -10,7 +10,7 @@ function createNewCommentForm(targetType, targetID)
     html += '<input type=button value="Save Comment" onclick="saveNewComment(\'' + targetType + '\',\'' + targetID + '\')">';
     html += '</td>';
     html += '<td style="padding: 1em;">';
-    html += 'You can use markdown to style your comment.  Examples below:';
+    html += 'You can use markdown<br>to style your comment.<br>Examples below:';
     html += '<br>';
     html += '<br><i>*italic*</i>';
     html += '<br><b>**bold**</b>';
