@@ -11,6 +11,12 @@ Component: {{obj.component}}<br>
 Number of Components: {{obj.numComponents}}<br>
 RA, Dec: {{obj.ra|formatRA}}&emsp;{{obj.dec|formatDec}}<br>
 Distance: {{obj.dist}} parsecs<br>
+Next Transit:
+{% if obj.getTransitTime %}
+    {{obj.getTransitTime}}&emsp;&emsp;({{obj.getTransitTime|timeuntil}})
+{% else %}
+    "No known transit."
+{% endif %}
 
 <h3>Stellar Magnitude</h3>
 Mag B-V: {{obj.magBMinusV}}<br>

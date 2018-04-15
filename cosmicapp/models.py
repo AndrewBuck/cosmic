@@ -1526,7 +1526,7 @@ class ExoplanetRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject)
     bookmarks = GenericRelation('Bookmark')
     comments = GenericRelation('TextBlob')
 
-    def getTransitTime(self, transit, t=timezone.now()):
+    def getTransitTime(self, transit='next', t=timezone.now()):
         """
         Returns a datetime object for the time of the 'next' or 'prev' transit starting from the given time t.
         """
