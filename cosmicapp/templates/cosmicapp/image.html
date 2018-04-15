@@ -8,6 +8,25 @@
 {% block extrahead %}
 {% include "./jquery.html" %}
 <script src="/static/cosmicapp/comment.js"></script>
+
+<script>
+function copyToClipboard(inputID, messageDiv='', fadeOutTime=2000)
+{
+    var copyText = document.getElementById(inputID);
+
+    $('#'+inputID).show();
+    copyText.select();
+    document.execCommand("Copy");
+    $('#'+inputID).hide();
+
+    if(messageDiv != '')
+    {
+        $('#'+messageDiv).show();
+        $('#'+messageDiv).fadeOut(fadeOutTime);
+    }
+};
+</script>
+
 <style>
 td.numSourceResults
 {
@@ -36,7 +55,12 @@ td.numMatchResults
             <a href="/user/{{image.fileRecord.uploadSession.uploadingUser}}">{{image.fileRecord.uploadSession.uploadingUser}}</a>
 
             <br> Filename: {{image.fileRecord.originalFileName}}
-            <br> Sha-256: <a title="Click to copy to clipboard: {{image.fileRecord.fileSha256}}">{{image.fileRecord.fileSha256|sha256summary}}</a>
+
+            <input id=sha256input type=text value="{{image.fileRecord.fileSha256}}" hidden>
+            <br> Sha-256: <a class=functionLink title="Click to copy to clipboard:
+            {{image.fileRecord.fileSha256}}" onclick="copyToClipboard('sha256input', 'sha256MessageDiv')">{{image.fileRecord.fileSha256|sha256summary}}</a>
+            <div id=sha256MessageDiv hidden><br>&emsp;<font size=+1>Text copied to
+            clipboard.</font></div>
             <br>
             Taken on: {{image.dateTime|default_if_none:"Unknown date/time"}}
             <br>
