@@ -24,5 +24,13 @@
 {% block mainbody %}{% endblock %}
 
 {% block bottomSection %}
+{% if obj.getLinks %}
+    <h3>External Links</h3>
+    <p>
+    {% for link in obj.getLinks %}
+        <a href="{{link.0}}">{{link.1}}</a><br>
+    {% endfor %}
+    </p>
+{% endif %}
 <br>
 {% endblock bottomSection %}
