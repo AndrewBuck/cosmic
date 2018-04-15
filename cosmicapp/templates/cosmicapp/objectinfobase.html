@@ -9,6 +9,9 @@
 {% endblock extrahead %}
 
 {% block topSection %}
+<a href="/catalog/{{method}}/{{obj.id|add:-1}}">&lt;{{method}} {{obj.id|add:-1}}</a>&emsp;&emsp;
+<a href="/catalog/{{method}}/{{obj.id|add:1}}">{{method}} {{obj.id|add:1}} &gt;</a>
+
 <h2>Object Info</h2>
 {% endblock %}
 

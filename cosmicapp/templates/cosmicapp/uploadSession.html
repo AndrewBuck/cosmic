@@ -11,8 +11,7 @@
 {% endblock extrahead %}
 
 {% block mainbody %}
-<a href="/uploadSession/{{uploadSession.id|add:-1}}">&lt;Upload session
-{{uploadSession.id|add:-1}}</a>&emsp;&emsp;
+<a href="/uploadSession/{{uploadSession.id|add:-1}}">&lt;Upload session {{uploadSession.id|add:-1}}</a>&emsp;&emsp;
 <a href="/uploadSession/{{uploadSession.id|add:1}}">Upload session {{uploadSession.id|add:1}} &gt;</a>
 
 <h3>Upload session {{uploadSession.id}}</h3>
