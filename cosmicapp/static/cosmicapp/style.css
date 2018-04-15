@@ -221,3 +221,10 @@ div.comment {
     padding-left: 0.5em;
     margin: 1em;
 }
+
+div.commentFloatRight {
+    float: right;
+    border: 1px solid black;
+    margin: 1em;
+    padding: .5em;
+}

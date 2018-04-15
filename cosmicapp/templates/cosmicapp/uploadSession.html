@@ -16,7 +16,7 @@
 
 <h3>Upload session {{uploadSession.id}}</h3>
 
-<div style="float: right; border: 1px solid black; margin: 1em; padding: .5em;">
+<div class=commentFloatRight>
 {% newComment "uploadSession" uploadSession.id "Comment on this upload session" %}
 
 {% with uploadSession.uploadingUser as highlightCommentsFromUser %}

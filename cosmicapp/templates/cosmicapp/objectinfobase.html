@@ -13,13 +13,16 @@
 <a href="/catalog/{{method}}/{{obj.id|add:1}}">{{method}} {{obj.id|add:1}} &gt;</a>
 
 <h2>Object Info</h2>
+
+<div class=commentFloatRight>
+{% newComment method obj.id "Comment on this object:" %}
+
+{% displayCommentsFor obj "Comments for this object:" %}
+</div>
 {% endblock %}
 
 {% block mainbody %}{% endblock %}
 
 {% block bottomSection %}
 <br>
-{% newComment method obj.id "Comment on this object:" %}
-
-{% displayCommentsFor obj "Comments for this object:" %}
 {% endblock bottomSection %}
