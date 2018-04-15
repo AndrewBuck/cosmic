@@ -184,7 +184,7 @@ function ImageGallery(galleryName, paramString, displayType, includeLinks, image
         var image = this.getImageById(id);
 
         html += '<div class="imageGalleryZoomWindow ' + this.name + '">';
-        html += '<img src="' + image.thumbUrlFull + '">';
+        html += '<img src="' + image.thumbUrlLarge + '">';
         html += '</div>';
 
         $(document.body).append(html);
