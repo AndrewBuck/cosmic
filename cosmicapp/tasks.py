@@ -209,16 +209,30 @@ def imagestats(filename):
             if key == "" or value == "" or key in settings.IGNORED_KEYS:
                 continue
 
-            headerField = models.ImageHeaderField(
-                image = image,
-                index = i,
-                key = key,
-                value = value
-                )
+            maxWidth = 77 - len(key)
+            valueArray = []
+            tempString = ''
+            for c in value:
+                if len(tempString) <= maxWidth:
+                    tempString += c
+                else:
+                    valueArray.append(tempString)
+                    tempString = ''
 
-            headerField.save()
+            if tempString != '':
+                valueArray.append(tempString)
 
-            i += 1
+            for valueString in valueArray:
+                headerField = models.ImageHeaderField(
+                    image = image,
+                    index = i,
+                    key = key,
+                    value = valueString
+                    )
+
+                headerField.save()
+
+                i += 1
 
     outputText += "imagestats:wcs: " + filename + "\n"
     if os.path.splitext(filename)[-1].lower() in settings.SUPPORTED_IMAGE_TYPES:
