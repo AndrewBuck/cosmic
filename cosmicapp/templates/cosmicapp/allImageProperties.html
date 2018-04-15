@@ -20,6 +20,21 @@ are set by the website itself during image processing, most are cleaned up, sani
 versions of the header data in the original image file that was uploaded from the site.
 </p>
 
+<form method=GET action="/imageProperties">
+<p>
+In the form below you can enter a string for a key or value that will only show results with that
+string contained in them (this affects both tables).<br>As an example, enter <i>'filter'</i>
+(without the quotes) in the <i>'key contains'</i> field and note how the values in the top table
+compare to the ones in the bottom table.
+<br>
+Key contains: <input type=text name=keyContains value="{{request.GET.keyContains}}">
+&emsp;&emsp;
+And Value contains: <input type=text name=valueContains value="{{request.GET.valueContains}}">
+&emsp;&emsp;
+<input type=submit value="Search (case sensitive)">
+</p>
+</form>
+
 <table>
     <tr><th>Key=Value</th> <th>Count</th></tr>
     {% for property in properties %}
@@ -46,7 +61,7 @@ added to the <a href="/about/processes/parseHeaders">parseHeaders</a> task.
         
         <tr>
         <td>
-            <font {% if header.countOccurrences != header.countLinks %} color=red {% endif %}>
+            <font {% if header.countLinks == 0 %} color=red {% endif %}>
             {{header.key}}={{header.value}}
             </font>
         </td>

@@ -555,14 +555,40 @@ def imageProperties(request, id):
 def allImageProperties(request):
     context = {"user" : request.user}
 
-    properties = ImageProperty.objects.all().\
-        values('key', 'value').\
-        annotate(count=Count('id')).\
-        order_by('-count', 'key', 'value')
+    keyContainsList = request.GET.get('keyContains', '').split('|')
+    valueContainsList = request.GET.get('valueContains', '').split('|')
+
+    keyQ = Q()
+    for keyContains in keyContainsList:
+        if keyContains == '':
+            continue
+        print('key {}'.format(keyContains))
+        keyQ = keyQ | Q(key__contains=keyContains)
+
+    valueQ = Q()
+    for valueContains in valueContainsList:
+        if valueContains == '':
+            continue
+        print('value {}'.format(valueContains))
+        valueQ = valueQ | Q(value__contains=valueContains)
+
+    queryQ = keyQ & valueQ
+
+    propertiesQuery = ImageProperty.objects.filter(queryQ)
+
+    properties = propertiesQuery\
+        .values('key', 'value')\
+        .annotate(count=Count('id'))\
+        .order_by('-count', 'key', 'value')
 
     context['properties'] = properties
 
+    linkedImageHeaders = []
+    for curProperty in propertiesQuery:
+        linkedImageHeaders.append(curProperty.header_id)
+
     headers = ImageHeaderField.objects.all()\
+        .filter(queryQ | Q(pk__in=linkedImageHeaders))\
         .exclude(key__in=settings.NON_PROPERTY_KEYS)\
         .values('key', 'value')\
         .annotate(countOccurrences=Count('id'), countLinks=Count('properties__id'))\
@@ -773,7 +799,7 @@ def query(request):
 
         #TODO: Allow querying by uploaded filename.
 
-        results = results.order_by(ascDesc + orderField)[offset:offset+limit]
+        results = results.order_by(ascDesc + orderField, 'pk').distinct(orderField, 'pk')[offset:offset+limit]
         jsonResponse = json.dumps(dumpJsonAndAddThumbUrls(results), default=lambda o: o.__dict__)
 
     if request.GET['queryfor'] == 'imageTransform':
