@@ -102,6 +102,10 @@ td.numMatchResults
             <br>&emsp;<b>{{ps.source}}:</b>
             <br>&emsp;&emsp;{{ps.centerRA|formatRA}} {{ps.centerDec|formatDec}}
             <br>&emsp;&emsp;{{ps.resolutionX|floatformat:2}}x{{ps.resolutionY|floatformat:2}} arcsec/pixel
+            <br>&emsp;&emsp;Approximate dimensions:
+            {% comment %} TODO: Need to fix this.  Divide by cosine of declination? {% endcomment %}
+            <br>&emsp;&emsp;{{ps.resolutionX|multiply:image.dimX|divide:3600|floatformat:2}}x{{ps.resolutionY|multiply:image.dimY|divide:3600|floatformat:2}}
+            degrees
             <br>&emsp;&emsp;{{ps.area|floatformat:2}} square deg
             <br>&emsp;&emsp;1 / {{ps.area|divide:41253|invert|floatformat:0|intcomma}} of the whole sky
             {% endfor %}
@@ -232,7 +236,6 @@ td.numMatchResults
 
 {% newComment "image" image.id "Comment on this image" "<p>" "</p>"%}
 
-<br>
 <br>
 
 {% displayCommentsFor image "Comments for this image:" %}
