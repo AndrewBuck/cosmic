@@ -1557,6 +1557,7 @@ class ExoplanetRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject)
 
     def getValueForTime(self, t):
         #TODO: Properly implement this function.
+        #TODO: Add an increase in score proportional to the period the planets orbit (for transiting exoplanets), since planets with long orbits only rarely transit, whereas short period planets transit all the time and are easier to study.
         if self.transitEpoch != None and self.transitDuration != None and self.period != None:
             deltaT = t - self.transitEpoch
             periods = deltaT.total_seconds() / (86400*self.period)
