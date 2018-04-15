@@ -442,7 +442,7 @@ def objectInfo(request, method, pk):
         context['obj'] = obj
         return render(request, "cosmicapp/object_info_" + method + ".html", context)
     else:
-        return HttpResponse('Method "' + method + '" not found.', status=400, reason='not found.')
+        return HttpResponse('Catalog "' + method + '" not found.', status=400, reason='not found.')
 
 def uploadSession(request, pk):
     context = {"user" : request.user}
