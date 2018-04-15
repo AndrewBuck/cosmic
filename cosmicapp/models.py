@@ -1530,6 +1530,9 @@ class ExoplanetRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject)
         """
         Returns a datetime object for the time of the 'next' or 'prev' transit starting from the given time t.
         """
+        if self.transitEpoch is None:
+            return None
+
         deltaT = t - self.transitEpoch
         periods = deltaT.total_seconds() / (86400*self.period)
         if transit == 'next':
