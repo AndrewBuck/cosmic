@@ -263,7 +263,7 @@ function ImageGallery(galleryName, paramString, displayType, includeLinks, image
 
             if(this.displayType == 'gallery')
             {
-                html += '<div class="responsive ' + this.name + '" id="' + imageId + '">'
+                html += '<div class="responsive ' + this.name + '" id="' + imageId + '" style="height: 400px;">'
                 html += '<div class="gallery">'
 
                 if(this.includeLinks)
@@ -287,12 +287,12 @@ function ImageGallery(galleryName, paramString, displayType, includeLinks, image
             }
             else if(this.displayType == 'table')
             {
-                html += '<table class="responsive ' + this.name + '"cellpadding=5px border=2px style="border-collapse: collapse; margin: 1em;">';
+                html += '<table class="responsive ' + this.name + '"cellpadding=3px border=1px style="border-collapse: collapse; height: 11em;">';
                 html += '<tr>';
                 html += '<td> <a href="/image/' + res.id + '"><img src="' + res.thumbUrlSmall + '"><br>Image ' + res.id + '</a> </td>';
-                html += '<td> ' + res.dimX + 'x' + res.dimY + 'x' + res.dimZ + ' ' + res.bitDepth + 'bits/pix<br>';
+                html += '<td><font size=-1> ' + res.dimX + 'x' + res.dimY + 'x' + res.dimZ + ' ' + res.bitDepth + 'bits/pix<br>';
                 html += 'Frame Type: ' + res.frameType + '<br>' + res.dateTime + '<br>';
-                html += res.numPlateSolutions + ' Plate Solutions </td>';
+                html += res.numPlateSolutions + ' Plate Solutions </font></td>';
                 html += '</tr>';
                 html += '</table>';
             }
@@ -326,12 +326,22 @@ function ImageGallery(galleryName, paramString, displayType, includeLinks, image
 
     this.handleWindowResize = function()
     {
-        //NOTE: These width values should match the ones in style.css  If that changes need to change these too.
         var width = $(window).width();
-        if(width > 1000) { this.numCols = 4; this.numRows = 2; }
-        else if(width > 700) { this.numCols = 3; this.numRows = 3; }
-        else if(width > 400) { this.numCols = 2; this.numRows = 4; }
-        else { this.numCols = 1; this.numRows = 8; }
+        var height = $(window).height();
+
+        //NOTE: These width values should match the ones in style.css  If that changes need to change these too.
+        if(width > 1000) { this.numCols = 4; }
+        else if(width > 700) { this.numCols = 3; }
+        else if(width > 400) { this.numCols = 4; }
+        else { this.numCols = 3; }
+
+        if(height > 900) { this.numRows = 4; }
+        else if(height > 700) { this.numRows = 3; }
+        else if(height > 500) { this.numRows = 2; }
+        else { this.numRows = 2; }
+
+        if(this.displayType == 'table')
+            this.numRows *= 2;
     };
 
     this.saveQuery = function()
