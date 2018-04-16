@@ -139,6 +139,9 @@ def displayComment(context, comment, prefix=None, postfix=None):
     tempDict['previousFlags'] = CommentFlag.objects.filter(user=context['user'], comment=comment)
     tempDict['previousFlagsCounts'] = CommentFlag.objects.filter(comment=comment)\
         .values('flagValue').annotate(count=Count('id'))
+    tempDict['previousResponses'] = CommentNeedsResponse.objects.filter(user=context['user'], comment=comment)
+    tempDict['previousResponsesCounts'] = CommentNeedsResponse.objects.filter(comment=comment)\
+        .values('responseValue').annotate(count=Count('id'))
     return tempDict
 
 @register.inclusion_tag('cosmicapp/displayCommentsFor.html', takes_context=True)

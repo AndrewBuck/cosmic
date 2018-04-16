@@ -1950,7 +1950,7 @@ def saveFlag(request):
         responseDict['errorMessage'] = 'Error: You have already flagged comment {}.'.format(commentID)
         responseDict['flagID'] = previousFlags[0].id
         for previousFlag in previousFlags:
-            responseDict['errorMessage'] += '\nFlagged "{}" on {}'.format(previousFlag.flafValue, previousFlag.dateTime)
+            responseDict['errorMessage'] += '\nFlagged "{}" on {}'.format(previousFlag.flagValue, previousFlag.dateTime)
         return HttpResponse(json.dumps(responseDict), status=400)
 
     flag = CommentFlag(
@@ -1963,6 +1963,46 @@ def saveFlag(request):
 
     responseDict['message'] = 'Flagged comment {}'.format(flagValue)
     responseDict['flagID'] = flag.id
+    return HttpResponse(json.dumps(responseDict), status=200)
+
+@login_required
+@require_http_methods(['POST'])
+def saveCommentNeedsResponse(request):
+    responseDict = {}
+    commentID = int(request.POST.get('commentID', '-1'))
+    responseValue = request.POST.get('responseValue', '')
+
+    if commentID == -1:
+        responseDict['errorMessage'] = 'Error: No commentID given.'
+        return HttpResponse(json.dumps(responseDict), status=400)
+
+    if responseValue not in ['question', 'feedback']:
+        responseDict['errorMessage'] = 'Error: unknown responseValue "{}"'.format(responseValue)
+        return HttpResponse(json.dumps(responseDict), status=400)
+
+    targetComment = TextBlob.objects.filter(id=commentID).first()
+    if targetComment is None:
+        responseDict['errorMessage'] = 'Error: Comment id number {} not found.'.format(commentID)
+        return HttpResponse(json.dumps(responseDict), status=400)
+
+    previousNeedsResponses = CommentNeedsResponse.objects.filter(user=request.user, comment=targetComment)
+    if len(previousNeedsResponses) > 0:
+        responseDict['errorMessage'] = 'Error: You have already marked comment {} as needing a response.'.format(commentID)
+        responseDict['responseID'] = previousNeedsResponses[0].id
+        for previousNeedsResponse in previousNeedsResponses:
+            responseDict['errorMessage'] += '<br>Marked as "{}" on {}'.format(previousNeedsResponse.responseValue, previousNeedsResponse.dateTime)
+        return HttpResponse(json.dumps(responseDict), status=400)
+
+    needsResponse = CommentNeedsResponse(
+        user = request.user,
+        responseValue = responseValue,
+        comment = targetComment
+        )
+
+    needsResponse.save()
+
+    responseDict['message'] = 'Marked comment as needing response: {}'.format(responseValue)
+    responseDict['responseID'] = needsResponse.id
     return HttpResponse(json.dumps(responseDict), status=200)
 
 @login_required
@@ -1993,6 +2033,21 @@ def deleteFlag(request):
         return HttpResponse(json.dumps(responseDict), status=400)
 
     responseDict['message'] = 'Flag deleted.'
+    return HttpResponse(json.dumps(responseDict), status=200)
+
+@login_required
+@require_http_methods(['POST'])
+def deleteCommentNeedsResponse(request):
+    responseDict = {}
+    responseID = int(request.POST.get('responseID', '-1'))
+    try:
+        obj = CommentNeedsResponse.objects.get(pk=responseID, user=request.user)
+        obj.delete()
+    except:
+        responseDict['errorMessage'] = 'Error: Could not delete commentNeedsResponse.'
+        return HttpResponse(json.dumps(responseDict), status=400)
+
+    responseDict['message'] = 'Needs response deleted.'
     return HttpResponse(json.dumps(responseDict), status=200)
 
 @login_required

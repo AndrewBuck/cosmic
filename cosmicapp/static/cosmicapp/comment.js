@@ -147,6 +147,67 @@ function undoFlag(flagID, flagDropdownID)
 
 };
 
+function commentNeedsResponse(responseDropdown)
+{
+    var html = '';
+    var responseValue = $('#'+responseDropdown.id).get(0).value;
+    var commentID = responseDropdown.id.split('_')[1];
+
+    if(responseValue == '')
+        return;
+
+    $.ajax({
+        url : "/save/commentNeedsResponse/",
+        type : "post",
+        async: true,
+        dataType: 'json',
+        data: {
+            commentID: commentID,
+            responseValue: responseValue
+        },
+        success : function(response)
+        {
+            $('#'+responseDropdown.id).hide(1000);
+
+            html += response.message + '&emsp;<input type=button class=button value="Undo Needs Response"';
+            html += 'onclick="undoCommentNeedsResponse(\'' + response.responseID + '\',\'' + responseDropdown.id + '\')">';
+            $('#'+responseDropdown.id+'Span').html(html);
+        },
+        error : function(response)
+        {
+            response = response.responseJSON;
+            html += response.errorMessage + '&emsp;<input type=button class=button value="Undo Needs Response"';
+            html += 'onclick="undoCommentNeedsResponse(\'' + response.responseID + '\',\'' + responseDropdown.id + '\')">';
+            $('#'+responseDropdown.id+'Span').html(html);
+        }
+    });
+
+};
+
+function undoCommentNeedsResponse(responseID, responseDropdownID)
+{
+    $.ajax({
+        url : "/delete/commentNeedsResponse/",
+        type : "post",
+        async: true,
+        dataType: 'json',
+        data: {
+            responseID: responseID
+        },
+        success : function(response)
+        {
+            $('#'+responseDropdownID).show(1000);
+            $('#'+responseDropdownID+'Span').html('');
+        },
+        error : function(response)
+        {
+            response = response.responseJSON;
+            alert(response.errorMessage);
+        }
+    });
+
+};
+
 function moderateComment(modDropdown)
 {
     var html = '';

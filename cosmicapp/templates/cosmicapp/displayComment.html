@@ -23,6 +23,7 @@ Score {{comment.score}}
 {% endfor %}
 )
 {% endif %}
+
 {% if comment.flags.count > 0 %}
 <br>
 (
@@ -31,6 +32,16 @@ Score {{comment.score}}
 {% endfor %}
 )
 {% endif %}
+
+{% if comment.needsResponses.count > 0 %}
+<br>
+(
+{% for response in previousResponsesCounts %}
+    {{response.responseValue}}{% if response.count > 1 %} x{{response.count}}{% endif %}
+{% endfor %}
+)
+{% endif %}
+
 </div>
 <br>
 <div class=comment id="comment_{{comment.id}}" {% if comment.score < 0 %}hidden{% endif %}>
@@ -59,11 +70,14 @@ onclick="$('#comment_{{comment.id}}_interactSpan').show(200); $(this).hide();">
 <span id="comment_{{comment.id}}_flagSpan"></span>
 {% endif %}
 
-<select id="comment_{{comment.id}}_needsResponse">
+{% if previousResponses.count == 0 %}
+<select id="comment_{{comment.id}}_needsResponse" onchange="commentNeedsResponse(this)">
     <option value="">Needs Response</option>
     <option value="question">Question</option>
-    <option value="moderator">Site Feedback</option>
+    <option value="feedback">Site Feedback</option>
 </select>
+<span id="comment_{{comment.id}}_needsResponseSpan"></span>
+{% endif %}
 
 </span>
 
@@ -86,6 +100,15 @@ onclick="$('#comment_{{comment.id}}_interactSpan').show(200); $(this).hide();">
     {% for previousFlag in previousFlags %}
     <br>
     Flagged {{previousFlag.flagValue}} on {{previousFlag.dateTime}} ({{previousFlag.dateTime|timesince}} ago)
+    {% endfor %}
+    </span>
+{% endif %}
+
+{% if previousResponses.count != 0 %}
+    <span id="comment_{{comment.id}}_responseSpan">
+    {% for previousResponse in previousResponses %}
+    <br>
+    Flagged {{previousResponse.responseValue}} on {{previousResponse.dateTime}} ({{previousResponse.dateTime|timesince}} ago)
     {% endfor %}
     </span>
 {% endif %}
