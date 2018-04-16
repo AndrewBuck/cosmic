@@ -15,9 +15,11 @@
 <h2>Object Info</h2>
 
 <div class=commentFloatRight>
+{% with 40 as commentWidthInEM %}
 {% newComment method obj.id "Comment on this object:" %}
 
 {% displayCommentsFor obj "Comments for this object:" %}
+{% endwith %}
 </div>
 {% endblock %}
 

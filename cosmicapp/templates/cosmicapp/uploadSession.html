@@ -21,7 +21,9 @@
 
 {% with uploadSession.uploadingUser as highlightCommentsFromUser %}
 {% with "Comments made by the user who uploaded these files<br>will be highlighted with a blue background." as extraCommentText %}
+{% with 40 as commentWidthInEM %}
 {% displayCommentsFor uploadSession "Comments for this upload session:" %}
+{% endwith %}
 {% endwith %}
 {% endwith %}
 </div>
@@ -31,13 +33,15 @@ Uploaded by user: <a href="/user/{{uploadSession.uploadingUser}}/">{{uploadSessi
 Uploaded on: {{uploadSession.dateTime}}<br><br>
 Upload consisted of {{uploadSession.uploadedFileRecords.count}} files:<br>
 
+<font size=-1>
 {% for uploadedFileRecord in uploadSession.uploadedFileRecords.all %}
     &emsp;{{uploadedFileRecord.originalFileName}} - {{uploadedFileRecord.uploadSize|filesizeformat}} -
     {% for image in uploadedFileRecord.image.all %}
         <a href="/image/{{image.id}}/">Image {{image.id}}</a>
     {% endfor %}
-    - SHA256: {{uploadedFileRecord.fileSha256}}<br>
+    - SHA256: {{uploadedFileRecord.fileSha256|sha256summary}}<br>
 {% endfor %}
+</font>
 </p>
 
 Images uploaded during this upload session:
