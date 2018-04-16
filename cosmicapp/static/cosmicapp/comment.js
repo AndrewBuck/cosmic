@@ -25,6 +25,7 @@ function createNewCommentForm(targetType, targetID)
     $('#' + targetType + '_' + targetID + '_newCommentFormDiv').show();
     $('#' + targetType + '_' + targetID + '_newCommentFormButton').hide();
     $('#comment_' + targetType + '_' + targetID + '_newCommentTextArea')[0].scrollIntoView({behaviour: 'smooth', block: 'start', inline: 'start'});
+    $('#comment_' + targetType + '_' + targetID + '_newCommentTextArea')[0].focus();
     blah = ''
 };
 
@@ -83,5 +84,66 @@ function showHideComment(commentID)
         $('#comment_' + commentID).show();
         $('#commentToggle_' + commentID)[0].scrollIntoView({behaviour: 'smooth', block: 'start', inline: 'start'});
     }
+};
+
+function moderateComment(modDropdown)
+{
+    var html = '';
+    var modValue = $('#'+modDropdown.id).get(0).value;
+    var commentID = modDropdown.id.split('_')[1];
+
+    if(modValue == '')
+        return;
+
+    $.ajax({
+        url : "/save/moderation/",
+        type : "post",
+        async: true,
+        dataType: 'json',
+        data: {
+            commentID: commentID,
+            modValue: modValue
+        },
+        success : function(response)
+        {
+            $('#'+modDropdown.id).hide(1000);
+
+            html += response.message + '&emsp;<input type=button class=button value="Undo Moderation"';
+            html += 'onclick="undoModeration(\'' + response.moderationID + '\',\'' + modDropdown.id + '\')">';
+            $('#'+modDropdown.id+'Span').html(html);
+        },
+        error : function(response)
+        {
+            response = response.responseJSON;
+            html += response.errorMessage + '&emsp;<input type=button class=button value="Undo Moderation"';
+            html += 'onclick="undoModeration(\'' + response.moderationID + '\',\'' + modDropdown.id + '\')">';
+            $('#'+modDropdown.id+'Span').html(html);
+        }
+    });
+
+};
+
+function undoModeration(moderationID, modDropdownID)
+{
+    $.ajax({
+        url : "/delete/moderation/",
+        type : "post",
+        async: true,
+        dataType: 'json',
+        data: {
+            moderationID: moderationID
+        },
+        success : function(response)
+        {
+            $('#'+modDropdownID).show(1000);
+            $('#'+modDropdownID+'Span').html('');
+        },
+        error : function(response)
+        {
+            response = response.responseJSON;
+            alert(response.errorMessage);
+        }
+    });
+
 };
 

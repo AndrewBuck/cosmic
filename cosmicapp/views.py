@@ -1835,6 +1835,96 @@ def saveComment(request):
     responseDict['commentID'] = textBlob.id
     return HttpResponse(json.dumps(responseDict), status=200)
 
+def updateScoreForComment(commentID, user):
+    comment = TextBlob.objects.filter(pk=commentID).first()
+
+    if comment is None:
+        return (False, 'Error: comment id number {} not found.'.format(commentID))
+
+    moderationScores = {
+        'informative': 1,
+        'interesting': 1,
+        'funny': 1,
+        'offtopic': -1,
+        'troll': -1,
+        'spam': -1,
+        'hide': -10
+        }
+
+    # Total the score for all the moderations applied to this comment.
+    moderations = CommentModeration.objects.filter(comment=comment)
+    #TODO: Add default score for user.
+    score = 0
+    for moderation in moderations:
+        if moderation.modValue in moderationScores:
+            score += moderationScores[moderation.modValue]
+
+    comment.score = score
+    comment.save()
+
+    # Total the score for all the moderations applied to comments made bu the target user.
+    userComments = TextBlob.objects.filter(user=user)
+    score = 0
+    for comment in userComments:
+        for moderation in comment.moderations.all():
+            if moderation.modValue in moderationScores:
+                score += moderationScores[moderation.modValue]
+
+    user.profile.commentScore = score
+    user.profile.save()
+
+    return (True, '')
+
+@login_required
+@require_http_methods(['POST'])
+def saveModeration(request):
+    responseDict = {}
+    commentID = int(request.POST.get('commentID', '-1'))
+    modValue = request.POST.get('modValue', '')
+
+    if commentID == -1:
+        responseDict['errorMessage'] = 'Error: No commentID given.'
+        return HttpResponse(json.dumps(responseDict), status=400)
+
+    if modValue not in ['informative', 'interesting', 'funny', 'offtopic', 'troll', 'spam', 'hide']:
+        responseDict['errorMessage'] = 'Error: unknown modValue "{}"'.format(modValue)
+        return HttpResponse(json.dumps(responseDict), status=400)
+
+    targetComment = TextBlob.objects.filter(id=commentID).first()
+    if targetComment is None:
+        responseDict['errorMessage'] = 'Error: Comment id number {} not found.'.format(commentID)
+        return HttpResponse(json.dumps(responseDict), status=400)
+
+    previousMods = CommentModeration.objects.filter(user=request.user, comment=targetComment)
+    if len(previousMods) > 0:
+        responseDict['errorMessage'] = 'Error: You have already moderated comment {}.'.format(commentID)
+        responseDict['moderationID'] = previousMods[0].id
+        for previousMod in previousMods:
+            responseDict['errorMessage'] += '\nModerated "{}" on {}'.format(previousMod.modValue, previousMod.dateTime)
+        return HttpResponse(json.dumps(responseDict), status=400)
+
+    if request.user.profile.modPoints <= 0:
+        responseDict['errorMessage'] = 'Error: Comment id number {} not found.'.format(commentID)
+        return HttpResponse(json.dumps(responseDict), status=400)
+
+    #TODO: Skip this point deduction for admins.
+    request.user.profile.modPoints -= 1
+    request.user.profile.save()
+
+    moderation = CommentModeration(
+        user = request.user,
+        modValue = modValue,
+        comment = targetComment
+        )
+
+    moderation.save()
+
+    updateScoreForComment(targetComment.id, targetComment.user)
+
+    responseDict['message'] = 'Modded comment {}'.format(modValue)
+    responseDict['moderationID'] = moderation.id
+    return HttpResponse(json.dumps(responseDict), status=200)
+
 @login_required
 @require_http_methods(['POST'])
 def deleteInstrumentConfiguration(request):
@@ -1847,6 +1937,27 @@ def deleteInstrumentConfiguration(request):
         return HttpResponse(json.dumps(responseDict), status=400)
 
     responseDict['message'] = 'Instrument configuration deleted.'
+
+    return HttpResponse(json.dumps(responseDict), status=200)
+
+@login_required
+@require_http_methods(['POST'])
+def deleteModeration(request):
+    responseDict = {}
+    moderationID = int(request.POST.get('moderationID', '-1'))
+    print('modID', moderationID)
+    try:
+        obj = CommentModeration.objects.get(pk=moderationID, user=request.user)
+        textBlobID = obj.comment.id
+        commentUser = obj.comment.user
+        obj.delete()
+    except:
+        responseDict['errorMessage'] = 'Error: Could not delete moderation.'
+        return HttpResponse(json.dumps(responseDict), status=400)
+
+    responseDict['message'] = 'Moderation deleted.'
+
+    updateScoreForComment(textBlobID, commentUser)
 
     return HttpResponse(json.dumps(responseDict), status=200)
 
@@ -2167,7 +2278,7 @@ def observing(request):
         limit = int(request.GET['limit'])
 
     if limit > 500:
-        limit = 500;
+        limit = 500
 
     if windowSize > 90:
         windowSize = 90

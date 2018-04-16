@@ -214,11 +214,13 @@ class Profile(models.Model):
     defaultObservatory = models.ForeignKey('Observatory', on_delete=models.CASCADE, null=True)
     birthDate = models.DateField(null=True, blank=True)
     limitingMag = models.FloatField(null=True, blank=True)
+    modPoints = models.PositiveIntegerField()
+    commentScore = models.IntegerField()
 
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
-        Profile.objects.create(user=instance, limitingMag=12)
+        Profile.objects.create(user=instance, limitingMag=12, modPoints=0, commentScore=0)
 
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
@@ -1767,6 +1769,7 @@ class TextBlob(models.Model):
     user = models.ForeignKey(User, null=True, db_index=True, on_delete=models.CASCADE)
     dateTime = models.DateTimeField(auto_now=True)
     markdownText = models.TextField()
+    score = models.IntegerField(default=0)
 
     #Generic FK to the object this text blob is for.
     #TODO: Add a reverse generic relation to the relevant classes this will link to (Image, etc).
@@ -1779,10 +1782,16 @@ class TextBlob(models.Model):
     comments = GenericRelation('TextBlob')
 
     class Meta:
-        ordering = ['dateTime']
+        ordering = ['-score', 'dateTime']
 
     def __str__(self):
         return markdown.markdown(self.markdownText, safe_mode='escape')
+
+class CommentModeration(models.Model):
+    user = models.ForeignKey(User, null=True, db_index=True, on_delete=models.CASCADE)
+    modValue = models.TextField(db_index=True)
+    comment = models.ForeignKey('TextBlob', on_delete=models.CASCADE, related_name='moderations')
+    dateTime = models.DateTimeField(auto_now=True)
 
 class SavedQuery(models.Model):
     name = models.TextField(null=True, db_index=True, unique=True)

@@ -4,7 +4,7 @@
     <input type=button class=button id={{targetType}}_{{targetID}}_newCommentFormButton value="{{buttonText}}"
     onclick="createNewCommentForm('{{targetType}}', '{{targetID}}')">
     {{postfix|default_if_none:""}}
-    <div class="newComment" id="comment_{{targetType}}_{{targetID}}"></div>
     <div id={{targetType}}_{{targetID}}_newCommentFormDiv></div>
+    <span class="newComment" id="comment_{{targetType}}_{{targetID}}"></span>
 {% endif %}
 

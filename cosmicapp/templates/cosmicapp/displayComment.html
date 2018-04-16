@@ -1,10 +1,31 @@
 {% load cosmicapp_extras %}
 {{prefix|default_if_none:""}}
-<font color=blue size=+3><a id="commentToggle_{{comment.id}}" onclick="showHideComment('{{comment.id}}')">-</a></font>
-Posted by <a href="/user/{{comment.user}}">{{comment.user}}</a>
-on {{comment.dateTime}}
+{% with previousCommentIndentLevel|default:0|add:1 as commentIndentLevel %}
+{% with commentIndentLevel as previousCommentIndentLevel %}
+{% with commentIndentLevel|multiply:-3 as widthModifier %}
+<div style="margin-top: .5em; margin-left: 1em; margin-right: 1em; margin-bottom: .5em;
+border: 1px solid grey; width: {% filter add:widthModifier %}{{commentWidthInEM|default:60}}{% endfilter %}em;">
+{% if comment.score >= 0 %}
+    <font color=blue size=+3><a id="commentToggle_{{comment.id}}" onclick="showHideComment('{{comment.id}}')">-</a></font>
+{% else %}
+    <font color=blue size=+3><a id="commentToggle_{{comment.id}}" onclick="showHideComment('{{comment.id}}')">+</a></font>
+{% endif %}
+
+<div style="display: inline-block; position: relative; top: 7px; left: 5px;">
+Posted by <a href="/user/{{comment.user}}">{{comment.user}} ({{comment.user.profile.commentScore}})</a>
+{{comment.dateTime|timesince}} ago
 <br>
-<div class=comment id="comment_{{comment.id}}">
+Score {{comment.score}}
+{% if comment.moderations.count > 0 %}
+(
+{% for moderation in comment.moderations.all %}
+    <font {% if moderation.user == user %}color=green{% endif %}>{{moderation.modValue}}</font>
+{% endfor %}
+)
+{% endif %}
+</div>
+<br>
+<div class=comment id="comment_{{comment.id}}" {% if comment.score < 0 %}hidden{% endif %}>
 <div style="background: 
 {% if comment.user == highlightCommentsFromUser %}
 #bbe;
@@ -13,11 +34,56 @@ on {{comment.dateTime}}
 {% endif %}
 ">{{comment|safe}}</div>
 <br>
+<span id="comment_{{comment.id}}_interactSpanSmall"
+onclick="$('#comment_{{comment.id}}_interactSpan').show(200); $(this).hide();">
+<a class=functionLink>(Interact)</a>
+</span>
+<span id="comment_{{comment.id}}_interactSpan" hidden>
+
 {% newComment "comment" comment.id "Reply" %}
+<br>
+<select id="comment_{{comment.id}}_flag">
+    <option value="">Flag</option>
+    <option value="spam">Spam</option>
+    <option value="moderator">Moderator Review</option>
+</select>
+
+<select id="comment_{{comment.id}}_needsResponse">
+    <option value="">Needs Response</option>
+    <option value="question">Question</option>
+    <option value="moderator">Site Feedback</option>
+</select>
+
+</span>
+
+{% if user.profile.modPoints > 0 and previousMods.count == 0 %}
+<select id="comment_{{comment.id}}_moderate" onchange="moderateComment(this)">
+    <option value="">Click to Moderate</option>
+    <option value="informative">Informative +1</option>
+    <option value="interesting">Interesting +1</option>
+    <option value="funny">Funny +1</option>
+    <option value="offtopic">Offtopic -1</option>
+    <option value="troll">Troll -1</option>
+    <option value="spam">Spam -1</option>
+    <option value="hide">Do Not Show -10</option>
+</select>
+<span id="comment_{{comment.id}}_moderateSpan"></span>
+{% else %}
+    <span id="comment_{{comment.id}}_moderateSpan">
+    {% for previousMod in previousMods %}
+    Moderated {{previousMod.modValue}} on {{previousMod.dateTime}} ({{previousMod.dateTime|timesince}} ago)
+    {% endfor %}
+    </span>
+{% endif %}
+
 <br>
 {% for comment in comment.comments.all %}
     {% displayComment comment %}
 {% endfor %}
 </div>
 <br>
+</div>
+{% endwith %}
+{% endwith %}
+{% endwith %}
 {{postfix|default_if_none:""}}

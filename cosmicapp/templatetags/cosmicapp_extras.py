@@ -6,6 +6,8 @@ from datetime import timedelta
 
 register = template.Library()
 
+from cosmicapp.models import *
+
 @register.filter
 def doubleEscape(arg1, arg2):
     """Search through arg1 and replace all instances of arg2 with 2 copies of arg2."""
@@ -131,6 +133,7 @@ def displayComment(context, comment, prefix=None, postfix=None):
     tempDict['comment'] = comment
     tempDict['prefix'] = prefix
     tempDict['postfix'] = postfix
+    tempDict['previousMods'] = CommentModeration.objects.filter(user=context['user'], comment=comment)
     return tempDict
 
 @register.inclusion_tag('cosmicapp/displayCommentsFor.html', takes_context=True)
