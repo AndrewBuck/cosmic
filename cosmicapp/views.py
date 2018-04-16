@@ -1927,6 +1927,46 @@ def saveModeration(request):
 
 @login_required
 @require_http_methods(['POST'])
+def saveFlag(request):
+    responseDict = {}
+    commentID = int(request.POST.get('commentID', '-1'))
+    flagValue = request.POST.get('flagValue', '')
+
+    if commentID == -1:
+        responseDict['errorMessage'] = 'Error: No commentID given.'
+        return HttpResponse(json.dumps(responseDict), status=400)
+
+    if flagValue not in ['moderator', 'spam']:
+        responseDict['errorMessage'] = 'Error: unknown flagValue "{}"'.format(flagValue)
+        return HttpResponse(json.dumps(responseDict), status=400)
+
+    targetComment = TextBlob.objects.filter(id=commentID).first()
+    if targetComment is None:
+        responseDict['errorMessage'] = 'Error: Comment id number {} not found.'.format(commentID)
+        return HttpResponse(json.dumps(responseDict), status=400)
+
+    previousFlags = CommentFlag.objects.filter(user=request.user, comment=targetComment)
+    if len(previousFlags) > 0:
+        responseDict['errorMessage'] = 'Error: You have already flagged comment {}.'.format(commentID)
+        responseDict['flagID'] = previousFlags[0].id
+        for previousFlag in previousFlags:
+            responseDict['errorMessage'] += '\nFlagged "{}" on {}'.format(previousFlag.flafValue, previousFlag.dateTime)
+        return HttpResponse(json.dumps(responseDict), status=400)
+
+    flag = CommentFlag(
+        user = request.user,
+        flagValue = flagValue,
+        comment = targetComment
+        )
+
+    flag.save()
+
+    responseDict['message'] = 'Flagged comment {}'.format(flagValue)
+    responseDict['flagID'] = flag.id
+    return HttpResponse(json.dumps(responseDict), status=200)
+
+@login_required
+@require_http_methods(['POST'])
 def deleteInstrumentConfiguration(request):
     responseDict = {}
     id = int(request.POST.get('id', '-1000'))
@@ -1942,10 +1982,24 @@ def deleteInstrumentConfiguration(request):
 
 @login_required
 @require_http_methods(['POST'])
+def deleteFlag(request):
+    responseDict = {}
+    flagID = int(request.POST.get('flagID', '-1'))
+    try:
+        obj = CommentFlag.objects.get(pk=flagID, user=request.user)
+        obj.delete()
+    except:
+        responseDict['errorMessage'] = 'Error: Could not delete moderation.'
+        return HttpResponse(json.dumps(responseDict), status=400)
+
+    responseDict['message'] = 'Flag deleted.'
+    return HttpResponse(json.dumps(responseDict), status=200)
+
+@login_required
+@require_http_methods(['POST'])
 def deleteModeration(request):
     responseDict = {}
     moderationID = int(request.POST.get('moderationID', '-1'))
-    print('modID', moderationID)
     try:
         obj = CommentModeration.objects.get(pk=moderationID, user=request.user)
         textBlobID = obj.comment.id
@@ -1955,10 +2009,9 @@ def deleteModeration(request):
         responseDict['errorMessage'] = 'Error: Could not delete moderation.'
         return HttpResponse(json.dumps(responseDict), status=400)
 
-    responseDict['message'] = 'Moderation deleted.'
-
     updateScoreForComment(textBlobID, commentUser)
 
+    responseDict['message'] = 'Moderation deleted.'
     return HttpResponse(json.dumps(responseDict), status=200)
 
 @login_required

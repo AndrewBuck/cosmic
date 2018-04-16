@@ -23,6 +23,14 @@ Score {{comment.score}}
 {% endfor %}
 )
 {% endif %}
+{% if comment.flags.count > 0 %}
+<br>
+(
+{% for flag in previousFlagsCounts %}
+    {{flag.flagValue}}{% if flag.count > 1 %} x{{flag.count}}{% endif %}
+{% endfor %}
+)
+{% endif %}
 </div>
 <br>
 <div class=comment id="comment_{{comment.id}}" {% if comment.score < 0 %}hidden{% endif %}>
@@ -42,11 +50,14 @@ onclick="$('#comment_{{comment.id}}_interactSpan').show(200); $(this).hide();">
 
 {% newComment "comment" comment.id "Reply" %}
 <br>
-<select id="comment_{{comment.id}}_flag">
+{% if previousFlags.count == 0 %}
+<select id="comment_{{comment.id}}_flag" onchange="flagComment(this)">
     <option value="">Flag</option>
     <option value="spam">Spam</option>
     <option value="moderator">Moderator Review</option>
 </select>
+<span id="comment_{{comment.id}}_flagSpan"></span>
+{% endif %}
 
 <select id="comment_{{comment.id}}_needsResponse">
     <option value="">Needs Response</option>
@@ -68,9 +79,21 @@ onclick="$('#comment_{{comment.id}}_interactSpan').show(200); $(this).hide();">
     <option value="hide">Do Not Show -10</option>
 </select>
 <span id="comment_{{comment.id}}_moderateSpan"></span>
-{% else %}
+{% endif %}
+
+{% if previousFlags.count != 0 %}
+    <span id="comment_{{comment.id}}_flagSpan">
+    {% for previousFlag in previousFlags %}
+    <br>
+    Flagged {{previousFlag.flagValue}} on {{previousFlag.dateTime}} ({{previousFlag.dateTime|timesince}} ago)
+    {% endfor %}
+    </span>
+{% endif %}
+
+{% if user.profile.modPoints == 0 or previousMods.count != 0 %}
     <span id="comment_{{comment.id}}_moderateSpan">
     {% for previousMod in previousMods %}
+    <br>
     Moderated {{previousMod.modValue}} on {{previousMod.dateTime}} ({{previousMod.dateTime|timesince}} ago)
     {% endfor %}
     </span>

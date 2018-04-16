@@ -86,6 +86,67 @@ function showHideComment(commentID)
     }
 };
 
+function flagComment(flagDropdown)
+{
+    var html = '';
+    var flagValue = $('#'+flagDropdown.id).get(0).value;
+    var commentID = flagDropdown.id.split('_')[1];
+
+    if(flagValue == '')
+        return;
+
+    $.ajax({
+        url : "/save/flag/",
+        type : "post",
+        async: true,
+        dataType: 'json',
+        data: {
+            commentID: commentID,
+            flagValue: flagValue
+        },
+        success : function(response)
+        {
+            $('#'+flagDropdown.id).hide(1000);
+
+            html += response.message + '&emsp;<input type=button class=button value="Undo Flagging"';
+            html += 'onclick="undoFlag(\'' + response.flagID + '\',\'' + flagDropdown.id + '\')">';
+            $('#'+flagDropdown.id+'Span').html(html);
+        },
+        error : function(response)
+        {
+            response = response.responseJSON;
+            html += response.errorMessage + '&emsp;<input type=button class=button value="Undo flag"';
+            html += 'onclick="undoFlag(\'' + response.flagID + '\',\'' + flagDropdown.id + '\')">';
+            $('#'+flagDropdown.id+'Span').html(html);
+        }
+    });
+
+};
+
+function undoFlag(flagID, flagDropdownID)
+{
+    $.ajax({
+        url : "/delete/flag/",
+        type : "post",
+        async: true,
+        dataType: 'json',
+        data: {
+            flagID: flagID
+        },
+        success : function(response)
+        {
+            $('#'+flagDropdownID).show(1000);
+            $('#'+flagDropdownID+'Span').html('');
+        },
+        error : function(response)
+        {
+            response = response.responseJSON;
+            alert(response.errorMessage);
+        }
+    });
+
+};
+
 function moderateComment(modDropdown)
 {
     var html = '';

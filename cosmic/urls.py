@@ -65,11 +65,14 @@ urlpatterns = [
     url(r'^save/query/$', views.saveQuery),
     url(r'^save/comment/$', views.saveComment),
     url(r'^save/moderation/$', views.saveModeration),
+    url(r'^save/flag/$', views.saveFlag),
 
     url(r'^delete/userOwnedEquipment/$', views.deleteUserOwnedEquipment),
     url(r'^delete/instrumentConfigurationLink/$', views.deleteInstrumentConfigurationLink),
     url(r'^delete/instrumentConfiguration/$', views.deleteInstrumentConfiguration),
     url(r'^delete/moderation/$', views.deleteModeration),
+    url(r'^delete/flag/$', views.deleteFlag),
+
     url(r'^bookmark/$', views.bookmark),
 
     url(r'^calibration/$', views.calibration),

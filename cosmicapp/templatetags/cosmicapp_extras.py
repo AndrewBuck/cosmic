@@ -1,8 +1,10 @@
-from django import template
 import math
 import ephem
 import markdown
 from datetime import timedelta
+
+from django import template
+from django.db.models import Count
 
 register = template.Library()
 
@@ -134,6 +136,9 @@ def displayComment(context, comment, prefix=None, postfix=None):
     tempDict['prefix'] = prefix
     tempDict['postfix'] = postfix
     tempDict['previousMods'] = CommentModeration.objects.filter(user=context['user'], comment=comment)
+    tempDict['previousFlags'] = CommentFlag.objects.filter(user=context['user'], comment=comment)
+    tempDict['previousFlagsCounts'] = CommentFlag.objects.filter(comment=comment)\
+        .values('flagValue').annotate(count=Count('id'))
     return tempDict
 
 @register.inclusion_tag('cosmicapp/displayCommentsFor.html', takes_context=True)

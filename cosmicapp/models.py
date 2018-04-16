@@ -1793,6 +1793,12 @@ class CommentModeration(models.Model):
     comment = models.ForeignKey('TextBlob', on_delete=models.CASCADE, related_name='moderations')
     dateTime = models.DateTimeField(auto_now=True)
 
+class CommentFlag(models.Model):
+    user = models.ForeignKey(User, null=True, db_index=True, on_delete=models.CASCADE)
+    flagValue = models.TextField(db_index=True)
+    comment = models.ForeignKey('TextBlob', on_delete=models.CASCADE, related_name='flags')
+    dateTime = models.DateTimeField(auto_now=True)
+
 class SavedQuery(models.Model):
     name = models.TextField(null=True, db_index=True, unique=True)
     user = models.ForeignKey(User, null=True, db_index=True, on_delete=models.CASCADE)
