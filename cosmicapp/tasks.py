@@ -16,9 +16,11 @@ import math
 import random
 import dateparser
 import scipy
+import scipy.stats
 import numpy
 import ephem
 from datetime import timedelta
+import time
 
 from astropy import wcs
 from astropy.io import fits
@@ -269,9 +271,11 @@ def imagestats(filename):
     #
     #   2: Generate and apply bias, dark, flat, air mass, moonlight scatter, light
     #   pollution
+    #       NOTE: combining will be generated as a seperate task, the results of which
+    #       will be passed back into the image analysis queue
     #   3: Detect haze and clouds
 
-    outputText += "imagestats:background: " + filename + "\n"
+    outputText += "imagestats: " + filename + "\n"
     if os.path.splitext(filename)[-1].lower() in settings.SUPPORTED_IMAGE_TYPES:
         hdulist = fits.open(settings.MEDIA_ROOT + filename)
         with transaction.atomic():
@@ -293,375 +297,409 @@ def imagestats(filename):
 
                 frameIndex = 0
                 for frame in frames:
-                    outputText += "imagestats:histogram:\n"
+                    outputText += "Starting analysis of channel: {}\n\n".format(channelIndex)
+                    startms = int(1000 * time.time())
                     # TODO: Need to filter all non-data pixels
-
-                    # Generate a histogram for initial image analysis.
-
-                    # Due to the nature of the data, naive histogram approaches with even
-                    # very many fixed width bins often fail to produce satisfactory
-                    # results.
-
-                    # Here we count every pixel value.  An individual pixel value count
-                    # represents samples of the image in the neighborhood of that value.
-                    # The neighborhood of a pixel value is the interval half way to the
-                    # next lowest and highest value.
-
-                    # The histogram is constructed from the counts by dividing the counts
-                    # by the width of the neighborhood for each pixel value found.
-
-                    # Compression of the histogram is accomplished by the following process:
-                    #   1: Select a pixel value at random
-                    #       1a: Generate a random sequence of the indexes
-                    #       1b: Subtract from the index the count of deleted indices less
-                    #       than the generated index to generate an index to the squozen
-                    #       data.
-                    #   2: Perform a trial deletion of the pixel value, where the nearest
-                    #   two values and counts are adjusted minimize distortion of the
-                    #   histogram and preserve total count.
-                    #   3: Accept deletion randomly based on percent error of histogram
-                    #   introduced by the deletion.
-                    #       3a: Record the index of deleted value/count pairs.
-                    #   4: Repeat above until all pixel values have been tested exactly
-                    #   once.  Note that a pixel value and count changed by a deletion
-                    #   process may still be selected for trial deletion if it had not yet
-                    #   been selected.
-                    #   5: If histogram is still too large, loosen acception criteria and
-                    #   repeat.
-
-                    def overlapError(x, a):
-                        """ Computes the percent overlap of the histogram defined by two
-                        sets of bin center / bin count pairs. """
-                        aCenters = numpy.array(a.keys())
-                        aCounts = numpy.array(a.values())
-                        bCenters = numpy.array([ aCenters[0], x[0], x[2], aCenters[4] ])
-                        bCounts = numpy.array([ aCounts[0], x[1], x[3], aCounts[4] ])
-                        assert( len(bCenters) + 1 == len(aCenters) )
-
-                        aLeft = numpy.array([
-                            1.5*aCenters[0] - 0.5*aCenters[1],
-                            0.5*aCenters[0] + 0.5*aCenters[1],
-                            0.5*aCenters[1] + 0.5*aCenters[2],
-                            0.5*aCenters[2] + 0.5*aCenters[3],
-                            0.5*aCenters[3] + 0.5*aCenters[4]
-                            ])
-
-                        bLeft = numpy.array([
-                            1.5*bCenters[0] - 0.5*bCenters[1],
-                            0.5*bCenters[0] + 0.5*bCenters[1],
-                            0.5*bCenters[1] + 0.5*bCenters[2],
-                            0.5*bCenters[2] + 0.5*bCenters[3]
-                            ])
-
-                        aRight = numpy.array([
-                            0.5*aCenters[0] + 0.5*aCenters[1],
-                            0.5*aCenters[1] + 0.5*aCenters[2],
-                            0.5*aCenters[2] + 0.5*aCenters[3],
-                            0.5*aCenters[3] + 0.5*aCenters[4],
-                            1.5*aCenters[4] - 0.5*aCenters[3]
-                            ])
-
-                        bRight = numpy.array([
-                            0.5*bCenters[0] + 0.5*bCenters[1],
-                            0.5*bCenters[1] + 0.5*bCenters[2],
-                            0.5*bCenters[2] + 0.5*bCenters[3],
-                            1.5*bCenters[3] - 0.5*bCenters[2],
-                            ])
-
-                        aWidth = aRight - aLeft
-                        bWidth = bRight - bLeft
-
-                        aHistogram = aCounts / aWidth
-                        bHistogram = bCounts / bWidth
-
-                        overlapHeightMins = numpy.empty([5,4])
-                        overlapHeightMins.flat = list( min(x,y) for (x,y) in
-                            itertools.product(aHistogram,bHistogram) )
-
-                        overlapLeftMaxs = numpy.empty([5,4])
-                        overlapLeftMaxs.flat = list( max(x,y) for (x,y) in
-                            itertools.product(aLeft,bLeft) )
-
-                        overlapRightMins = numpy.empty([5,4])
-                        overlapRightMins.flat = list( min(x,y) for (x,y) in
-                            itertools.product(aRight,bRight) )
-
-                        overlapWidths = overlapRightMins - overlapLeftMaxs
-
-                        overlapMask = overlapRightMins > overlapLeftMaxs
-
-                        overlapAreas = overlapMask * overlapHeightMins * overlapWidths
-
-                        initialArea = sum(aCounts)
-                        totalOverlapArea = sum(overlapAreas.flat)
-                        fitness = (initialArea - totalOverlapArea) / initialArea
-                        fitness *= fitness
-
-                        fitnessJacobian = numpy.zeros([4])
-
-                        return fitness
-
-                    def conserveTotalPixelCountConstraint(x, total):
-                        return (x[1] + x[3]) - total
-
-                    # Count all pixel values into a sorted dict with key of the pixel
-                    # value and the value is the number of pixels with that value.
-                    pixelCounts = SortedDict(Counter(frame.flat))
-                    initialUniqueValues = len(pixelCounts)
-                    initialBitDepth = round(math.log(initialUniqueValues, 2),2)
-
-                    outputText += str(initialUniqueValues) + " unique values, approx bits:" + str(initialBitDepth) + "\n"
-
-                    # This will correspond to the maximum number of histogram bins
-                    uniqueValuesLimit = models.CosmicVariable.getVariable('histogramMaxBins')
-
-                    # If we have way too many values, do some rough binning.
-                    uniqueValuesStart = uniqueValuesLimit * 10
-                    if initialUniqueValues > uniqueValuesStart:
-                        tempPixelCounts = SortedDict()
-                        roughStride = 1 + (initialUniqueValues // uniqueValuesStart)
-                        roughBins = initialUniqueValues // roughStride
-                        outputText += "Performing initial rough binning.  Goal values: " + str(roughBins) + "\n"
-                        for i in range(roughBins):
-                            roughKey = 0.0
-                            roughValue = 0.0
-                            for j in range(roughStride):
-                                key, value = pixelCounts.popitem()
-                                roughKey += key*value
-                                roughValue += value
-                            roughKey /= roughValue
-                            tempPixelCounts[roughKey] = roughValue
-                        # Check for leftovers and throw them in the last key/value
-                        if len(pixelCounts) > 0:
-                            roughKey = numpy.average(list(pixelCounts.iterkeys()),
-                                weights = list(pixelCounts.itervalues()) )
-                            roughValue = numpy.sum(list(pixelCounts.itervalues()))
-                            tempPixelCounts[roughKey] = roughValue
-                        pixelCounts.update(tempPixelCounts)
+                    #   NOTE: now finds and removes bathtub pixels
 
 
-                    # Replacement rejection exponent, lower this to accept more disruptive
-                    # deletions.  This will automatically adjust if one pass is not
-                    # sufficient to reduce the number of unique values.
-                    rejectionExponent = models.CosmicVariable.getVariable('histogramRejectionExponent')
+                    # Count all pixel values into a 2D numpy array. Column 1 contains
+                    # sorted, unique values from the frame, and column 2 contains the
+                    # respective count.
+                    outputText += "Counting pixel values ... "
+                    msec = int(1000 * time.time())
+                    # FIXME: More sophisticated pixel count than xdim * ydim
+                    # NOTE: Partially implemented with masking below
+                    pixelNumber = frame.shape[0]*frame.shape[1]
+                    valueFrequency = scipy.stats.itemfreq(frame)
+                    pixelValues = valueFrequency.take(0, axis=1)
+                    pixelCounts = valueFrequency.take(1, axis=1)
+                    uniquePixelValues = valueFrequency.shape[0]
+                    approximateBitDepth = round(math.log(uniquePixelValues, 2),2)
+                    minIndex = 0
+                    maxIndex = uniquePixelValues - 1
+                    minValue = valueFrequency[minIndex][0]
+                    maxValue = valueFrequency[maxIndex][0]
+                    msec = int(1000 * time.time()) - msec
+                    outputText += "completed: {}ms\n".format(msec)
+                    outputText += "pixel number: {}\n".format(pixelNumber)
+                    outputText += "minValue: {}\n".format(minValue)
+                    outputText += "maxValue: {}\n".format(maxValue)
+                    outputText += "unique values: {}\n".format(uniquePixelValues)
+                    outputText += "approximate bits/pixel: {}\n".format(approximateBitDepth)
+                    outputText += "\n"
 
-                    currentUniqueValues = len(pixelCounts)
-                    while currentUniqueValues > uniqueValuesLimit:
+                    # Now we will do some trimming
+                    currentPixelNumber = pixelNumber
+                    outputText += "Searching for bathtub pixel values ... "
+                    msec = int(1000 * time.time())
+                    currentPixelValueNumber = uniquePixelValues
+                    bathtubLimit = 0.25 / 100 / 2
+                    bathtubValues = SortedDict()
+                    bathtubValueNumber = 0
+                    bathtubPixelNumber = 0
+                    bathtubLow = None
+                    bathtubHigh = None
+                    bathtubFound = True
+                    bathtubFail = False
+                    while bathtubFound :
+                        bathtubFound = False
+                        while valueFrequency[minIndex][1] / currentPixelNumber > bathtubLimit :
+                            value, count = valueFrequency[minIndex]
+                            bathtubValues[value] = int(count)
+                            minIndex += 1
+                            currentPixelNumber -= count
+                            bathtubPixelNumber += count
+                            bathtubLow = value
+                            currentPixelValueNumber -= 1
+                            bathtubValueNumber += 1
+                            bathtubFound = True
+                            if minIndex >= maxIndex :
+                                bathtubFail = True
+                                bathtubFound = False
+                                break
+                        while valueFrequency[maxIndex][1] / currentPixelNumber > bathtubLimit :
+                            value, count = valueFrequency[maxIndex]
+                            bathtubValues[value] = int(count)
+                            maxIndex -= 1
+                            currentPixelNumber -= count
+                            bathtubPixelNumber += count
+                            bathtubHigh = value
+                            currentPixelValueNumber -= 1
+                            bathtubValueNumber += 1
+                            bathtubFound = True
+                            if maxIndex <= minIndex :
+                                bathtubFail = True
+                                bathtubFound = False
+                                break
+                    if bathtubPixelNumber / currentPixelNumber > 1./3 :
+                        outputText += "\nToo many suspect bathtub pixels found!\n"
+                        outputText += "Recording bathtub values, but resetting min and max values.\n"
+                        minIndex = 0
+                        maxIndex = uniquePixelValues - 1
+                        currentPixelNumber += bathtubPixelNumber
+                        currentPixelValueNumber += bathtubValueNumber
+                    minValue = valueFrequency[minIndex][0]
+                    maxValue = valueFrequency[maxIndex][0]
+                    msec = int(1000 * time.time()) - msec
+                    outputText += "completed: {}ms\n".format(msec)
+                    outputText += "bathtub limit: {}%\n".format(100*bathtubLimit)
+                    outputText += "total bathtub values: {}, {}%\n".format( bathtubValueNumber,
+                        round(100*bathtubValueNumber/(bathtubValueNumber + currentPixelValueNumber),4))
+                    outputText += "total bathtub pixels: {}, {}%\n".format(bathtubPixelNumber,
+                        round(100*bathtubPixelNumber/(bathtubPixelNumber + currentPixelNumber),4))
+                    outputText += "bathtub (value,pixels): " + str(list(bathtubValues.iteritems())) + "\n"
+                    outputText += "highest low bathtub value: {}\n".format(bathtubLow)
+                    outputText += "lowest high bathtub value: {}\n".format(bathtubHigh)
+                    outputText += "remaining values: {}, {}%\n".format( currentPixelValueNumber,
+                        round(100*currentPixelValueNumber/(bathtubValueNumber + currentPixelValueNumber),4))
+                    outputText += "remaining pixels: {}, {}%\n".format(currentPixelNumber,
+                        round(100*currentPixelNumber/(bathtubPixelNumber + currentPixelNumber),4))
+                    outputText += "remaining min(Index, Value): ({}, {})\n".format(minIndex, minValue)
+                    outputText += "remaining max(Index, Value): ({}, {})\n".format(maxIndex, maxValue)
+                    outputText += "\n"
 
-                        # Initialize the list of deleted indices
-                        deletedIndices = SortedList()
 
-                        # Select in random order (almost) all unique pixel values to test
-                        # for trial deletion.
-                        for rawIndex in random.sample(range(2, currentUniqueValues - 2), currentUniqueValues - 4):
-                            # Adjust index to account for any deleted indices
-                            index = rawIndex - deletedIndices.bisect_left(rawIndex)
+                    # Get pixel value bounds assuming we will ignore the values for some
+                    # percentage of the brightest and darkest pixels when making thumbnails.
+                    # I can't believe I can't suss out the syntax for a do while loop. I
+                    # guess the internet is sometimes useful ... or maybe I should have
+                    # kept that little python o'rielys pocketbook.  Hmm ... books.
+                    outputText += "Finding dark and light points ... "
+                    msec = int(1000 * time.time())
+                    ignoreLower = models.CosmicVariable.getVariable('histogramIgnoreLower') / 100.0
+                    ignoredLowerValue = valueFrequency[minIndex][0]
+                    ignoredLowerPixels = valueFrequency[minIndex][1]
+                    while ignoredLowerPixels < ignoreLower * currentPixelNumber :
+                        minIndex += 1
+                        peekValue, peekPixels = valueFrequency[minIndex]
+                        if ignoredLowerPixels + peekPixels > ignoreLower * currentPixelNumber :
+                            includeFraction = (ignoreLower * currentPixelNumber - ignoredLowerPixels) / peekPixels
+                            ignoredLowerValue = (1.0-includeFraction)*valueFrequency[minIndex-1][0] + includeFraction*peekValue
+                        else :
+                            ignoredLowerValue = peekValue
+                        ignoredLowerPixels += peekPixels
+                    ignoreUpper = models.CosmicVariable.getVariable('histogramIgnoreUpper') / 100.0
+                    ignoredUpperValue, ignoredUpperPixels = valueFrequency[maxIndex]
+                    while ignoredUpperPixels < ignoreUpper * currentPixelNumber :
+                        maxIndex -= 1
+                        peekValue, peekPixels = valueFrequency[maxIndex]
+                        if ignoredUpperPixels + peekPixels > ignoreUpper * currentPixelNumber :
+                            includeFraction = (ignoreUpper * currentPixelNumber - ignoredUpperPixels) / peekPixels
+                            ignoredUpperValue = includeFraction*peekValue + (1.0-includeFraction)*valueFrequency[maxIndex+1][0]
+                        else :
+                            ignoredUpperValue = peekValue
+                        ignoredUpperPixels += peekPixels
+                    minValue = valueFrequency[minIndex][0]
+                    maxValue = valueFrequency[maxIndex][0]
+                    msec = int(1000 * time.time()) - msec
+                    outputText += "completed: {}ms\n".format(msec)
+                    outputText += "dark point {}, contains {} pixels, {}%, {}% of originial frame\n".format(
+                        ignoredLowerValue, ignoredLowerPixels,
+                        round(100*ignoredLowerPixels / currentPixelNumber, 4),
+                        round(100*ignoredLowerPixels / pixelNumber, 4) )
+                    outputText += "light point {}, contains {} pixels, {}%, {}% of originial frame\n".format(
+                        ignoredUpperValue, ignoredUpperPixels,
+                        round(100*ignoredUpperPixels / currentPixelNumber, 4),
+                        round(100*ignoredUpperPixels / pixelNumber, 4) )
+                    outputText += "min(Index, Value): ({}, {})\n".format(minIndex, minValue)
+                    outputText += "max(Index, Value): ({}, {})\n".format(maxIndex, maxValue)
+                    outputText += "\n"
 
-                            indexStart = index - 2
-                            indexEnd = index + 3
 
-                            a = SortedDict(itertools.islice(pixelCounts.items(), indexStart, indexEnd))
-                            removedKey = a.peekitem(2)[0]
-                            removedCount = a.peekitem(2)[1]
-                            newCount1 = a.peekitem(1)[1] + removedCount/2.0
-                            newCount2 = a.peekitem(3)[1] + removedCount/2.0
-                            conservedCount = newCount1 + newCount2
+                    # Get the mean value of remaining pixels to calculate gamma correction
+                    outputText += "Finding mean value of clipped pixels ... "
+                    msec = int(1000 * time.time())
+                    unclippedPixelNumber = currentPixelNumber - ignoredLowerPixels - ignoredUpperPixels
+                    meanUnclippedPixels = sum( pixelValues[minIndex:maxIndex] *
+                        pixelCounts[minIndex:maxIndex] ) / unclippedPixelNumber
+                    mean = sum( pixelValues[minIndex:maxIndex] * pixelCounts[minIndex:maxIndex] ) / unclippedPixelNumber
+                    meanFrac = (meanUnclippedPixels - minValue)/(maxValue - minValue)
+                    targetMean = 0.8 * minValue + 0.2 * maxValue
+                    targetMeanFrac = (targetMean - minValue)/(maxValue - minValue)
+                    gammaCorrection = math.log(meanFrac)/math.log(targetMeanFrac)
+                    msec = int(1000 * time.time()) - msec
+                    outputText += "completed: {}ms\n".format(msec)
+                    outputText += "mean: {}, {}%\n".format(meanUnclippedPixels,meanFrac)
+                    outputText += "targetmean: {}, {}%\n".format(targetMean,targetMeanFrac)
+                    outputText += "gamma: {}\n".format(gammaCorrection)
+                    outputText += "\n"
 
-                            x0 = [
-                                a.peekitem(1)[0],
-                                newCount1,
-                                a.peekitem(3)[0],
-                                newCount2
-                                ]
 
-                            bounds = [
-                                (0.99*a.peekitem(0)[0] + 0.01*a.peekitem(1)[0],
-                                0.01*a.peekitem(1)[0] + 0.99*a.peekitem(2)[0] ),
-                                (a.peekitem(1)[1], None),
-                                (0.99*a.peekitem(2)[0] + 0.01*a.peekitem(3)[0],
-                                0.01*a.peekitem(3)[0] + 0.99*a.peekitem(4)[0]),
-                                (a.peekitem(3)[1], None)
-                                ]
+                    # Digitize and rebin the the value counts to a histogram
+                    outputText += "Generating histograms from value counts ... "
+                    msec = int(1000 * time.time())
+                    # TODO: Read from cosmic variable
+                    thumbnailBitDepth = 8
+                    binNumber = pow(2, thumbnailBitDepth)
+                    binsLinear = minValue + (maxValue - minValue) * numpy.linspace(0, 1, binNumber)
+                    binsGamma = minValue + (maxValue - minValue) * pow(numpy.linspace(0, 1, binNumber), gammaCorrection)
+                    binAssignLinear = numpy.digitize(pixelValues.clip(minValue, maxValue), binsLinear)
+                    binAssignGamma = numpy.digitize(pixelValues.clip(minValue, maxValue), binsGamma)
+                    histCountLinear = numpy.bincount(binAssignLinear, pixelCounts, binNumber)
+                    histCountGamma = numpy.bincount(binAssignGamma, pixelCounts, binNumber)
+                    histContribLinear = pixelCounts / histCountLinear[binAssignLinear]
+                    histContribGamma = pixelCounts / histCountGamma[binAssignGamma]
+                    histCenterLinear = numpy.bincount(binAssignLinear, pixelValues * histContribLinear, binNumber)
+                    histCenterGamma = numpy.bincount(binAssignGamma, pixelValues * histContribGamma, binNumber)
+                    msec = int(1000 * time.time()) - msec
+                    outputText += "completed: {}ms\n".format(msec)
+                    outputText += "digitized bits/pixel: {}\n".format(thumbnailBitDepth)
+                    outputText += "digitized shades: {}\n".format(binNumber)
+                    outputText += "\n"
 
-                            constraints = ({
-                                'type': 'eq',
-                                'fun' : conserveTotalPixelCountConstraint,
-                                'args': [conservedCount]
-                                })
 
-                            # TODO: Jacobian
-                            jacobian = False
-
-                            result = scipy.optimize.minimize(overlapError, x0, args=(a),
-                            bounds=bounds, constraints=constraints, method='SLSQP')
-                            if result.success:
-                                if result.fun < math.pow(random.uniform(0, 1), rejectionExponent):
-                                    deletedIndices.add(rawIndex)
-                                    pixelCounts.pop(removedKey)
-                                    pixelCounts.pop(x0[0])
-                                    pixelCounts.pop(x0[2])
-                                    pixelCounts[result.x[0]] = result.x[1]
-                                    pixelCounts[result.x[2]] = result.x[3]
-                                    if len(pixelCounts) == uniqueValuesLimit:
-                                        break
-                            else:
-                                errorText += 'Minimization failed:\n\n' + str(result) + '\n'
-
-                        deletionsThisCycle = currentUniqueValues - len(pixelCounts)
-                        deletionsNeeded = len(pixelCounts) - uniqueValuesLimit
-
-                        outputText += "Reduction step complete." +\
-                            " deletions: " + str(deletionsThisCycle) +\
-                            " , values: " + str(len(pixelCounts)) +\
-                            " , bits: " + str(round(math.log(len(pixelCounts),2),2)) +\
-                            " , rejection exponent: " + str(round(rejectionExponent,2)) +\
-                            " , deletions needed: " + str(deletionsNeeded) + "\n"
-
-                        # Adjust rejection exponent based on results
-                        if deletionsNeeded > 0:
-                            if deletionsThisCycle > 0:
-                                try:
-                                    rejectionExponent *= 0.5 + 1.5*math.exp( -1.0*deletionsNeeded/deletionsThisCycle )
-                                except ValueError:
-                                    outputText += '\nValueError exception in math.log(deletionsNeeded / deletionsThisCycle, rejectionExponent):\n' +\
-                                        'deletionsNeeded = ' + str(deletionsNeeded) +\
-                                        ', deletionsThisCycle = ' + str(deletionsThisCycle) +\
-                                        ', rejectionExponent = ' + str(rejectionExponent) + '\n'
-                            else:
-                                rejectionExponent /= 2.0
-
-                        currentUniqueValues = len(pixelCounts)
-                    # end of while
-
-                    # This will injest the pixel count and histogram dicts into some numpy arrays
-                    histogramLength = len(pixelCounts)
-                    binCenters = numpy.empty([histogramLength])
-                    histPixels = numpy.empty([histogramLength])
-                    cumulativePixels = numpy.empty([histogramLength])
-                    totalCount = 0
-                    for i in range(histogramLength):
-                        (binCenters[i], histPixels[i]) = pixelCounts.popitem(last=False)
-                        totalCount += histPixels[i]
-                        cumulativePixels[i] = totalCount
-
-                    assert(totalCount == sum(histPixels))
-
-                    binLefts = numpy.empty([histogramLength])
-                    binRights = numpy.empty([histogramLength])
-                    binLefts[0] = 1.5 * binCenters[0] - 0.5 * binCenters[1]
-                    for i in range(1,histogramLength):
-                        binLefts[i] = 0.5 * (binCenters[i-1] + binCenters[i])
-                        binRights[i-1] = binLefts[i]
-                    binRights[histogramLength-1] = 1.5 * binCenters[histogramLength-1] - 0.5 * binCenters[histogramLength-2]
-
-                    histCounts = numpy.empty([histogramLength])
-                    for i in range(histogramLength):
-                        histCounts[i] = histPixels[i] / (1.0*binRights[i] - 1.0*binLefts[i])
-
-                    for i in range(histogramLength):
-                        histogramBin = models.ImageHistogramBin(
-                            image = image,
-                            binCenter = binCenters[i],
-                            binCount = histCounts[i]
-                            )
-
-                        histogramBin.save()
-
-                    mean, median, stdDev = sigma_clipped_stats(frame, sigma=7, iters=3)
-
-                    plotFilename = "histogramData_{}_{}.gnuplot".format(image.pk, channelIndex)
-                    binFilename = "histogramData_{}_{}.txt".format(image.pk, channelIndex)
-
-                    # Write the column data to be read in by gnuplot.
-                    lowerBound = binLefts[0]
-                    upperBound = binRights[histogramLength-1]
-                    cumulativeCount = 0.0
-                    cumulativeFraction = cumulativeCount / totalCount
-                    with open(settings.MEDIA_ROOT + binFilename, "w") as outputFile:
-                        ignoreLower = models.CosmicVariable.getVariable('histogramIgnoreLower') / 100.0
-                        ignoreUpper = models.CosmicVariable.getVariable('histogramIgnoreUpper') / 100.0
-                        for i in range(histogramLength):
-                            binCount = histCounts[i]
-                            binCenter = binCenters[i]
-                            # Skip writing values for up 0.25% of the darkest and
-                            # brightest pixels. This is to match the parameters used in
-                            # generating thumnails.
-                            pixelCount = histPixels[i]
-                            pixelCountFraction = histPixels[i] / totalCount
-                            if cumulativeFraction < ignoreLower:
-                                if cumulativeFraction + pixelCountFraction >= ignoreLower:
-                                    overageFraction = cumulativeFraction + pixelCountFraction - ignoreLower
-                                    includeFraction = overageFraction / pixelCountFraction
-                                    lowerBound = includeFraction*binLefts[i]  + (1.0 - includeFraction)*binRights[i]
-                            cumulativeCount += histPixels[i]
-                            cumulativeFraction = cumulativeCount / totalCount
-                            if cumulativeFraction > 1.0 - ignoreUpper:
-                                if binCenter < upperBound:
-                                    overageFraction = cumulativeFraction - 1.0 + ignoreUpper
-                                    countFraction = histPixels[i] / totalCount
-                                    includeFraction = 1.0 - overageFraction / countFraction
-                                    upperBound = (1.0 - includeFraction)*binLefts[i] + includeFraction*binRights[i]
-
-                            outputFile.write("{} {} {}\n".format(binLefts[i], histCounts[i], (cumulativePixels[i]/totalCount) ) )
-                            outputFile.write("{} {} {}\n".format(binRights[i], histCounts[i], (cumulativePixels[i]/totalCount) ) )
-
-                    targetMean = 0.8*lowerBound + 0.2*upperBound
-                    meanFrac = (mean - lowerBound)/(upperBound - lowerBound)
-                    targetMeanFrac = (targetMean - lowerBound)/(upperBound - lowerBound)
-                    gammaCorrection = math.log(meanFrac, 10)/math.log(targetMeanFrac, 10)
-                    # Write the gnuplot script file.
-                    with open(settings.MEDIA_ROOT + plotFilename, "w") as outputFile:
+                    # Generate fast histogram for image info page
+                    outputText += "Writing histograms to file ... "
+                    msec = int(1000 * time.time())
+                    histDataFilename = "histogramData_{}_{}.txt".format(image.pk, channelIndex)
+                    histPlotFilename = "histogramData_{}_{}.gnuplot".format(image.pk, channelIndex)
+                    histImageFilename = "histogramData_{}_{}.gnuplot.svg".format(image.pk, channelIndex)
+                    histDataLongFilename = settings.MEDIA_ROOT + histDataFilename
+                    histPlotLongFilename = settings.MEDIA_ROOT + histPlotFilename
+                    histImageLongFilename = staticDirectory + "images/" + histImageFilename
+                    with open(histDataLongFilename, "w") as outputFile :
+                        for i in range(binNumber) :
+                            outputFile.write("{} {} {} {}\n".format(
+                                histCenterLinear[i],
+                                histCountLinear[i],
+                                histCenterGamma[i],
+                                histCountGamma[i]
+                            ))
+                    with open(histPlotLongFilename, "w") as outputFile :
                         outputFile.write("set terminal svg size 400,300 dynamic mouse standalone\n" +
-                                         "set output '{}/{}.svg'\n".format(staticDirectory + "images", plotFilename) +
+                                         "set output '{}'\n".format(histImageLongFilename) +
                                          "set key off\n" +
                                          "set logscale y\n" +
-                                         "set xrange ["+str(lowerBound)+":"+str(upperBound)+"]\n" +
+                                         "set xrange [{}:{}]\n".format(minValue, maxValue) +
                                          "set style line 1 linewidth 3 linecolor 'blue'\n" +
-                                         "plot '" + settings.MEDIA_ROOT + "/{}' using 1:2 with lines linestyle 1\n".format(binFilename)
-                                         )
+                                         "set style line 2 linewidth 2 linecolor 'red'\n" +
+                                         "plot '{}' using 1:2 with lines linestyle 1, ".format(histDataLongFilename) +
+                                         "'' using 3:4 with lines linestyle 2\n")
+                    msec = int(1000 * time.time()) - msec
+                    outputText += "completed: {}ms\n".format(msec)
+                    outputText += "histogram data file: {}\n".format(histDataFilename)
+                    outputText += "histogram plot file: {}\n".format(histPlotFilename)
+                    outputText += "\n"
 
-                    outputText += "Running gnuplot:\n\n"
-                    proc = subprocess.Popen(['gnuplot', settings.MEDIA_ROOT + plotFilename],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE
-                            )
 
+                    # Run gnuplot
+                    outputText += "Generating histogram image ... "
+                    msec = int(1000 * time.time())
+                    proc = subprocess.Popen(['gnuplot', histPlotLongFilename],
+                        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     output, error = proc.communicate()
                     output = output.decode('utf-8')
                     error = error.decode('utf-8')
-
                     proc.wait()
-
-                    outputText += output
+                    msec = int(1000 * time.time()) - msec
+                    errorText += '==================== start process error ====================\n'
                     errorText += error
+                    errorText += '===================== end process error =====================\n'
+                    outputText += "completed: {}ms\n".format(msec)
+                    outputText += '==================== start process output ====================\n'
+                    outputText += output
+                    outputText += '===================== end process output =====================\n'
+                    outputText += "histogram image file: {}\n".format(histImageFilename)
+                    outputText += "\n"
 
-                    outputText += '\n ==================== End of process output ====================\n\n'
-                    errorText += '\n ==================== End of process error =====================\n\n'
+
+                    # Digitize the raw value counts into an image
+                    if channelIndex == 0 :
+                        outputText += "Digitizing the frame to a full size image ... "
+                        msec = int(1000 * time.time())
+                        binNumber = pow(2, thumbnailBitDepth)
+                        binsGamma = minValue + (maxValue - minValue) * pow(numpy.linspace(0, 1, binNumber), gammaCorrection)
+                        binAssignment = numpy.digitize(frame.clip(minValue, maxValue), binsGamma)
+                        msec = int(1000 * time.time()) - msec
+                        outputText += "completed: {}ms\n".format(msec)
+                        outputText += "\n"
+
+
+                    # Write text file
+                    if channelIndex == 0 :
+                        outputText += "Writing text encoded image oh god ... "
+                        msec = int(1000 * time.time())
+                        textImageFilename = settings.MEDIA_ROOT + "asciiImage_{}.txt".format(image.pk)
+                        xdim, ydim = binAssignment.shape
+                        with open(textImageFilename, "w") as outputFile :
+                            outputFile.write("# ImageMagick pixel enumeration: {},{},{},gray\n".format(
+                                ydim, xdim, binNumber - 1) )
+                            for i in range(xdim) :
+                                for j in range(ydim) :
+                                    k = binAssignment[i][j] - 1
+                                    s = str(hex(k + k*2**8 + k*2**16 + 2**24))[3:10]
+                                    outputFile.write("{0},{1}: ({2},{2},{2})  #{3}  gray({2})\n".format(j, i, k, s))
+                        msec = int(1000 * time.time()) - msec
+                        outputText += "completed: {}ms\n".format(msec)
+                        outputText += "\n"
+
+
+                    # Call convert on text file
+                    if channelIndex == 0 :
+                        outputText += "Calling convert on text encoded image ... "
+                        msec = int(1000 * time.time())
+                        pngImageFilename = staticDirectory + "images/" + os.path.splitext(filename)[0] + "_thumb_full.png"
+                        process = subprocess.Popen(['convert', textImageFilename, pngImageFilename], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        output, error = process.communicate()
+                        output = output.decode('utf-8')
+                        error = error.decode('utf-8')
+                        proc.wait()
+                        errorText += error
+                        msec = int(1000 * time.time()) - msec
+                        outputText += "completed: {}ms\n".format(msec)
+                        outputText += output
+                        outputText += "\n"
+
+                    # Delete the ascii image file
+                    if channelIndex == 0 :
+                        outputText += "Cleaning up ascii image file ..."
+                        msec = int(1000 * time.time())
+                        try :
+                            os.remove(textImageFilename)
+                        except FileNotFoundError :
+                            pass
+                        except :
+                            errorText += "Error removing file: {}\n".format(textImageFilename)
+                            errorText += '==================== start process error ====================\n'
+                            errorText += str(sys.exc_info()[0])
+                            errorText += '===================== end process error =====================\n'
+                        msec = int(1000 * time.time()) - msec
+                        outputText += "completed: {}ms\n".format(msec)
+                        outputText += "\n"
+
+                    #TODO: Look into this masking and potentially record the masked pixel
+                    # data as a stored thing which can be accessed later on.
+                    # Create frame mask
+                    outputText += "Generating frame mask ... "
+                    msec = int(1000 * time.time())
+                    # mask = make_source_mask(frame, snr=10, npixels=5, dilate_size=11)
+                    rejectValues = numpy.array([])
+                    rejectPixelNumber = 0
+                    bathtubRejects = numpy.array(bathtubValues.keys())
+                    bathtubPixelCounts = numpy.array(bathtubValues.values())
+                    if bathtubRejects.shape[0] > 0 :
+                        rejectValues = numpy.union1d(rejectValues, bathtubRejects)
+                        rejectPixelNumber += sum(bathtubPixelCounts)
+                    otherRejects = numpy.array([])
+                    if otherRejects.shape[0] > 0 :
+                        rejectValues = numpy.union1d(rejectValues, otherRejects)
+                    moreRejects = numpy.array([])
+                    if moreRejects.shape[0] > 0 :
+                        rejectValues = numpy.union1d(rejectValues, moreRejects)
+                    rejectValueNumber = rejectValues.shape[0]
+                    mask = numpy.ma.in1d(frame.ravel(), rejectValues).reshape(frame.shape)
+                    maskedFrame = numpy.ma.masked_array(frame, mask)
+                    msec = int(1000 * time.time()) - msec
+                    outputText += "completed: {}ms\n".format(msec)
+                    outputText += "masked values: {}\n".format(rejectValueNumber)
+                    outputText += "masked pixels: {}\n".format(rejectPixelNumber)
+                    outputText += "\n"
+
+
+                    # Get statistics on unmasked frame
+                    outputText += "Non-masked frame statistics ... "
+                    msec = int(1000 * time.time())
+                    ( nonmaskedNumber, (nonmaskedMin, nonmaskedMax),
+                      nonmaskedMean, nonmaskedVariance,
+                      nonmaskedSkewness, nonmaskedKurtosis ) = scipy.stats.describe(frame.ravel())
+                    msec = int(1000 * time.time()) - msec
+                    outputText += "completed: {}ms\n".format(msec)
+                    outputText += "pixels: {}\n".format(nonmaskedNumber)
+                    outputText += "min: {}\n".format(nonmaskedMin)
+                    outputText += "max: {}\n".format(nonmaskedMax)
+                    outputText += "mean: {}\n".format(nonmaskedMean)
+                    outputText += "variance: {}\n".format(nonmaskedVariance)
+                    outputText += "skewness: {}\n".format(nonmaskedSkewness)
+                    outputText += "kurtosis: {}\n".format(nonmaskedKurtosis)
+                    outputText += "\n"
+
+
+                    # Get statistics on masked frame
+                    outputText += "Getting statistics on masked frame ... "
+                    msec = int(1000 * time.time())
+                    maskedMean, maskedMedian, maskedStdDev = sigma_clipped_stats(maskedFrame, sigma=0, iters=0)
+                    # Converges well with 3 iterations.  Half as much time as iters=None
+                    bgMean, bgMedian, bgStdDev = sigma_clipped_stats(maskedFrame, sigma=3, iters=3)
+                    msec = int(1000 * time.time()) - msec
+                    outputText += "completed: {}ms\n".format(msec)
+                    outputText += "mean: {}\n".format(maskedMean)
+                    outputText += "median: {}\n".format(maskedMedian)
+                    outputText += "stdDev: {}\n".format(maskedStdDev)
+                    outputText += "background mean: {}\n".format(bgMean)
+                    outputText += "background median: {}\n".format(bgMedian)
+                    outputText += "background stdDev: {}\n".format(bgStdDev)
+                    outputText += "\n"
 
                     try:
                         channelInfo = models.ImageChannelInfo.objects.get(image=image, index=channelIndex)
                     except:
-                        outputText += 'ERROR: continuing loop because channel info not found. id: {} index: {}'.format(image.pk, channelIndex)
+                        outputText += '\n\nERROR: continuing loop because channel info not found. id: {} index: {}\n\n\n'.format(image.pk, channelIndex)
                         continue
 
-                    #TODO: Look into this masking and potentially record the masked pixel data as a stored thing which can be accessed later on.
-                    #mask = make_source_mask(frame, snr=10, npixels=5, dilate_size=11)
-                    bgMean, bgMedian, bgStdDev = sigma_clipped_stats(frame, sigma=3, iters=3)
-
-                    #TODO: For some reason the median and bgMedain are always 0.  Need to fix this.
                     channelInfo.hduIndex = hduIndex
                     channelInfo.frameIndex = frameIndex
-                    channelInfo.mean = mean
-                    channelInfo.median = median
-                    channelInfo.stdDev = stdDev
+                    channelInfo.mean = maskedMean
+                    channelInfo.median = maskedMedian
+                    channelInfo.stdDev = maskedStdDev
                     channelInfo.bgMean = bgMean
                     channelInfo.bgMedian = bgMedian
                     channelInfo.bgStdDev = bgStdDev
-                    channelInfo.uniqueValues = initialUniqueValues
-                    channelInfo.approximateBits = initialBitDepth
-                    channelInfo.thumbnailBlackPoint = lowerBound
-                    channelInfo.thumbnailWhitePoint = upperBound
+                    channelInfo.pixelNumber = pixelNumber
+                    channelInfo.minValue = nonmaskedMin
+                    channelInfo.maxValue = nonmaskedMax
+                    channelInfo.uniqueValues = uniquePixelValues
+                    channelInfo.approximateBits = approximateBitDepth
+                    channelInfo.bathtubLimit = bathtubLimit
+                    channelInfo.bathtubValueNumber = bathtubValueNumber
+                    channelInfo.bathtubPixelNumber = bathtubPixelNumber
+                    channelInfo.bathtubLow = bathtubLow
+                    channelInfo.bathtubHigh = bathtubHigh
+                    channelInfo.thumbnailBlackPoint = ignoredLowerValue
+                    channelInfo.thumbnailWhitePoint = ignoredUpperValue
                     channelInfo.thumbnailGamma = gammaCorrection
+                    channelInfo.maskedValues = rejectValueNumber
+                    channelInfo.maskedPixels = rejectPixelNumber
 
                     channelInfo.save()
 
@@ -701,7 +739,476 @@ def imagestats(filename):
 #       c_i = count at bin i
 #       a = coeffecient ... suspect = 1
 #   Now, vary n along with coeffecients of f
-    
+
+# Generate a histogram for initial image analysis.
+
+# Due to the nature of the data, naive histogram approaches with even
+# very many fixed width bins often fail to produce satisfactory
+# results.
+
+# Here we count every pixel value.  An individual pixel value count
+# represents samples of the image in the neighborhood of that value.
+# The neighborhood of a pixel value is the interval half way to the
+# next lowest and highest value.
+
+# The histogram is constructed from the counts by dividing the counts
+# by the width of the neighborhood for each pixel value found.
+
+# Compression of the histogram is accomplished by the following process:
+#   1: Select a pixel value at random
+#       1a: Generate a random sequence of the indexes
+#       1b: Subtract from the index the count of deleted indices less
+#       than the generated index to generate an index to the squozen
+#       data.
+#   2: Perform a trial deletion of the pixel value, where the nearest
+#   two values and counts are adjusted minimize distortion of the
+#   histogram and preserve total count.
+#   3: Accept deletion randomly based on percent error of histogram
+#   introduced by the deletion.
+#       3a: Record the index of deleted value/count pairs.
+#   4: Repeat above until all pixel values have been tested exactly
+#   once.  Note that a pixel value and count changed by a deletion
+#   process may still be selected for trial deletion if it had not yet
+#   been selected.
+#   5: If histogram is still too large, loosen acception criteria and
+#   repeat.
+def depricatedHistogram(frame) :
+    def overlapError(x, a):
+        """ Computes the percent overlap of the histogram defined by two
+        sets of bin center / bin count pairs. """
+        aCenters = numpy.array(a.keys())
+        aCounts = numpy.array(a.values())
+        bCenters = numpy.array([ aCenters[0], x[0], x[2], aCenters[4] ])
+        bCounts = numpy.array([ aCounts[0], x[1], x[3], aCounts[4] ])
+        assert( len(bCenters) + 1 == len(aCenters) )
+
+        aLeft = numpy.array([
+            1.5*aCenters[0] - 0.5*aCenters[1],
+            0.5*aCenters[0] + 0.5*aCenters[1],
+            0.5*aCenters[1] + 0.5*aCenters[2],
+            0.5*aCenters[2] + 0.5*aCenters[3],
+            0.5*aCenters[3] + 0.5*aCenters[4]
+            ])
+
+        bLeft = numpy.array([
+            1.5*bCenters[0] - 0.5*bCenters[1],
+            0.5*bCenters[0] + 0.5*bCenters[1],
+            0.5*bCenters[1] + 0.5*bCenters[2],
+            0.5*bCenters[2] + 0.5*bCenters[3]
+            ])
+
+        aRight = numpy.array([
+            0.5*aCenters[0] + 0.5*aCenters[1],
+            0.5*aCenters[1] + 0.5*aCenters[2],
+            0.5*aCenters[2] + 0.5*aCenters[3],
+            0.5*aCenters[3] + 0.5*aCenters[4],
+            1.5*aCenters[4] - 0.5*aCenters[3]
+            ])
+
+        bRight = numpy.array([
+            0.5*bCenters[0] + 0.5*bCenters[1],
+            0.5*bCenters[1] + 0.5*bCenters[2],
+            0.5*bCenters[2] + 0.5*bCenters[3],
+            1.5*bCenters[3] - 0.5*bCenters[2],
+            ])
+
+        aWidth = aRight - aLeft
+        bWidth = bRight - bLeft
+
+        aHistogram = aCounts / aWidth
+        bHistogram = bCounts / bWidth
+
+        overlapHeightMins = numpy.empty([5,4])
+        overlapHeightMins.flat = list( min(x,y) for (x,y) in
+            itertools.product(aHistogram,bHistogram) )
+
+        overlapLeftMaxs = numpy.empty([5,4])
+        overlapLeftMaxs.flat = list( max(x,y) for (x,y) in
+            itertools.product(aLeft,bLeft) )
+
+        overlapRightMins = numpy.empty([5,4])
+        overlapRightMins.flat = list( min(x,y) for (x,y) in
+            itertools.product(aRight,bRight) )
+
+        overlapWidths = overlapRightMins - overlapLeftMaxs
+
+        overlapMask = overlapRightMins > overlapLeftMaxs
+
+        overlapAreas = overlapMask * overlapHeightMins * overlapWidths
+
+        initialArea = sum(aCounts)
+        totalOverlapArea = sum(overlapAreas.flat)
+        # Scale relative to overall contribution
+        fitness = (initialArea - totalOverlapArea) / currentPixelNumber
+        fitness *= fitness
+
+        fitnessJacobian = numpy.zeros([4])
+
+        return fitness
+
+    def conserveTotalPixelCountConstraint(x, total):
+        return (x[1] + x[3]) - total
+
+    # Perform initial statistics
+    # TODO: prefilter known bad values from frame
+    outputText += "Initial frame statistics ... "
+    msec = int(1000 * time.time())
+    ( pixelNumber, (pixelValueMin, pixelValueMax),
+      pixelValueMean, pixelValueVariance,
+      pixelValueSkewness, pixelValueKurtosis ) = scipy.stats.describe(frame.flat)
+    currentPixelNumber = pixelNumber
+    msec = int(1000 * time.time()) - msec
+    outputText += "completed: {}ms\n".format(msec)
+    outputText += "data pixels:  " + str(pixelNumber) + "\n"
+    outputText += "min: " + str(pixelValueMin) + "\n"
+    outputText += "max: " + str(pixelValueMax) + "\n"
+    outputText += "mean: " + str(pixelValueMean) + "\n"
+    outputText += "variance: " + str(pixelValueVariance) + "\n"
+    outputText += "skewness: " + str(pixelValueSkewness) + "\n"
+    outputText += "kurtosis:  " + str(pixelValueKurtosis) + "\n"
+    outputText += "\n"
+
+
+    # Count all pixel values into a sorted dict with key of the pixel
+    # value and the value is the number of pixels with that value.
+    outputText += "Counting pixel values ... "
+    msec = int(1000 * time.time())
+    pixelCounts = SortedDict(Counter(frame.flat))
+    uniquePixelValues = len(pixelCounts)
+    approximateBitDepth = round(math.log(uniquePixelValues, 2),2)
+    msec = int(1000 * time.time()) - msec
+    outputText += "completed: {}ms\n".format(msec)
+    outputText += "unique values: " + str(uniquePixelValues) + "\n"
+    outputText += "approximate bit depth:" + str(approximateBitDepth) + "\n"
+    outputText += "\n"
+
+
+    # Look for and remove from histogram bathtub values that might
+    # indicate over-or-under-exposed pixels.
+    bathtubLimit = 0.25 / 100
+    outputText += "Searching for bathtub pixel values ... "
+    msec = int(1000 * time.time())
+    currentPixelValueNumber = uniquePixelValues
+    bathtubValues = SortedDict()
+    bathtubValueNumber = 0
+    bathtubPixelNumber = 0
+    bathtubFound = True
+    while bathtubFound :
+        bathtubFound = False
+        while pixelCounts.peekitem(index=0)[1] / currentPixelNumber > bathtubLimit :
+            popKey, popCount = pixelCounts.popitem(last=False)
+            bathtubValues[popKey] = popCount
+            currentPixelNumber -= popCount
+            bathtubPixelNumber += popCount
+            currentPixelValueNumber -= 1
+            bathtubValueNumber += 1
+            bathtubFound = True
+        while pixelCounts.peekitem(index=-1)[1] / currentPixelNumber > bathtubLimit :
+            popKey, popCount = pixelCounts.popitem(last=True)
+            bathtubValues[popKey] = popCount
+            currentPixelNumber -= popCount
+            bathtubPixelNumber += popCount
+            currentPixelValueNumber -= 1
+            bathtubValueNumber += 1
+            bathtubFound = True
+        if bathtubFound :
+            outputText += ". "
+
+    msec = int(1000 * time.time()) - msec
+    outputText += "completed: {}ms\n".format(msec)
+    if bathtubPixelNumber / currentPixelNumber > 1.0 / 3.0 :
+        outputText += "Too many suspect bathtub pixels found!\n"
+        outputText += "\tRestoring bathtub values to histogram ... "
+        pixelCounts.update = bathtubValues
+        currentPixelNumber += bathtubPixelNumber
+        bathtubFailure = True
+    else :
+        bathtubFailure = False
+    outputText += "total bathtub values: {}, {}%\n".format( bathtubValueNumber,
+        round(100*bathtubValueNumber/(bathtubValueNumber + currentPixelValueNumber),4))
+    outputText += "remaining values: {}, {}%\n".format( currentPixelValueNumber,
+        round(100*currentPixelValueNumber/(bathtubValueNumber + currentPixelValueNumber),4))
+    outputText += "total bathtub pixels: {}, {}%\n".format(bathtubPixelNumber,
+        round(100*bathtubPixelNumber/(bathtubPixelNumber +
+        currentPixelNumber),4))
+    outputText += "remaining pixels: {}, {}%\n".format(currentPixelNumber,
+        round(100*currentPixelNumber/(bathtubPixelNumber +
+        currentPixelNumber),4))
+    outputText += "bathtub (value,pixels): " + str(list(bathtubValues.iteritems())) + "\n"
+    outputText += "\n"
+
+
+    # Get pixel value bounds assuming we will ignore the values for some
+    # percentage of the brightest and darkest pixels when making thumbnails.
+    # I can't believe I can't suss out the syntax for a do while loop. I
+    # guess the internet is sometimes useful ... or maybe I should have
+    # kept that little python o'rielys pocketbook.  Hmm ... books.
+    outputText += "Finding dark and light points ... "
+    msec = int(1000 * time.time())
+    ignoreLower = models.CosmicVariable.getVariable('histogramIgnoreLower') / 100.0
+    i = 0
+    ignoredLowerValue, ignoredLowerPixels = pixelCounts.peekitem(index=i)
+    while ignoredLowerPixels / currentPixelNumber < ignoreLower :
+        i += 1
+        peekValue, peekPixels = pixelCounts.peekitem(index=i)
+        ignoredLowerValue = peekValue
+        ignoredLowerPixels += peekPixels
+    ignoreUpper = models.CosmicVariable.getVariable('histogramIgnoreUpper') / 100.0
+    i = -1
+    ignoredUpperValue, ignoredUpperPixels = pixelCounts.peekitem(index=i)
+    while ignoredUpperPixels / currentPixelNumber < ignoreUpper :
+        i -= 1
+        peekValue, peekPixels = pixelCounts.peekitem(index=i)
+        ignoredUpperValue = peekValue
+        ignoredUpperPixels += peekPixels
+    msec = int(1000 * time.time()) - msec
+    outputText += "completed: {}ms\n".format(msec)
+    outputText += "dark point {}, contains {} pixels, {}%, {}% of originial frame\n".format(
+        ignoredLowerValue, ignoredLowerPixels,
+        round(100*ignoredLowerPixels / currentPixelNumber, 4),
+        round(100*ignoredLowerPixels / pixelNumber, 4) )
+    outputText += "light point {}, contains {} pixels, {}%, {}% of originial frame\n".format(
+        ignoredUpperValue, ignoredUpperPixels,
+        round(100*ignoredUpperPixels / currentPixelNumber, 4),
+        round(100*ignoredUpperPixels / pixelNumber, 4) )
+    outputText += "\n"
+
+    currentPixelValueNumber = len(pixelCounts)
+    # If we have way too many values, do some rough binning.
+    uniqueValuesStart = uniqueValuesLimit * 10
+    if currentPixelValueNumber > uniqueValuesStart:
+        outputText += "Beginning rough binning ... "
+        msec = int(1000 * time.time())
+        tempPixelCounts = SortedDict()
+        roughStride = 1 + (currentPixelValueNumber // uniqueValuesStart)
+        roughBins = currentPixelValueNumber // roughStride
+        outputText += "Performing initial rough binning.  Goal values: " + str(roughBins) + "\n"
+        for i in range(roughBins):
+            roughKey = 0.0
+            roughValue = 0.0
+            for j in range(roughStride):
+                key, value = pixelCounts.popitem()
+                roughKey += key*value
+                roughValue += value
+            roughKey /= roughValue
+            tempPixelCounts[roughKey] = roughValue
+        # Check for leftovers and throw them in the last key/value
+        if len(pixelCounts) > 0:
+            roughKey = numpy.average(list(pixelCounts.iterkeys()),
+                weights = list(pixelCounts.itervalues()) )
+            roughValue = numpy.sum(list(pixelCounts.itervalues()))
+            tempPixelCounts[roughKey] = roughValue
+        pixelCounts.update(tempPixelCounts)
+        msec = int(1000 * time.time()) - msec
+        outputText += "completed: {}ms\n".format(msec)
+
+
+    outputText += "Beginning adaptive re-binning ... "
+    msec = int(1000 * time.time())
+    # Replacement rejection exponent, lower this to accept more disruptive
+    # deletions.  This will automatically adjust if one pass is not
+    # sufficient to reduce the number of unique values.
+    rejectionExponent = models.CosmicVariable.getVariable('histogramRejectionExponent')
+
+    currentUniqueValues = len(pixelCounts)
+    while currentUniqueValues > uniqueValuesLimit:
+
+        # Initialize the list of deleted indices
+        deletedIndices = SortedList()
+
+        # Select in random order (almost) all unique pixel values to test
+        # for trial deletion.
+        for rawIndex in random.sample(range(2, currentUniqueValues - 2), currentUniqueValues - 4):
+            # Adjust index to account for any deleted indices
+            index = rawIndex - deletedIndices.bisect_left(rawIndex)
+
+            indexStart = index - 2
+            indexEnd = index + 3
+
+            a = SortedDict(itertools.islice(pixelCounts.items(), indexStart, indexEnd))
+            removedKey = a.peekitem(2)[0]
+            removedCount = a.peekitem(2)[1]
+            newCount1 = a.peekitem(1)[1] + removedCount/2.0
+            newCount2 = a.peekitem(3)[1] + removedCount/2.0
+            conservedCount = newCount1 + newCount2
+
+            x0 = [
+                a.peekitem(1)[0],
+                newCount1,
+                a.peekitem(3)[0],
+                newCount2
+                ]
+
+            bounds = [
+                (0.99*a.peekitem(0)[0] + 0.01*a.peekitem(1)[0],
+                0.01*a.peekitem(1)[0] + 0.99*a.peekitem(2)[0] ),
+                (a.peekitem(1)[1], None),
+                (0.99*a.peekitem(2)[0] + 0.01*a.peekitem(3)[0],
+                0.01*a.peekitem(3)[0] + 0.99*a.peekitem(4)[0]),
+                (a.peekitem(3)[1], None)
+                ]
+
+            constraints = ({
+                'type': 'eq',
+                'fun' : conserveTotalPixelCountConstraint,
+                'args': [conservedCount]
+                })
+
+            # TODO: Jacobian
+            jacobian = False
+
+            result = scipy.optimize.minimize(overlapError, x0, args=(a),
+            bounds=bounds, constraints=constraints, method='SLSQP')
+            if result.success:
+                if result.fun < math.pow(random.uniform(0, 1), rejectionExponent):
+                    deletedIndices.add(rawIndex)
+                    pixelCounts.pop(removedKey)
+                    pixelCounts.pop(x0[0])
+                    pixelCounts.pop(x0[2])
+                    pixelCounts[result.x[0]] = result.x[1]
+                    pixelCounts[result.x[2]] = result.x[3]
+                    if len(pixelCounts) == uniqueValuesLimit:
+                        break
+            else:
+                errorText += 'Minimization failed:\n\n' + str(result) + '\n'
+
+        deletionsThisCycle = currentUniqueValues - len(pixelCounts)
+        deletionsNeeded = len(pixelCounts) - uniqueValuesLimit
+
+        outputText += "Reduction step complete." +\
+            " deletions: " + str(deletionsThisCycle) +\
+            " , values: " + str(len(pixelCounts)) +\
+            " , bits: " + str(round(math.log(len(pixelCounts),2),2)) +\
+            " , rejection exponent: " + str(round(rejectionExponent,2)) +\
+            " , deletions needed: " + str(deletionsNeeded) + "\n"
+
+        # Adjust rejection exponent based on results
+        if deletionsNeeded > 0:
+            if deletionsThisCycle > 0:
+                try:
+                    rejectionExponent *= 0.5 + 1.5*math.exp( -1.0*deletionsNeeded/deletionsThisCycle )
+                except ValueError:
+                    outputText += '\nValueError exception in math.log(deletionsNeeded / deletionsThisCycle, rejectionExponent):\n' +\
+                        'deletionsNeeded = ' + str(deletionsNeeded) +\
+                        ', deletionsThisCycle = ' + str(deletionsThisCycle) +\
+                        ', rejectionExponent = ' + str(rejectionExponent) + '\n'
+            else:
+                rejectionExponent /= 2.0
+
+        currentUniqueValues = len(pixelCounts)
+    # end of while
+    msec = int(1000 * time.time()) - msec
+    outputText += "completed: {}ms\n".format(msec)
+
+
+    # This will injest the pixel count and histogram dicts into some numpy arrays
+    histogramLength = len(pixelCounts)
+    binCenters = numpy.empty([histogramLength])
+    histPixels = numpy.empty([histogramLength])
+    cumulativePixels = numpy.empty([histogramLength])
+    totalCount = 0
+    for i in range(histogramLength):
+        (binCenters[i], histPixels[i]) = pixelCounts.popitem(last=False)
+        totalCount += histPixels[i]
+        cumulativePixels[i] = totalCount
+
+    assert(totalCount == sum(histPixels))
+
+    binLefts = numpy.empty([histogramLength])
+    binRights = numpy.empty([histogramLength])
+    binLefts[0] = 1.5 * binCenters[0] - 0.5 * binCenters[1]
+    for i in range(1,histogramLength):
+        binLefts[i] = 0.5 * (binCenters[i-1] + binCenters[i])
+        binRights[i-1] = binLefts[i]
+    binRights[histogramLength-1] = 1.5 * binCenters[histogramLength-1] - 0.5 * binCenters[histogramLength-2]
+
+    histCounts = numpy.empty([histogramLength])
+    for i in range(histogramLength):
+        histCounts[i] = histPixels[i] / (1.0*binRights[i] - 1.0*binLefts[i])
+
+    for i in range(histogramLength):
+        histogramBin = models.ImageHistogramBin(
+            image = image,
+            binCenter = binCenters[i],
+            binCount = histCounts[i]
+            )
+
+        histogramBin.save()
+
+
+    plotFilename = "histogramData_{}_{}.gnuplot".format(image.pk, channelIndex)
+    binFilename = "histogramData_{}_{}.txt".format(image.pk, channelIndex)
+
+    # Write the column data to be read in by gnuplot.
+    lowerBound = binLefts[0]
+    upperBound = binRights[histogramLength-1]
+    cumulativeCount = 0.0
+    cumulativeFraction = cumulativeCount / totalCount
+    with open("/cosmicmedia/" + binFilename, "w") as outputFile:
+        ignoreLower = models.CosmicVariable.getVariable('histogramIgnoreLower') / 100.0
+        ignoreUpper = models.CosmicVariable.getVariable('histogramIgnoreUpper') / 100.0
+        for i in range(histogramLength):
+            binCount = histCounts[i]
+            binCenter = binCenters[i]
+            # Skip writing values for up 0.25% of the darkest and
+            # brightest pixels. This is to match the parameters used in
+            # generating thumnails.
+            pixelCount = histPixels[i]
+            pixelCountFraction = histPixels[i] / totalCount
+            if cumulativeFraction < ignoreLower:
+                if cumulativeFraction + pixelCountFraction >= ignoreLower:
+                    overageFraction = cumulativeFraction + pixelCountFraction - ignoreLower
+                    includeFraction = overageFraction / pixelCountFraction
+                    lowerBound = includeFraction*binLefts[i]  + (1.0 - includeFraction)*binRights[i]
+            cumulativeCount += histPixels[i]
+            cumulativeFraction = cumulativeCount / totalCount
+            if cumulativeFraction > 1.0 - ignoreUpper:
+                if binCenter < upperBound:
+                    overageFraction = cumulativeFraction - 1.0 + ignoreUpper
+                    countFraction = histPixels[i] / totalCount
+                    includeFraction = 1.0 - overageFraction / countFraction
+                    upperBound = (1.0 - includeFraction)*binLefts[i] + includeFraction*binRights[i]
+
+            outputFile.write("{} {} {}\n".format(binLefts[i], histCounts[i], (cumulativePixels[i]/totalCount) ) )
+            outputFile.write("{} {} {}\n".format(binRights[i], histCounts[i], (cumulativePixels[i]/totalCount) ) )
+
+    targetMean = 0.8*lowerBound + 0.2*upperBound
+    meanFrac = (mean - lowerBound)/(upperBound - lowerBound)
+    targetMeanFrac = (targetMean - lowerBound)/(upperBound - lowerBound)
+    gammaCorrection = math.log(meanFrac, 10)/math.log(targetMeanFrac, 10)
+
+    # Write the gnuplot script file.
+    with open("/cosmicmedia/" + plotFilename, "w") as outputFile:
+        outputFile.write("set terminal svg size 400,300 dynamic mouse standalone\n" +
+                         "set output '{}/{}.svg'\n".format(staticDirectory + "images", plotFilename) +
+                         "set key off\n" +
+                         "set logscale y\n" +
+                         "set xrange ["+str(lowerBound)+":"+str(upperBound)+"]\n" +
+                         "set style line 1 linewidth 3 linecolor 'blue'\n" +
+                         "set style line 2 linewidth 2 linecolor 'red'\n" +
+                         "plot '/cosmicmedia/{0}' using 1:2 with lines linestyle 1, ".format(binFilename) +
+                         "'/cosmicmedia/{0}' using ( $1 * {3}**(($1-{1})/({2}-{1})) ):2 with lines linestyle 2\n".format(
+                            binFilename, lowerBound, upperBound, gammaCorrection))
+
+    outputText += "Running gnuplot:\n\n"
+    proc = subprocess.Popen(['gnuplot', "/cosmicmedia/" + plotFilename],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+            )
+
+    output, error = proc.communicate()
+    output = output.decode('utf-8')
+    error = error.decode('utf-8')
+
+    proc.wait()
+
+    outputText += output
+    errorText += error
+
+    outputText += '\n ==================== End of process output ====================\n\n'
+    errorText += '\n ==================== End of process error =====================\n\n'
+
+
 @shared_task
 def generateThumbnails(filename):
     outputText = ""
@@ -772,24 +1279,20 @@ def generateThumbnails(filename):
     
     #TODO: Add some python logic to decide the exact dimensions we want the thumbnails to
     # be to preserve aspect ratio but still respect screen space requirements.
-    for tempFilename, sizeArg, sizeString in [(filenameFull, "100%", "full"), (filenameSmall, "100x100", "small"),
-                                              (filenameMedium, "300x300", "medium"), (filenameLarge, "900x900", "large")]:
+    for tempFilename, sizeArg, sizeString in [
+        (filenameSmall, "100x100", "small"),
+        (filenameMedium, "300x300", "medium"),
+        (filenameLarge, "900x900", "large") ] :
 
         #TODO: Small images will actually get thumbnails made which are bigger than the original, should implement
         # protection against this - will need to test all callers to make sure that is safe.
         #TODO: Play around with the 'convolve' kernel here to see what the best one to use is.
         # Consider bad horiz/vert lines, also bad pixels, and finally noise.
         # For bad lines use low/negative values along the middle row/col in the kernel.
-        proc = subprocess.Popen(['convert',
-            #TODO: Only looking at the first channel here, need to loop and add all channels if it is an RGB image, etc.
-            "-contrast-stretch", "{}%x{}%".format(
-                models.CosmicVariable.getVariable('histogramIgnoreLower'),
-                models.CosmicVariable.getVariable('histogramIgnoreUpper')),
-            "-gamma", str(imageChannels[0].thumbnailGamma),
-            "-strip", "-filter", "spline", "-resize",
-            sizeArg, "-verbose", settings.MEDIA_ROOT + filename, "-depth", "8", staticDirectory + "images/" + tempFilename],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE)
+        proc = subprocess.Popen(['convert', '-verbose', '-strip', '-filter', 'Box', '-resize', sizeArg,
+            staticDirectory + "images/"+ filenameFull, '-depth', '8', staticDirectory + "images/" + tempFilename],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        #TODO: Only looking at the first channel here, need to loop and add all channels if it is an RGB image, etc.
 
         output, error = proc.communicate()
         output = output.decode('utf-8')
