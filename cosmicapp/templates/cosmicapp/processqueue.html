@@ -25,7 +25,7 @@ which gets put into this queue until the server has time to execute it.</p>
     </tr>
 
     {% for processInput in processInputsUncompleted %}
-    <tr bgcolor="yellow">
+    <tr bgcolor="#ee3">
         <td>
             <a href="/user/{{processInput.requestor}}/">{{processInput.requestor}}</a>
             <br><br>
@@ -44,9 +44,9 @@ which gets put into this queue until the server has time to execute it.</p>
 
     {% for processInput in processInputsCompleted %}
     {% if processInput.completed == "success" or processInput.completed == "success." %}
-        <tr bgcolor="green">
+        <tr bgcolor="lightgreen">
     {% else %}
-        <tr bgcolor="red">
+        <tr bgcolor="#e22">
     {% endif %}
         <td>
             <a href="/user/{{processInput.requestor}}/">{{processInput.requestor}}</a>
