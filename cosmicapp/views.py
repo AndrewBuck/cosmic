@@ -878,6 +878,19 @@ def query(request):
     jsonResponse = None
     root = etree.Element("queryresult")
 
+    def dumpJson(results):
+        resultList = []
+        for result in results:
+            d = result.__dict__
+            #TODO: Consider leaving this _state key in since it contains useful related tables sometimes.
+            del d['_state']
+            for key in d:
+                if type(d[key]) == datetime:
+                    d[key] = str(d[key])
+            resultList.append(d)
+
+        return resultList
+
     def dumpJsonAndAddRaDec(results):
         resultList = []
         for result in results:
@@ -929,6 +942,9 @@ def query(request):
 
         return resultList
 
+    print('\n\nTiming:')
+    millis = int(round(time.time() * 1000))
+
     # Strip out "blank" query parameters such as 'id='.
     #NOTE: Modifying the request.GET datastructure is not standard, need to make sure this is safe.  Maybe better to
     # make a copy and query on that.
@@ -958,8 +974,8 @@ def query(request):
             if limit > 100:
                 limit = 100
         elif request.GET['queryfor'] in ['sextractorResult', 'image2xyResult', 'daofindResult', 'starfindResult', 'sourceFindMatch', 'userSubmittedResult']:
-            if limit > 10000:
-                limit = 10000
+            if limit > 50000:
+                limit = 50000
 
     offset = 0
     if 'offset' in request.GET:
@@ -967,6 +983,11 @@ def query(request):
             offset = int(request.GET['offset'])
         except:
             pass
+
+    newMillis = int(round(time.time() * 1000))
+    deltaT = newMillis - millis
+    print('Parsing query took {} milliseconds to execute.'.format(deltaT ))
+    millis = int(round(time.time() * 1000))
 
     if request.GET['queryfor'] == 'image':
         orderField, ascDesc = parseQueryOrderBy(request, {'time': 'fileRecord__uploadDateTime'}, 'time', '-')
@@ -1040,7 +1061,7 @@ def query(request):
                     results = results.filter(image__pk__in=values)
 
         results = results.order_by(ascDesc + orderField)[offset:offset+limit]
-        jsonResponse = json.dumps(dumpJsonAndAddRaDec(results), default=lambda o: o.__dict__)
+        jsonResponse = json.dumps(dumpJson(results), default=lambda o: o.__dict__)
 
     elif request.GET['queryfor'] == 'image2xyResult':
         orderField, ascDesc = parseQueryOrderBy(request, {'confidence': 'confidence'}, 'confidence', '-')
@@ -1053,7 +1074,7 @@ def query(request):
                     results = results.filter(image__pk__in=values)
 
         results = results.order_by(ascDesc + orderField)[offset:offset+limit]
-        jsonResponse = json.dumps(dumpJsonAndAddRaDec(results), default=lambda o: o.__dict__)
+        jsonResponse = json.dumps(dumpJson(results), default=lambda o: o.__dict__)
 
     elif request.GET['queryfor'] == 'daofindResult':
         orderField, ascDesc = parseQueryOrderBy(request, {'confidence': 'confidence'}, 'confidence', '-')
@@ -1066,7 +1087,18 @@ def query(request):
                     results = results.filter(image__pk__in=values)
 
         results = results.order_by(ascDesc + orderField)[offset:offset+limit]
-        jsonResponse = json.dumps(dumpJsonAndAddRaDec(results), default=lambda o: o.__dict__)
+
+        newMillis = int(round(time.time() * 1000))
+        deltaT = newMillis - millis
+        print('query from database took {} milliseconds to execute.'.format(deltaT ))
+        millis = int(round(time.time() * 1000))
+
+        jsonResponse = json.dumps(dumpJson(results), default=lambda o: o.__dict__)
+
+        newMillis = int(round(time.time() * 1000))
+        deltaT = newMillis - millis
+        print('building json took {} milliseconds to execute.'.format(deltaT ))
+        millis = int(round(time.time() * 1000))
 
     elif request.GET['queryfor'] == 'starfindResult':
         orderField, ascDesc = parseQueryOrderBy(request, {'confidence': 'confidence'}, 'confidence', '-')
@@ -1079,7 +1111,7 @@ def query(request):
                     results = results.filter(image__pk__in=values)
 
         results = results.order_by(ascDesc + orderField)[offset:offset+limit]
-        jsonResponse = json.dumps(dumpJsonAndAddRaDec(results), default=lambda o: o.__dict__)
+        jsonResponse = json.dumps(dumpJson(results), default=lambda o: o.__dict__)
 
     elif request.GET['queryfor'] == 'userSubmittedResult':
         orderField, ascDesc = parseQueryOrderBy(request, {'confidence': 'confidence'}, 'confidence', '-')
@@ -1092,7 +1124,7 @@ def query(request):
                     results = results.filter(image__pk__in=values)
 
         results = results.order_by(ascDesc + orderField)[offset:offset+limit]
-        jsonResponse = json.dumps(dumpJsonAndAddRaDec(results), default=lambda o: o.__dict__)
+        jsonResponse = json.dumps(dumpJson(results), default=lambda o: o.__dict__)
 
     elif request.GET['queryfor'] == 'userSubmittedHotPixel':
         orderField, ascDesc = parseQueryOrderBy(request, {'confidence': 'confidence'}, 'confidence', '-')
@@ -1105,7 +1137,7 @@ def query(request):
                     results = results.filter(image__pk__in=values)
 
         results = results.order_by(ascDesc + orderField)[offset:offset+limit]
-        jsonResponse = json.dumps(dumpJsonAndAddRaDec(results), default=lambda o: o.__dict__)
+        jsonResponse = json.dumps(dumpJson(results), default=lambda o: o.__dict__)
 
     elif request.GET['queryfor'] == 'sourceFindMatch':
         orderField, ascDesc = parseQueryOrderBy(request, {'confidence': 'confidence'}, 'confidence', '-')
@@ -1118,7 +1150,7 @@ def query(request):
                     results = results.filter(image__pk__in=values)
 
         results = results.order_by(ascDesc + orderField)[offset:offset+limit]
-        jsonResponse = json.dumps(dumpJsonAndAddRaDec(results), default=lambda o: o.__dict__)
+        jsonResponse = json.dumps(dumpJson(results), default=lambda o: o.__dict__)
 
     elif request.GET['queryfor'] == 'objectsInImage':
         #TODO: Need to consider adding order by and limit statements to the queries for the actual objects, and need to

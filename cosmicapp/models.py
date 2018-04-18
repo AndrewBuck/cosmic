@@ -6,6 +6,7 @@ import numpy
 from astropy import wcs
 import markdown
 
+from django.db import transaction
 from django.contrib.gis.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
@@ -225,6 +226,32 @@ def create_user_profile(sender, instance, created, **kwargs):
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
     instance.profile.save()
+
+@receiver(post_save, sender='cosmicapp.PlateSolution')
+def savePlateSolution(sender, instance, **kwargs):
+    """
+    When we save a plate solution it may have changed the best plate solution for the
+    image.  If so, we need to re-compute the ra-dec for all objects detected in the image.
+    """
+    print("Re-computing ra-dec for sources.")
+    sourceFindMatchResults = [
+        instance.image.sextractorResults.all(),
+        instance.image.image2xyResults.all(),
+        instance.image.daofindResults.all(),
+        instance.image.starfindResults.all(),
+        instance.image.userSubmittedResults.all(),
+        instance.image.sourceFindMatchResults.all(),
+        ]
+
+    with transaction.atomic():
+        for results in sourceFindMatchResults:
+            for result in results:
+                #result.ra, result.dec = instance.getRaDec(result.pixelX, result.pixelY)
+                result.ra, result.dec = (12, 15)
+
+            results.save()
+
+    print("Done.")
 
 class Bookmark(models.Model):
     """
@@ -817,10 +844,12 @@ class SourceFindResult(models.Model):
     manipulating those results to have a guarantee that certain fields are present on any of the found sources, no matter
     the algorithm used to detect them.
     """
-    image = models.ForeignKey(Image, db_index=True, on_delete=models.CASCADE)
     pixelX = models.FloatField(null=True)
     pixelY = models.FloatField(null=True)
     pixelZ = models.FloatField(null=True)
+    ra = models.FloatField(null=True)
+    dec = models.FloatField(null=True)
+    #TODO: Add a geometry point field for (ra, dec)?
     confidence = models.FloatField(null=True)
     flagHotPixel = models.NullBooleanField()
     flagBadLine = models.NullBooleanField()
@@ -844,6 +873,7 @@ class SextractorResult(SourceFindResult):
     """
     A record storing a single source detected in an image by the Source Extractor program.
     """
+    image = models.ForeignKey(Image, db_index=True, on_delete=models.CASCADE, related_name="sextractorResults")
     #TODO: Add in a bunch more fields here.
     fluxAuto = models.FloatField(null=True)
     fluxAutoErr = models.FloatField(null=True)
@@ -857,6 +887,7 @@ class Image2xyResult(SourceFindResult):
     """
     A record storing a single source detected in an image by the image2xy program.
     """
+    image = models.ForeignKey(Image, db_index=True, on_delete=models.CASCADE, related_name="image2xyResults")
     flux = models.FloatField(null=True)
     background = models.FloatField(null=True)
 
@@ -864,6 +895,7 @@ class DaofindResult(SourceFindResult):
     """
     A record storing a single source detected in an image by the daofind algorithm (part of astropy).
     """
+    image = models.ForeignKey(Image, db_index=True, on_delete=models.CASCADE, related_name="daofindResults")
     mag = models.FloatField(null=True)
     flux = models.FloatField(null=True)
     peak = models.FloatField(null=True)
@@ -875,6 +907,7 @@ class StarfindResult(SourceFindResult):
     """
     A record storing a single source detected in an image by the starfind algorithm (part of astropy).
     """
+    image = models.ForeignKey(Image, db_index=True, on_delete=models.CASCADE, related_name="starfindResults")
     mag = models.FloatField(null=True)
     peak = models.FloatField(null=True)
     flux = models.FloatField(null=True)
@@ -885,9 +918,11 @@ class StarfindResult(SourceFindResult):
 
 #TODO: We should create another model to tie a bunch of results submitted at the same time to a single session.
 class UserSubmittedResult(SourceFindResult):
+    image = models.ForeignKey(Image, db_index=True, on_delete=models.CASCADE, related_name="userSubmittedResults")
     user = models.ForeignKey(User, db_index=True, on_delete=models.CASCADE)
 
 class UserSubmittedHotPixel(SourceFindResult):
+    image = models.ForeignKey(Image, db_index=True, on_delete=models.CASCADE, related_name="userSubmittedHotPixels")
     user = models.ForeignKey(User, db_index=True, on_delete=models.CASCADE)
 
 class SourceFindMatch(SourceFindResult):
@@ -896,31 +931,13 @@ class SourceFindMatch(SourceFindResult):
     an image by two or more individual source find methods.  The confidence of the match is taken to be the "geometric mean"
     of the confidence values of the individual matched results.
     """
+    image = models.ForeignKey(Image, db_index=True, on_delete=models.CASCADE, related_name="sourceFindMatchResults")
     numMatches = models.IntegerField()
     sextractorResult = models.ForeignKey(SextractorResult, null=True, on_delete=models.CASCADE)
     image2xyResult = models.ForeignKey(Image2xyResult, null=True, on_delete=models.CASCADE)
     daofindResult = models.ForeignKey(DaofindResult, null=True, on_delete=models.CASCADE)
     starfindResult = models.ForeignKey(StarfindResult, null=True, on_delete=models.CASCADE)
     userSubmittedResult = models.ForeignKey(UserSubmittedResult, null=True, on_delete=models.CASCADE)
-
-    def getRaDec(self):
-        #TODO: This is a very expensive function to compute, we should consider computing this right when we create this db entry initially, however it will need to be updated when the "best" wcs for the targeted image changes.
-        num = 0
-        raSum = 0
-        decSum = 0
-
-        for t in (self.sextractorResult, self.image2xyResult, self.daofindResult, self.starfindResult):
-            if t != None:
-                ra, dec = t.getRaDec()
-                if ra is not None:
-                    num += 1
-                    raSum += ra
-                    decSum += dec
-
-        if num == 0:
-            return (None, None)
-        else:
-            return (raSum/float(num), decSum/float(num))
 
 #TODO: Create a base class for catalog object entries with some standard params in it to make querying more uniform.
 class Catalog(models.Model):

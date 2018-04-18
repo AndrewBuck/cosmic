@@ -1971,6 +1971,16 @@ def starmatch(filename):
     outputText += 'write to db took {} ms.'.format(deltaT )
     millis = int(round(time.time() * 1000))
 
+    # Force a save of the images best plate solution to calculate the RA and Dec of all
+    # the assosciated source find methods.
+    outputText += "Checking for plate solution: "
+    ps = image.getBestPlateSolution()
+    if ps is not None:
+        outputText += "Image has a plate solution, forcing a save to trigger update of RA, Dec for all source find results.\n"
+        ps.save()
+    else:
+        outputText += "No plate solution found.\n"
+
     newMillis = int(round(time.time() * 1000))
     deltaT = newMillis - millis
     outputText += 'RA, Dec recalc took {} ms.'.format(deltaT )
