@@ -284,7 +284,7 @@ var objectsInImage = [];
 var sextractorResults = [], image2xyResults = [], daofindResults = [], starfindResults = [];
 var userCreatedResults = [], userSubmittedResults = [];
 var userCreatedHotPixels = [], userSubmittedHotPixels = [];
-var sextractorResultsPromise, image2xyResultsPromise, daofindResultsPromise, starfindResultsPromise;
+var sextractorResultsPromise, image2xyResultsPromise, daofindResultsPromise, starfindResultsPromise, userSubmittedResultsPromise;
 var sourceFindMatches = [];
 var finishedLoading = false;
 var submitButtonEnabled = false;
@@ -422,6 +422,7 @@ function binData(data, nBins)
     return bins;
 };
 
+//TODO: Split calls to this out on their own, or do them after the promise for loading each method is complete to speed up page loading.
 function addHistogramToPlot(data, nBins, lineColor, legendStr, dashArray)
 {
     bins = binData(data, nBins);
@@ -527,13 +528,14 @@ function getSextractorResults()
                 magAutoValues[i] = -2.5*math.log10(sextractorResults[i].fluxAuto);
             }
 
+            Promise.resolve(true);
+
             //addHistogramToPlot(fluxAutoValues, numberOfBins, sextractorColor, 'Flux (sextractor)', []);
             addHistogramToPlot(magAutoValues, numberOfBins, sextractorColor, 'Mag (sextractor)', []);
 
             drawSources();
             $('#sextractorLoadingDiv').html("<br>" + sextractorResults.length + " Results<br>Loaded");
             $('#sextractorTableHeader').attr('bgcolor', sextractorColor);
-            Promise.resolve(true);
         }
     });
 };
@@ -542,7 +544,7 @@ function getUserSubmittedResults()
 {
     var i;
 
-    $.ajax({
+    userSubmittedResultsPromise = $.ajax({
         url : "/query/?queryfor=userSubmittedResult&limit=" + limitPerSource + "&imageId=" + imageId,
         type : "get",
         async: true,
@@ -550,6 +552,7 @@ function getUserSubmittedResults()
         success : function(response)
         {
             userSubmittedResults = response;
+            Promise.resolve(true);
             drawSources();
         }
     });
@@ -596,13 +599,14 @@ function getImage2xyResults()
                 magValues[i] = -2.5*math.log10(image2xyResults[i].flux);
             }
 
+            Promise.resolve(true);
+
             //addHistogramToPlot(fluxValues, numberOfBins, image2xyColor, 'Flux (image2xy)', []);
             addHistogramToPlot(magValues, numberOfBins, image2xyColor, 'Mag (image2xy)', []);
 
             drawSources();
             $('#image2xyLoadingDiv').html("<br>" + image2xyResults.length + " Results<br>Loaded");
             $('#image2xyTableHeader').attr('bgcolor', image2xyColor);
-            Promise.resolve(true);
         }
     });
 };
@@ -638,6 +642,8 @@ function getDaofindResults()
                 //groundValues[i] = daofindResults[i].ground;
             }
 
+            Promise.resolve(true);
+
             addHistogramToPlot(magValues, numberOfBins, daofindColor, 'Mag (daofind)', []);
             //addHistogramToPlot(fluxValues, numberOfBins, daofindColor, 'Flux (daofind)', [1, 3]);
             //addHistogramToPlot(peakValues, numberOfBins, daofindColor, 'Peak(daofind)', [1, 3, 3, 5]);
@@ -648,7 +654,6 @@ function getDaofindResults()
             drawSources();
             $('#daofindLoadingDiv').html("<br>" + daofindResults.length + " Results<br>Loaded");
             $('#daofindTableHeader').attr('bgcolor', daofindColor);
-            Promise.resolve(true);
         }
     });
 };
@@ -686,6 +691,8 @@ function getStarfindResults()
                 //sharpnessValues[i] = starfindResults[i].sharpness;
             }
 
+            Promise.resolve(true);
+
             addHistogramToPlot(magValues, numberOfBins, starfindColor, 'Mag (starfind)', []);
             //addHistogramToPlot(peakValues, numberOfBins, starfindColor, 'Peak (starfind)', [1, 3]);
             //addHistogramToPlot(fluxValues, numberOfBins, starfindColor, 'Flux (starfind)', [1, 3, 3, 5]);
@@ -697,7 +704,6 @@ function getStarfindResults()
             drawSources();
             $('#starfindLoadingDiv').html("<br>" + starfindResults.length + " Results<br>Loaded");
             $('#starfindTableHeader').attr('bgcolor', starfindColor);
-            Promise.resolve(true);
         }
     });
 };
@@ -715,27 +721,30 @@ function getSourceFindMatches()
         dataType: 'json',
         success : function(response)
         {
-            sourceFindMatches = response;
-            for(i = 0; i < sourceFindMatches.length; i++)
-            {
-                sextractorId = sourceFindMatches[i].sextractorResult;
-                image2xyId = sourceFindMatches[i].image2xyResult;
-                daofindId = sourceFindMatches[i].daofindResult;
-                starfindId = sourceFindMatches[i].starfindResult;
-                userSubmittedId = sourceFindMatches[i].userSubmittedResult;
+            $.when(sextractorResultsPromise, image2xyResultsPromise, daofindResultsPromise,
+                starfindResultsPromise,userSubmittedResultsPromise).done(function() {
 
-                sourceFindMatches[i].sextractorResult = getObjectById(sextractorResults, sourceFindMatches[i].sextractorResultId);
-                sourceFindMatches[i].image2xyResult = getObjectById(image2xyResults, sourceFindMatches[i].image2xyResultId);
-                sourceFindMatches[i].daofindResult = getObjectById(daofindResults, sourceFindMatches[i].daofindResultId);
-                sourceFindMatches[i].starfindResult = getObjectById(starfindResults, sourceFindMatches[i].starfindResultId);
-                sourceFindMatches[i].userSubmittedResult = getObjectById(userSubmittedResults, sourceFindMatches[i].userSubmittedResultId);
-            }
+                sourceFindMatches = response;
+                for(i = 0; i < sourceFindMatches.length; i++)
+                {
+                    sextractorId = sourceFindMatches[i].sextractorResult;
+                    image2xyId = sourceFindMatches[i].image2xyResult;
+                    daofindId = sourceFindMatches[i].daofindResult;
+                    starfindId = sourceFindMatches[i].starfindResult;
+                    userSubmittedId = sourceFindMatches[i].userSubmittedResult;
 
-            finishedLoading = true;
-            drawSources();
-            $('#sourceFindMatchesLoadingDiv').html("<br>" + sourceFindMatches.length + " Results<br>Loaded");
-            $('#sourceFindMatchesTableHeader').attr('bgcolor', sourceFindMatchesColor);
-            Promise.resolve(true);
+                    sourceFindMatches[i].sextractorResult = getObjectById(sextractorResults, sourceFindMatches[i].sextractorResultId);
+                    sourceFindMatches[i].image2xyResult = getObjectById(image2xyResults, sourceFindMatches[i].image2xyResultId);
+                    sourceFindMatches[i].daofindResult = getObjectById(daofindResults, sourceFindMatches[i].daofindResultId);
+                    sourceFindMatches[i].starfindResult = getObjectById(starfindResults, sourceFindMatches[i].starfindResultId);
+                    sourceFindMatches[i].userSubmittedResult = getObjectById(userSubmittedResults, sourceFindMatches[i].userSubmittedResultId);
+                }
+
+                finishedLoading = true;
+                drawSources();
+                $('#sourceFindMatchesLoadingDiv').html("<br>" + sourceFindMatches.length + " Results<br>Loaded");
+                $('#sourceFindMatchesTableHeader').attr('bgcolor', sourceFindMatchesColor);
+            });
         }
     });
 };
@@ -1778,7 +1787,7 @@ window.onload = function()
     getImage2xyResults();
     getDaofindResults();
     getStarfindResults();
-    $.when(sextractorResultsPromise, image2xyResultsPromise, daofindResultsPromise, starfindResultsPromise).done(getSourceFindMatches);
+    getSourceFindMatches();
 
 };
 </script>
