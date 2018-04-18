@@ -7,6 +7,7 @@
 
 {% block extrahead %}
 {% include "./jquery.html" %}
+{% if user.is_authenticated %}<script src="/static/cosmicapp/bookmark.js"></script>{% endif %}
 <script src="/static/cosmicapp/comment.js"></script>
 
 <script>
@@ -70,6 +71,9 @@ td.numMatchResults
             <br>
             <br> Has <a href="/image/{{id}}/properties/">{{image.properties.all.count}} image properties</a>.
             <br> Has <a href="/image/{{id}}/question/">{{image.answers.all.count}} questions answered</a> about it.
+            <br>
+            {% comment %}<br> {% bookmark "image" image.pk "Saved Images" %}: Save image in folder{% endcomment %}
+            <br> {% bookmark "image" image.pk "Marked for Download" %}: Mark for downloading
             <br>
             <br>
             Using instrument:

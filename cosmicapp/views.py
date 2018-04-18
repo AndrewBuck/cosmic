@@ -2090,6 +2090,7 @@ def bookmark(request):
     folderName = request.POST.get('folderName', None)
 
     typeDict = {
+        'image': Image,
         'asteroid': AstorbRecord,
         'exoplanet': ExoplanetRecord,
         'variableStar': GCVSRecord,
