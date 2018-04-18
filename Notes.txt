@@ -29,6 +29,13 @@ Login usernames should not be case sensitive.
 
 
 
+If the user uploads a PGP public key, allow an option that any private messages sent to
+them are automatically encrypted to the users PGP public key before being stored in the
+database.
+
+
+
+
 We should look into allowing login via a public key and having the user sign a message to
 log in.  This could work especially well for something like an app that logs in as the
 user.  You could create an api token for it and upload its public key to it and it could
