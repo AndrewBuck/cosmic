@@ -99,6 +99,22 @@
         This user has not yet uploaded<br>any images or observing notes.
     {% endif %}
 {% endif %}
+
+{% if downloadSessions %}
+    <br><br>Your recent download sessions:<br><br>
+
+    {% for downloadSession in downloadSessions %}
+        <a
+        href="/downloadSession/{{downloadSession.id}}">{{downloadSession.dateTime}}&emsp;{{downloadSession.fileRecords.count}} files</a><br>
+    {% endfor %}
+{% else %}
+    {% if user == foruser %}
+        <br><br>You have not yet created any download sessions.<br>
+        You can create these on the <a href="/download/">download</a> page.
+    {% else %}
+        <br><br>This user has not created any download sessions.
+    {% endif %}
+{% endif %}
 {% endif %}
 </td>
 </tr>

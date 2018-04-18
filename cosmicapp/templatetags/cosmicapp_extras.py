@@ -65,6 +65,10 @@ def formatTime(time):
     return timeString
 
 @register.filter
+def typeOf(value):
+    return str(type(value))
+
+@register.filter
 def multiply(value, arg):
     return value*arg
 

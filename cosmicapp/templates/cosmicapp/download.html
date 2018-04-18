@@ -1,0 +1,161 @@
+{% extends "cosmicapp/base.html" %}
+
+{% load static %}
+{% load cosmicapp_extras %}
+
+{% block extratitle %} - Download {% endblock extratitle %}
+
+{% block extrahead %}
+{% include "./jquery.html" %}
+{% if user.is_authenticated %}<script src="/static/cosmicapp/bookmark.js"></script>{% endif %}
+
+<script>
+
+function imageFormatChanged(domObject)
+{
+    var i;
+    var disabledFlag = (domObject.value == 'original');
+    var objectsToSet = [];
+
+    imageID = $(domObject).attr('name').split('_')[1]
+
+    objectsToSet[objectsToSet.length] = document.getElementsByName('imagePixelData_'+imageID)[0]
+    objectsToSet[objectsToSet.length] = document.getElementsByName('imageHeaders_'+imageID)[0]
+
+    wcsCheckboxes = document.getElementsByClassName('plateSolutionCheckbox_'+imageID)
+    for(i = 0; i < wcsCheckboxes.length; i++)
+        objectsToSet[objectsToSet.length] = wcsCheckboxes[i]
+
+    for(i = 0; i < objectsToSet.length; i++)
+        $(objectsToSet[i]).attr('disabled', disabledFlag);
+
+};
+
+function validateDownloadForm()
+{
+    var i, j;
+    var duplicateNames = [];
+    var filenames = []
+    var filenameTexts = document.getElementsByClassName('filenameText');
+    for(i = 0; i < filenameTexts.length; i++)
+    {
+        for(j = 0; j < filenames.length; j++)
+        {
+            if(filenameTexts[i].value == filenames[j])
+            {
+                duplicateNames[duplicateNames.length] = filenameTexts[i].value;
+                break;
+            }
+        }
+        filenames[filenames.length] = filenameTexts[i].value;
+    }
+
+    if(duplicateNames.length > 0)
+    {
+        var text = 'Warning: The following file names are duplicated: \n';
+        for(i = 0; i < duplicateNames.length; i++)
+            text += "\n" + duplicateNames[i];
+        alert(text);
+        return;
+    }
+
+    $('#downloadForm').submit()
+};
+
+
+$(document).ready(function()
+{
+    imageFormatDropdowns = document.getElementsByClassName('imageFormatDropdown')
+    for(i = 0; i < imageFormatDropdowns.length; i++)
+        imageFormatChanged(imageFormatDropdowns[i]);
+});
+
+</script>
+
+{% endblock extrahead %}
+
+{% block mainbody %}
+<h2> Download </h2>
+
+<form method=POST id=downloadForm>
+{% csrf_token %}
+<table border=2px style="border-collapse: collapse; margin: 1em;">
+
+<tr>
+    <th>Select<br>for<br>Download</th>
+    <th>Object Preview</th>
+    <th>Object Download Options</th>
+</tr>
+
+{% for item in itemsToDownload %}
+    <tr class=downloadItemRow>
+    {% if item|typeOf == "<class 'cosmicapp.models.Image'>" %}
+        <td>
+        <input type=checkbox class=downloadEnabled name="downloadEnabled_image_{{item.pk}}" checked>
+        </td>
+
+        <td>
+        <img src="{{item.getThumbnailUrlMedium}}">
+        </td>
+
+        <td width=650px>
+            {% bookmark "image" item.pk "Marked for Download" %}: Click to remove this image from your "Marked for Download" folder
+
+            <br> <a href="/image/{{item.pk}}/">{{item.getDisplayName}}</a>
+
+            <br>
+            Image Format:
+            <select class="imageFormatDropdown" name="imageFormat_{{item.pk}}" onchange="imageFormatChanged(this)">
+                <option value="custom">Custom (see below)</option>
+                <option value="original">Original - Unchanged (some options below ignored)</option>
+            </select>
+
+            <br>
+            Filename:
+            <input class=filenameText type=text name="imageFilename_{{item.pk}}" value="{{item.fileRecord.originalFileName}}">
+
+            <br>
+            Pixel Data:
+            <select name="imagePixelData_{{item.pk}}">
+                <option value="original">Original - Unchanged</option>
+                {% for channel in item.imageChannels.all %}
+                    <option value="channel_{{channel.index}}">Channel {{channel.index}} ({{channel.channelType}}) only</option>
+                {% endfor %}
+            </select>
+
+            <br>
+            Image Headers:
+            <select name="imageHeaders_{{item.pk}}">
+                <option value="originalPlusCosmic">All original headers plus custom ones from cosmic</option>
+                <option value="cosmic">With only custom headers from Cosmic</option>
+                <option value="original">Original - Unchanged</option>
+            </select>
+
+            <br>
+            WCS:
+            {% if item.plateSolutions.count > 0 %}
+                <div style="display: inline-block;">
+                {% for ps in item.plateSolutions.all %}
+                    <div style="display: inline-block; float: left; border: 1px dashed grey; padding: .5em; margin-left: 1em; margin-top: 1em;">
+                    <input type=checkbox class="plateSolutionCheckbox_{{item.pk}}" name="imageWCS_{{item.pk}}_plateSolution_{{ps.pk}}" {% if forloop.first %}checked{% endif %}>
+                    {{ps.source}}
+                    <br>&emsp;&emsp;{{ps.centerRA|formatRA}} {{ps.centerDec|formatDec}}
+                    <br>&emsp;&emsp;{{ps.resolutionX|floatformat:2}}x{{ps.resolutionY|floatformat:2}} arcsec/pixel
+                    </div>
+                {% endfor %}
+                </div>
+            {% else %}
+                Image has no plate solutions.
+            {% endif %}
+        </td>
+    {% endif %}
+    </tr>
+{% endfor %}
+</table>
+
+<p>
+<input type=button class=button value="Prepare selected items for download" onclick="validateDownloadForm()">
+</p>
+</form>
+
+{% endblock mainbody %}

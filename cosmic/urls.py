@@ -36,6 +36,7 @@ urlpatterns = [
     url(r'^catalog/(?P<method>.+)/(?P<pk>.+)', views.objectInfo),
     url(r'^detectedSource/(?P<method>.+)/(?P<pk>.+)', views.objectInfo),
     url(r'^uploadSession/(?P<pk>.+)', views.uploadSession),
+    url(r'^downloadSession/(?P<pk>.+)', views.downloadSession),
 
     url(r'^user/(?P<username>.+)/bookmarks/$', views.bookmarkPage),
     url(r'^user/(?P<username>.+)/', views.userpage),
@@ -89,5 +90,6 @@ urlpatterns = [
 
     url(r'^export/bookmarks/$', views.exportBookmarks),
 
-    url(r'^upload/$', views.upload)
+    url(r'^upload/$', views.upload),
+    url(r'^download/$', views.download)
 ]

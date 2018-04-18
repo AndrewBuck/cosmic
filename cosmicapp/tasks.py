@@ -269,16 +269,22 @@ def imagestats(filename):
         hdulist = fits.open(settings.MEDIA_ROOT + filename)
         with transaction.atomic():
             channelIndex = 0
+            hduIndex = 0
             for hdu in hdulist:
                 frames = []
                 #TODO: Check that this is really image data and not a table, etc.
                 if len(hdu.data.shape) == 2:
                     frames.append(hdu.data)
 
-                if len(hdu.data.shape) == 3:
+                elif len(hdu.data.shape) == 3:
                     for i in range(hdu.data.shape[0]):
                         frames.append(hdu.data[channelIndex+i])
 
+                else:
+                    #TODO: Throw an error.
+                    pass
+
+                frameIndex = 0
                 for frame in frames:
                     outputText += "imagestats:histogram:\n"
                     # TODO: Need to filter all non-data pixels
@@ -636,6 +642,8 @@ def imagestats(filename):
                     bgMean, bgMedian, bgStdDev = sigma_clipped_stats(frame, sigma=3, iters=3)
 
                     #TODO: For some reason the median and bgMedain are always 0.  Need to fix this.
+                    channelInfo.hduIndex = hduIndex
+                    channelInfo.frameIndex = frameIndex
                     channelInfo.mean = mean
                     channelInfo.median = median
                     channelInfo.stdDev = stdDev
@@ -650,7 +658,10 @@ def imagestats(filename):
 
                     channelInfo.save()
 
+                    frameIndex += 1
                     channelIndex += 1
+
+            hduIndex += 1
 
         hdulist.close()
 

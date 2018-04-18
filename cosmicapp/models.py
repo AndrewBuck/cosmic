@@ -360,6 +360,19 @@ class UploadedFileRecord(models.Model):
     uploadDateTime = models.DateTimeField()
     uploadSize = models.IntegerField()
 
+class DownloadSession(models.Model):
+    user = models.ForeignKey(User, db_index=True, on_delete=models.CASCADE, related_name='downloadSessions')
+    dateTime = models.DateTimeField(auto_now=True)
+    stillActive = models.BooleanField(default=True)
+    outputText = models.TextField(null=True)
+    postData = models.TextField(null=True)
+
+class DownloadFileRecord(models.Model):
+    #TODO: Add file size, etc.
+    downloadSession = models.ForeignKey(DownloadSession, db_index=True, on_delete=models.CASCADE, related_name='fileRecords')
+    fileName = models.TextField(db_index=True)
+    url = models.TextField(db_index=True)
+
 #TODO: Make Question a ScorableObject (in the sense of "how useful is it to show this uploaded image to a user").
 class Image(models.Model, SkyObject, BookmarkableItem):
     """
@@ -610,6 +623,8 @@ class ImageChannelInfo(models.Model):
     """
     image = models.ForeignKey(Image, db_index=True, on_delete=models.CASCADE, related_name="imageChannels")
     index = models.IntegerField()
+    hduIndex = models.IntegerField(null=True)
+    frameIndex = models.IntegerField(null=True)
     channelType = models.CharField(max_length=16)
     mean = models.FloatField(null=True)
     median = models.FloatField(null=True)

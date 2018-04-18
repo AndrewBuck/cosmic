@@ -32,6 +32,8 @@ from .forms import *
 from .functions import *
 from .tasks import *
 
+staticDirectory = os.path.dirname(os.path.realpath(__file__)) + "/static/cosmicapp/"
+
 #TODO: Replace all model.pk references with model.whatever_id as the second version does not fetch the joined model from the db.
 
 def index(request):
@@ -282,6 +284,206 @@ def upload(request):
 
     return render(request, "cosmicapp/upload.html", context)
 
+@login_required
+def download(request):
+    context = {"user" : request.user}
+    context['itemsToDownload'] = BookmarkFolder.getItemsInFolder(request.user, "Marked for Download")
+
+    if request.method == 'POST':
+        outputText = ''
+        postData = ''
+        objectsToDownload = []
+        imageFormats = {}
+        imageFilenames = {}
+        imagePixelDatas = {}
+        imagePlateSolutions = {}
+        imageHeaders = {}
+        for key in request.POST:
+            value = request.POST[key]
+
+            if key == 'csrfmiddlewaretoken':
+                continue
+
+            postData += key + '=' + value + '<br>'
+            if key.startswith('downloadEnabled_'):
+                if value != 'on':
+                    continue
+
+                keySplit = key.split('_')
+                objectType = keySplit[1]
+                objectID = int(keySplit[2])
+                objectsToDownload.append([objectType, objectID])
+
+            elif key.startswith('imageFormat_'):
+                keySplit = key.split('_')
+                objectID = int(keySplit[1])
+                imageFormats[objectID] = value
+
+            elif key.startswith('imageFilename_'):
+                keySplit = key.split('_')
+                objectID = int(keySplit[1])
+                imageFilenames[objectID] = value
+
+            elif key.startswith('imagePixelData_'):
+                keySplit = key.split('_')
+                objectID = int(keySplit[1])
+                imagePixelDatas[objectID] = value
+
+            elif key.startswith('imageWCS_'):
+                if value != 'on':
+                    continue
+
+                keySplit = key.split('_')
+                objectID = int(keySplit[1])
+                if objectID in imagePlateSolutions:
+                    imagePlateSolutions[objectID].append(int(keySplit[3]))
+                else:
+                    imagePlateSolutions[objectID] = [int(keySplit[3])]
+
+            elif key.startswith('imageHeaders_'):
+                keySplit = key.split('_')
+                objectID = int(keySplit[1])
+                imageHeaders[objectID] = value
+
+        outputText += "objectsToDownload<br>"
+        outputText += str(objectsToDownload)
+        outputText += "<br><br>imageFormats<br>"
+        outputText += str(imageFormats)
+        outputText += "<br><br>imageFilenames<br>"
+        outputText += str(imageFilenames)
+        outputText += "<br><br>imagePixelDatas<br>"
+        outputText += str(imagePixelDatas)
+        outputText += "<br><br>imagePlateSolutions<br>"
+        outputText += str(imagePlateSolutions)
+        outputText += "<br><br>imageHeaders<br>"
+        outputText += str(imageHeaders)
+        outputText += "<br><br>"
+
+        downloadSession = DownloadSession(
+            user = request.user
+            )
+
+        downloadSession.save()
+
+        downloadDirectory = staticDirectory + 'downloads/' + str(downloadSession.pk) + '/'
+        print(downloadDirectory)
+        os.makedirs(downloadDirectory)
+
+        #TODO: Instead of writing these files to a directory in /static/ where they are directly readable, consider putting them in a directory that is only accessible by accessing it through a view so we can implement access controls, etc.
+        for objectToDownloadType, objectID in objectsToDownload:
+            outputFileName = 'downloads/' + str(downloadSession.pk) + '/' + imageFilenames[objectID]
+
+            downloadFileRecord = DownloadFileRecord(
+                downloadSession = downloadSession,
+                fileName = imageFilenames[objectID],
+                url = '/static/cosmicapp/' + outputFileName
+                )
+
+            downloadFileRecord.save()
+
+            if objectToDownloadType == 'image':
+                image = Image.objects.get(pk=objectID)
+                inputFileName = settings.MEDIA_ROOT + image.fileRecord.onDiskFileName
+                outputText += '<br> Processing: '
+                outputText += image.fileRecord.originalFileName + "<br>"
+
+                outputText += 'Image format is "{}"<br>'.format(imageFormats[objectID])
+                if imageFormats[objectID] == 'original':
+                    outputText += 'Just copying the original file to somewehere it can be accessed.'
+                    #TODO: Consider making this a symlink, or a better way of copying the file, etc.
+                    with open(inputFileName, "rb") as inputFile:
+                        with open(staticDirectory + outputFileName, "wb") as outputFile:
+                            outputFile.write(inputFile.read())
+
+                elif imageFormats[objectID] == 'custom':
+                    hdulist = fits.open(inputFileName)
+                    addCustomHeaders = False
+                    outputText += "&emsp;length of hdulist is {}<br>".format(str(len(hdulist)))
+
+                    outputText += "&emsp;imagePixelDatas is {}<br>".format(imagePixelDatas[objectID])
+                    if imagePixelDatas[objectID].startswith('channel_'):
+                        channelIndex = imagePixelDatas[objectID].split('_')[1]
+                        channelInfo = ImageChannelInfo.objects.get(image=image, index=channelIndex)
+                        outputText += "&emsp;image channel index: {}&emsp;hduIndex: {}&emsp;frameIndex: {}<br>"\
+                            .format(str(channelIndex), str(channelInfo.hduIndex), str(channelInfo.frameIndex))
+
+                        curHduIndex = 0
+                        for hdu in hdulist:
+                            if curHduIndex == channelInfo.hduIndex:
+                                outputText += "&emsp;&emsp;HDU Found<br>"
+                                if len(hdu.data.shape) == 2:
+                                    outputText += "&emsp;&emsp;&emsp;Data is 2-dimensional.<br>"
+                                    if channelInfo.frameIndex != 0:
+                                        return HttpResponse('ERROR: frameIndex is nonzero but channel only has 2 dimensions.', status=400)
+
+                                elif len(hdu.data.shape) == 3:
+                                    outputText += "&emsp;&emsp;&emsp;Data is 3-dimensional.<br>"
+                                    hdu.data = hdu.data[channelInfo.frameIndex]
+
+                                else:
+                                    return HttpResponse('ERROR: Don\'t understand how to slice {} dimensional data.'.format(len(hdu.data.shape)), status=400)
+                                hdulist = fits.hdu.hdulist.HDUList(hdu)
+                                break
+
+                            curHduIndex += 1
+
+                    elif imagePixelDatas[objectID] == 'original':
+                        # Nothing to do here since the pixel data is being left untouched.
+                        pass
+
+                    else:
+                        return HttpResponse('ERROR: Unknown image pixel data type: ' + str(imagePixelDatas[objectID]), status=400)
+
+                    outputText += "&emsp;imageHeaders is " + imageHeaders[objectID]
+                    if imageHeaders[objectID] == 'cosmic':
+                        outputText += "<br>&emsp;&emsp;clearing existing headers from the hdulist."
+                        for hdu in hdulist:
+                            i = 0
+                            customHeaders = fits.header.Header()
+                            for header in hdu.header:
+                                if header.lower() in ['simple', 'bitpix', 'naxis', 'naxis1', 'naxis2', 'naxis3', 'extend', 'bzero', 'bscale']:
+                                    customHeaders.append( (header, hdu.header[i]) )
+
+                                i += 1
+                            outputText += "<br>&emsp;&emsp;&emsp;Kept {} headers from the original hdu.<br>".format(len(customHeaders))
+                            addCustomHeaders = True
+                            hdu.header = customHeaders
+
+                    elif imageHeaders[objectID] == 'originalPlusCosmic':
+                        addCustomHeaders = True
+
+                    elif imageHeaders[objectID] == 'original':
+                        # There is nothing to change if we are keeping the original headers.
+                        #TODO: Need to strip wcs from original header, maybe an extra option for this?
+                        pass
+
+                    else:
+                        return HttpResponse('Unknown image header type: ' + str(imageHeaders[objectID]), status=400)
+
+                    if addCustomHeaders:
+                        outputText += "<br>&emsp;&emsp;Processing HDU.<br>"
+                        for hdu in hdulist:
+                            outputText += "&emsp;&emsp;&emsp;HDU has {} headers.<br>".format(len(hdu.header))
+                            outputText += "&emsp;&emsp;&emsp;Adding custom headers...<br>"
+                            hdu.header.append( ('foo', 'bar', 'baz') )
+                            outputText += "&emsp;&emsp;&emsp;HDU has {} headers.<br>".format(len(hdu.header))
+
+                    #TODO: Do not allow overwrite on next line?
+                    hdulist.writeto(staticDirectory + outputFileName, overwrite=True)
+                else:
+                    return HttpResponse('Unknown image format type: ' + str(imageFormats[objectID]), status=400)
+
+                outputText += '&emsp;Image written to "{}"<br><br>'.format(outputFileName)
+            outputText += "<br>"
+
+        downloadSession.outputText = outputText
+        downloadSession.postData = postData
+        downloadSession.save()
+
+        return HttpResponseRedirect('/downloadSession/' + str(downloadSession.pk))
+
+    return render(request, "cosmicapp/download.html", context)
+
 def userpage(request, username):
     context = {"user" : request.user}
 
@@ -300,6 +502,7 @@ def userpage(request, username):
         context['otherObservatories'] = context['otherObservatories'].exclude(pk=foruser.profile.defaultObservatory.pk)
 
     context['uploadSessions'] = UploadSession.objects.filter(uploadingUser=foruser).order_by('-dateTime')[:10]
+    context['downloadSessions'] = DownloadSession.objects.filter(user=foruser).order_by('-dateTime')[:10]
 
     if request.method == 'POST':
         if 'edit' in request.POST:
@@ -454,6 +657,16 @@ def uploadSession(request, pk):
 
     context['displayType'] = 'table'
     return render(request, "cosmicapp/uploadSession.html", context)
+
+def downloadSession(request, pk):
+    context = {"user" : request.user}
+
+    try:
+        context['downloadSession'] = DownloadSession.objects.get(pk=pk)
+    except:
+        return HttpResponse('Download session "' + pk + '" not found.', status=400, reason='not found.')
+
+    return render(request, "cosmicapp/downloadSession.html", context)
 
 def image(request, id):
     context = {"user" : request.user}

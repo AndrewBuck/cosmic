@@ -1,0 +1,45 @@
+{% extends "cosmicapp/base.html" %}
+
+{% load static %}
+{% load cosmicapp_extras %}
+
+{% block extratitle %} - Download session {{downloadSession.pk}} {% endblock extratitle %}
+
+{% block extrahead %}
+{% endblock extrahead %}
+
+{% block mainbody %}
+<a href="/downloadSession/{{downloadSession.id|add:-1}}">&lt; Download Session {{downloadSession.id|add:-1}}</a>&emsp;&emsp;
+<a href="/downloadSession/{{downloadSession.id|add:1}}">Download Session {{downloadSession.id|add:1}} &gt;</a>
+
+<h2> Download session </h2>
+
+<div style="float: right; width: 400px; border: 1px solid black; padding: .5em; margin-bottom: 1em; margin-right: 1em;">
+<b>Post Data:</b>
+<br><br>
+{{downloadSession.postData|default_if_none:"Error: no postData created by export process."|safe}}
+<hr>
+<b>Output Text:</b>
+<br><br>
+{{downloadSession.outputText|default_if_none:"Error: no outputText created by export process."|safe}}
+</div>
+
+<p>
+Created by user: <a href="/user/{{downloadSession.user}}/">{{downloadSession.user}}</a>
+<br>
+Created on: {{downloadSession.dateTime}} ({{downloadSession.dateTime|timesince}} ago)
+<br>
+Files still available: {{downloadSession.stillActive}}
+</p>
+
+<p>
+Files:
+<ul>
+{% for file in downloadSession.fileRecords.all %}
+    <li> <a href="{{file.url}}">{{file.fileName}}</a> </li>
+{% endfor %}
+</ul>
+</p>
+
+{% endblock mainbody %}
+
