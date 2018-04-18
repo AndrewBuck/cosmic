@@ -136,7 +136,8 @@ while not quit:
         processOutput = ProcessOutput(
             processInput = pi,
             outputText = celeryResult.info['outputText'],
-            outputErrorText = celeryResult.info['outputErrorText']
+            outputErrorText = celeryResult.info['outputErrorText'],
+            actualCostCPU = celeryResult.info['executionTime']
             )
 
         processOutput.save()

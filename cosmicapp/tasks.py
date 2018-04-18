@@ -91,10 +91,11 @@ def storeImageLocation(image, w, sourceString):
     ps.area = ps.geometry.area
     ps.save()
 
-def constructProcessOutput(outputText, errorText):
+def constructProcessOutput(outputText, errorText, executionTime=None):
     processOutput = {
         'outputText': outputText,
-        'outputErrorText': errorText
+        'outputErrorText': errorText,
+        'executionTime': executionTime
         }
 
     return processOutput
@@ -103,6 +104,7 @@ def constructProcessOutput(outputText, errorText):
 def imagestats(filename):
     outputText = ""
     errorText = ""
+    taskStartTime = time.time()
 
     formatString = '{"width" : %w, "height" : %h, "depth" : %z, "channels" : "%[channels]"},'
     proc = subprocess.Popen(['identify', '-format', formatString, settings.MEDIA_ROOT + filename],
@@ -726,7 +728,7 @@ def imagestats(filename):
         numChannels = models.ImageChannelInfo.objects.filter(image=image).count()
         image.addImageProperty('totalNumChannels', numChannels)
 
-    return constructProcessOutput(outputText, errorText)
+    return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 
 # TODO: Histogram of FITS data (count vs adu) in linear and logarithmic (if possible?).
 # Needs to be high resolution, but deal efficiently with large swaths of 0-count.  Must
@@ -1226,6 +1228,7 @@ def depricatedHistogram(frame) :
 def generateThumbnails(filename):
     outputText = ""
     errorText = ""
+    taskStartTime = time.time()
 
     filenameFull = os.path.splitext(filename)[0] + "_thumb_full.png"
     filenameSmall = os.path.splitext(filename)[0] + "_thumb_small.png"
@@ -1351,7 +1354,7 @@ def generateThumbnails(filename):
 
                     record.save()
 
-    return constructProcessOutput(outputText, errorText)
+    return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 
 def initSourcefind(method, image):
     methodDict = {
@@ -1438,6 +1441,7 @@ def initSourcefind(method, image):
 
 def checkIfCalibrationImage(image, propertyKeyToSet, propertyValueToSet):
     outputText = ''
+
     imageType = image.getImageProperty('imageType')
     outputText += "Image type is: " + str(imageType) + "\n"
     if imageType in ('bias', 'dark', 'flat', 'masterBias', 'masterDark', 'masterFlat'):
@@ -1450,6 +1454,8 @@ def checkIfCalibrationImage(image, propertyKeyToSet, propertyValueToSet):
 
 @shared_task
 def sextractor(filename):
+    taskStartTime = time.time()
+
     # Get the image record
     image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
 
@@ -1459,7 +1465,7 @@ def sextractor(filename):
     detectThresholdMultiplier, shouldReturn, outputText, errorText = initSourcefind('sextractor', image)
 
     if shouldReturn:
-        return constructProcessOutput(outputText, errorText)
+        return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 
     detectThreshold = detectThresholdMultiplier*channelInfos[0].bgStdDev
     outputText += 'Final multiplier of {} standard deviations.\n'.format(detectThresholdMultiplier)
@@ -1592,12 +1598,13 @@ def sextractor(filename):
     except OSError:
         pass
 
-    return constructProcessOutput(outputText, errorText)
+    return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 
 @shared_task
 def image2xy(filename):
     outputText = ""
     errorText = ""
+    taskStartTime = time.time()
 
     # Get the image record
     image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
@@ -1607,7 +1614,7 @@ def image2xy(filename):
     detectThresholdMultiplier, shouldReturn, outputText, errorText = initSourcefind('image2xy', image)
 
     if shouldReturn:
-        return constructProcessOutput(outputText, errorText)
+        return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 
     #TODO: Use the -P option to handle images with multiple planes.  Also has support for multi-extension fits built in if called with appropriate params.
     #TODO: Consider using the -d option to downsample by a given factor before running.
@@ -1666,10 +1673,12 @@ def image2xy(filename):
     except OSError:
         pass
 
-    return constructProcessOutput(outputText, errorText)
+    return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 
 @shared_task
 def daofind(filename):
+    taskStartTime = time.time()
+
     #TODO: daofind can only handle .fit files.  Should autoconvert the file to .fit if necessary before running.
     image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
 
@@ -1679,7 +1688,7 @@ def daofind(filename):
     detectThresholdMultiplier, shouldReturn, outputText, errorText = initSourcefind('daofind', image)
 
     if shouldReturn:
-        return constructProcessOutput(outputText, errorText)
+        return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 
     detectThreshold = detectThresholdMultiplier*channelInfos[0].bgStdDev
     outputText += 'Final multiplier of {} standard deviations.\n'.format(detectThresholdMultiplier)
@@ -1723,10 +1732,12 @@ def daofind(filename):
             record.confidence = sigmoid((meanMag-record.mag)/stdDevMag)
             record.save()
 
-    return constructProcessOutput(outputText, errorText)
+    return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 
 @shared_task
 def starfind(filename):
+    taskStartTime = time.time()
+
     #TODO: starfind can only handle .fit files.  Should autoconvert the file to .fit if necessary before running.
     image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
 
@@ -1736,7 +1747,7 @@ def starfind(filename):
     detectThresholdMultiplier, shouldReturn, outputText, errorText = initSourcefind('starfind', image)
 
     if shouldReturn:
-        return constructProcessOutput(outputText, errorText)
+        return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 
     detectThreshold = detectThresholdMultiplier*channelInfos[0].bgStdDev
     outputText += 'Final multiplier of {} standard deviations.\n'.format(detectThresholdMultiplier)
@@ -1781,22 +1792,26 @@ def starfind(filename):
             record.confidence = sigmoid((meanMag-record.mag)/stdDevMag)
             record.save()
 
-    return constructProcessOutput(outputText, errorText)
+    return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 
 @shared_task
 def starmatch(filename):
     outputText = ""
     errorText = ""
+    taskStartTime = time.time()
 
     outputText += "starmatch: " + filename + "\n"
 
     image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
 
+    outputText += '\n\nTiming:'
+    millis = int(round(time.time() * 1000))
+
     # If this is a calibration image we do not need to run this task.
     shouldReturn, retText = checkIfCalibrationImage(image, 'astrometryNet', 'skippedCalibration')
     outputText += retText
     if shouldReturn:
-        return constructProcessOutput(outputText, errorText)
+        return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 
     models.SourceFindMatch.objects.filter(image=image).delete()
 
@@ -1809,9 +1824,6 @@ def starmatch(filename):
         { 'name': 'userSubmitted', 'model': models.UserSubmittedResult },
         { 'name': 'userSubmitted2', 'model': models.UserSubmittedResult }
         ]
-
-    print('\n\nTiming:')
-    millis = int(round(time.time() * 1000))
 
     for method in inputs:
         method['query'] = SortedListWithKey(method['model'].objects.filter(image=image), key=lambda x: x.pixelX)
@@ -1853,7 +1865,7 @@ def starmatch(filename):
 
     newMillis = int(round(time.time() * 1000))
     deltaT = newMillis - millis
-    print('pairwise took {} ms.'.format(deltaT ))
+    outputText += 'pairwise took {} ms.'.format(deltaT )
     millis = int(round(time.time() * 1000))
 
     def sortKeyForSuperMatch(superMatch):
@@ -1899,7 +1911,7 @@ def starmatch(filename):
 
     newMillis = int(round(time.time() * 1000))
     deltaT = newMillis - millis
-    print('superMatches took {} ms.'.format(deltaT ))
+    outputText += 'superMatches took {} ms.'.format(deltaT )
     millis = int(round(time.time() * 1000))
 
     # Loop over all the superMatch entries and create a database entry for each one.
@@ -1956,15 +1968,21 @@ def starmatch(filename):
 
     newMillis = int(round(time.time() * 1000))
     deltaT = newMillis - millis
-    print('write to db took {} ms.'.format(deltaT ))
+    outputText += 'write to db took {} ms.'.format(deltaT )
     millis = int(round(time.time() * 1000))
 
-    return constructProcessOutput(outputText, errorText)
+    newMillis = int(round(time.time() * 1000))
+    deltaT = newMillis - millis
+    outputText += 'RA, Dec recalc took {} ms.'.format(deltaT )
+    millis = int(round(time.time() * 1000))
+
+    return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 
 @shared_task
 def astrometryNet(filename):
     outputText = ""
     errorText = ""
+    taskStartTime = time.time()
 
     outputText += "astrometrynet: " + filename + "\n"
 
@@ -1974,7 +1992,7 @@ def astrometryNet(filename):
     shouldReturn, retText = checkIfCalibrationImage(image, 'astrometryNet', 'skippedCalibration')
     outputText += retText
     if shouldReturn:
-        return constructProcessOutput(outputText, errorText)
+        return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 
     #TODO: Move this to after we know if the task actually has to run or not.
     superMatches = models.SourceFindMatch.objects.filter(image=image)
@@ -1993,7 +2011,7 @@ def astrometryNet(filename):
         table.write(tableFilename, format='fits')
     except OSError:
         errorText += 'ERROR: Could not open file for writing: ' + tableFilename + "\n"
-        return constructProcessOutput(outputText, errorText)
+        return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 
     outputText += "Chose {} objects to use in plate solution.".format(len(table)) + "\n"
 
@@ -2115,18 +2133,19 @@ def astrometryNet(filename):
         except:
             errorText += 'Error in removing file {}\nError was: {}'.format(f, sys.exc_info()[0]) + "\n"
 
-    return constructProcessOutput(outputText, errorText)
+    return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 
 @shared_task
 def parseHeaders(imageId):
     outputText = ""
     errorText = ""
+    taskStartTime = time.time()
 
     try:
         image = models.Image.objects.get(pk=imageId)
     except:
         errorText += "Image {} does not exist".format(imageId)
-        return constructProcessOutput(outputText, errorText)
+        return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 
     headers = models.ImageHeaderField.objects.filter(image=imageId)
 
@@ -2634,12 +2653,13 @@ def parseHeaders(imageId):
                 #TODO: Try to look up the object in the various catalogs we have in the database.
                 pass
 
-    return constructProcessOutput(outputText, errorText)
+    return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 
 @shared_task
 def flagSources(imageIdString):
     outputText = ""
     errorText = ""
+    taskStartTime = time.time()
 
     outputText += "Flagging image sources for image '{}'\n".format(imageIdString)
 
@@ -2650,7 +2670,7 @@ def flagSources(imageIdString):
     shouldReturn, retText = checkIfCalibrationImage(image, 'astrometryNet', 'skippedCalibration')
     outputText += retText
     if shouldReturn:
-        return constructProcessOutput(outputText, errorText)
+        return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 
     hotPixels = models.UserSubmittedHotPixel.objects.filter(image_id=imageId)
     numHotPixels = hotPixels.count()
@@ -2689,7 +2709,7 @@ def flagSources(imageIdString):
     else:
         outputText += "Image has no user submitted hot pixels in it\n"
 
-    return constructProcessOutput(outputText, errorText)
+    return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 
 def computeSingleEphemeris(asteroid, ephemTime):
     ephemTimeObject = ephem.Date(ephemTime)

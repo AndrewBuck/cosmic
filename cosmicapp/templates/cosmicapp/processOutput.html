@@ -40,8 +40,8 @@ Resource Costs:
 
 <tr>
     <td>CPU</td>
-    <td>{{processOutput.processInput.estCostCPU|default_if_none:"Not recorded"}} seconds</td>
-    <td>{{processOutput.actualCostCPU|default_if_none:"Not recorded"}}</td>
+    <td>{{processOutput.processInput.estCostCPU|default_if_none:"Not recorded"|floatformat:2}} seconds</td>
+    <td>{{processOutput.actualCostCPU|default_if_none:"Not recorded"|floatformat:2}} seconds</td>
 </tr>
 
 <tr>
