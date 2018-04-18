@@ -561,15 +561,15 @@ def imagestats(filename):
                         outputText += "Writing text encoded image oh god ... "
                         msec = int(1000 * time.time())
                         textImageFilename = settings.MEDIA_ROOT + "asciiImage_{}.txt".format(image.pk)
-                        xdim, ydim = binAssignment.shape
+                        ydim, xdim = binAssignment.shape
                         with open(textImageFilename, "w") as outputFile :
                             outputFile.write("# ImageMagick pixel enumeration: {},{},{},gray\n".format(
-                                ydim, xdim, binNumber - 1) )
-                            for i in range(xdim) :
-                                for j in range(ydim) :
+                                xdim, ydim, binNumber - 1) )
+                            for i in range(ydim) :
+                                for j in range(xdim) :
                                     k = binAssignment[i][j] - 1
                                     s = str(hex(k + k*2**8 + k*2**16 + 2**24))[3:10]
-                                    outputFile.write("{0},{1}: ({2},{2},{2})  #{3}  gray({2})\n".format(j, i, k, s))
+                                    outputFile.write("{0},{1}: ({2},{2},{2})  #{3} gray({2})\n".format(j, ydim-i, k, s))
                         msec = int(1000 * time.time()) - msec
                         outputText += "completed: {}ms\n".format(msec)
                         outputText += "\n"
