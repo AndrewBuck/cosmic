@@ -577,7 +577,7 @@ def imagestats(filename):
                     upperBound = binRights[histogramLength-1]
                     cumulativeCount = 0.0
                     cumulativeFraction = cumulativeCount / totalCount
-                    with open("/cosmicmedia/" + binFilename, "w") as outputFile:
+                    with open(settings.MEDIA_ROOT + binFilename, "w") as outputFile:
                         ignoreLower = models.CosmicVariable.getVariable('histogramIgnoreLower') / 100.0
                         ignoreUpper = models.CosmicVariable.getVariable('histogramIgnoreUpper') / 100.0
                         for i in range(histogramLength):
@@ -610,18 +610,18 @@ def imagestats(filename):
                     targetMeanFrac = (targetMean - lowerBound)/(upperBound - lowerBound)
                     gammaCorrection = math.log(meanFrac, 10)/math.log(targetMeanFrac, 10)
                     # Write the gnuplot script file.
-                    with open("/cosmicmedia/" + plotFilename, "w") as outputFile:
+                    with open(settings.MEDIA_ROOT + plotFilename, "w") as outputFile:
                         outputFile.write("set terminal svg size 400,300 dynamic mouse standalone\n" +
                                          "set output '{}/{}.svg'\n".format(staticDirectory + "images", plotFilename) +
                                          "set key off\n" +
                                          "set logscale y\n" +
                                          "set xrange ["+str(lowerBound)+":"+str(upperBound)+"]\n" +
                                          "set style line 1 linewidth 3 linecolor 'blue'\n" +
-                                         "plot '/cosmicmedia/{}' using 1:2 with lines linestyle 1\n".format(binFilename)
+                                         "plot '" + settings.MEDIA_ROOT + "/{}' using 1:2 with lines linestyle 1\n".format(binFilename)
                                          )
 
                     outputText += "Running gnuplot:\n\n"
-                    proc = subprocess.Popen(['gnuplot', "/cosmicmedia/" + plotFilename],
+                    proc = subprocess.Popen(['gnuplot', settings.MEDIA_ROOT + plotFilename],
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE
                             )
