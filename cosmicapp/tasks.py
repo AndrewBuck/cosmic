@@ -579,8 +579,8 @@ def imagestats(filename):
                     if channelIndex == 0 :
                         outputText += "Calling convert on text encoded image ... "
                         msec = int(1000 * time.time())
-                        pngImageFilename = staticDirectory + "images/" + os.path.splitext(filename)[0] + "_thumb_full.png"
-                        process = subprocess.Popen(['convert', textImageFilename, pngImageFilename], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        pngImageFilename = os.path.splitext(filename)[0] + "_thumb_full.png"
+                        process = subprocess.Popen(['convert', textImageFilename, staticDirectory + "images/" + pngImageFilename], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                         output, error = process.communicate()
                         output = output.decode('utf-8')
                         error = error.decode('utf-8')
@@ -607,6 +607,19 @@ def imagestats(filename):
                         msec = int(1000 * time.time()) - msec
                         outputText += "completed: {}ms\n".format(msec)
                         outputText += "\n"
+
+                    # Create a database record for the thumbnail.
+                    if channelIndex == 0:
+                        record = models.ImageThumbnail(
+                            image = image,
+                            width = xdim,
+                            height = ydim,
+                            size = 'full',
+                            channel = channelIndex,
+                            filename = pngImageFilename
+                            )
+
+                        record.save()
 
                     #TODO: Look into this masking and potentially record the masked pixel
                     # data as a stored thing which can be accessed later on.
