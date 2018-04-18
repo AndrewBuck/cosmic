@@ -2275,7 +2275,7 @@ def parseHeaders(imageId):
                 key = 'headerTimeSystem'
                 value = header.value.split('/')[0].strip().strip("'")
 
-            elif header.key == 'fits:radecsys':
+            elif header.key in ['fits:radecsys', 'fits:radesysa']:
                 key = 'headerCoordinateSystem'
                 value = header.value.split('/')[0].strip().strip("'")
 
