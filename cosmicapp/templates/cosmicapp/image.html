@@ -115,7 +115,7 @@ td.numMatchResults
             {% endfor %}
             </td>
 
-            {% for channel in image.imagechannelinfo_set.all %}
+            {% for channel in image.imageChannels.all %}
                 <tr>
                 <td>
                 Channel {{channel.index}}: {{channel.channelType}}

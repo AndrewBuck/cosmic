@@ -341,7 +341,7 @@ class Observatory(models.Model):
 
 
 class UploadSession(models.Model):
-    uploadingUser = models.ForeignKey(User, db_index=True, on_delete=models.CASCADE)
+    uploadingUser = models.ForeignKey(User, db_index=True, on_delete=models.CASCADE, related_name='uploadSessions')
     dateTime = models.DateTimeField(auto_now=True)
 
     comments = GenericRelation('TextBlob')
@@ -608,7 +608,7 @@ class ImageChannelInfo(models.Model):
     (mean, median, and standard deviation) of the channel as well as the same statistics for just the background (i.e.
     after source removal by sigma clipping or other methods).
     """
-    image = models.ForeignKey(Image, db_index=True, on_delete=models.CASCADE)
+    image = models.ForeignKey(Image, db_index=True, on_delete=models.CASCADE, related_name="imageChannels")
     index = models.IntegerField()
     channelType = models.CharField(max_length=16)
     mean = models.FloatField(null=True)
