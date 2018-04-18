@@ -195,15 +195,22 @@ def imagestats(filename):
         #TODO: Long lines starting with 'HISTORY' in the fits headers do not seem to be output by ImageMagick in the same way that 'COMMENT' lines are.  We may need to submit a ticket about this or something.
         for line in output2.splitlines():
             split = line.split('=', 1)
-            key = None
-            value = None
+            key = ''
+            value = ''
 
-            if len(split) == 1:
-                key = split[0].strip()
+            # If there was no equals sign on the line, or there was an equals sign but it was more than 8 characters into the line.
+            if len(split) == 1 or (len(split) == 2 and len(split[0]) > 8):
+                newSplit = split[0].split(' ', 1)
+                if len(newSplit) == 2:
+                    key = newSplit[0].strip()
+                    value = newSplit[1].strip()
+            # If there was an equals sign on the line (and by extension, it was within 8 characters of the start of the line).
             elif len(split) == 2:
                 key = split[0].strip()
                 value = split[1].strip()
+            # This never should really happen.
             else:
+                #TODO: Throw an error or something.
                 continue
 
             if key == "" or value == "" or key in settings.IGNORED_KEYS:
