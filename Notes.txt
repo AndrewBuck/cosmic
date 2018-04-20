@@ -112,6 +112,17 @@ values is returned: a is much less than b, a and b are roughly equal, a is much 
 
 
 
+For images which have horizontal, vertical, or both gradients in the data (or other
+oddities like every other line being brighter, etc) we should compute a baseline level
+image, which is effectively an artificial flat field.  One possible way to compute such a
+baseline would be to compute an average (or median, etc) for every row and every column in
+the image.  Then, the baseline value for pixel (x,y) is given as the average of the
+average for the row that contains y and the column average for the column that contains x.
+I.E. the average of the two averages that contain (x,y).
+
+
+
+
 imhisto - iraf task that computes and prints a histogram of an image.  Should
           probably do this in 2 stages, first with bins across the whole range,
           then a second pass across the range that captures 95% of pixels.
