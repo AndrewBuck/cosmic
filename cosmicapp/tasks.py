@@ -2165,7 +2165,7 @@ def parseHeaders(imageId):
         # an ImageProperty that is more standardized than the dizzying variety of formats
         # used in fits headers in the wild.
         for header in headers:
-            if header.key in ['comment', 'fits:comment', 'fits:history']:
+            if header.key not in ['comment', 'fits:comment', 'fits:history']:
                 # Look for comments at the end of the 'value' portion of the header to build
                 # up a list of commonly used comments.  By enumerating as many as we can
                 # automatically and manually flagging a few others that get missed, we should
