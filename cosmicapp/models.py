@@ -243,13 +243,22 @@ def savePlateSolution(sender, instance, **kwargs):
         instance.image.sourceFindMatchResults.all(),
         ]
 
+    xCoords = []
+    yCoords = []
     with transaction.atomic():
         for results in sourceFindMatchResults:
             for result in results:
-                #result.ra, result.dec = instance.getRaDec(result.pixelX, result.pixelY)
-                result.ra, result.dec = (12, 15)
+                xCoords.append(result.pixelX)
+                yCoords.append(result.pixelY)
 
-            results.save()
+            if len(xCoords) > 0:
+                raArray, decArray = instance.getRaDec(xCoords, yCoords)
+
+                for result, ra, dec in zip(results, raArray, decArray):
+                    result.ra = ra
+                    result.dec = dec
+
+                    result.save()
 
     print("Done.")
 
@@ -732,8 +741,15 @@ class PlateSolution(models.Model):
         return wcs.WCS(self.wcsHeader)
 
     def getRaDec(self, x, y):
-        ret = self.wcs().all_pix2world(x, y, 1)    #TODO: Determine if this 1 should be a 0.
-        return (numpy.asscalar(ret[0]), numpy.asscalar(ret[1]))
+        if(type(x) == list):
+            if len(x) == 0:
+                return (None, None)
+
+            ret = self.wcs().all_pix2world(x, y, 1, ra_dec_order=True)    #TODO: Determine if this 1 should be a 0.
+            return ret
+        else:
+            ret = self.wcs().all_pix2world(x, y, 1, ra_dec_order=True)    #TODO: Determine if this 1 should be a 0.
+            return (numpy.asscalar(ret[0]), numpy.asscalar(ret[1]))
 
 class ProcessPriority(models.Model):
     """
