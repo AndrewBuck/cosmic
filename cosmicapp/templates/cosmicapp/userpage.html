@@ -86,7 +86,13 @@
 <td>
 {% if edit != 'true' %}
 {% if uploadSessions %}
-    Your recent upload sessions:<br><br>
+    {% if user == foruser %}
+        Your recent upload sessions:
+    {% else %}
+        Upload sessions for this user:
+    {% endif %}
+
+    <br><br>
 
     {% for uploadSession in uploadSessions %}
         <a href="/uploadSession/{{uploadSession.id}}">{{uploadSession.dateTime}}&emsp;{{uploadSession.uploadedFileRecords.count}} files</a><br>
@@ -101,7 +107,14 @@
 {% endif %}
 
 {% if downloadSessions %}
-    <br><br>Your recent download sessions:<br><br>
+    <br><br>
+    {% if user == foruser %}
+        Your recent download sessions:
+    {% else %}
+        Download sessions for this user:
+    {% endif %}
+
+    <br><br>
 
     {% for downloadSession in downloadSessions %}
         <a
