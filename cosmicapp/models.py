@@ -262,6 +262,7 @@ def savePlateSolution(sender, instance, **kwargs):
 
     print("Done.")
 
+#TODO: Add a check when a user adds a bookmark to see if they should be shown a tutorial popup assosciated with the newly added bookmark.
 class Bookmark(models.Model):
     """
     A class storing a GenericForeignKey relation to an object to act as a bookmark.
@@ -863,6 +864,7 @@ class SourceFindResult(models.Model):
     pixelX = models.FloatField(null=True)
     pixelY = models.FloatField(null=True)
     pixelZ = models.FloatField(null=True)
+    #TODO: Instead of storing ra/dec here, store a link to each newly created plateSolution from all the objects detected in that image with the ra/dec stored as a property on an intermediate link.
     ra = models.FloatField(null=True)
     dec = models.FloatField(null=True)
     #TODO: Add a geometry point field for (ra, dec)?
