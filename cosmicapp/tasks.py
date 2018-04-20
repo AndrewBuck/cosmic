@@ -202,8 +202,9 @@ def imagestats(filename):
             key = ''
             value = ''
 
-            # If there was no equals sign on the line, or there was an equals sign but it was more than 8 characters into the line.
-            if len(split) == 1 or (len(split) == 2 and len(split[0]) > 8):
+            # If there was no equals sign on the line, or there was an equals sign but it
+            # was more than 8 characters into the line + 5 characters in in the prefix 'fits:'.
+            if len(split) == 1 or (len(split) == 2 and len(split[0]) > 13 and ()):
                 newSplit = split[0].split(' ', 1)
                 if len(newSplit) == 2:
                     key = newSplit[0].strip()
