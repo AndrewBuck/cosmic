@@ -1169,7 +1169,10 @@ class UCAC4Record(models.Model, BookmarkableItem, SkyObject, ScorableObject):
 
     def getUserDifficultyForTime(self, t, user, observatory=None):
         #TODO: Properly implement this function.
-        return ScorableObject.limitingStellarMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
+        if user.is_authenticated:
+            return ScorableObject.limitingStellarMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
+        else:
+            return ScorableObject.limitingStellarMagnitudeDifficulty(self.getMag(t), 16)
 
 class GCVSRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     """
@@ -1222,7 +1225,10 @@ class GCVSRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
 
     def getUserDifficultyForTime(self, t, user, observatory=None):
         #TODO: Properly implement this function.
-        return ScorableObject.limitingStellarMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
+        if user.is_authenticated:
+            return ScorableObject.limitingStellarMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
+        else:
+            return ScorableObject.limitingStellarMagnitudeDifficulty(self.getMag(t), 16)
 
     @property
     def getLinks(self):
@@ -1273,7 +1279,10 @@ class TwoMassXSCRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject
     def getUserDifficultyForTime(self, t, user, observatory=None):
         #TODO: Allow fainter magnitudes for galaxies since the goal of observing them is mainly to check for supernovas which might be quite bright.
         #TODO: Properly implement this function.
-        return ScorableObject.limitingDSOMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
+        if user.is_authenticated:
+            return ScorableObject.limitingDSOMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
+        else:
+            return ScorableObject.limitingDSOMagnitudeDifficulty(self.getMag(t), 16)
 
     @property
     def getLinks(self):
@@ -1373,7 +1382,10 @@ class MessierRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
 
     def getUserDifficultyForTime(self, t, user, observatory=None):
         #TODO: Properly implement this function.
-        return ScorableObject.limitingDSOMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
+        if user.is_authenticated:
+            return ScorableObject.limitingDSOMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
+        else:
+            return ScorableObject.limitingDSOMagnitudeDifficulty(self.getMag(t), 16)
 
     @property
     def getLinks(self):
@@ -1508,7 +1520,10 @@ class AstorbRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
 
     def getUserDifficultyForTime(self, t, user, observatory=None):
         #TODO: Properly implement this function.
-        return ScorableObject.limitingStellarMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
+        if user.is_authenticated:
+            return ScorableObject.limitingStellarMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
+        else:
+            return ScorableObject.limitingStellarMagnitudeDifficulty(self.getMag(t), 16)
 
     @property
     def getLinks(self):
@@ -1677,7 +1692,10 @@ class ExoplanetRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject)
 
     def getUserDifficultyForTime(self, t, user, observatory=None):
         #TODO: Properly implement this function.
-        return ScorableObject.limitingStellarMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
+        if user.is_authenticated:
+            return ScorableObject.limitingStellarMagnitudeDifficulty(self.getMag(t), user.profile.limitingMag)
+        else:
+            return ScorableObject.limitingStellarMagnitudeDifficulty(self.getMag(t), 16)
 
     @property
     def getLinks(self):
