@@ -17,7 +17,7 @@ which gets put into this queue until the server has time to execute it.</p>
         <th> Started <br><br> (time) </th>
         <th> Finished <br><br> (time) </th>
         <th> Priority <br><br> (value)</th>
-        <th> Est CPU <br><br> (s) </th>
+        <th> Est CPU <br>(actual)<br> (s) </th>
         <th> Est Bw <br><br>(size)</th>
         <th> Est Storage <br><br>(size)</th>
         <th> Est IO <br><br>(size)</th>
@@ -35,7 +35,7 @@ which gets put into this queue until the server has time to execute it.</p>
         <td> {{processInput.startedDateTime|formatTime|safe}} </td>
         <td> {{processInput.processOutput.all.0.finishedDateTime|formatTime|safe}} </td>
         <td> {{processInput.priority}} </td>
-        <td> {{processInput.estCostCPU}} </td>
+        <td> {{processInput.estCostCPU|floatformat:2}} s </td>
         <td> {{processInput.estCostBandwidth|filesizeformat}} </td>
         <td> {{processInput.estCostStorage|filesizeformat}} </td>
         <td> {{processInput.estCostIO|filesizeformat}} </td>
@@ -57,7 +57,8 @@ which gets put into this queue until the server has time to execute it.</p>
         <td> {{processInput.startedDateTime|formatTime|safe}} </td>
         <td> {{processInput.processOutput.all.0.finishedDateTime|formatTime|safe}} </td>
         <td> {{processInput.priority}} </td>
-        <td> {{processInput.estCostCPU}} </td>
+        <td> {{processInput.estCostCPU|floatformat:2}} s <br>
+        ({{processInput.processOutput.all.0.actualCostCPU|floatformat:2}} s) </td>
         <td> {{processInput.estCostBandwidth|filesizeformat}} </td>
         <td> {{processInput.estCostStorage|filesizeformat}} </td>
         <td> {{processInput.estCostIO|filesizeformat}} </td>
