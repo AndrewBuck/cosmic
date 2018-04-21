@@ -2492,6 +2492,7 @@ def parseHeaders(imageId):
                 key = 'objectHA'
                 value = header.value.split('/')[0].strip().strip("'").lower()
 
+            #TODO: Check if ra dec is 0 and if so, ignore it.  Some headers have      fits:objctra    '00 00 00.000'
             elif header.key in ['fits:objctra', 'fits:ra']:
                 key = 'objectRA'
                 value = header.value.split('/')[0].strip().strip("'").lower()
