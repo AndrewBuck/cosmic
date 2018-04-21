@@ -98,16 +98,6 @@ r, created = QuestionResponse.objects.get_or_create(
     question = qImageProblems,
     index = 6,
     inputType = 'checkbox',
-    text = 'Not full frame',
-    descriptionText = 'The image data does not completely fill the image file.',
-    keyToSet = 'notFullFrame',
-    valueToSet = 'yes'
-    )
-
-r, created = QuestionResponse.objects.get_or_create(
-    question = qImageProblems,
-    index = 7,
-    inputType = 'checkbox',
     text = 'Not science',
     descriptionText = 'The image is not science data (or calibration data), it is a picture of a person, a telescope, or anything else.',
     keyToSet = 'notScience',
@@ -116,7 +106,7 @@ r, created = QuestionResponse.objects.get_or_create(
 
 r, created = QuestionResponse.objects.get_or_create(
     question = qImageProblems,
-    index = 7,
+    index = 6,
     inputType = 'checkbox',
     text = 'Spam',
     descriptionText = 'The image is an advertisement, etc.',
@@ -126,7 +116,7 @@ r, created = QuestionResponse.objects.get_or_create(
 
 r, created = QuestionResponse.objects.get_or_create(
     question = qImageProblems,
-    index = 8,
+    index = 7,
     inputType = 'checkbox',
     text = 'xxx',
     descriptionText = 'The image contains adult content, or otherwise obscene material that should not be shown to non-moderators.',
