@@ -72,7 +72,7 @@ function ImageGallery(galleryName, paramString, displayType, includeLinks, image
         {
             if(paramString[i] == ':' && paramString[i+1] != ':' && paramString[i-1] != ':')
             {
-                params[params.length] = paramString.substring(startIndex, i-1);
+                params[params.length] = paramString.substring(startIndex, i);
                 startIndex = i+1;
             }
 
