@@ -16,6 +16,7 @@ import math
 import random
 import dateparser
 import scipy
+import imageio
 import scipy.stats
 import numpy
 import ephem
@@ -559,57 +560,14 @@ def imagestats(filename):
                         outputText += "\n"
 
 
-                    # Write text file
-                    if channelIndex == 0 :
-                        outputText += "Writing text encoded image oh god ... "
-                        msec = int(1000 * time.time())
-                        textImageFilename = settings.MEDIA_ROOT + "asciiImage_{}.txt".format(image.pk)
-                        ydim, xdim = binAssignment.shape
-                        with open(textImageFilename, "w") as outputFile :
-                            outputFile.write("# ImageMagick pixel enumeration: {},{},{},gray\n".format(
-                                xdim, ydim, binNumber - 1) )
-                            for i in range(ydim) :
-                                for j in range(xdim) :
-                                    k = binAssignment[i][j] - 1
-                                    s = str(hex(k + k*2**8 + k*2**16 + 2**24))[3:10]
-                                    outputFile.write("{0},{1}: ({2},{2},{2})  #{3} gray({2})\n".format(j, ydim-i, k, s))
-                        msec = int(1000 * time.time()) - msec
-                        outputText += "completed: {}ms\n".format(msec)
-                        outputText += "\n"
-
-
-                    # Call convert on text file
-                    if channelIndex == 0 :
-                        outputText += "Calling convert on text encoded image ... "
-                        msec = int(1000 * time.time())
-                        pngImageFilename = os.path.splitext(filename)[0] + "_thumb_full.png"
-                        process = subprocess.Popen(['convert', textImageFilename, staticDirectory + "images/" + pngImageFilename], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                        output, error = process.communicate()
-                        output = output.decode('utf-8')
-                        error = error.decode('utf-8')
-                        proc.wait()
-                        errorText += error
-                        msec = int(1000 * time.time()) - msec
-                        outputText += "completed: {}ms\n".format(msec)
-                        outputText += output
-                        outputText += "\n"
-
-                    # Delete the ascii image file
-                    if channelIndex == 0 :
-                        outputText += "Cleaning up ascii image file ..."
-                        msec = int(1000 * time.time())
-                        try :
-                            os.remove(textImageFilename)
-                        except FileNotFoundError :
-                            pass
-                        except :
-                            errorText += "Error removing file: {}\n".format(textImageFilename)
-                            errorText += '==================== start process error ====================\n'
-                            errorText += str(sys.exc_info()[0])
-                            errorText += '===================== end process error =====================\n'
-                        msec = int(1000 * time.time()) - msec
-                        outputText += "completed: {}ms\n".format(msec)
-                        outputText += "\n"
+                    # Write the gamma corrected png full size thumbnail.
+                    outputText += "Writing full size png thumbnail."
+                    pngImageFilename = os.path.splitext(filename)[0] + "_thumb_full.png"
+                    ydim, xdim = binAssignment.shape
+                    msec = int(1000 * time.time())
+                    imageio.imwrite(staticDirectory + "images/" + pngImageFilename, numpy.flip(binAssignment, axis=0), optimize=True, bits=8)
+                    msec = int(1000 * time.time()) - msec
+                    outputText += "completed: {}ms\n\n".format(msec)
 
                     # Create a database record for the thumbnail.
                     if channelIndex == 0:
