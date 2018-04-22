@@ -2546,6 +2546,10 @@ def parseHeaders(imageId):
                 key = 'pierSide'
                 value = header.value.split('/')[0].strip().strip("'").lower()
 
+            elif header.key in ['fits:flipstat']:
+                key = 'pierFlipState'
+                value = header.value.split('/')[0].strip().strip("'").lower()
+
             elif header.key in ['fits:object']:
                 key = 'object'
                 value = header.value.split('/')[0].strip().strip("'")
@@ -2688,7 +2692,9 @@ def parseHeaders(imageId):
 
         # Set "known unknown" tags on fields that should be set for all images, but
         # haven't been read in from the header in the file.
-        knownUnknownKeys = [ 'imageType', 'filter', 'exposureTime' ]
+        knownUnknownKeys = [ 'imageType', 'filter', 'exposureTime', 'flatCorrected',
+            'darkCorrected', 'biasCorrected', 'width', 'height', 'binningX', 'binningY',
+            'imageIsStacked' ]
         for key in knownUnknownKeys:
             imageProperty = image.getImageProperty(key)
             if imageProperty is None:
