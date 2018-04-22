@@ -780,8 +780,6 @@ def allImageProperties(request):
 
     valueQ = Q()
     for valueContains in valueContainsList:
-        if valueContains == '':
-            continue
         print('value {}'.format(valueContains))
         valueQ = valueQ | Q(value__contains=valueContains)
 
