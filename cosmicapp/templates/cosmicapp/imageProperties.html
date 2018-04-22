@@ -24,8 +24,7 @@
 
     {% for property in properties %}
         <tr id="row_{{property.pk}}">
-            {% comment %}TODO: If the key or value contains a ':' it will break the image gallery parsing.{% endcomment %}
-            <td><a href="/image/gallery/?queryParams=imageProperty={{property.key|doubleEscape:':'|urlencode}}={{property.value|doubleEscape:':'|urlencode}}">{{property.key}}={{property.value}}</a></td>
+        <td><a href="/imageProperties/?keyContains={{property.key}}">{{property.key}}</a>=<a href="/image/gallery/?queryParams=imageProperty={{property.key|doubleEscape:':'|urlencode}}={{property.value|doubleEscape:':'|urlencode}}">{{property.value}}</a></td>
             <td>{{property.header.key}}</td>
             <td>{{property.header.value}}</td>
             <td>{{property.createDateTime}}</td>
