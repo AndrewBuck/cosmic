@@ -688,10 +688,22 @@ class ImageChannelInfo(models.Model):
     def getHistogramUrl(self):
         return '/static/cosmicapp/images/histogramData_{}_{}.gnuplot.svg'.format(self.image.pk, self.index)
 
+    def getRowMeanUrl(self):
+        return '/static/cosmicapp/images/rowMeanData_{}_{}.gnuplot.svg'.format(self.image.pk, self.index)
+
+    def getColMeanUrl(self):
+        return '/static/cosmicapp/images/colMeanData_{}_{}.gnuplot.svg'.format(self.image.pk, self.index)
+
 class ImageHistogramBin(models.Model):
     image = models.ForeignKey(Image, on_delete=models.CASCADE)
     binCenter = models.FloatField()
     binCount = models.FloatField()
+
+class ImageSliceMean(models.Model):
+    channelInfo = models.ForeignKey(ImageChannelInfo, on_delete=models.CASCADE)
+    direction = models.CharField(max_length=1)
+    index = models.IntegerField()
+    mean = models.FloatField()
 
 class ImageTransform(models.Model):
     """
