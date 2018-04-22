@@ -53,56 +53,67 @@ td.numMatchResults
         <tr>
             <td>
             Uploaded by user:
+            <font size=-1>
             <a href="/user/{{image.fileRecord.uploadSession.uploadingUser}}">{{image.fileRecord.uploadSession.uploadingUser}}</a>
+            </font>
 
-            <br> Filename: {{image.fileRecord.originalFileName}}
+            <br> Filename: <font size=-1>{{image.fileRecord.originalFileName}}</font>
 
             <input id=sha256input type=text value="{{image.fileRecord.fileSha256}}" hidden>
-            <br> Sha-256: <a class=functionLink title="Click to copy to clipboard:
-            {{image.fileRecord.fileSha256}}" onclick="copyToClipboard('sha256input', 'sha256MessageDiv')">{{image.fileRecord.fileSha256|sha256summary}}</a>
+            <br> Sha-256: <font size=-1><a class=functionLink title="Click to copy to clipboard:
+            {{image.fileRecord.fileSha256}}" onclick="copyToClipboard('sha256input', 'sha256MessageDiv')">{{image.fileRecord.fileSha256|sha256summary}}</a></font>
             <div id=sha256MessageDiv hidden><br>&emsp;<font size=+1>Text copied to
             clipboard.</font></div>
             <br>
-            Taken on: {{image.dateTime|default_if_none:"Unknown date/time"}}
+            Taken on: <font size=-1>{{image.dateTime|default_if_none:"Unknown date/time"}}</font>
             <br>
             Uploaded:
-            <a href="/uploadSession/{{image.fileRecord.uploadSession.id}}">
-            {{image.fileRecord.uploadSession.dateTime|default_if_none:"Unknown date/time"}}</a>
+            <font size=-1><a href="/uploadSession/{{image.fileRecord.uploadSession.id}}">
+            {{image.fileRecord.uploadSession.dateTime|default_if_none:"Unknown date/time"}}</a></font>
             <br>
+            <font size=-1>
             <br> Has <a href="/image/{{id}}/properties/">{{image.properties.all.count}} image properties</a>.
             <br> Has <a href="/image/{{id}}/question/">{{image.answers.all.count}} questions answered</a> about it.
+            </font>
             <br>
             {% comment %}<br> {% bookmark "image" image.pk "Saved Images" %}: Save image in folder{% endcomment %}
             <br> {% bookmark "image" image.pk "Marked for Download" %}: Mark for downloading
             <br>
             <br>
             Using instrument:
+            <font size=-1>
             {% if image.instrument %}
                 {{image.instrument}}
             {% else %}
                 Unknown
             {% endif %}
+            </font>
             <br>
             From observatory:
+            <font size=-1>
             {% if image.observatory %}
                 {{image.observatory.name}}
             {% else %}
                 Unknown
             {% endif %}
+            </font>
             <br>
-            <br> Image dimensions: {{image.dimX}}x{{image.dimY}}x{{image.dimZ}}
-            <br> Bit depth: {{image.bitDepth}}&nbsp;bits/pixel
+            <br> Image dimensions: <font size=-1>{{image.dimX}}x{{image.dimY}}x{{image.dimZ}}</font>
+            <br> Bit depth: <font size=-1>{{image.bitDepth}}&nbsp;bits/pixel</font>
             <br>
             Frame type:
+            <font size=-1>
             {% if image.frameType %}
                 <a href="/image/gallery/?queryParams=imageProperty=imageType={{image.frameType}}">{{image.frameType}}</a>
             {% else %}
                 Unknown
             {% endif %}
+            </font>
             <br>
-            <br> This image has {{plateSolutions.count}} plate solutions.
+            <br> <font size=-1>This image has {{plateSolutions.count}} plate solutions.</font>
 
             {% for ps in plateSolutions %}
+            <font size=-1>
             <br>&emsp;<b>{{ps.source}}:</b>
             <br>&emsp;&emsp;{{ps.centerRA|formatRA}} {{ps.centerDec|formatDec}}
             <br>&emsp;&emsp;{{ps.resolutionX|floatformat:2}}x{{ps.resolutionY|floatformat:2}} arcsec/pixel
@@ -112,17 +123,19 @@ td.numMatchResults
             degrees
             <br>&emsp;&emsp;{{ps.area|floatformat:2}} square deg
             <br>&emsp;&emsp;1 / {{ps.area|divide:41253|invert|floatformat:0|intcomma}} of the whole sky
+            </font>
             {% endfor %}
             </td>
 
             {% for channel in image.imageChannels.all %}
                 <tr>
                 <td>
-                Channel {{channel.index}}: {{channel.channelType}}
-                <br> Unique Values: {{channel.uniqueValues}}
-                <br> Black Point: {{channel.thumbnailBlackPoint|floatformat:2}}
-                <br> White Point: {{channel.thumbnailWhitePoint|floatformat:2}}
-                <br> Gamma: {{channel.thumbnailGamma|floatformat:2}}
+                Channel {{channel.index}}: <font size=-1>{{channel.channelType}}</font>
+                <br> Unique Values: <font size=-1>{{channel.uniqueValues}}</font>
+                <br> Black Point: <font size=-1>{{channel.thumbnailBlackPoint|floatformat:2}}</font>
+                <br> White Point: <font size=-1>{{channel.thumbnailWhitePoint|floatformat:2}}</font>
+                <br> Gamma: <font size=-1>{{channel.thumbnailGamma|floatformat:2}}</font>
+                <font size=-1>
                 <table>
                     <tr><th></th> <th>mean</th> <th>median</th> <th>stdev</th></tr>
                     <tr>
@@ -139,6 +152,7 @@ td.numMatchResults
                     </tr>
 
                 </table>
+                </font>
                 <a href="{{channel.getHistogramUrl}}"><img src="{{channel.getHistogramUrl}}"></a>
                 </td>
                 </tr>
