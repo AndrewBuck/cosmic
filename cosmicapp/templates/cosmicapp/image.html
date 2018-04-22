@@ -46,8 +46,19 @@ td.numMatchResults
 {% block mainbody %}
 <h2>Image {{id}}</h2>
 
-<a href="{{image.getThumbnailUrlFull|safe}}">
-<img style="float; right;" src="{{image.getThumbnailUrlLarge|safe}}"></a>
+<div style="margin: 0px; padding: 0px; position: relative; display: inline-block; float: right;">
+    <table cellpadding=0px>
+        <tr>
+            <td></td>
+            <td><img height=75px src="{{image.imageChannels.all.0.getColMeanUrl}}"></td>
+        </tr>
+        <tr>
+            <td><img width=75px src="{{image.imageChannels.all.0.getRowMeanUrl}}"></td>
+            <td><a href="{{image.getThumbnailUrlFull|safe}}">
+            <img src="{{image.getThumbnailUrlLarge|safe}}"></a></td>
+        </tr>
+    </table>
+</div>
 
     <table border=2px style="width: 300px; float: left; border-collapse: collapse; margin: 1em;">
         <tr>

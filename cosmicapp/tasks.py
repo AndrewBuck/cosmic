@@ -301,11 +301,80 @@ def imagestats(filename):
 
                 frameIndex = 0
                 for frame in frames:
+                    try:
+                        channelInfo = models.ImageChannelInfo.objects.get(image=image, index=channelIndex)
+                    except:
+                        outputText += '\n\nERROR: continuing loop because channel info not found. id: {} index: {}\n\n\n'.format(image.pk, channelIndex)
+                        continue
+
                     outputText += "Starting analysis of channel: {}\n\n".format(channelIndex)
                     startms = int(1000 * time.time())
                     # TODO: Need to filter all non-data pixels
                     #   NOTE: now finds and removes bathtub pixels
 
+                    # Compute and store the row and column averages for the image frame.
+                    outputText += "Computing row and column mean values ... "
+                    msec = int(1000 * time.time())
+                    rowMeans = numpy.mean(frame, axis=1)
+                    colMeans = numpy.mean(frame, axis=0)
+
+                    imageSliceMeans = []
+                    for direction, means in [('r', rowMeans), ('c', colMeans)]:
+                        for mean, index in zip(means, range(len(means))):
+                            imageSliceMean = models.ImageSliceMean(
+                                channelInfo = channelInfo,
+                                direction = direction,
+                                index = index,
+                                mean = mean
+                                )
+
+                            imageSliceMeans.append(imageSliceMean)
+
+                    models.ImageSliceMean.objects.bulk_create(imageSliceMeans)
+
+                    msec = int(1000 * time.time()) - msec
+                    outputText += "completed: {}ms\n".format(msec)
+
+                    for direction, means, xsize, ysize, rangeString, usingString in [
+                            ('row', rowMeans, 75, 900*(frame.shape[0]/frame.shape[1]), 'set yrange [0:{}]'.format(frame.shape[0]), 'using 1:0'),
+                            ('col', colMeans, 900, 75, 'set xrange [0:{}]'.format(frame.shape[1]), 'using 0:1')
+                            ]:
+                        dataFilename = direction + "MeanData_{}_{}.txt".format(image.pk, channelIndex)
+                        plotFilename = direction + "MeanData_{}_{}.gnuplot".format(image.pk, channelIndex)
+                        imageFilename = direction + "MeanData_{}_{}.gnuplot.svg".format(image.pk, channelIndex)
+                        with open(settings.MEDIA_ROOT + dataFilename, "w") as outputFile:
+                            for mean in means:
+                                outputFile.write("{}\n".format(mean))
+
+                        with open(settings.MEDIA_ROOT + plotFilename, "w") as outputFile:
+                            outputFile.write("set terminal svg size {},{} dynamic mouse standalone\n".format(xsize, ysize) +
+                                             "set output '{}'\n".format(staticDirectory + "images/" + imageFilename) +
+                                             "set lmargin 0\n" +
+                                             "set rmargin 0\n" +
+                                             "set tmargin 0\n" +
+                                             "set bmargin 0\n" +
+                                             "set key off\n" +
+                                             rangeString + "\n" +
+                                             "set format x \"\"\n" +
+                                             "set format y \"\"\n" +
+                                             "plot '{}' {} with lines".format(settings.MEDIA_ROOT + dataFilename, usingString))
+
+                        outputText += "Generating {} mean image ... ".format(direction)
+                        msec = int(1000 * time.time())
+                        proc = subprocess.Popen(['gnuplot', settings.MEDIA_ROOT + plotFilename],
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        output, error = proc.communicate()
+                        output = output.decode('utf-8')
+                        error = error.decode('utf-8')
+                        proc.wait()
+                        msec = int(1000 * time.time()) - msec
+                        errorText += '==================== start process error ====================\n'
+                        errorText += error
+                        errorText += '===================== end process error =====================\n'
+                        outputText += "completed: {}ms\n".format(msec)
+                        outputText += '==================== start process output ====================\n'
+                        outputText += output
+                        outputText += '===================== end process output =====================\n'
 
                     # Count all pixel values into a 2D numpy array. Column 1 contains
                     # sorted, unique values from the frame, and column 2 contains the
@@ -561,7 +630,7 @@ def imagestats(filename):
 
 
                     # Write the gamma corrected png full size thumbnail.
-                    outputText += "Writing full size png thumbnail."
+                    outputText += "Writing full size png thumbnail ... "
                     pngImageFilename = os.path.splitext(filename)[0] + "_thumb_full.png"
                     ydim, xdim = binAssignment.shape
                     msec = int(1000 * time.time())
@@ -644,12 +713,6 @@ def imagestats(filename):
                     outputText += "background median: {}\n".format(bgMedian)
                     outputText += "background stdDev: {}\n".format(bgStdDev)
                     outputText += "\n"
-
-                    try:
-                        channelInfo = models.ImageChannelInfo.objects.get(image=image, index=channelIndex)
-                    except:
-                        outputText += '\n\nERROR: continuing loop because channel info not found. id: {} index: {}\n\n\n'.format(image.pk, channelIndex)
-                        continue
 
                     channelInfo.hduIndex = hduIndex
                     channelInfo.frameIndex = frameIndex
