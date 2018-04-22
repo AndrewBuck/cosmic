@@ -1036,7 +1036,7 @@ def query(request):
         results = results.order_by(ascDesc + orderField, 'pk').distinct(orderField, 'pk')[offset:offset+limit]
         jsonResponse = json.dumps(dumpJsonAndAddThumbUrls(results), default=lambda o: o.__dict__)
 
-    if request.GET['queryfor'] == 'imageTransform':
+    elif request.GET['queryfor'] == 'imageTransform':
         orderField, ascDesc = parseQueryOrderBy(request, {'referenceImage': 'referenceImage'}, 'referenceImage', '')
         results = ImageTransform.objects
 
