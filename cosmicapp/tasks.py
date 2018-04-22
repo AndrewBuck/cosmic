@@ -2623,6 +2623,14 @@ def parseHeaders(imageId):
                 #TODO: Try to look up the object in the various catalogs we have in the database.
                 pass
 
+        # Set "known unknown" tags on fields that should be set for all images, but
+        # haven't been read in from the header in the file.
+        knownUnknownKeys = [ 'imageType', 'filter', 'exposureTime' ]
+        for key in knownUnknownKeys:
+            imageProperty = image.getImageProperty(key)
+            if imageProperty is None:
+                image.addImageProperty(key, 'unknown');
+
     return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 
 @shared_task
