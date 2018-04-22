@@ -7,3 +7,5 @@
 *_thumb_medium-*.png
 *_thumb_large-*.png
 histogramData_*_*.gnuplot.svg
+rowMeanData_*_*.gnuplot.svg
+colMeanData_*_*.gnuplot.svg
