@@ -8,7 +8,7 @@ from django.db.models import Count
 
 register = template.Library()
 
-from cosmicapp.models import *
+from cosmicapp import models
 
 @register.filter
 def doubleEscape(arg1, arg2):
@@ -139,12 +139,12 @@ def displayComment(context, comment, prefix=None, postfix=None):
     tempDict['comment'] = comment
     tempDict['prefix'] = prefix
     tempDict['postfix'] = postfix
-    tempDict['previousMods'] = CommentModeration.objects.filter(user=context['user'], comment=comment)
-    tempDict['previousFlags'] = CommentFlag.objects.filter(user=context['user'], comment=comment)
-    tempDict['previousFlagsCounts'] = CommentFlag.objects.filter(comment=comment)\
+    tempDict['previousMods'] = models.CommentModeration.objects.filter(user=context['user'], comment=comment)
+    tempDict['previousFlags'] = models.CommentFlag.objects.filter(user=context['user'], comment=comment)
+    tempDict['previousFlagsCounts'] = models.CommentFlag.objects.filter(comment=comment)\
         .values('flagValue').annotate(count=Count('id'))
-    tempDict['previousResponses'] = CommentNeedsResponse.objects.filter(user=context['user'], comment=comment)
-    tempDict['previousResponsesCounts'] = CommentNeedsResponse.objects.filter(comment=comment)\
+    tempDict['previousResponses'] = models.CommentNeedsResponse.objects.filter(user=context['user'], comment=comment)
+    tempDict['previousResponsesCounts'] = models.CommentNeedsResponse.objects.filter(comment=comment)\
         .values('responseValue').annotate(count=Count('id'))
     return tempDict
 

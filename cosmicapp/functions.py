@@ -27,9 +27,9 @@ def getLocationForIp(ip):
     integerIp = (16777216*o1) + (65536*o2) + (256*o3 ) + o4
 
     try:
-        result = GeoLiteBlock.objects.get(startIp__lte=integerIp, endIp__gte=integerIp)
+        result = models.GeoLiteBlock.objects.get(startIp__lte=integerIp, endIp__gte=integerIp)
         return (result.location.lat, result.location.lon)
-    except GeoLiteBlock.DoesNotExist:
+    except models.GeoLiteBlock.DoesNotExist:
         return (0, 0)
 
 def getAsteroidsAroundGeometry(geometry, bufferSize, targetTime, limitingMag, limit):
@@ -50,7 +50,7 @@ def getAsteroidsAroundGeometry(geometry, bufferSize, targetTime, limitingMag, li
 
     # Start by performing a query which returns all asteroids that pass within the
     # bufferDistance around the targetTime.
-    asteroidsApprox = AstorbEphemeris.objects.filter(
+    asteroidsApprox = models.AstorbEphemeris.objects.filter(
         geometry__dwithin=(geometry, largeBufferSize),
         startTime__lte=targetTime,
         endTime__gte=targetTime,
@@ -95,14 +95,14 @@ def formulateObservingPlan(user, observatory, targets, includeOtherTargets, star
         mag = 0.0
         defaultSelected = True
 
-        if isinstance(target, Bookmark):
+        if isinstance(target, models.Bookmark):
             d['divID'] = target.getObjectTypeString + '_' + str(target.object_id)
             d['type'] = target.getObjectTypeCommonName
             d['typeInternal'] = target.getObjectTypeString
             d['id'] = str(target.object_id)
             d['identifier'] = target.content_object.getDisplayName
 
-            if isinstance(target.content_object, ScorableObject):
+            if isinstance(target.content_object, models.ScorableObject):
                 peakScoreTuple = target.content_object.getPeakScoreForInterval(startTime, endTime, user, observatory)
                 d['peakScore'] = round(peakScoreTuple[0], 2)
                 d['peakScoreTime'] = str(peakScoreTuple[1])
@@ -118,7 +118,7 @@ def formulateObservingPlan(user, observatory, targets, includeOtherTargets, star
                 d['peakScore'] = 'None'
                 d['peakScoreTime'] = str(startTime)
 
-            if isinstance(target.content_object, SkyObject):
+            if isinstance(target.content_object, models.SkyObject):
                 if d['peakScore'] != 'None':
                     ra, dec = target.content_object.getSkyCoords(peakScoreTuple[1])
                     mag = target.content_object.getMag(peakScoreTuple[1])
@@ -251,7 +251,7 @@ def formulateObservingPlan(user, observatory, targets, includeOtherTargets, star
                 observation['startTime'] = str(i1['startTimeDatetime'] + i1ObservingTime + minTimeBetweenTimedelta)
                 observation['startTimeDatetime'] = dateparser.parse(observation['startTime'])
 
-                if isinstance(target.content_object, ScorableObject):
+                if isinstance(target.content_object, models.ScorableObject):
                     observation['score'] = observation['target'].content_object.getScoreForTime(observation['startTimeDatetime'], user, observatory)
 
                 observingPlan.append(observation)
@@ -409,4 +409,196 @@ def createTasksForNewImage(fileRecord, user):
         piHeaders.save()
         piHeaders.addArguments([imageRecord.pk])
         piHeaders.prerequisites.add(piImagestats)
+
+def computeSingleEphemeris(asteroid, ephemTime):
+    ephemTimeObject = ephem.Date(ephemTime)
+
+    body = ephem.EllipticalBody()
+
+    body._inc = asteroid.inclination
+    body._Om = asteroid.lonAscendingNode
+    body._om = asteroid.argPerihelion
+    body._a = asteroid.semiMajorAxis
+    body._M = asteroid.meanAnomaly
+    body._epoch_M = asteroid.epoch
+    body._epoch = asteroid.epoch
+    body._e = asteroid.eccentricity
+    body._H = asteroid.absMag
+    body._G = asteroid.slopeParam
+
+    #TODO: The computed RA/DEC are off slightly, fix this.  I think it is due the +0.5 day issue in the epoch time in the import script.
+    body.compute(ephemTimeObject)
+
+    return body
+
+def computeSingleEphemerisRange(asteroid, ephemTimeStart, ephemTimeEnd, tolerance, timeTolerance, startEphemeris, endEphemeris):
+    if startEphemeris == None and endEphemeris == None:
+        firstCall = True
+    else:
+        firstCall = False
+
+    ephemerideList = []
+
+    if startEphemeris == None:
+        startEphemeris = computeSingleEphemeris(asteroid, ephemTimeStart)
+
+    if endEphemeris == None:
+        endEphemeris = computeSingleEphemeris(asteroid, ephemTimeEnd)
+
+    if firstCall:
+        ephemerideList.append( (ephemTimeStart, startEphemeris) )
+
+    positionDelta = (180/math.pi)*ephem.separation(startEphemeris, endEphemeris)
+    if positionDelta > tolerance:
+        steps = math.ceil(positionDelta/tolerance)
+        timeDelta = (ephemTimeEnd - ephemTimeStart) / steps
+
+        if timeDelta > timeTolerance:
+            timeDelta = timeTolerance
+            steps = math.ceil((ephemTimeEnd - ephemTimeStart) / timeDelta)
+
+        s = startEphemeris
+        for i in range(steps-1):
+            ephemTimeMid = ephemTimeStart + timeDelta
+            tempList = computeSingleEphemerisRange(asteroid, ephemTimeStart, ephemTimeMid, tolerance, timeTolerance, s, None)
+
+            #TODO: Add a check here and perform a linear interpolation between the s and m ephemeride positions.  If
+            # the interpolated position differs by more than some smaller tolerance, then compute an extra step in the
+            # middle.  This should mostly catch the special case where the asteroid undergoes retrograde motion and
+            # moves back to nearly the same spot, even though it was quite a bit farther away in between those two
+            # points.  This will not be a perfect solution but should be so close to perfect as to not matter.
+
+            ephemerideList.extend(tempList)
+            ephemTimeStart = ephemTimeMid
+            s = tempList[-1][1]
+
+    ephemerideList.append( (ephemTimeEnd, endEphemeris) )
+
+    return ephemerideList
+
+def computeAsteroidEphemerides(ephemTimeStart, ephemTimeEnd, clearFirst):
+    tolerance = models.CosmicVariable.getVariable('asteroidEphemerideTolerance')
+    timeTolerance = timedelta(days=models.CosmicVariable.getVariable('asteroidEphemerideTimeTolerance'))
+    maxAngularDistance = models.CosmicVariable.getVariable('asteroidEphemerideMaxAngularDistance')
+
+    def writeAstorbEphemerisToDB(astorbRecord, startTime, endTime, dimMag, brightMag, geometry):
+        #print("saving " + str(startTime) + "       " + str(endTime) + "     " + geometry)
+        record = models.AstorbEphemeris(
+            astorbRecord = asteroid,
+            startTime = startTime,
+            endTime = endTime,
+            dimMag = dimMag,
+            brightMag = brightMag,
+            geometry = geometry
+            )
+
+        record.save()
+
+    offset = 0
+    pagesize = 25000
+
+    numAsteroids = models.AstorbRecord.objects.count()
+    print('Num asteroids to compute: {}'.format(numAsteroids))
+    sys.stdout.flush()
+
+    with transaction.atomic():
+        if clearFirst:
+            models.AstorbEphemeris.objects.all().delete()
+
+        while offset < numAsteroids:
+            asteroids = models.AstorbRecord.objects.all()[offset : offset+pagesize]
+
+            for asteroid in asteroids:
+                #TODO: Add a check to see if there is already an ephemeris calculated near the start/end time and if so
+                # pass it along to this function (remember to change the time to match the ephemeris we are passing).
+                ephemerideList = computeSingleEphemerisRange(asteroid, ephemTimeStart, ephemTimeEnd, tolerance, timeTolerance, None, None)
+
+                startingElement = ephemerideList[0]
+                previousElement = ephemerideList[0]
+                brightMag = startingElement[1].mag
+                dimMag = startingElement[1].mag
+                geometryString = 'LINESTRING(' + str(startingElement[1].ra*180/math.pi) + " " + str(startingElement[1].dec*180/math.pi)
+                angularDistance = 0.0
+                resultsWritten = False
+                for element in ephemerideList[1:]:
+                    resultsWritten = False
+                    #print(element[0], element[1].ra*180/math.pi, element[1].dec*180/math.pi, element[1].mag)
+                    if element[1].mag < brightMag:
+                        brightMag = element[1].mag
+
+                    if element[1].mag > dimMag:
+                        dimMag = element[1].mag
+
+                    # Check to see if the asteroid crosses the meridian
+                    dRA = element[1].ra - previousElement[1].ra
+                    dDec = element[1].dec - previousElement[1].dec
+                    meridianCrossDistance = (180/math.pi)*math.sqrt(dRA*dRA + dDec*dDec)
+                    if meridianCrossDistance < 180:    # Does not cross the meridian, handle normally.
+                        meridianCross = False
+                        geometryString += "," + str(element[1].ra*180/math.pi) + " " + str(element[1].dec*180/math.pi)
+                    else:    # Does cross the meridian, end the line 1 segment early and start a new segment
+                        meridianCross = True
+
+                        # Check to see which direction we are crossing the meridian in and set up variables for later use.
+                        if element[1].ra > math.pi and previousElement[1].ra < math.pi:
+                            highRAElement = element
+                            lowRAElement = previousElement
+                            firstEdgeRA = 0
+                            secondEdgeRA = 360
+                        elif element[1].ra < math.pi and previousElement[1].ra > math.pi:
+                            highRAElement = previousElement
+                            lowRAElement = element
+                            firstEdgeRA = 360
+                            secondEdgeRA = 0
+                        else:
+                            print("ERROR: Got confused in meridian cross of asteroid.")
+                            print("asteroid:", asteroid.number, "\t", asteroid.name, "\telement: ",
+                                element[1].ra*(180/math.pi), element[1].dec*(180/math.pi),
+                                "\tprev element: ", previousElement[1].ra*(180/math.pi), previousElement[1].dec*(180/math.pi))
+
+                        # Calculate the edgeDec which is the declination at which the line segment crosses the
+                        # meridian.  We do this by simple linear interpolation.
+                        deltaRA = (180/math.pi)*(lowRAElement[1].ra + (2*math.pi-highRAElement[1].ra))
+                        deltaDec =  (180/math.pi)*(lowRAElement[1].dec - highRAElement[1].dec)
+                        deltaRAToEdge = (180/math.pi)*((2*math.pi-highRAElement[1].ra))
+                        edgeDec = highRAElement[1].dec*(180/math.pi) + deltaDec*(deltaRAToEdge/deltaRA)
+
+                        geometryString += "," + str(firstEdgeRA) + " " + str(edgeDec)
+
+                    # TODO: Consider adding a constraint that dimMag-brightMag must be less than some value to handle highly
+                    # eccentric objects whose brightness might change rapidly as it moves radially inward.  It also
+                    # would handle objects passing very close to the earth as well.  Not sure if this would make sense or not.
+                    # The only code change required to implement this is adding an 'or' statement to the 'if' statement below.
+                    angularDistance += (180/math.pi)*ephem.separation(previousElement[1], element[1])
+                    if angularDistance > maxAngularDistance or meridianCross:
+                        geometryString += ')'
+
+                        #TODO: When there is a meridian cross the start and end times of the two line segments are
+                        # slightly different than what is recorded.  We can probably just ignore this but there may be
+                        # some minor issues with doing so.
+                        writeAstorbEphemerisToDB(asteroid, startingElement[0], element[0], dimMag, brightMag, geometryString)
+                        startingElement = element
+                        brightMag = startingElement[1].mag
+                        dimMag = startingElement[1].mag
+                        angularDistance = 0.0
+                        resultsWritten = True
+
+                        if meridianCross:
+                            geometryString = 'LINESTRING(' + str(secondEdgeRA) + " " + str(edgeDec) + ","
+                        else:
+                            geometryString = 'LINESTRING('
+
+                        geometryString += str(startingElement[1].ra*180/math.pi) + " " + str(startingElement[1].dec*180/math.pi)
+
+                    previousElement = element
+
+                if not resultsWritten:
+                    geometryString += ")"
+                    writeAstorbEphemerisToDB(asteroid, startingElement[0], element[0], dimMag, brightMag, geometryString)
+
+            offset += pagesize
+            print('Processed {} asteroids - {}% complete.'.format(offset, round(100*offset/numAsteroids,0)))
+            sys.stdout.flush()
+
+    return True
 
