@@ -168,6 +168,10 @@ NON_PROPERTY_KEYS = [
     'fits:wat0_001', 'fits:wat1_001', 'fits:wat2_001', 'fits:wat3_001',
     'fits:ltm1_1', 'fits:ltm2_2', 'fits:ltm3_3',
     'fits:ltv1', 'fits:ltv2', 'fits:ltv3',
-    'fits:waxmap01'
+    'fits:waxmap01',
+    'fits:tr1_0', 'fits:tr1_1', 'fits:tr1_2', 'fits:tr1_3', 'fits:tr1_4', 'fits:tr1_5', 'fits:tr1_6', 'fits:tr1_7',
+    'fits:tr1_8', 'fits:tr1_9', 'fits:tr1_10', 'fits:tr1_11', 'fits:tr1_12', 'fits:tr1_13', 'fits:tr1_14',
+    'fits:tr2_0', 'fits:tr2_1', 'fits:tr2_2', 'fits:tr2_3', 'fits:tr2_4', 'fits:tr2_5', 'fits:tr2_6', 'fits:tr2_7',
+    'fits:tr2_8', 'fits:tr2_9', 'fits:tr2_10', 'fits:tr2_11', 'fits:tr2_12', 'fits:tr2_13', 'fits:tr2_14'
     ]
 

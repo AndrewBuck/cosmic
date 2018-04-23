@@ -559,6 +559,7 @@ class Image(models.Model, SkyObject, BookmarkableItem):
             try:
                 imageProperty = ImageProperty.objects.get(image=self, key=key)
                 imageProperty.value = value
+                imageProperty.header = header
             except:
                 createNew = True
 

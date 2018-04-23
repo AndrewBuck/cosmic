@@ -1723,6 +1723,7 @@ def daofind(filename):
         data = data[0]
 
     #TODO: Set the fwhm from a variable if this is the first run, or from the previous run average if this is the second run of this task.
+    #TODO: Make use of the 'headerMeanFWHM' image property if set.
     daofind = DAOStarFinder(fwhm = 2.5, threshold = detectThresholdMultiplier*channelInfos[0].bgStdDev)
     sources = daofind(data - channelInfos[0].bgMedian)
 
@@ -1782,6 +1783,7 @@ def starfind(filename):
         data = data[0]
 
     #TODO: Set the fwhm from a variable if this is the first run, or from the previous run average if this is the second run of this task.
+    #TODO: Make use of the 'headerMeanFWHM' image property if set.
     starfinder = IRAFStarFinder(fwhm = 2.5, threshold = detectThresholdMultiplier*channelInfos[0].bgStdDev)
     sources = starfinder(data - channelInfos[0].bgMedian)
 
@@ -2265,6 +2267,14 @@ def parseHeaders(imageId):
                 key = 'headerCCDMean'
                 value = header.value.split()[0]
 
+            elif header.key == 'fits:fwhm':
+                key = 'headerMeanFWHM'
+                value = header.value.split()[0]
+
+            elif header.key == 'fits:zmag':
+                key = 'magnitudeZeroPoint'
+                value = header.value.split()[0]
+
             elif header.key == 'fits:bzero':
                 key = 'bzero'
                 value = header.value.split()[0]
@@ -2305,12 +2315,16 @@ def parseHeaders(imageId):
                 key = 'photometryFilterSystem'
                 value = header.value.split('/')[0].strip().strip("'")
 
-            elif header.key == 'fits:jd':
+            elif header.key in ['fits:jd', 'fits:jd-obs']:
                 key = 'julianDate'
                 value = header.value.split()[0]
 
-            elif header.key == 'fits:jd-helio':
+            elif header.key in ['fits:jd-helio', 'fits:hjd-obs']:
                 key = 'julianDateHeliocentric'
+                value = header.value.split()[0]
+
+            elif header.key == 'fits:bjd-obs':
+                key = 'barycentricJulianDate'
                 value = header.value.split()[0]
 
             elif header.key in ['fits:date-avg']:
@@ -2354,6 +2368,10 @@ def parseHeaders(imageId):
 
             elif header.key in ['fits:traktime']:
                 key = 'autoguiderExposureTime'
+                value = header.value.split()[0]
+
+            elif header.key in ['fits:darktime']:
+                key = 'totalDarkTime'
                 value = header.value.split()[0]
 
             elif header.key == 'fits:telescop':
@@ -2449,6 +2467,10 @@ def parseHeaders(imageId):
             elif header.key == 'fits:egain':
                 key = 'ePerADU'
                 value = header.value.split()[0]
+
+            elif header.key == 'fits:rdnoise':
+                key = 'readNoise'
+                value = header.value
 
             elif header.key in ['fits:ccd-temp', 'fits:temperat']:
                 key = 'ccdTemp'
@@ -2583,7 +2605,8 @@ def parseHeaders(imageId):
                 value = header.value.split('/')[0].strip().strip("'")
 
             #TODO: Check if there is a declination component for hour angle or if it just uses regular declination.
-            elif header.key in ['fits:objctha']:
+            #TODO: The documentation for 'fits:ha' says it is the 'telescope hour angle', need to confirm if this is the same as 'fits:objctha'.
+            elif header.key in ['fits:objctha', 'fits:ha']:
                 key = 'objectHA'
                 value = header.value.split('/')[0].strip().strip("'").lower()
 
@@ -2600,11 +2623,11 @@ def parseHeaders(imageId):
                 key = 'equinox'
                 value = header.value.split()[0]
 
-            elif header.key in ['fits:objctalt']:
+            elif header.key in ['fits:objctalt', 'fits:altitude']:
                 key = 'objectAlt'
                 value = header.value.split('/')[0].strip().strip("'").lower()
 
-            elif header.key in ['fits:objctaz']:
+            elif header.key in ['fits:objctaz', 'fits:azimuth']:
                 key = 'objectAz'
                 value = header.value.split('/')[0].strip().strip("'").lower()
 
@@ -2663,6 +2686,11 @@ def parseHeaders(imageId):
 
             if key != "" and value != "":
                 image.addImageProperty(key, value, False, header)
+
+        #TODO: Also need to read all the image properties like flatCorrected, etc, and set imageIsCalibrated accordingly.
+        for result in image.getImageProperty('history', True):
+            if result.value.lower() == 'calibrated':
+                image.addImageProperty('imageIsCalibrated', 'true', True, result.header)
 
         # Handle data split across multiple header fields like dateObs and timeObs.
         dateObsResult = models.ImageProperty.objects.filter(image=image, key='dateObs').first()
@@ -2723,6 +2751,7 @@ def parseHeaders(imageId):
         knownUnknownKeys = [ 'imageType', 'filter', 'exposureTime', 'flatCorrected',
             'darkCorrected', 'biasCorrected', 'width', 'height', 'binningX', 'binningY',
             'imageIsStacked' ]
+
         for key in knownUnknownKeys:
             imageProperty = image.getImageProperty(key)
             if imageProperty is None:
