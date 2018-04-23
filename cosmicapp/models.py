@@ -445,6 +445,8 @@ class Image(models.Model, SkyObject, BookmarkableItem):
 
     def getSkyCoords(self, dateTime):
         ps = self.getBestPlateSolution()
+        if ps is None:
+            return (None, None)
         return (ps.centerRA, ps.centerDec)
 
     #TODO: Include image channel in the thumbnail selection.  Make this a pipe char separated list to allow multiple

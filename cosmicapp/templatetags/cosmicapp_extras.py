@@ -30,11 +30,17 @@ def concat(arg1, arg2):
 @register.filter
 def formatRA(ra):
     """Format the ra given in degrees into hours, minutes, seconds."""
+    if ra is None:
+        return None
+
     return formatRA_rad((math.pi/180)*ra)
 
 @register.filter
 def formatDec(dec):
     """Format the dec given in degrees into degrees, minutes, seconds."""
+    if dec is None:
+        return None
+
     return formatDec_rad((math.pi/180)*dec)
 
 @register.filter
