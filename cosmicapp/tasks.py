@@ -2874,6 +2874,7 @@ def imageCombine(argList, processInputId):
 
     fileRecord = models.UploadedFileRecord(
         uploadSession = None,
+        user = processInput.requestor,
         createdByProcess = processInput,
         unpackedFromFile = None,
         originalFileName = desiredFilename,

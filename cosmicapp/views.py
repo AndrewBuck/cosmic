@@ -119,6 +119,7 @@ def upload(request):
 
             record = UploadedFileRecord(
                 uploadSession = uploadSession,
+                user = request.user,
                 unpackedFromFile = None,
                 originalFileName = myfile.name,
                 onDiskFileName = filename,
@@ -852,7 +853,7 @@ def query(request):
             for valueString in request.GET.getlist('user'):
                 values = cleanupQueryValues(valueString, 'string')
                 if len(values) > 0:
-                    results = results.filter(fileRecord__uploadSession__uploadingUser__username__in=values)
+                    results = results.filter(fileRecord__user__username__in=values)
 
         if 'imageProperty' in request.GET:
             for valueString in request.GET.getlist('imageProperty'):
@@ -1426,7 +1427,7 @@ def getQuestionImage(request, id):
 
     if not questionFound:
         #TODO: Make this query a bit better to only find images needing questions answered and also don't just stop at the highest number.
-        nextImage = Image.objects.filter(pk__gt=id, fileRecord__uploadSession__uploadingUser=request.user.pk)[0:1]
+        nextImage = Image.objects.filter(pk__gt=id, fileRecord__user=request.user.pk)[0:1]
         if len(nextImage) > 0:
             nextImageDict = {'id': str(nextImage[0].pk)}
             etree.SubElement(root, "NextImage", nextImageDict)
