@@ -2500,7 +2500,7 @@ def parseHeaders(imageId):
                 key = 'ccdProcessing'
                 value = header.value.split('/')[0].strip().strip("'")
 
-            elif header.key in ['fits:zerocor']:
+            elif header.key in ['fits:zerocor', 'fits:biassub']:
                 key = 'biasCorrected'
                 value = header.value.split('/')[0].strip().strip("'")
 
@@ -2511,6 +2511,10 @@ def parseHeaders(imageId):
             elif header.key in ['fits:flatted', 'fits:flatcor']:
                 key = 'flatCorrected'
                 value = header.value.split('/')[0].strip().strip("'")
+
+            elif header.key in ['fits:pltsolvd']:
+                key = 'plateSolvedBeforeUpload'
+                value = header.value
 
             elif header.key in ['fits:ccdsec']:
                 key = 'ccdDataSection'
@@ -2538,6 +2542,30 @@ def parseHeaders(imageId):
                 key = 'observerLon'
                 value = header.value.split('/')[0].strip().strip("'").lower()
 
+            elif header.key in ['fits:winddir']:
+                key = 'weatherWindDirection'
+                value = header.value
+
+            elif header.key in ['fits:skytemp']:
+                key = 'weatherSkyTemperature'
+                value = header.value
+
+            elif header.key in ['fits:ambtemp']:
+                key = 'weatherAmbientTemperature'
+                value = header.value
+
+            elif header.key in ['fits:humidity']:
+                key = 'weatherHumidity'
+                value = header.value
+
+            elif header.key in ['fits:windspd']:
+                key = 'weatherWindSpeed'
+                value = header.value
+
+            elif header.key in ['fits:dewpoint']:
+                key = 'weatherDewPoint'
+                value = header.value
+
             elif header.key in ['fits:alt-obs']:
                 key = 'observerAlt'
                 value = header.value.split('/')[0].strip().strip("'").lower()
@@ -2548,7 +2576,7 @@ def parseHeaders(imageId):
 
             elif header.key in ['fits:flipstat']:
                 key = 'pierFlipState'
-                value = header.value.split('/')[0].strip().strip("'").lower()
+                value = header.value
 
             elif header.key in ['fits:object']:
                 key = 'object'
