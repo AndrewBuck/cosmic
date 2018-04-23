@@ -23,6 +23,13 @@ Run for user: <a href="/user/{{processOutput.processInput.requestor}}">{{process
 {% endfor %}
 
 <br>
+<br> Process Prerequisites:
+
+{% for prereq in processOutput.processInput.prerequisites.all %}
+    <br>&emsp;<a href="/processoutput/{{prereq.processOutput.all.0.pk}}">{{prereq.process}}</a>
+{% endfor %}
+
+<br>
 <br>
 <table>
 <tr> <td>Process submitted:</td> <td>{{processOutput.processInput.submittedDateTime}}</td> </tr>
