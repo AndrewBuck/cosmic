@@ -102,7 +102,7 @@ def constructProcessOutput(outputText, errorText, executionTime=None):
     return processOutput
 
 @shared_task
-def imagestats(filename):
+def imagestats(filename, processInputId):
     outputText = ""
     errorText = ""
     taskStartTime = time.time()
@@ -1247,7 +1247,7 @@ def depricatedHistogram(frame) :
 
 
 @shared_task
-def generateThumbnails(filename):
+def generateThumbnails(filename, processInputId):
     outputText = ""
     errorText = ""
     taskStartTime = time.time()
@@ -1475,7 +1475,7 @@ def checkIfCalibrationImage(image, propertyKeyToSet, propertyValueToSet):
         return (False, outputText)
 
 @shared_task
-def sextractor(filename):
+def sextractor(filename, processInputId):
     taskStartTime = time.time()
 
     # Get the image record
@@ -1623,7 +1623,7 @@ def sextractor(filename):
     return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 
 @shared_task
-def image2xy(filename):
+def image2xy(filename, processInputId):
     outputText = ""
     errorText = ""
     taskStartTime = time.time()
@@ -1698,7 +1698,7 @@ def image2xy(filename):
     return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 
 @shared_task
-def daofind(filename):
+def daofind(filename, processInputId):
     taskStartTime = time.time()
 
     #TODO: daofind can only handle .fit files.  Should autoconvert the file to .fit if necessary before running.
@@ -1758,7 +1758,7 @@ def daofind(filename):
     return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 
 @shared_task
-def starfind(filename):
+def starfind(filename, processInputId):
     taskStartTime = time.time()
 
     #TODO: starfind can only handle .fit files.  Should autoconvert the file to .fit if necessary before running.
@@ -1819,7 +1819,7 @@ def starfind(filename):
     return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 
 @shared_task
-def starmatch(filename):
+def starmatch(filename, processInputId):
     outputText = ""
     errorText = ""
     taskStartTime = time.time()
@@ -2013,7 +2013,7 @@ def starmatch(filename):
     return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 
 @shared_task
-def astrometryNet(filename):
+def astrometryNet(filename, processInputId):
     outputText = ""
     errorText = ""
     taskStartTime = time.time()
@@ -2170,7 +2170,7 @@ def astrometryNet(filename):
     return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 
 @shared_task
-def parseHeaders(imageId):
+def parseHeaders(imageId, processInputId):
     outputText = ""
     errorText = ""
     taskStartTime = time.time()
@@ -2760,7 +2760,7 @@ def parseHeaders(imageId):
     return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 
 @shared_task
-def flagSources(imageIdString):
+def flagSources(imageIdString, processInputId):
     outputText = ""
     errorText = ""
     taskStartTime = time.time()

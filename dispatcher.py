@@ -71,43 +71,43 @@ while not quit:
 
     if pi.process == 'imagestats':
         arg = pi.arguments.all()[0].arg
-        celeryResult = imagestats.delay(arg)
+        celeryResult = imagestats.delay(arg, pi.pk)
 
     elif pi.process == 'generateThumbnails':
         arg = pi.arguments.all()[0].arg
-        celeryResult = generateThumbnails.delay(arg)
+        celeryResult = generateThumbnails.delay(arg, pi.pk)
 
     elif pi.process == 'sextractor':
         arg = pi.arguments.all()[0].arg
-        celeryResult = sextractor.delay(arg)
+        celeryResult = sextractor.delay(arg, pi.pk)
 
     elif pi.process == 'image2xy':
         arg = pi.arguments.all()[0].arg
-        celeryResult = image2xy.delay(arg)
+        celeryResult = image2xy.delay(arg, pi.pk)
 
     elif pi.process == 'daofind':
         arg = pi.arguments.all()[0].arg
-        celeryResult = daofind.delay(arg)
+        celeryResult = daofind.delay(arg, pi.pk)
 
     elif pi.process == 'starfind':
         arg = pi.arguments.all()[0].arg
-        celeryResult = starfind.delay(arg)
+        celeryResult = starfind.delay(arg, pi.pk)
 
     elif pi.process == 'starmatch':
         arg = pi.arguments.all()[0].arg
-        celeryResult = starmatch.delay(arg)
+        celeryResult = starmatch.delay(arg, pi.pk)
 
     elif pi.process == 'astrometryNet':
         arg = pi.arguments.all()[0].arg
-        celeryResult = astrometryNet.delay(arg)
+        celeryResult = astrometryNet.delay(arg, pi.pk)
 
     elif pi.process == 'parseHeaders':
         arg = pi.arguments.all()[0].arg
-        celeryResult = parseHeaders.delay(arg)
+        celeryResult = parseHeaders.delay(arg, pi.pk)
 
     elif pi.process == 'flagSources':
         arg = pi.arguments.all()[0].arg
-        celeryResult = flagSources.delay(arg)
+        celeryResult = flagSources.delay(arg, pi.pk)
 
     else:
         print("Skipping unknown task type: " + pi.process)
