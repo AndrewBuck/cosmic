@@ -2107,6 +2107,46 @@ def saveCommentNeedsResponse(request):
 
 @login_required
 @require_http_methods(['POST'])
+def combineImageIds(request):
+    responseDict = {}
+    combineType = request.POST.get('combineType', '').lower()
+    idList = json.loads(request.POST.get('idList', ''))
+
+    if combineType not in ['bias', 'dark', 'flat']:
+        responseDict['errorMessage'] = 'Error: unknown combineType "{}"'.format(combineType)
+        return HttpResponse(json.dumps(responseDict), status=400)
+
+    images = Image.objects.filter(pk__in=idList)
+    if len(images) < 2:
+        responseDict['errorMessage'] = 'Error: only found {} images to combine, need at least 2.'.format(len(images))
+        return HttpResponse(json.dumps(responseDict), status=400)
+
+    totalSize = 0
+    filteredIdList = []
+    for image in images:
+        print('image pk is ', image.pk)
+        totalSize += image.fileRecord.uploadSize
+        filteredIdList.append(image.pk)
+
+    with transaction.atomic():
+        piCombine = ProcessInput(
+            process = "imageCombine",
+            requestor = User.objects.get(pk=request.user.pk),
+            priority = ProcessPriority.getPriorityForProcess("imageCombine", "interactive"),
+            estCostCPU = totalSize / 1e6,
+            estCostBandwidth = 0,
+            estCostStorage = totalSize / len(filteredIdList),
+            estCostIO = totalSize
+            )
+
+        piCombine.save()
+        piCombine.addArguments(filteredIdList)
+
+    responseDict['message'] = 'Image combine task for {} images added to process queue.  Your combined image will be available shortly.'.format(len(images))
+    return HttpResponse(json.dumps(responseDict), status=200)
+
+@login_required
+@require_http_methods(['POST'])
 def deleteInstrumentConfiguration(request):
     responseDict = {}
     id = int(request.POST.get('id', '-1000'))

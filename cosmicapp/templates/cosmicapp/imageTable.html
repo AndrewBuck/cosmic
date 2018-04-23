@@ -263,7 +263,7 @@ function ImageGallery(galleryName, paramString, displayType, includeLinks, image
 
             if(this.displayType == 'gallery')
             {
-                html += '<div class="responsive ' + this.name + '" id="' + imageId + '" style="height: 400px;">'
+                html += '<div class="responsive ' + this.name + '" id="gallery_' + this.name + '_image_' + imageId + '" style="height: 400px; padding: 4px;">'
                 html += '<div class="gallery">'
 
                 if(this.includeLinks)
@@ -274,7 +274,7 @@ function ImageGallery(galleryName, paramString, displayType, includeLinks, image
                 }
                 else
                 {
-                    html += '<img onclick="' + this.imageOnclickFunction + '(' + imageId + ')" src="' + res['thumbUrl'+this.thumbnailSize] + '">';
+                    html += '<img onclick="' + this.imageOnclickFunction + '(' + imageId + ',\'' + this.name + '\')" src="' + res['thumbUrl'+this.thumbnailSize] + '">';
                 }
 
                 html += '<div class="desc ' + this.name + '">'
@@ -287,6 +287,7 @@ function ImageGallery(galleryName, paramString, displayType, includeLinks, image
             }
             else if(this.displayType == 'table')
             {
+                html += '<div class="responsive ' + this.name + '" id="gallery_' + this.name + '_image_' + imageId + '" style="height: 400px; padding: 4px;">'
                 html += '<table class="responsive ' + this.name + '"cellpadding=3px border=1px style="border-collapse: collapse; height: 11em;">';
                 html += '<tr>';
                 html += '<td> <a href="/image/' + res.id + '"><img src="' + res.thumbUrlSmall + '"><br>Image ' + res.id + '</a> </td>';
@@ -295,6 +296,7 @@ function ImageGallery(galleryName, paramString, displayType, includeLinks, image
                 html += res.numPlateSolutions + ' Plate Solutions </font></td>';
                 html += '</tr>';
                 html += '</table>';
+                html += '</div>';
             }
 
             this.offset += 1;
@@ -388,6 +390,28 @@ function ImageGallery(galleryName, paramString, displayType, includeLinks, image
         $('#' + this.name + '_saveQueryLink').show();
         $('#' + this.name + '_saveQueryDiv').hide();
     };
+
+    this.getImageById = function(id)
+    {
+        var i;
+        for(i = 0; i < this.images.length; i++)
+        {
+            if(this.images[i].id == id)
+                return this.images[i];
+        }
+
+        return undefined;
+    };
+
+    this.selectImage = function(id)
+    {
+        $('#gallery_' + this.name + '_image_' + id).css('background', '#4e4');
+    }
+
+    this.unselectImage = function(id)
+    {
+        $('#gallery_' + this.name + '_image_' + id).css('background', 'none');
+    }
 };
 
 $(document).ready(function()
@@ -400,6 +424,7 @@ $(document).ready(function()
 </script>
 
 <div id=imageGalleryQueryDiv>
+    <div id="gallery_{{galleryName}}_top_div"></div>
     <p>
     Query Parameters:
     <span id={{galleryName}}_saveQueryLink>

@@ -390,11 +390,12 @@ class UploadedFileRecord(models.Model):
     multiple uploads of the same file, etc).
     """
     uploadSession = models.ForeignKey(UploadSession, db_index=True, null=True, on_delete=models.CASCADE, related_name='uploadedFileRecords')
+    createdByProcess = models.ForeignKey('ProcessInput', db_index=True, null=True, on_delete=models.CASCADE, related_name='uploadedFileRecords')
     unpackedFromFile = models.ForeignKey('self', null=True, on_delete=models.CASCADE)
     originalFileName = models.CharField(db_index=True, max_length=256)
     onDiskFileName = models.CharField(db_index=True, max_length=256)
     fileSha256 = models.CharField(db_index=True, max_length=64)
-    uploadDateTime = models.DateTimeField()
+    uploadDateTime = models.DateTimeField(auto_now=True)
     uploadSize = models.IntegerField()
 
 class DownloadSession(models.Model):

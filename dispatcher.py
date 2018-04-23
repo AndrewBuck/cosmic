@@ -109,6 +109,13 @@ while not quit:
         arg = pi.arguments.all()[0].arg
         celeryResult = flagSources.delay(arg, pi.pk)
 
+    elif pi.process == 'imageCombine':
+        argList = []
+        for arg in pi.arguments.all():
+            argList.append(arg.arg)
+
+        celeryResult = imageCombine.delay(argList, pi.pk)
+
     else:
         print("Skipping unknown task type: " + pi.process)
         sys.stdout.flush()

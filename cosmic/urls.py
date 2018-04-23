@@ -76,6 +76,8 @@ urlpatterns = [
     url(r'^delete/flag/$', views.deleteFlag),
     url(r'^delete/commentNeedsResponse/$', views.deleteCommentNeedsResponse),
 
+    url(r'^process/combineImageIds/$', views.combineImageIds),
+
     url(r'^bookmark/$', views.bookmark),
 
     url(r'^calibration/$', views.calibration),

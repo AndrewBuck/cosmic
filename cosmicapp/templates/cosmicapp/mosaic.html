@@ -925,12 +925,14 @@ function onImageTableLoad()
         if(arrayIndex == -1)
         {
             addImageToDesktop(clickedId);
+            //TODO: Make this use the image gallerys .selectImage function instead.
             $(this).parent().parent().css('background', '#1040a0');
             $(hideButtonId).hide();
         }
         else
         {
             removeImageFromDesktop(clickedId);
+            //TODO: Make this use the image gallerys .unselectImage function instead.
             $(this).parent().parent().css('background', 'none');
             $(hideButtonId).show();
         }

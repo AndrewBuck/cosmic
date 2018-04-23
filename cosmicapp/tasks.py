@@ -4,6 +4,7 @@ from django.db import transaction
 from django.conf import settings
 from django.db.models import Avg, StdDev
 from django.contrib.gis.geos import GEOSGeometry
+from django.core.files.storage import FileSystemStorage
 
 import subprocess
 import json
@@ -22,16 +23,21 @@ import numpy
 import ephem
 from datetime import timedelta
 import time
+import hashlib
 
 from astropy import wcs
+from astropy import units as u
 from astropy.io import fits
 from astropy.stats import sigma_clipped_stats
 from astropy.table import Table
+from astropy.nddata import CCDData
 from photutils import make_source_mask, DAOStarFinder, IRAFStarFinder
+from ccdproc import Combiner
 from collections import Counter
 from sortedcontainers import SortedList, SortedDict, SortedListWithKey
 
 from cosmicapp import models
+from .functions import *
 
 staticDirectory = os.path.dirname(os.path.realpath(__file__)) + "/static/cosmicapp/"
 
@@ -2812,6 +2818,79 @@ def flagSources(imageIdString, processInputId):
                 source.save()
     else:
         outputText += "Image has no user submitted hot pixels in it\n"
+
+    return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
+
+@shared_task
+def imageCombine(argList, processInputId):
+    outputText = ""
+    errorText = ""
+    taskStartTime = time.time()
+
+    processInput = models.ProcessInput.objects.get(pk=processInputId)
+
+    #TODO: Change this.
+    desiredFilename = 'cosmic_combined.fit'
+    fss = FileSystemStorage()
+    outputFilename = fss.get_available_name(desiredFilename)
+
+    idList = []
+    for arg in argList:
+        try:
+            pk = int(arg)
+            idList.append(pk)
+        except ValueError:
+            errorText += "Could not parse '{}' as int, skipping argument.".format(arg)
+            return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
+
+    images = models.Image.objects.filter(pk__in=idList)
+    dataArray = []
+    for image in images:
+        outputText += "Loading image {}: {}\n".format(image.pk, image.fileRecord.originalFileName)
+        hdulist = fits.open(settings.MEDIA_ROOT + image.fileRecord.onDiskFileName)
+
+        #TODO: Do a better job than just choosing the first frame like we do now.
+        data = hdulist[0].data
+        if len(data.shape) == 3:
+            data = data[0]
+
+        dataArray.append(CCDData(data, unit=u.adu))
+
+    outputText += "\nCreating Combiner.\n"
+    combiner = Combiner(dataArray)
+
+    outputText += "\nPerforming median combine.\n"
+    combinedData = combiner.median_combine()
+    primaryHDU = fits.PrimaryHDU(combinedData)
+    combinedHDUList = fits.HDUList([primaryHDU])
+    outputText += "\nWriting image.\n"
+    combinedHDUList.writeto(settings.MEDIA_ROOT + outputFilename)
+    outputText += "Done.\n"
+
+    hashObject = hashlib.sha256()
+    with open(settings.MEDIA_ROOT + outputFilename, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hashObject.update(chunk)
+
+    fileRecord = models.UploadedFileRecord(
+        uploadSession = None,
+        createdByProcess = processInput,
+        unpackedFromFile = None,
+        originalFileName = desiredFilename,
+        onDiskFileName = outputFilename,
+        fileSha256 = hashObject.hexdigest(),
+        uploadSize = os.stat(settings.MEDIA_ROOT + outputFilename).st_size
+        )
+
+    fileRecord.save()
+
+    createTasksForNewImage(fileRecord, processInput.requestor)
+
+    #TODO: User is not saved for image since there is no upload session, need to remedy this.
+
+    #TODO: Set parentImages on the newly created image.
+
+    #TODO: Set instrument/observatory if it was set on the parent images.
 
     return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 

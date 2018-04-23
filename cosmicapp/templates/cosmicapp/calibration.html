@@ -5,29 +5,88 @@
 {% block extratitle %} - Calibration library tool {% endblock %}
 
 {% block extrahead %}
+{% include "./jquery.html" %}
 <script>
 var biasIdList = [], darkIdList = [], flatIdList = [];
 
-function handleImageClick(idList, id)
+function handleImageClick(id, galleryName)
 {
+    var html = '';
+    var i;
+    var idList;
+    var combineType;
+
+    switch(galleryName)
+    {
+        case 'biasGallery':    idList = biasIdList;    combineType = 'Bias';    break;
+        case 'darkGallery':    idList = darkIdList;    combineType = 'Dark';    break;
+        case 'flatGallery':    idList = flatIdList;    combineType = 'Flat';    break;
+
+        default:    alert('ERROR: Gallery name "' + galleryName + '" not recognised.');    return;
+    }
+
+    var gallery = window['gallery_' + galleryName];
+
     var i = idList.indexOf(id);
     if(i == -1)
+    {
+        gallery.selectImage(id);
         idList[idList.length] = id;
+    }
     else
+    {
+        gallery.unselectImage(id);
         idList.splice(i, 1);
+    }
 
-    alert(idList.length);
+    html += 'Selected ' + idList.length + ' images to combine:<br>';
+    for(i = 0; i < idList.length; i++)
+    {
+        var image = gallery.getImageById(idList[i]);
+        html += '<span style="display: inline-block; margin: .1em;">';
+        html += '';
+        html += '<img src="' + image.thumbUrlSmall + '"><br>';
+        html += '<a href="/image/' + idList[i] + '">Image ' + idList[i] + '</a> ';
+        html += '</span>';
+    }
+
+    if(idList.length >= 2)
+    {
+        html += '<br><input type=button class=button value="Combine ' + combineType + ' Images" ';
+        html += 'onclick="combineImageIds(\'' + combineType + '\',\'' + JSON.stringify(idList) + '\')">';
+    }
+
+    $('#gallery_' + galleryName + '_top_div').html(html);
 };
 
-function handleBiasImageClick(id) { alert('bias' + biasIdList.length); handleImageClick(biasIdList, id); };
-function handleDarkImageClick(id) { alert('dark' + darkIdList.length); handleImageClick(darkIdList, id); };
-function handleFlatImageClick(id) { handleImageClick(flatIdList, id); };
+function combineImageIds(combineType, idList)
+{
+    $.ajax({
+        url : "/process/combineImageIds/",
+        type : "post",
+        async: true,
+        dataType: 'json',
+        data: {
+            combineType: combineType,
+            //TODO: The square brackets are left off by stringify, not sure why.
+            idList: idList
+        },
+        success : function(response)
+        {
+            alert(response.message);
+        },
+        error : function(response)
+        {
+            var response = response.responseJSON;
+            alert(response.errorMessage);
+        }
+    });
+};
 
 </script>
 {% endblock extrahead %}
 
 {% block mainbody %}
-{% include "./jquery.html" %}
 
 <h2>Calibration library tool</h2>
 
@@ -37,21 +96,11 @@ which can then be applied to a series of science frames to produced calibrated i
 
 <h3>Bias frames</h3>
 
-{% include "./imageTable.html" with queryParams="imageProperty=imageType=bias:user="|concat:user|safe imageOnclickFunction="handleBiasImageClick" galleryName="biasGallery" includeLinks="false" thumbnailSize="Medium" %}
+{% include "./imageTable.html" with queryParams="imageProperty=imageType=bias:user="|concat:user|safe imageOnclickFunction="handleImageClick" galleryName="biasGallery" includeLinks="false" thumbnailSize="Medium" %}
 
 <h4>Master Bias frames</h4>
 
-{% include "./imageTable.html" with queryParams="imageProperty=imageType=masterBias:user="|concat:user|safe galleryName="masterBiasGallery" includeLinks="false" thumbnailSize="Medium" %}
-
-{% comment %}
-<h3>Dark frames</h3>
-
-{% with "imageProperty=imageType=dark:user="|concat:user|safe as queryParams %}
-{% include "./imageTable.html" with galleryName="darkGallery" includeLinks="false" imageOnclickFunction="handleDarkImageClick" thumbnailSize="Medium" %}
-{% endwith %}
-
-<h4>Master Dark frames</h4>
-{% endcomment %}
+{% include "./imageTable.html" with queryParams="imageProperty=imageType=masterBias:user="|concat:user|safe imageOnclickFunction="handleImageClick" galleryName="masterBiasGallery" includeLinks="false" thumbnailSize="Medium" %}
 
 {% endblock mainbody %}
 

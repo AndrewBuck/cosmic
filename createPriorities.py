@@ -118,3 +118,15 @@ priority, created = ProcessPriority.objects.get_or_create(
     priorityClass = 'interactive'
     )
 
+priority, created = ProcessPriority.objects.get_or_create(
+    name = 'imageCombine',
+    priority = 1000,
+    priorityClass = 'batch'
+    )
+
+priority, created = ProcessPriority.objects.get_or_create(
+    name = 'imageCombine',
+    priority = 100000,
+    priorityClass = 'interactive'
+    )
+
