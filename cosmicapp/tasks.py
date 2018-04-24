@@ -41,8 +41,6 @@ from .functions import *
 
 staticDirectory = os.path.dirname(os.path.realpath(__file__)) + "/static/cosmicapp/"
 
-#TODO: Find out if django has a faster method of writing many objects to the database all at once, instead of calling .save() on each one individually.
-
 def longestCommonPrefix(string1, string2):
     length = 0
     for a, b in zip(string1, string2):
@@ -241,6 +239,7 @@ def imagestats(filename, processInputId):
             if tempString != '':
                 valueArray.append(tempString)
 
+            headerFields = []
             for valueString in valueArray:
                 headerField = models.ImageHeaderField(
                     image = image,
@@ -249,9 +248,11 @@ def imagestats(filename, processInputId):
                     value = valueString
                     )
 
-                headerField.save()
+                headerFields.append(headerField)
 
                 i += 1
+
+            models.ImageHeaderField.objects.bulk_create(headerFields)
 
     outputText += "imagestats:wcs: " + filename + "\n"
     if os.path.splitext(filename)[-1].lower() in settings.SUPPORTED_IMAGE_TYPES:
@@ -1169,6 +1170,8 @@ def depricatedHistogram(frame) :
     for i in range(histogramLength):
         histCounts[i] = histPixels[i] / (1.0*binRights[i] - 1.0*binLefts[i])
 
+    histogramBins = []
+    errorText += 'histogram length is: ' + str(histogramLength)
     for i in range(histogramLength):
         histogramBin = models.ImageHistogramBin(
             image = image,
@@ -1176,8 +1179,9 @@ def depricatedHistogram(frame) :
             binCount = histCounts[i]
             )
 
-        histogramBin.save()
+        histogramBins.append(histogramBin)
 
+    models.ImageHistogramBin.objects.bulk_create(histogramBins)
 
     plotFilename = "histogramData_{}_{}.gnuplot".format(image.pk, channelIndex)
     binFilename = "histogramData_{}_{}.txt".format(image.pk, channelIndex)
@@ -1529,6 +1533,7 @@ def sextractor(filename, processInputId):
         fieldDict = {}
         with transaction.atomic():
             models.SextractorResult.objects.filter(image=image).delete()
+            sextractorResults = []
             for line in catfile:
                 # Split the line into fields (space separated) and throw out empty fields caused by multiple spaces in a
                 # row.  I.E. do a "combine consecutive delimeters" operation.
@@ -1541,7 +1546,7 @@ def sextractor(filename, processInputId):
                 #For lines that are not comments, use the fieldDict to determine what fields to read and store in the database.
                 else:
                     zPos = None   #TODO: Add image layer number if this is a data cube, just leaving null for now.
-                    record = models.SextractorResult(
+                    sextractorResult = models.SextractorResult(
                         image = image,
                         pixelX = fields[fieldDict['X_IMAGE_DBL']],
                         pixelY = fields[fieldDict['Y_IMAGE_DBL']],
@@ -1555,7 +1560,7 @@ def sextractor(filename, processInputId):
                         boxYMax = fields[fieldDict['YMAX_IMAGE']]
                         )
 
-                    record.save()
+                    sextractorResults.append(sextractorResult)
 
                     """
                     fields[fieldDict['NUMBER']]
@@ -1612,6 +1617,9 @@ def sextractor(filename, processInputId):
                     fields[fieldDict['MAGERR_POINTSOURCE']]
                     """
 
+            models.SextractorResult.objects.bulk_create(sextractorResults)
+
+            #TODO: Recode this section to calculate its own local average and standard deviation and then modify the confidence on sextractorResults array before doing the bulk_create.
             records = models.SextractorResult.objects.filter(image=image)
             meanFluxAuto = records.aggregate(Avg('fluxAuto'))['fluxAuto__avg']
             stdDevFluxAuto = records.aggregate(StdDev('fluxAuto'))['fluxAuto__stddev']
@@ -1672,6 +1680,7 @@ def image2xy(filename, processInputId):
 
     with transaction.atomic():
         models.Image2xyResult.objects.filter(image=image).delete()
+        image2xyResults = []
         for row in table:
             if row['FLUX'] < 0.1:
                 continue
@@ -1685,8 +1694,11 @@ def image2xy(filename, processInputId):
                 background = row['BACKGROUND']
                 )
 
-            result.save()
+            image2xyResults.append(result)
 
+        models.Image2xyResult.objects.bulk_create(image2xyResults)
+
+        #TODO: Recode this section to calculate its own local average and standard deviation and then modify the confidence on sextractorResults array before doing the bulk_create.
         records = models.Image2xyResult.objects.filter(image=image)
         meanFlux = records.aggregate(Avg('flux'))['flux__avg']
         stdDevFlux = records.aggregate(StdDev('flux'))['flux__stddev']
@@ -1735,6 +1747,7 @@ def daofind(filename, processInputId):
 
     with transaction.atomic():
         models.DaofindResult.objects.filter(image=image).delete()
+        daofindResults = []
         for source in sources:
             result = models.DaofindResult(
                 image = image,
@@ -1749,8 +1762,11 @@ def daofind(filename, processInputId):
                 ground = source['roundness2']
                 )
 
-            result.save()
+            daofindResults.append(result)
 
+        models.DaofindResult.objects.bulk_create(daofindResults)
+
+        #TODO: Recode this section to calculate its own local average and standard deviation and then modify the confidence on sextractorResults array before doing the bulk_create.
         records = models.DaofindResult.objects.filter(image=image)
         meanMag = records.aggregate(Avg('mag'))['mag__avg']
         stdDevMag = records.aggregate(StdDev('mag'))['mag__stddev']
@@ -1795,6 +1811,7 @@ def starfind(filename, processInputId):
 
     with transaction.atomic():
         models.StarfindResult.objects.filter(image=image).delete()
+        starfindResults = []
         for source in sources:
             result = models.StarfindResult(
                 image = image,
@@ -1810,8 +1827,11 @@ def starfind(filename, processInputId):
                 pa = source['pa']
                 )
 
-            result.save()
+            starfindResults.append(result)
 
+        models.StarfindResult.objects.bulk_create(starfindResults)
+
+        #TODO: Recode this section to calculate its own local average and standard deviation and then modify the confidence on sextractorResults array before doing the bulk_create.
         records = models.StarfindResult.objects.filter(image=image)
         meanMag = records.aggregate(Avg('mag'))['mag__avg']
         stdDevMag = records.aggregate(StdDev('mag'))['mag__stddev']
@@ -1949,6 +1969,7 @@ def starmatch(filename, processInputId):
     sys.stdout.flush()
     with transaction.atomic():
         models.SourceFindMatch.objects.filter(image=image).delete()
+        sourceFindMatches = []
         for superMatch in superMatches:
             sextractorResult = superMatch.get('sextractor', None)
             image2xyResult = superMatch.get('image2xy', None)
@@ -1992,7 +2013,9 @@ def starmatch(filename, processInputId):
                 userSubmittedResult = userSubmittedResult
                 )
 
-            record.save()
+            sourceFindMatches.append(record)
+
+        models.SourceFindMatch.objects.bulk_create(sourceFindMatches)
 
     outputText += 'Done.' + "\n"
 
@@ -2691,6 +2714,7 @@ def parseHeaders(imageId, processInputId):
             value = value.strip()
 
             if key != "" and value != "":
+                #TODO: Consider setting up a function to do bulk_create of image properties.
                 image.addImageProperty(key, value, False, header)
 
         #TODO: Also need to read all the image properties like flatCorrected, etc, and set imageIsCalibrated accordingly.
