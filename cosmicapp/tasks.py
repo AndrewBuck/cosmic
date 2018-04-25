@@ -2893,6 +2893,8 @@ def imageCombine(argList, processInputId):
 
     images = models.Image.objects.filter(pk__in=idList)
     dataArray = []
+    exposureSum = 0
+    exposureCount = 0
     for image in images:
         outputText += "Loading image {}: {}\n".format(image.pk, image.fileRecord.originalFileName)
         hdulist = fits.open(settings.MEDIA_ROOT + image.fileRecord.onDiskFileName)
@@ -2914,6 +2916,14 @@ def imageCombine(argList, processInputId):
 
         dataArray.append(CCDData(data, unit=u.adu))
 
+        imageExposure = image.getImageProperty('exposureTime')
+        if imageExposure is not None and imageExposure != 'unknown':
+            exposureSum += float(imageExposure)
+            exposureCount += 1
+
+    exposureMean = exposureSum / exposureCount
+    outputText += '\nExposure sum: {}\nExposure mean: {}\n'.format(exposureSum, exposureMean)
+
     outputText += "\nCreating Combiner.\n"
     combiner = Combiner(dataArray)
 
@@ -2921,12 +2931,18 @@ def imageCombine(argList, processInputId):
     combinedData = combiner.median_combine()
     primaryHDU = fits.PrimaryHDU(combinedData)
 
+    if argDict['combineType'] in ['light']:
+        primaryHDU.header.append( ('exptime', str(exposureSum)) )
+    elif argDict['combineType'] in ['bias', 'dark', 'flat']:
+        primaryHDU.header.append( ('exptime', str(exposureMean)) )
+
     primaryHDU.header.append( ('origin', 'Cosmic.science') )
     primaryHDU.header.append( ('imagetyp', 'master ' + argDict['combineType']) )
     primaryHDU.header.append( ('ncombine', str(len(dataArray))) )
     for image, i in zip(images, range(1, 1+len(images))):
         imageString = 'Image ' + str(image.pk) + ':  ' + image.fileRecord.originalFileName
         primaryHDU.header.append( ('imcmb{:03d}'.format(i), imageString) )
+        primaryHDU.header.append( ('exptim{:02d}'.format(i), image.getImageProperty('exposureTime')) )
 
     if masterBiasImage is not None:
         imageString = 'Image ' + str(masterBiasImage.pk) + ':  ' + masterBiasImage.fileRecord.originalFileName
