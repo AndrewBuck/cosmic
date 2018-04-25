@@ -2112,6 +2112,7 @@ def combineImageIds(request):
     responseDict = {}
     combineType = request.POST.get('combineType', '').lower()
     idList = json.loads(request.POST.get('idList', ''))
+    masterBiasId = int(request.POST.get('masterBiasId', '-1'))
 
     if combineType not in ['bias', 'dark', 'flat']:
         responseDict['errorMessage'] = 'Error: unknown combineType "{}"'.format(combineType)
@@ -2123,7 +2124,11 @@ def combineImageIds(request):
         return HttpResponse(json.dumps(responseDict), status=400)
 
     totalSize = 0
-    filteredIdList = []
+    filteredIdList = ['combineType=str:' + combineType]
+
+    if masterBiasId != -1:
+        filteredIdList.append('masterBiasId=int:' + str(masterBiasId))
+
     for image in images:
         print('image pk is ', image.pk)
         totalSize += image.fileRecord.uploadSize

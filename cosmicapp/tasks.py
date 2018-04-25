@@ -2850,6 +2850,7 @@ def imageCombine(argList, processInputId):
     outputText = ""
     errorText = ""
     taskStartTime = time.time()
+    argDict = {}
 
     processInput = models.ProcessInput.objects.get(pk=processInputId)
 
@@ -2864,8 +2865,31 @@ def imageCombine(argList, processInputId):
             pk = int(arg)
             idList.append(pk)
         except ValueError:
-            errorText += "Could not parse '{}' as int, skipping argument.".format(arg)
-            return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
+            splits = arg.split('=', 1)
+            if len(splits) == 2:
+                argType, argVal = splits[1].split(':', 1)
+                if argType == 'str':
+                    argDict[splits[0]] = argVal
+
+                elif argType == 'int':
+                    argDict[splits[0]] = int(argVal)
+
+                else:
+                    errorText += "argType '{}' not recognised, aborting.".format(argType)
+                    return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
+
+            else:
+                errorText += "Could not parse '{}' as int or as 'arg=type:val', skipping argument.".format(arg)
+                return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
+
+    outputText += "argDict is:\n"
+    for key in argDict:
+        outputText += "   " + key + " = " + str(argDict[key]) + "\n"
+
+    if 'masterBiasId' in argDict:
+        masterBiasImage = models.Image.objects.filter(pk=argDict['masterBiasId']).first()
+    else:
+        masterBiasImage = None
 
     images = models.Image.objects.filter(pk__in=idList)
     dataArray = []
@@ -2878,6 +2902,16 @@ def imageCombine(argList, processInputId):
         if len(data.shape) == 3:
             data = data[0]
 
+        if masterBiasImage is not None:
+            masterBiasHdulist = fits.open(settings.MEDIA_ROOT + masterBiasImage.fileRecord.onDiskFileName)
+
+            #TODO: Do a better job than just choosing the first frame like we do now.
+            masterBiasData = masterBiasHdulist[0].data
+            if len(data.shape) == 3:
+                masterBiasData = masterBiasData[0]
+
+            data -= masterBiasData
+
         dataArray.append(CCDData(data, unit=u.adu))
 
     outputText += "\nCreating Combiner.\n"
@@ -2886,6 +2920,18 @@ def imageCombine(argList, processInputId):
     outputText += "\nPerforming median combine.\n"
     combinedData = combiner.median_combine()
     primaryHDU = fits.PrimaryHDU(combinedData)
+
+    primaryHDU.header.append( ('origin', 'Cosmic.science') )
+    primaryHDU.header.append( ('imagetyp', 'master ' + argDict['combineType']) )
+    primaryHDU.header.append( ('ncombine', str(len(dataArray))) )
+    for image, i in zip(images, range(1, 1+len(images))):
+        imageString = 'Image ' + str(image.pk) + ':  ' + image.fileRecord.originalFileName
+        primaryHDU.header.append( ('imcmb{:03d}'.format(i), imageString) )
+
+    if masterBiasImage is not None:
+        imageString = 'Image ' + str(masterBiasImage.pk) + ':  ' + masterBiasImage.fileRecord.originalFileName
+        primaryHDU.header.append( ('zerocor', imageString) )
+
     combinedHDUList = fits.HDUList([primaryHDU])
     outputText += "\nWriting image.\n"
     combinedHDUList.writeto(settings.MEDIA_ROOT + outputFilename)

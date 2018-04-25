@@ -62,6 +62,16 @@ function handleImageClick(id, galleryName)
 
 function combineImageIds(combineType, idList)
 {
+    if(combineType.toLowerCase() == 'dark')
+    {
+        var masterBiasId = document.getElementsByName('masterBiasId')[0].value;
+        if(masterBiasId == "")
+        {
+            alert('ERROR: You must provide the id number of a master bias image to use for calibrating the dark frames before stacking.');
+            return;
+        }
+    }
+
     $.ajax({
         url : "/process/combineImageIds/",
         type : "post",
@@ -70,7 +80,8 @@ function combineImageIds(combineType, idList)
         data: {
             combineType: combineType,
             //TODO: The square brackets are left off by stringify, not sure why.
-            idList: idList
+            idList: idList,
+            masterBiasId: masterBiasId
         },
         success : function(response)
         {
@@ -101,7 +112,18 @@ which can then be applied to a series of science frames to produced calibrated i
 
 <h4>Master Bias frames</h4>
 
-{% include "./imageTable.html" with queryParams="imageProperty=imageType=masterBias:user="|concat:user|safe imageOnclickFunction="handleImageClick" galleryName="masterBiasGallery" includeLinks="false" thumbnailSize="Medium" %}
+{% include "./imageTable.html" with queryParams="imageProperty=imageType=masterBias:user="|concat:user|safe galleryName="masterBiasGallery" includeLinks="true" thumbnailSize="Medium" %}
+
+<h3>Dark frames</h3>
+
+Master Bias Image ID (required): <input type=text name=masterBiasId>
+<br>
+
+{% include "./imageTable.html" with queryParams="imageProperty=imageType=dark:user="|concat:user|safe imageOnclickFunction="handleImageClick" galleryName="darkGallery" includeLinks="false" thumbnailSize="Medium" %}
+
+<h4>Master Dark frames</h4>
+
+{% include "./imageTable.html" with queryParams="imageProperty=imageType=masterDark:user="|concat:user|safe galleryName="masterDarkGallery" includeLinks="true" thumbnailSize="Medium" %}
 
 {% endblock mainbody %}
 
