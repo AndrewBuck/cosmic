@@ -3,6 +3,11 @@
 
 {% block extratitle %} - Details for user {{foruser.username}} {% endblock %}
 
+{% block extrahead %}
+{% include "./jquery.html" %}
+<script src="/static/cosmicapp/imageTable.js"></script>
+{% endblock extrahead %}
+
 {% block mainbody %}
 <h2>User profile for {{foruser.username}}</h2>
 

@@ -1,5 +1,4 @@
 {% extends "cosmicapp/base.html" %}
-
 {% load static %}
 {% load cosmicapp_extras %}
 
@@ -8,7 +7,9 @@
 {% block extrahead %}
 {% include "./jquery.html" %}
 <script src="/static/cosmicapp/comment.js"></script>
+<script src="/static/cosmicapp/imageTable.js"></script>
 {% endblock extrahead %}
+
 
 {% block mainbody %}
 <a href="/uploadSession/{{uploadSession.id|add:-1}}">&lt;Upload session {{uploadSession.id|add:-1}}</a>&emsp;&emsp;
