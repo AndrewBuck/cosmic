@@ -2891,6 +2891,12 @@ def imageCombine(argList, processInputId):
     else:
         masterBiasImage = None
 
+    if 'masterDarkId' in argDict:
+        masterDarkImage = models.Image.objects.filter(pk=argDict['masterDarkId']).first()
+        darkExposure = masterDarkImage.getImageProperty('exposureTime')
+    else:
+        masterDarkImage = None
+
     images = models.Image.objects.filter(pk__in=idList)
     dataArray = []
     exposureSum = 0
@@ -2899,11 +2905,18 @@ def imageCombine(argList, processInputId):
         outputText += "Loading image {}: {}\n".format(image.pk, image.fileRecord.originalFileName)
         hdulist = fits.open(settings.MEDIA_ROOT + image.fileRecord.onDiskFileName)
 
+        imageExposure = image.getImageProperty('exposureTime')
+        outputText += "Image exposure time is: {}\n".format(imageExposure)
+
         #TODO: Do a better job than just choosing the first frame like we do now.
         data = hdulist[0].data
         if len(data.shape) == 3:
             data = data[0]
 
+        #NOTE: This bias subtraction is done here inside the loop for code cleanliness
+        # reasons, and in case of future expansions when it might want to be treated
+        # differently from image to image.  It would be more computationally efficient to
+        # subtract it once at the end of the loop.
         if masterBiasImage is not None:
             masterBiasHdulist = fits.open(settings.MEDIA_ROOT + masterBiasImage.fileRecord.onDiskFileName)
 
@@ -2914,9 +2927,28 @@ def imageCombine(argList, processInputId):
 
             data -= masterBiasData
 
+        if masterDarkImage is not None:
+            masterDarkHdulist = fits.open(settings.MEDIA_ROOT + masterDarkImage.fileRecord.onDiskFileName)
+
+            #TODO: Do a better job than just choosing the first frame like we do now.
+            masterDarkData = masterDarkHdulist[0].data
+            if len(masterDarkData.shape) == 3:
+                masterDarkData = masterDarkData[0]
+
+            if darkExposure is not None and imageExposure is not None and imageExposure != 'unknown':
+                try:
+                    darkScaleFactor = float(imageExposure) / float(darkExposure)
+                except:
+                    outputText += 'Warning: using dark scale factor of 1.0 instead of \'{}\' / \'{}\'\n'.format(imageExposure, darkExposure)
+                    darkScaleFactor = 1.0
+            else:
+                darkScaleFactor = 1.0
+
+            outputText += 'Dark scale factor: {}\n'.format(darkScaleFactor)
+            data -= masterDarkData * darkScaleFactor
+
         dataArray.append(CCDData(data, unit=u.adu))
 
-        imageExposure = image.getImageProperty('exposureTime')
         if imageExposure is not None and imageExposure != 'unknown':
             exposureSum += float(imageExposure)
             exposureCount += 1
@@ -2927,8 +2959,14 @@ def imageCombine(argList, processInputId):
     outputText += "\nCreating Combiner.\n"
     combiner = Combiner(dataArray)
 
+    if argDict['combineType'] == 'flat':
+        outputText += "\nCombine type is 'flat' - scaling input images by their individual mean values.\n"
+        scaling_func = lambda arr: 1/numpy.ma.average(arr)
+        combiner.scaling = scaling_func
+
     outputText += "\nPerforming median combine.\n"
     combinedData = combiner.median_combine()
+
     primaryHDU = fits.PrimaryHDU(combinedData)
 
     if argDict['combineType'] in ['light']:
@@ -2947,6 +2985,10 @@ def imageCombine(argList, processInputId):
     if masterBiasImage is not None:
         imageString = 'Image ' + str(masterBiasImage.pk) + ':  ' + masterBiasImage.fileRecord.originalFileName
         primaryHDU.header.append( ('zerocor', imageString) )
+
+    if masterDarkImage is not None:
+        imageString = 'Image ' + str(masterDarkImage.pk) + ':  ' + masterDarkImage.fileRecord.originalFileName
+        primaryHDU.header.append( ('darkcor', imageString) )
 
     combinedHDUList = fits.HDUList([primaryHDU])
     outputText += "\nWriting image.\n"

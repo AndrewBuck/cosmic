@@ -62,12 +62,31 @@ function handleImageClick(id, galleryName)
 
 function combineImageIds(combineType, idList)
 {
+    var masterBiasId = '-1', masterDarkId = '-1';
+
     if(combineType.toLowerCase() == 'dark')
     {
-        var masterBiasId = document.getElementsByName('masterBiasId')[0].value;
+        masterBiasId = document.getElementsByName('darkMasterBiasId')[0].value;
         if(masterBiasId == "")
         {
             alert('ERROR: You must provide the id number of a master bias image to use for calibrating the dark frames before stacking.');
+            return;
+        }
+    }
+
+    else if(combineType.toLowerCase() == 'flat')
+    {
+        masterBiasId = document.getElementsByName('flatMasterBiasId')[0].value;
+        if(masterBiasId == "")
+        {
+            alert('ERROR: You must provide the id number of a master bias image to use for calibrating the flat frames before stacking.');
+            return;
+        }
+
+        masterDarkId = document.getElementsByName('flatMasterDarkId')[0].value;
+        if(masterDarkId == "")
+        {
+            alert('ERROR: You must provide the id number of a master dark image to use for calibrating the flat frames before stacking.');
             return;
         }
     }
@@ -81,7 +100,8 @@ function combineImageIds(combineType, idList)
             combineType: combineType,
             //TODO: The square brackets are left off by stringify, not sure why.
             idList: idList,
-            masterBiasId: masterBiasId
+            masterBiasId: masterBiasId,
+            masterDarkId: masterDarkId
         },
         success : function(response)
         {
@@ -116,7 +136,7 @@ which can then be applied to a series of science frames to produced calibrated i
 
 <h3>Dark frames</h3>
 
-Master Bias Image ID (required): <input type=text name=masterBiasId>
+Master Bias Image ID (required): <input type=text name=darkMasterBiasId>
 <br>
 
 {% include "./imageTable.html" with queryParams="imageProperty=imageType=dark:user="|concat:user|safe imageOnclickFunction="handleImageClick" galleryName="darkGallery" includeLinks="false" thumbnailSize="Medium" %}
@@ -124,6 +144,19 @@ Master Bias Image ID (required): <input type=text name=masterBiasId>
 <h4>Master Dark frames</h4>
 
 {% include "./imageTable.html" with queryParams="imageProperty=imageType=masterDark:user="|concat:user|safe galleryName="masterDarkGallery" includeLinks="true" thumbnailSize="Medium" %}
+
+<h3>Flat frames</h3>
+
+Master Bias Image ID (required): <input type=text name=flatMasterBiasId>
+<br>
+Master Dark Image ID (required): <input type=text name=flatMasterDarkId>
+<br>
+
+{% include "./imageTable.html" with queryParams="imageProperty=imageType=flat:user="|concat:user|safe imageOnclickFunction="handleImageClick" galleryName="flatGallery" includeLinks="false" thumbnailSize="Medium" %}
+
+<h4>Master Flat frames</h4>
+
+{% include "./imageTable.html" with queryParams="imageProperty=imageType=masterFlat:user="|concat:user|safe galleryName="masterFlatGallery" includeLinks="true" thumbnailSize="Medium" %}
 
 {% endblock mainbody %}
 
