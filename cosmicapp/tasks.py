@@ -2152,7 +2152,22 @@ def astrometryNet(filename, processInputId):
         argArray.append('--scale-units')
         argArray.append('arcsecperpix')
     else:
-        outputText += 'Image does not have a plate solution.  Not restricting image scale range.\n'
+        plateScale = image.getImageProperty('plateScale')
+        if plateScale is not None:
+            try:
+                plateScale = float(plateScale)
+                argArray.append('--scale-low')
+                argArray.append(str(0.7*plateScale))
+                argArray.append('--scale-high')
+                argArray.append(str(1.3*plateScale))
+                argArray.append('--scale-units')
+                argArray.append('arcsecperpix')
+                outputText += 'Image has a plate scale listed in its image properties.  Using a scale of {} arcsec per pixel.\n'.format(plateScale)
+            except:
+                outputText += 'ERROR: Could not parse plateScale string "{}" as a float.\n'.format(plateScale)
+
+        else:
+            outputText += 'Image does not have a plate solution.  Not restricting image scale range.\n'
 
     proc = subprocess.Popen(argArray,
             stdout=subprocess.PIPE,

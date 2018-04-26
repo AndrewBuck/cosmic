@@ -514,6 +514,42 @@ def uploadSession(request, pk):
         return HttpResponse('Upload session "' + pk + '" not found.', status=400, reason='not found.')
 
     context['displayType'] = 'table'
+
+    if request.method == 'POST' and request.user.is_authenticated:
+        objectRA = request.POST.get('objectRA', '')
+        objectDec = request.POST.get('objectDec', '')
+        plateScale = request.POST.get('plateScale', '')
+
+        positionAdded = False
+        if objectRA != '' and objectDec != '':
+            for image in Image.objects.filter(fileRecord__uploadSession=context['uploadSession']):
+                image.addImageProperty('objectRA', objectRA)
+                image.addImageProperty('objectDec', objectDec)
+                positionAdded = True
+
+        scaleAdded = False
+        if plateScale != '':
+            for image in Image.objects.filter(fileRecord__uploadSession=context['uploadSession']):
+                image.addImageProperty('plateScale', plateScale)
+                scaleAdded = True
+
+        if positionAdded or scaleAdded:
+            ps = image.getBestPlateSolution()
+
+            if ps is None:
+                piAstrometryNet = ProcessInput(
+                    process = "astrometryNet",
+                    requestor = User.objects.get(pk=request.user.pk),
+                    priority = ProcessPriority.getPriorityForProcess("astrometryNet", "batch") + 20,
+                    estCostCPU = 100,
+                    estCostBandwidth = 3000,
+                    estCostStorage = 3000,
+                    estCostIO = 10000000000
+                    )
+
+                piAstrometryNet.save()
+                piAstrometryNet.addArguments([image.fileRecord.onDiskFileName])
+
     return render(request, "cosmicapp/uploadSession.html", context)
 
 def downloadSession(request, pk):

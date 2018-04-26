@@ -45,6 +45,28 @@ Upload consisted of {{uploadSession.uploadedFileRecords.count}} files:<br>
 </font>
 </p>
 
+<h3>Set common properties for files in this upload</h3>
+<form method=POST action="/uploadSession/{{uploadSession.pk}}">
+{% csrf_token %}
+<p>
+<ul>
+<li>If all the images in this upload session are of the same part of the sky you can provide
+a location hint to help us find a plate solution more quickly (or at all):</li>
+<br>&emsp;Object RA (decimal deg): <input type=text name="objectRA">
+<br>&emsp;Object Dec (decimal deg): <input type=text name="objectDec">
+<br>
+<br>
+
+<li>If all the images in this upload session were taken with the same equipment and you
+know the image scale (in arcsec/pixel) of the images your camera/telescope combination
+produces you can enter that to help us find a plate solution:</li>
+<br>&emsp;Plate scale (arcsec/pixel): <input type=text name="plateScale">
+</ul>
+
+&emsp;&emsp;<input type=submit value="Save Common Information">
+</p>
+</form>
+
 Images uploaded during this upload session:
 
 {% with "uploadSessionId="|concat:uploadSession.id as queryParams %}
