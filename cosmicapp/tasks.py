@@ -459,6 +459,7 @@ def imagestats(filename, processInputId):
                         maxIndex = uniquePixelValues - 1
                         currentPixelNumber += bathtubPixelNumber
                         currentPixelValueNumber += bathtubValueNumber
+                        bathtubFail = True
                     minValue = valueFrequency[minIndex][0]
                     maxValue = valueFrequency[maxIndex][0]
                     msec = int(1000 * time.time()) - msec
@@ -668,7 +669,7 @@ def imagestats(filename, processInputId):
                     rejectPixelNumber = 0
                     bathtubRejects = numpy.array(bathtubValues.keys())
                     bathtubPixelCounts = numpy.array(bathtubValues.values())
-                    if bathtubRejects.shape[0] > 0 :
+                    if not bathtubFail and bathtubRejects.shape[0] > 0 :
                         rejectValues = numpy.union1d(rejectValues, bathtubRejects)
                         rejectPixelNumber += sum(bathtubPixelCounts)
                     otherRejects = numpy.array([])
