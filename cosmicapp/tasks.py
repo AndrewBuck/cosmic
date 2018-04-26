@@ -2909,7 +2909,7 @@ def imageCombine(argList, processInputId):
 
             #TODO: Do a better job than just choosing the first frame like we do now.
             masterBiasData = masterBiasHdulist[0].data
-            if len(data.shape) == 3:
+            if len(masterBiasData.shape) == 3:
                 masterBiasData = masterBiasData[0]
 
             data -= masterBiasData
