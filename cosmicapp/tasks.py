@@ -2069,6 +2069,11 @@ def astrometryNet(filename, processInputId):
         yValues.append(star.pixelY)
         confidenceValues.append(star.confidence)
 
+    if len(superMatches) < 4:
+        outputText += 'Task is exiting because there are {} detected sources in the image and the plate solver needs at least 4.'.format(len(superMatches))
+        image.addImageProperty('astrometryNet', 'noSources')
+        return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
+
     try:
         tableFilename = settings.MEDIA_ROOT + filename + ".sources.xyls"
         table = Table([xValues, yValues, confidenceValues], names=("XIMAGE", "YIMAGE", "CONFIDENCE"), dtype=('f4', 'f4', 'f4'));
@@ -2082,7 +2087,7 @@ def astrometryNet(filename, processInputId):
     previousResult = image.getImageProperty('astrometryNet')
     cpuLimit = '30'
     depth = '8,14,22'
-    if previousResult == None:
+    if previousResult == None or previousResult == 'noSources':
         cpuLimit = str(models.CosmicVariable.getVariable('astrometryNetTimeout1'))
         depth = str(models.CosmicVariable.getVariable('astrometryNetDepth1'))
     elif previousResult == 'failure':
