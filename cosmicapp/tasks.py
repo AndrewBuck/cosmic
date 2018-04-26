@@ -670,7 +670,6 @@ def imagestats(filename, processInputId):
                     bathtubRejects = numpy.array(bathtubValues.keys())
                     bathtubPixelCounts = numpy.array(bathtubValues.values())
                     if not bathtubFail and bathtubRejects.shape[0] > 0 :
-                    if bathtubRejects.shape[0] > 0 :
                         rejectValues = numpy.union1d(rejectValues, bathtubRejects)
                         rejectPixelNumber += sum(bathtubPixelCounts)
                     otherRejects = numpy.array([])
