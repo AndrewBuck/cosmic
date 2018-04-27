@@ -334,6 +334,13 @@ class BookmarkableItem:
     This contains common base functionality required for displaying lists of bookmarks when the items in the list are
     of differing types.  I.E. it normalizes the display so that differing types can be displayed in a common format.
     """
+    def getUrl(self):
+        """
+        --> Should be reimplemented by child classes. <--
+        Returns the url of the main info page about this object.
+        """
+        return None
+
     @property
     def getDisplayName(self):
         """
@@ -448,6 +455,9 @@ class Image(models.Model, SkyObject, BookmarkableItem):
         if ps is None:
             return (None, None)
         return (ps.centerRA, ps.centerDec)
+
+    def getUrl(self):
+        return "/image/" + str(self.pk)
 
     #TODO: Include image channel in the thumbnail selection.  Make this a pipe char separated list to allow multiple
     # channels to be returned at once to save on requests.
@@ -1176,6 +1186,9 @@ class UCAC4Record(models.Model, BookmarkableItem, SkyObject, ScorableObject):
         #TODO: Properly implement this function.
         return self.magFit
 
+    def getUrl(self):
+        return "/catalog/UCAC4/" + str(self.pk)
+
     @property
     def getDisplayName(self):
         return self.identifier
@@ -1228,6 +1241,9 @@ class GCVSRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     def getMag(self, dateTime):
         #TODO: Properly implement this function.
         return self.magMax
+
+    def getUrl(self):
+        return "/catalog/gcvs/" + str(self.pk)
 
     @property
     def getDisplayName(self):
@@ -1283,6 +1299,9 @@ class TwoMassXSCRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject
     def getMag(self, dateTime):
         return self.isophotalKMag
 
+    def getUrl(self):
+        return "/catalog/2MassXSC/" + str(self.pk)
+
     @property
     def getDisplayName(self):
         return self.identifier
@@ -1336,6 +1355,9 @@ class MessierRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
 
     def getMag(self, dateTime):
         return self.magV
+
+    def getUrl(self):
+        return "/catalog/messier/" + str(self.pk)
 
     @property
     def getDisplayName(self):
@@ -1457,6 +1479,9 @@ class AstorbRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     def getMag(self, dateTime):
         body = computeSingleEphemeris(self, dateTime)
         return body.mag
+
+    def getUrl(self):
+        return "/catalog/asteroid/" + str(self.pk)
 
     @property
     def getDisplayName(self):
@@ -1659,6 +1684,9 @@ class ExoplanetRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject)
 
     def getMag(self, dateTime):
         return self.magV
+
+    def getUrl(self):
+        return "/catalog/exoplanet/" + str(self.pk)
 
     @property
     def getDisplayName(self):

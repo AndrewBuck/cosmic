@@ -146,7 +146,7 @@
             <tr>
             {% bookmark "asteroid" asteroid.record.pk "Observing Targets" "<td>" "</td>" %}
             <td>{% scoreForObject asteroid.record currentTime user %}</td>
-            <td><a href="/catalog/asteroid/{{asteroid.record.pk}}">{{asteroid.record.name}}</a></td>
+            <td><a href="{{asteroid.record.getUrl}}">{{asteroid.record.name}}</a></td>
             <td>{{asteroid.ephem.ra|formatRA_rad}}</td>
             <td>{{asteroid.ephem.dec|formatDec_rad}}</td>
             <td>{{asteroid.ephem.mag|floatformat:2}}</td>
@@ -174,7 +174,7 @@
             <tr>
             {% bookmark "exoplanet" exoplanet.pk "Observing Targets" "<td>" "</td>" %}
             <td>{% scoreForObject exoplanet currentTime user %}</td>
-            <td><a href="/catalog/Exoplanet/{{exoplanet.pk}}">{{exoplanet.identifier}}</a></td>
+            <td><a href="{{exoplanet.getUrl}}">{{exoplanet.identifier}}</a></td>
             <td>{{exoplanet.ra|formatRA}}</td>
             <td>{{exoplanet.dec|formatDec}}</td>
             <td>{{exoplanet.magV|floatformat:2}}</td>
@@ -201,7 +201,7 @@
             <tr>
             {% bookmark "variableStar" variableStar.pk "Observing Targets" "<td>" "</td>" %}
             <td>{% scoreForObject variableStar currentTime user %}</td>
-            <td><a href="/catalog/gcvs/{{variableStar.pk}}">{{variableStar.identifier}}</a></td>
+            <td><a href="{{variableStar.getUrl}}">{{variableStar.identifier}}</a></td>
             <td>{{variableStar.ra|formatRA}}</td>
             <td>{{variableStar.dec|formatDec}}</td>
             <td>{{variableStar.magMax|floatformat:2}}</td>
@@ -232,7 +232,7 @@
             <tr>
             {% bookmark "messierObject" messierObject.pk "Observing Targets" "<td>" "</td>" %}
             <td>{% scoreForObject messierObject currentTime user %}</td>
-            <td><a href="/catalog/messier/{{messierObject.pk}}">{{messierObject.identifier}}</td>
+            <td><a href="{{messierObject.getUrl}}">{{messierObject.identifier}}</td>
             <td>{{messierObject.ra|formatRA}}</td>
             <td>{{messierObject.dec|formatDec}}</td>
             <td>{{messierObject.objectType}}</td>
@@ -259,8 +259,7 @@
             <tr>
             {% bookmark "2MassXSC" extendedSource.pk "Observing Targets" "<td>" "</td>" %}
             <td>{% scoreForObject extendedSource currentTime user %}</td>
-            <td><a
-            href="/catalog/2MassXSC/{{extendedSource.pk}}">{{extendedSource.identifier}}</a></td>
+            <td><a href="{{extendedSource.getUrl}}">{{extendedSource.identifier}}</a></td>
             <td>{{extendedSource.ra|formatRA}}</td>
             <td>{{extendedSource.dec|formatDec}}</td>
             <td>{{extendedSource.isophotalKMag|floatformat:2}}</td>

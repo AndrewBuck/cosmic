@@ -40,7 +40,11 @@ Create new folder:
                 <tr>
                 <td>{% bookmark bookmark.getObjectTypeString bookmark.object_id folder.name %}</td>
                 <td>{{bookmark.getObjectTypeCommonName}}</td>
-                <td>{{bookmark.content_object.getDisplayName}}</td>
+                {% if bookmark.content_object.getUrl %}
+                    <td><a href="{{bookmark.content_object.getUrl}}">{{bookmark.content_object.getDisplayName}}</a></td>
+                {% else %}
+                    <td>{{bookmark.content_object.getDisplayName}}</td>
+                {% endif %}
                 </tr>
             {% endfor %}
         </table>
