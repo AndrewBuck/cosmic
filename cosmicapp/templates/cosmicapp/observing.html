@@ -7,6 +7,7 @@
 {% block extrahead %}
 {% include "./jquery.html" %}
 {% if user.is_authenticated %}<script src="/static/cosmicapp/bookmark.js"></script>{% endif %}
+<script src="/static/cosmicapp/raDec.js"></script>
 {% endblock extrahead %}
 
 {% block mainbody %}
@@ -124,7 +125,7 @@
 
 <h3>Now</h3>
 
-<p>Your current zenith is at:&emsp;{{zenithNowRA|formatRA_rad}}&emsp;{{zenithNowDec|formatDec_rad}}</p>
+<p>Your current zenith is at:&emsp;{% formatRADec_rad zenithNowRA zenithNowDec %}</p>
 
 <p>
 <a href="#asteroidDiv">Jump to Asteroid Results</a><br>
@@ -140,15 +141,14 @@
     <table cellpadding=5px border=2px style="border-collapse: collapse; margin: 1em;">
     <tr>
     {% if user.is_authenticated %}<th><font color=gold>★</font></th>{% endif %}
-    <th>Score</th> <th>Name</th> <th>RA</th> <th>Dec</th> <th>Mag</th> <th>CEU</th> <th>Priority</th> <th>Links</th>
+    <th>Score</th> <th>Name</th> <th>RA Dec</th> <th>Mag</th> <th>CEU</th> <th>Priority</th> <th>Links</th>
     </tr>
         {% for asteroid in asteroids %}
             <tr>
             {% bookmark "asteroid" asteroid.record.pk "Observing Targets" "<td>" "</td>" %}
             <td>{% scoreForObject asteroid.record currentTime user %}</td>
             <td><a href="{{asteroid.record.getUrl}}">{{asteroid.record.name}}</a></td>
-            <td>{{asteroid.ephem.ra|formatRA_rad}}</td>
-            <td>{{asteroid.ephem.dec|formatDec_rad}}</td>
+            <td>{% formatRADec_rad asteroid.ephem.ra asteroid.ephem.dec %}</td>
             <td>{{asteroid.ephem.mag|floatformat:2}}</td>
             <td>{{asteroid.record.ceu|floatformat:3}}</td>
             <td>{{asteroid.record.astrometryNeededCode}}</td>
@@ -168,15 +168,14 @@
     <table cellpadding=5px border=2px style="border-collapse: collapse; margin: 1em;">
     <tr>
     {% if user.is_authenticated %}<th><font color=gold>★</font></th>{% endif %}
-    <th>Score</th> <th>Planet<br>Name</th> <th>RA</th> <th>Dec</th> <th>Star<br>Mag V</th> <th>Links</th>
+    <th>Score</th> <th>Planet<br>Name</th> <th>RA Dec</th> <th>Star<br>Mag V</th> <th>Links</th>
     </tr>
         {% for exoplanet in exoplanets %}
             <tr>
             {% bookmark "exoplanet" exoplanet.pk "Observing Targets" "<td>" "</td>" %}
             <td>{% scoreForObject exoplanet currentTime user %}</td>
             <td><a href="{{exoplanet.getUrl}}">{{exoplanet.identifier}}</a></td>
-            <td>{{exoplanet.ra|formatRA}}</td>
-            <td>{{exoplanet.dec|formatDec}}</td>
+            <td>{% formatRADec exoplanet.ra exoplanet.dec %}</td>
             <td>{{exoplanet.magV|floatformat:2}}</td>
             <td>
             {% for link in exoplanet.getLinks %}
@@ -194,7 +193,7 @@
     <table cellpadding=5px border=2px style="border-collapse: collapse; margin: 1em;">
     <tr>
     {% if user.is_authenticated %}<th><font color=gold>★</font></th>{% endif %}
-    <th>Score</th> <th>Name</th> <th>RA</th> <th>Dec</th> <th>Mag<br>max</th> <th>Mag<br>min</th>
+    <th>Score</th> <th>Name</th> <th>RA Dec</th> <th>Mag<br>max</th> <th>Mag<br>min</th>
     <th>Period</th> <th>Type</th> <th>Type2</th> <th>Spectral<br>type</th> <th>Links</th>
     </tr>
         {% for variableStar in variableStars %}
@@ -202,8 +201,7 @@
             {% bookmark "variableStar" variableStar.pk "Observing Targets" "<td>" "</td>" %}
             <td>{% scoreForObject variableStar currentTime user %}</td>
             <td><a href="{{variableStar.getUrl}}">{{variableStar.identifier}}</a></td>
-            <td>{{variableStar.ra|formatRA}}</td>
-            <td>{{variableStar.dec|formatDec}}</td>
+            <td>{% formatRADec variableStar.ra variableStar.dec %}</td>
             <td>{{variableStar.magMax|floatformat:2}}</td>
             <td>{{variableStar.magMin|floatformat:2}}</td>
             <td>{{variableStar.period|floatformat:2}}</td>
@@ -226,15 +224,14 @@
     <table cellpadding=5px border=2px style="border-collapse: collapse; margin: 1em;">
     <tr>
     {% if user.is_authenticated %}<th><font color=gold>★</font></th>{% endif %}
-    <th>Score</th> <th>Name</th> <th>RA</th> <th>Dec</th> <th>Object<br>type</th> <th>Mag V</th> <th>Links</th>
+    <th>Score</th> <th>Name</th> <th>RA Dec</th> <th>Object<br>type</th> <th>Mag V</th> <th>Links</th>
     </tr>
         {% for messierObject in messierObjects %}
             <tr>
             {% bookmark "messierObject" messierObject.pk "Observing Targets" "<td>" "</td>" %}
             <td>{% scoreForObject messierObject currentTime user %}</td>
             <td><a href="{{messierObject.getUrl}}">{{messierObject.identifier}}</td>
-            <td>{{messierObject.ra|formatRA}}</td>
-            <td>{{messierObject.dec|formatDec}}</td>
+            <td>{% formatRADec messierObject.ra messierObject.dec %}</td>
             <td>{{messierObject.objectType}}</td>
             <td>{{messierObject.magV|floatformat:2}}</td>
             <td>
@@ -253,15 +250,14 @@
     <table cellpadding=5px border=2px style="border-collapse: collapse; margin: 1em;">
     <tr>
     {% if user.is_authenticated %}<th><font color=gold>★</font></th>{% endif %}
-    <th>Score</th> <th>Name</th> <th>RA</th> <th>Dec</th> <th>Mag K</th> <th>Radius<br>(arcsec)</th> <th>W/H<br>ratio</th> <th>Links</th>
+    <th>Score</th> <th>Name</th> <th>RA Dec</th> <th>Mag K</th> <th>Radius<br>(arcsec)</th> <th>W/H<br>ratio</th> <th>Links</th>
     </tr>
         {% for extendedSource in extendedSources %}
             <tr>
             {% bookmark "2MassXSC" extendedSource.pk "Observing Targets" "<td>" "</td>" %}
             <td>{% scoreForObject extendedSource currentTime user %}</td>
             <td><a href="{{extendedSource.getUrl}}">{{extendedSource.identifier}}</a></td>
-            <td>{{extendedSource.ra|formatRA}}</td>
-            <td>{{extendedSource.dec|formatDec}}</td>
+            <td>{% formatRADec extendedSource.ra extendedSource.dec %}</td>
             <td>{{extendedSource.isophotalKMag|floatformat:2}}</td>
             <td>{{extendedSource.isophotalKSemiMajor|floatformat:2}}</td>
             <td>{{extendedSource.isophotalKMinorMajor|floatformat:2}}</td>

@@ -214,7 +214,7 @@ div.imageQuestionQuestions {
 .functionLink {
     cursor:pointer;
     color:blue;
-    text-decoration:underline;
+    /*text-decoration:underline;*/
 }
 
 div.comment {
@@ -228,3 +228,8 @@ div.commentFloatRight {
     margin: 1em;
     padding: .5em;
 }
+
+span.raDec {
+    display: inline-block;
+}
+

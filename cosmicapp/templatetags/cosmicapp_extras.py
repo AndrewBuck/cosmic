@@ -61,6 +61,21 @@ def formatDec_rad(dec):
 
     return sign + str(angle)
 
+@register.inclusion_tag('cosmicapp/raDec.html', takes_context=False)
+def formatRADec(ra, dec, prefix=None, postfix=None):
+    tempDict = {}
+    tempDict['ra'] = formatRA(ra)
+    tempDict['dec'] = formatDec(dec)
+    tempDict['raDecimal'] = 1.0*ephem.degrees(ra)
+    tempDict['decDecimal'] = 1.0*ephem.degrees(dec)
+    tempDict['prefix'] = prefix
+    tempDict['postfix'] = postfix
+    return tempDict
+
+@register.inclusion_tag('cosmicapp/raDec.html', takes_context=False)
+def formatRADec_rad(ra, dec, prefix=None, postfix=None):
+    return formatRADec(ra*(180/math.pi), dec*(180/math.pi), prefix, postfix)
+
 @register.filter
 def formatTime(time):
     if time == None:
