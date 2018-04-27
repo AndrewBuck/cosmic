@@ -334,6 +334,14 @@ class BookmarkableItem:
     This contains common base functionality required for displaying lists of bookmarks when the items in the list are
     of differing types.  I.E. it normalizes the display so that differing types can be displayed in a common format.
     """
+    def getBookmarkTypeString(self):
+        """
+        --> Should be reimplemented by child classes. <--
+        Returns a string which is used in the bookmark javascript code to send to the
+        server indicating the type of object to be bookmarked.
+        """
+        return None
+
     def getUrl(self):
         """
         --> Should be reimplemented by child classes. <--
@@ -455,6 +463,9 @@ class Image(models.Model, SkyObject, BookmarkableItem):
         if ps is None:
             return (None, None)
         return (ps.centerRA, ps.centerDec)
+
+    def getBookmarkTypeString(self):
+        return 'image'
 
     def getUrl(self):
         return "/image/" + str(self.pk)
@@ -1186,6 +1197,9 @@ class UCAC4Record(models.Model, BookmarkableItem, SkyObject, ScorableObject):
         #TODO: Properly implement this function.
         return self.magFit
 
+    def getBookmarkTypeString(self):
+        return 'ucac4'
+
     def getUrl(self):
         return "/catalog/UCAC4/" + str(self.pk)
 
@@ -1241,6 +1255,9 @@ class GCVSRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     def getMag(self, dateTime):
         #TODO: Properly implement this function.
         return self.magMax
+
+    def getBookmarkTypeString(self):
+        return 'variableStar'
 
     def getUrl(self):
         return "/catalog/gcvs/" + str(self.pk)
@@ -1299,6 +1316,9 @@ class TwoMassXSCRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject
     def getMag(self, dateTime):
         return self.isophotalKMag
 
+    def getBookmarkTypeString(self):
+        return '2MassXSC'
+
     def getUrl(self):
         return "/catalog/2MassXSC/" + str(self.pk)
 
@@ -1355,6 +1375,9 @@ class MessierRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
 
     def getMag(self, dateTime):
         return self.magV
+
+    def getBookmarkTypeString(self):
+        return 'messierObject'
 
     def getUrl(self):
         return "/catalog/messier/" + str(self.pk)
@@ -1479,6 +1502,9 @@ class AstorbRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     def getMag(self, dateTime):
         body = computeSingleEphemeris(self, dateTime)
         return body.mag
+
+    def getBookmarkTypeString(self):
+        return 'asteroid'
 
     def getUrl(self):
         return "/catalog/asteroid/" + str(self.pk)
@@ -1684,6 +1710,9 @@ class ExoplanetRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject)
 
     def getMag(self, dateTime):
         return self.magV
+
+    def getBookmarkTypeString(self):
+        return 'exoplanet'
 
     def getUrl(self):
         return "/catalog/exoplanet/" + str(self.pk)

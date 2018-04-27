@@ -6,12 +6,17 @@
 {% block extrahead %}
 {% include "./jquery.html" %}
 <script src="/static/cosmicapp/comment.js"></script>
+{% if user.is_authenticated %}<script src="/static/cosmicapp/bookmark.js"></script>{% endif %}
 {% endblock extrahead %}
 
 {% block topSection %}
 <a href="/catalog/{{method}}/{{obj.id|add:-1}}">&lt; {{method}} {{obj.id|add:-1}}</a>&emsp;&emsp;
 <a href="/catalog/{{method}}/{{obj.id|add:1}}">{{method}} {{obj.id|add:1}} &gt;</a>
-{% comment %} TODO: Add a bookmark link for this object. {% endcomment %}
+
+<br>
+<br>
+{% bookmark obj.getBookmarkTypeString obj.pk "Unsorted Bookmarks" "" "" %}
+Bookmark this object.
 
 <h2>Object Info</h2>
 

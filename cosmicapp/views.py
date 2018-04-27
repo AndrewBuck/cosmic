@@ -2285,7 +2285,8 @@ def bookmark(request):
         'exoplanet': ExoplanetRecord,
         'variableStar': GCVSRecord,
         'messierObject': MessierRecord,
-        '2MassXSC': TwoMassXSCRecord
+        '2MassXSC': TwoMassXSCRecord,
+        'ucac4': UCAC4Record
         }
 
     if targetType != None:
