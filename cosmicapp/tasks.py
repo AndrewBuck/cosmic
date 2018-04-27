@@ -2918,6 +2918,11 @@ def imageCombine(argList, processInputId):
     else:
         masterDarkImage = None
 
+    if 'masterFlatId' in argDict:
+        masterFlatImage = models.Image.objects.filter(pk=argDict['masterFlatId']).first()
+    else:
+        masterFlatImage = None
+
     images = models.Image.objects.filter(pk__in=idList)
     dataArray = []
     exposureSum = 0
@@ -2968,6 +2973,16 @@ def imageCombine(argList, processInputId):
             outputText += 'Dark scale factor: {}\n'.format(darkScaleFactor)
             data -= masterDarkData * darkScaleFactor
 
+        if masterFlatImage is not None:
+            masterFlatHdulist = fits.open(settings.MEDIA_ROOT + masterFlatImage.fileRecord.onDiskFileName)
+
+            #TODO: Do a better job than just choosing the first frame like we do now.
+            masterFlatData = masterFlatHdulist[0].data
+            if len(masterFlatData.shape) == 3:
+                masterFlatData = masterFlatData[0]
+
+            data /= masterFlatData
+
         dataArray.append(CCDData(data, unit=u.adu))
 
         if imageExposure is not None and imageExposure != 'unknown':
@@ -3010,6 +3025,10 @@ def imageCombine(argList, processInputId):
     if masterDarkImage is not None:
         imageString = 'Image ' + str(masterDarkImage.pk) + ':  ' + masterDarkImage.fileRecord.originalFileName
         primaryHDU.header.append( ('darkcor', imageString) )
+
+    if masterFlatImage is not None:
+        imageString = 'Image ' + str(masterFlatImage.pk) + ':  ' + masterFlatImage.fileRecord.originalFileName
+        primaryHDU.header.append( ('flatcor', imageString) )
 
     combinedHDUList = fits.HDUList([primaryHDU])
     outputText += "\nWriting image.\n"

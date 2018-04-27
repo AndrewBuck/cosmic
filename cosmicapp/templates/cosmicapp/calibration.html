@@ -8,7 +8,7 @@
 {% include "./jquery.html" %}
 <script src="/static/cosmicapp/imageTable.js"></script>
 <script>
-var biasIdList = [], darkIdList = [], flatIdList = [];
+var biasIdList = [], darkIdList = [], flatIdList = [], lightIdList = [];
 
 function handleImageClick(id, galleryName)
 {
@@ -22,6 +22,7 @@ function handleImageClick(id, galleryName)
         case 'biasGallery':    idList = biasIdList;    combineType = 'Bias';    break;
         case 'darkGallery':    idList = darkIdList;    combineType = 'Dark';    break;
         case 'flatGallery':    idList = flatIdList;    combineType = 'Flat';    break;
+        case 'lightGallery':    idList = lightIdList;    combineType = 'Light';    break;
 
         default:    alert('ERROR: Gallery name "' + galleryName + '" not recognised.');    return;
     }
@@ -51,7 +52,7 @@ function handleImageClick(id, galleryName)
         html += '</span>';
     }
 
-    if(idList.length >= 2)
+    if(idList.length >= 2 || (idList.length >= 1 && combineType.toLowerCase() == 'light') )
     {
         html += '<br><input type=button class=button value="Combine ' + combineType + ' Images" ';
         html += 'onclick="combineImageIds(\'' + combineType + '\',\'' + JSON.stringify(idList) + '\')">';
@@ -91,6 +92,34 @@ function combineImageIds(combineType, idList)
         }
     }
 
+    else if(combineType.toLowerCase() == 'light')
+    {
+        //TODO: The bias flat and dark correction images are actually optional for
+        //stacking light frames since the frames might already be calibrated or might not
+        //have calibration frames to use with them.  Need to make changes down the
+        //processing pipeline to support this method of operation.
+        masterBiasId = document.getElementsByName('lightMasterBiasId')[0].value;
+        if(masterBiasId == "")
+        {
+            alert('ERROR: You must provide the id number of a master bias image to use for calibrating the light frames before stacking.');
+            return;
+        }
+
+        masterDarkId = document.getElementsByName('lightMasterDarkId')[0].value;
+        if(masterDarkId == "")
+        {
+            alert('ERROR: You must provide the id number of a master dark image to use for calibrating the light frames before stacking.');
+            return;
+        }
+
+        masterFlatId = document.getElementsByName('lightMasterFlatId')[0].value;
+        if(masterDarkId == "")
+        {
+            alert('ERROR: You must provide the id number of a master flat image to use for calibrating the light frames before stacking.');
+            return;
+        }
+    }
+
     $.ajax({
         url : "/process/combineImageIds/",
         type : "post",
@@ -101,7 +130,8 @@ function combineImageIds(combineType, idList)
             //TODO: The square brackets are left off by stringify, not sure why.
             idList: idList,
             masterBiasId: masterBiasId,
-            masterDarkId: masterDarkId
+            masterDarkId: masterDarkId,
+            masterFlatId: masterFlatId
         },
         success : function(response)
         {
@@ -157,6 +187,21 @@ Master Dark Image ID (required): <input type=text name=flatMasterDarkId>
 <h4>Master Flat frames</h4>
 
 {% include "./imageTable.html" with queryParams="imageProperty=imageType=masterFlat:user="|concat:user|safe galleryName="masterFlatGallery" includeLinks="true" thumbnailSize="Medium" %}
+
+<h3>Light frames</h3>
+
+Master Bias Image ID (required): <input type=text name=lightMasterBiasId>
+<br>
+Master Dark Image ID (required): <input type=text name=lightMasterDarkId>
+<br>
+Master Flat Image ID (required): <input type=text name=lightMasterFlatId>
+<br>
+
+{% include "./imageTable.html" with queryParams="imageProperty=imageType=light:imageProperty=flatCorrected=unknown:user="|concat:user|safe imageOnclickFunction="handleImageClick" galleryName="lightGallery" includeLinks="false" thumbnailSize="Medium" %}
+
+<h4>Stacked light frames</h4>
+
+{% include "./imageTable.html" with queryParams="imageProperty=imageType=stackedLight:user="|concat:user|safe galleryName="stackedLightGallery" includeLinks="true" thumbnailSize="Medium" %}
 
 {% endblock mainbody %}
 
