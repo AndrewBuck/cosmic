@@ -26,17 +26,23 @@ function handleRADecClick(domObject)
             if(dist < 20)
             {
                 var greenValue = 255 - 5*dist;
-                otherCoords[i].style.background = 'rgb(20,' + greenValue + ',20)';
+                var redValue = 50 + 10*dist;
+                otherCoords[i].style.background = 'rgb(' + redValue + ',' + greenValue + ',40)';
             }
             else
             {
                 otherCoords[i].style.background = 'None';
             }
+
+            $(otherCoords[i]).children('span').html('');
+            $(otherCoords[i]).children('span').hide();
         }
     }
     else
     {
         wasHidden = false;
+        $('.raDecInner').html('');
+        $('.raDecInner').hide();
     }
 
     html = ''
