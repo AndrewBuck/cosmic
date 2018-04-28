@@ -8,6 +8,7 @@
 {% block extrahead %}
 {% include "./jquery.html" %}
 {% if user.is_authenticated %}<script src="/static/cosmicapp/bookmark.js"></script>{% endif %}
+<script src="/static/cosmicapp/raDec.js"></script>
 <script src="/static/cosmicapp/comment.js"></script>
 
 <script>
@@ -126,7 +127,7 @@ td.numMatchResults
             {% for ps in plateSolutions %}
             <font size=-1>
             <br>&emsp;<b>{{ps.source}}:</b>
-            <br>&emsp;&emsp;{{ps.centerRA|formatRA}} {{ps.centerDec|formatDec}}
+            <br>&emsp;&emsp;{% formatRADec ps.centerRA ps.centerDec %}
             <br>&emsp;&emsp;{{ps.resolutionX|floatformat:2}}x{{ps.resolutionY|floatformat:2}} arcsec/pixel
             <br>&emsp;&emsp;Approximate dimensions:
             {% comment %} TODO: Need to fix this.  Divide by cosine of declination? {% endcomment %}
