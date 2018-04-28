@@ -1286,7 +1286,7 @@ class GCVSRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     def getLinks(self):
         links =  [
             ("https://www.aavso.org/apps/webobs/results/?star="+self.identifier+"&num_results=50", "AAVSO"),
-            ("https://www.aavso.org/apps/vsp/chart/?star="+self.identifier+"&fov=60&maglimit=14.5&resolution=150&north=up&east=left", "VSP"),
+            ("https://www.aavso.org/apps/vsp/chart/?star="+self.identifier+"&fov=60&maglimit=14.5&resolution=150&north=up&east=left&other=all", "VSP"),
             ("http://simbad.u-strasbg.fr/simbad/sim-id?Ident="+self.identifier, "SIMBAD")
             ]
 
