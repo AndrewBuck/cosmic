@@ -1542,11 +1542,11 @@ function handleMouseMove(event)
 {
     var rect = canvas.getBoundingClientRect();
 
-    if(!lmbDown && (event.clientX < rect.left || event.clientX >  rect.right || event.clientY < rect.top || event.clientY > rect.bottom))
-        return true;
-
     mouseX = event.clientX - rect.left;
     mouseY = {{image.dimY}} - (event.clientY - rect.top);
+
+    if(!lmbDown && (event.clientX < rect.left || event.clientX >  rect.right || event.clientY < rect.top || event.clientY > rect.bottom))
+        return true;
 
     oldMouseObjectsList = mouseObjectsList;
     mouseObjectsList = [];
