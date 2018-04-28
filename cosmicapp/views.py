@@ -92,6 +92,10 @@ def upload(request):
     context = {"user" : request.user}
     context['supportedImageTypes'] = settings.SUPPORTED_IMAGE_TYPES
 
+    objectIdentifier = request.GET.get('object', '')
+    objectRA = request.GET.get('objectRA', '')
+    objectDec = request.GET.get('objectDec', '')
+
     if request.method == 'POST' and 'myfiles' in request.FILES:
         # Create a record for this upload session so that all the UploadedFileRecords can link to it.
         uploadSession = UploadSession(
@@ -135,7 +139,11 @@ def upload(request):
 
             #TODO: Do a better job of checking the file type here and take appropriate action.
             if fileExtension.lower() in settings.SUPPORTED_IMAGE_TYPES:
-                createTasksForNewImage(record, request.user)
+                image = createTasksForNewImage(record, request.user)
+
+                for key, value in [('object', objectIdentifier), ('objectRA', objectRA), ('objectDec', objectDec)]:
+                    if value != '':
+                        image.addImageProperty(key, value)
 
         context['upload_successful'] = True
         context['records'] = records

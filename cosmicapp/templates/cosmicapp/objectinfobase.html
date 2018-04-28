@@ -18,6 +18,11 @@
 {% bookmark obj.getBookmarkTypeString obj.pk "Unsorted Bookmarks" "" "" %}
 Bookmark this object.
 
+<br>
+<br>
+<a href="/upload/?object={{obj.getDisplayName|urlencode}}&objectRA={{obj.getSkyCoords.0}}&objectDec={{obj.getSkyCoords.1}}">
+Upload images of this object</a>
+
 <h2>Object Info</h2>
 
 <div class=commentFloatRight>

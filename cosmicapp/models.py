@@ -364,7 +364,7 @@ class SkyObject:
     This could be a fixed object like a star, or could be a moving object like a planet or asteroid, or something like
     an image with known sky coordinates.
     """
-    def getSkyCoords(self, dateTime):
+    def getSkyCoords(self, dateTime=datetime.now()):
         return (None, None)
 
     def getMag(self, dateTime):
@@ -458,7 +458,7 @@ class Image(models.Model, SkyObject, BookmarkableItem):
     def getDisplayName(self):
         return "Image {}".format(self.pk)
 
-    def getSkyCoords(self, dateTime):
+    def getSkyCoords(self, dateTime=datetime.now()):
         ps = self.getBestPlateSolution()
         if ps is None:
             return (None, None)
@@ -1190,7 +1190,7 @@ class UCAC4Record(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     bookmarks = GenericRelation('Bookmark')
     comments = GenericRelation('TextBlob')
 
-    def getSkyCoords(self, dateTime):
+    def getSkyCoords(self, dateTime=datetime.now()):
         return (self.ra, self.dec)
 
     def getMag(self, dateTime):
@@ -1249,7 +1249,7 @@ class GCVSRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     bookmarks = GenericRelation('Bookmark')
     comments = GenericRelation('TextBlob')
 
-    def getSkyCoords(self, dateTime):
+    def getSkyCoords(self, dateTime=datetime.now()):
         return (self.ra, self.dec)
 
     def getMag(self, dateTime):
@@ -1310,7 +1310,7 @@ class TwoMassXSCRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject
     bookmarks = GenericRelation('Bookmark')
     comments = GenericRelation('TextBlob')
 
-    def getSkyCoords(self, dateTime):
+    def getSkyCoords(self, dateTime=datetime.now()):
         return (self.ra, self.dec)
 
     def getMag(self, dateTime):
@@ -1370,7 +1370,7 @@ class MessierRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     bookmarks = GenericRelation('Bookmark')
     comments = GenericRelation('TextBlob')
 
-    def getSkyCoords(self, dateTime):
+    def getSkyCoords(self, dateTime=datetime.now()):
         return (self.ra, self.dec)
 
     def getMag(self, dateTime):
@@ -1495,7 +1495,7 @@ class AstorbRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     bookmarks = GenericRelation('Bookmark')
     comments = GenericRelation('TextBlob')
 
-    def getSkyCoords(self, dateTime):
+    def getSkyCoords(self, dateTime=datetime.now()):
         ephemeris = computeSingleEphemeris(self, dateTime)
         return (ephemeris.ra*180/math.pi, ephemeris.dec*180/math.pi)
 
@@ -1705,7 +1705,7 @@ class ExoplanetRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject)
         transitTime = timedelta(days=periodNumber * self.period) + self.transitEpoch
         return transitTime
 
-    def getSkyCoords(self, dateTime):
+    def getSkyCoords(self, dateTime=datetime.now()):
         return (self.ra, self.dec)
 
     def getMag(self, dateTime):

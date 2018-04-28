@@ -410,6 +410,8 @@ def createTasksForNewImage(fileRecord, user):
         piHeaders.addArguments([imageRecord.pk])
         piHeaders.prerequisites.add(piImagestats)
 
+    return imageRecord
+
 def computeSingleEphemeris(asteroid, ephemTime):
     ephemTimeObject = ephem.Date(ephemTime)
 
