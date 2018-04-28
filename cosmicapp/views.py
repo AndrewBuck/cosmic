@@ -95,6 +95,7 @@ def upload(request):
     objectIdentifier = request.GET.get('object', '')
     objectRA = request.GET.get('objectRA', '')
     objectDec = request.GET.get('objectDec', '')
+    overlapsImage = request.GET.get('image', '')
 
     if request.method == 'POST' and 'myfiles' in request.FILES:
         # Create a record for this upload session so that all the UploadedFileRecords can link to it.
@@ -141,9 +142,9 @@ def upload(request):
             if fileExtension.lower() in settings.SUPPORTED_IMAGE_TYPES:
                 image = createTasksForNewImage(record, request.user)
 
-                for key, value in [('object', objectIdentifier), ('objectRA', objectRA), ('objectDec', objectDec)]:
+                for key, value in [('object', objectIdentifier), ('objectRA', objectRA), ('objectDec', objectDec), ('overlapsImage', overlapsImage)]:
                     if value != '':
-                        image.addImageProperty(key, value)
+                        image.addImageProperty(key, value, False)
 
         context['upload_successful'] = True
         context['records'] = records
