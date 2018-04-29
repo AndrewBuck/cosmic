@@ -2295,7 +2295,9 @@ def bookmark(request):
         'variableStar': GCVSRecord,
         'messierObject': MessierRecord,
         '2MassXSC': TwoMassXSCRecord,
-        'ucac4': UCAC4Record
+        'ucac4': UCAC4Record,
+        'userSubmittedResult': UserSubmittedResult,
+        'userSubmittedHotPixel': UserSubmittedHotPixel
         }
 
     if targetType != None:

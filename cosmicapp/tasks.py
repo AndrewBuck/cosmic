@@ -2141,6 +2141,7 @@ def astrometryNet(filename, processInputId):
     else:
         outputText += 'Image has no plate solution or header data indicating where to search, searching the whole sky.\n'
 
+    #TODO: Also check the ImageProperty overlapsImage to see if that image has a plate solution or objectRA, etc.
     ps = image.getBestPlateSolution()
     if ps is not None:
         resolution = (ps.resolutionX + ps.resolutionY)/2.0

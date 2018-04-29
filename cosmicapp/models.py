@@ -284,7 +284,9 @@ class Bookmark(models.Model):
             'exoplanetrecord': 'exoplanet',
             'gcvsrecord': 'variableStar',
             'messierrecord': 'messierObject',
-            'twomassxscrecord': '2MassXSC'
+            'twomassxscrecord': '2MassXSC',
+            'usersubmittedresult': 'userSubmittedResult',
+            'usersubmittedhotpixel': 'userSubmittedHotPixel'
             }
 
         #TODO: Rework these queries to use _id instead of .pk and do this everywhere.
@@ -295,12 +297,14 @@ class Bookmark(models.Model):
     @property
     def getObjectTypeCommonName(self):
         stringDict = {
-            'image': 'image',
+            'image': 'Image',
             'astorbrecord': 'Asteroid',
             'exoplanetrecord': 'Exoplanet',
             'gcvsrecord': 'Variable Star',
             'messierrecord': 'Messier Object',
-            'twomassxscrecord': 'Deep Sky Object'
+            'twomassxscrecord': 'Deep Sky Object',
+            'usersubmittedresult': 'User Submitted Source',
+            'usersubmittedhotpixel': 'User Submitted Hot Pixel'
             }
 
         t = ContentType.objects.get(pk=self.content_type.pk)
@@ -364,6 +368,18 @@ class SkyObject:
     This could be a fixed object like a star, or could be a moving object like a planet or asteroid, or something like
     an image with known sky coordinates.
     """
+    def isMobile(self):
+        """
+        Returns 0 if the object always reports exactly the same position.
+
+        Returns 1 if the object gives a different position as a function of time due to
+        small effects like parralax, etc.
+
+        Returns 2 if the object gives a very different position as a function of time due
+        major things like it being in the solar system, etc.
+        """
+        return 0
+
     def getSkyCoords(self, dateTime=datetime.now()):
         return (None, None)
 
@@ -973,13 +989,35 @@ class StarfindResult(SourceFindResult):
     sharpness = models.FloatField(null=True)
 
 #TODO: We should create another model to tie a bunch of results submitted at the same time to a single session.
-class UserSubmittedResult(SourceFindResult):
+class UserSubmittedResult(SourceFindResult, BookmarkableItem):
     image = models.ForeignKey(Image, db_index=True, on_delete=models.CASCADE, related_name="userSubmittedResults")
     user = models.ForeignKey(User, db_index=True, on_delete=models.CASCADE)
 
-class UserSubmittedHotPixel(SourceFindResult):
+    bookmarks = GenericRelation('Bookmark')
+
+    def getBookmarkTypeString(self):
+        return 'userSubmittedResult'
+
+    def getUrl(self):
+        return '/detectedSource/userSubmittedResult/' + str(self.pk)
+
+    def getDisplayName(self):
+        return 'Image {}: User Submitted Source {}'.format(self.image.pk, self.pk)
+
+class UserSubmittedHotPixel(SourceFindResult, BookmarkableItem):
     image = models.ForeignKey(Image, db_index=True, on_delete=models.CASCADE, related_name="userSubmittedHotPixels")
     user = models.ForeignKey(User, db_index=True, on_delete=models.CASCADE)
+
+    bookmarks = GenericRelation('Bookmark')
+
+    def getBookmarkTypeString(self):
+        return 'userSubmittedHotPixel'
+
+    def getUrl(self):
+        return '/detectedSource/userHotPixel/' + str(self.pk)
+
+    def getDisplayName(self):
+        return 'Image {}: User Submitted Hot Pixel {}'.format(self.image.pk, self.pk)
 
 class SourceFindMatch(SourceFindResult):
     """
@@ -1494,6 +1532,9 @@ class AstorbRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
 
     bookmarks = GenericRelation('Bookmark')
     comments = GenericRelation('TextBlob')
+
+    def isMobile(self):
+        return 2
 
     def getSkyCoords(self, dateTime=datetime.now()):
         ephemeris = computeSingleEphemeris(self, dateTime)
