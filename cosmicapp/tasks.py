@@ -2112,6 +2112,7 @@ def astrometryNet(filename, processInputId):
     ra, dec = image.getBestRaDec()
     objectRA = image.getImageProperty('objectRA')
     objectDec = image.getImageProperty('objectDec')
+    #TODO: Also take into account the observatory location (if set) and the image time.
     if ra is not None:
         argArray.append('--ra')
         argArray.append(str(ra))

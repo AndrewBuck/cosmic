@@ -1,6 +1,49 @@
 {% extends "cosmicapp/base.html" %}
+{% load cosmicapp_extras %}
 
 {% block extratitle %} - Upload files {{foruser.username}} {% endblock %}
+
+{% block extrahead %}
+{% include "./jquery.html" %}
+<script>
+function searchForObject()
+{
+    var objectName = document.getElementsByName('object')[0].value;
+
+    $.ajax({
+        url : "/query/?queryfor=objectsNamed&limit=100&name=" + objectName,
+        type : "get",
+        async: true,
+        dataType: 'json',
+        success : function(response)
+        {
+            if(response.length > 0)
+            {
+                var html = '';
+                for(i = 0; i < response.length; i++)
+                {
+                    html += response[i].type + ': <a href="' + response[i].url + '">' + response[i].identifier + '</a>&emsp;'
+                    html += '<a href="/upload/?object=' + response[i].identifier + '&objectRA=' + response[i].ra + '&objectDec=' + response[i].dec + '">(Select)</a>';
+                    html += '<br>';
+                }
+                $('#searchResultsDiv').html(html);
+                $('#searchResultsDiv').show();
+            }
+            else
+            {
+                alert('No Results Found.');
+            }
+        },
+        error : function(response)
+        {
+            var response = response.responseJSON;
+            alert(response.errorMessage);
+        }
+    });
+};
+
+</script>
+{% endblock extrahead %}
 
 {% block mainbody %}
 <h2>Upload</h2>
@@ -32,6 +75,48 @@ upload them grouped by that, etc.  This will make it easy to add this informatio
 by adding the appropriate tags to all the files at once.  Do not bother manually grouping
 them by time, since the file headers almost always include this anyway.
 </p>
+
+<p>
+Below is a form allowing you to tell us what you were observing, where you observed it
+from, and what instrument you used to observe it from.  It is recommended that you set as
+much of this information as you can right when the file is uploaded.  Not only does this
+prevent you from forgetting to enter it later, it also makes it more likely we will find
+a plate solution for the uploaded images since we only have to search certain portions of
+the sky.  The easiest way to do this is to upload the images right when you are observing,
+or just after, grouping all the images for a given target (or within a few degrees of it)
+into a single upload.
+</p>
+
+<div id=searchResultsDiv style="float:right; margin: 1em; padding: .5em; width: 500px; border: 2px solid lightgrey;" hidden>
+</div>
+
+<div style="margin: 1em; padding: .5em; width: 525px; border: 2px solid lightgrey;">
+<form method="get" action="/upload/">
+Object Name: <input id=foo type=text name=object value="{{object}}">&emsp;<a class=functionLink onclick="searchForObject()">(Search)</a>
+<br>Object RA: <input id=objectRA type=text name=objectRA value="{{objectRA}}">
+<br>Object Dec: <input id=objectDec type=text name=objectDec value="{{objectDec}}">
+<br>Overlapping image ID Number: <input type=text name=image value="{{image}}">
+<br>Plate scale (arcsec/pixel): <input type=text name=plateScale value="{{plateScale}}">
+<br>Observing location:
+<select name=observatoryID>
+    <option value="">Select observatory</option>
+
+    {% if defaultObservatory %}
+        <option value="{{defaultObservatory.pk}}" {% if defaultObservatory.pk == observatoryID %}selected="selected"{% endif %}>{{defaultObservatory.name}}
+        ({{defaultObservatory.lat|floatformat:3}}
+        {{defaultObservatory.lon|floatformat:3}})</option>
+    {% endif %}
+
+    {% for otherObservatory in otherObservatories %}
+        <option value="{{otherObservatory.pk}}" {% if otherObservatory.pk == observatoryID %}selected="selected"{% endif %}>{{otherObservatory.name}}
+        ({{otherObservatory.lat|floatformat:3}}
+        {{otherObservatory.lon|floatformat:3}})</option>
+    {% endfor %}
+</select>
+
+<br><input type=submit value="Update: Click before uploading if setting any of these manually.">
+</form>
+</div>
 
 <!-- TODO: Add a progress indicator. -->
 <form method="post" enctype="multipart/form-data">

@@ -96,6 +96,27 @@ def upload(request):
     objectRA = request.GET.get('objectRA', '')
     objectDec = request.GET.get('objectDec', '')
     overlapsImage = request.GET.get('image', '')
+    plateScale = request.GET.get('plateScale', '')
+    try:
+        observatoryID = int(request.GET.get('observatoryID', -1))
+    except:
+        observatoryID = -1
+
+    context['object'] = objectIdentifier
+    context['objectRA'] = objectRA
+    context['objectDec'] = objectDec
+    context['image'] = overlapsImage
+    context['plateScale'] = plateScale
+    context['observatoryID'] = observatoryID
+
+    defaultObservatory = request.user.profile.defaultObservatory
+    otherObservatories = Observatory.objects.filter(user=request.user)
+    if defaultObservatory != None:
+        otherObservatories = otherObservatories.exclude(pk=defaultObservatory.pk)
+    otherObservatories = otherObservatories.order_by('-pk')
+
+    context['defaultObservatory'] = defaultObservatory
+    context['otherObservatories'] = otherObservatories
 
     if request.method == 'POST' and 'myfiles' in request.FILES:
         # Create a record for this upload session so that all the UploadedFileRecords can link to it.
@@ -142,9 +163,16 @@ def upload(request):
             if fileExtension.lower() in settings.SUPPORTED_IMAGE_TYPES:
                 image = createTasksForNewImage(record, request.user)
 
-                for key, value in [('object', objectIdentifier), ('objectRA', objectRA), ('objectDec', objectDec), ('overlapsImage', overlapsImage)]:
+                for key, value in [('object', objectIdentifier), ('objectRA', objectRA), ('objectDec', objectDec),
+                                   ('overlapsImage', overlapsImage), ('plateScale', plateScale)]:
                     if value != '':
                         image.addImageProperty(key, value, False)
+
+                if observatoryID != -1:
+                    observatory = Observatory.objects.filter(pk=int(observatoryID)).first()
+                    if observatory is not None:
+                        image.observatory = observatory
+                        image.save()
 
         context['upload_successful'] = True
         context['records'] = records
@@ -871,7 +899,7 @@ def query(request):
         except:
             pass
 
-        if request.GET['queryfor'] in ['image', 'imageTransform']:
+        if request.GET['queryfor'] in ['image', 'imageTransform', 'objectsNamed']:
             if limit > 100:
                 limit = 100
         elif request.GET['queryfor'] in ['sextractorResult', 'image2xyResult', 'daofindResult', 'starfindResult', 'sourceFindMatch', 'userSubmittedResult']:
@@ -1152,6 +1180,39 @@ def query(request):
         results = Pier.objects
         results = results.order_by('make', 'model')
         jsonResponse = json.dumps(list(results), default=lambda o: o.__dict__)
+
+    elif request.GET['queryfor'] == 'objectsNamed':
+        #TODO: Accept a time for sky positions?  Currently defaults to "now".
+        name = request.GET.get('name', '')
+        if len(name) < 1:
+            # If the search string is not at least 3 characters long, return just an empty list.
+            jsonResponse = json.dumps(list())
+        else:
+            resultArray = []
+            for results, typeString in [
+                (AstorbRecord.objects.filter(name__icontains=name), 'Asteroid'),
+                (ExoplanetRecord.objects.filter(identifier__icontains=name), 'Exoplanet'),
+                (GCVSRecord.objects.filter(identifier__icontains=name), 'Variable Star'),
+                (ExoplanetRecord.objects.filter(identifier__icontains=name), 'Exoplanet'),
+                (MessierRecord.objects.filter(identifier__icontains=name), 'Messier'),
+                (TwoMassXSCRecord.objects.filter(identifier__icontains=name), 'TwoMassXSC')
+                ]:
+                for result in results[:limit]:
+                    tempDict = {}
+                    if result.isMobile() < 2:
+                        ra, dec = result.getSkyCoords()
+                        tempDict['ra'] = ra
+                        tempDict['dec'] = dec
+                    else:
+                        tempDict['ra'] = ''
+                        tempDict['dec'] = ''
+
+                    tempDict['identifier'] = result.getDisplayName
+                    tempDict['type'] = typeString
+                    tempDict['url'] = result.getUrl()
+                    resultArray.append(tempDict)
+
+            jsonResponse = json.dumps(resultArray)
 
     return HttpResponse(jsonResponse)
 
