@@ -2626,6 +2626,18 @@ def observing(request):
     print('\n\nTiming:')
     millis = int(round(time.time() * 1000))
 
+    brightStars = UCAC4Record.objects.filter(
+        geometry__dwithin=(zenithGeometry, windowSize),
+        magFit__lt=6
+        ).order_by('magFit')[:limit]
+
+    context['brightStars'] = brightStars
+
+    newMillis = int(round(time.time() * 1000))
+    deltaT = newMillis - millis
+    print('BrightStars took {} milliseconds to execute.'.format(deltaT ))
+    millis = int(round(time.time() * 1000))
+
     variableStars = GCVSRecord.objects.filter(
         geometry__dwithin=(zenithGeometry, windowSize),
         magMin__lt=limitingMag

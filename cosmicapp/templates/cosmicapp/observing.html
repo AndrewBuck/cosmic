@@ -128,12 +128,33 @@
 <p>Your current zenith is at:&emsp;{% formatRADec_rad zenithNowRA zenithNowDec %}</p>
 
 <p>
+<a href="#brightStarDiv">Jump to Bright Star Results</a><br>
 <a href="#asteroidDiv">Jump to Asteroid Results</a><br>
 <a href="#exoplanetDiv">Jump to Exoplanet Results</a><br>
 <a href="#variablesDiv">Jump to Variable Star Results</a><br>
 <a href="#messierDiv">Jump to Messier Object Results</a><br>
 <a href="#dsoDiv">Jump to Deep Sky Object Results</a><br>
 </p>
+
+<div id=brightStarDiv style="display: inline-block; margin: 2em;">
+    <p>There are {{brightStars|length}} bright stars within {{windowSize}} degrees of your zenith.</p>
+
+    <table cellpadding=5px border=2px style="border-collapse: collapse; margin: 1em;">
+    <tr>
+    {% if user.is_authenticated %}<th><font color=gold>★</font></th>{% endif %}
+    <th>Score</th> <th>Name</th> <th>RA Dec</th> <th>Mag</th>
+    </tr>
+        {% for brightStar in brightStars %}
+            <tr>
+            {% bookmark "ucac4" brightStar.pk "Observing Targets" "<td>" "</td>" %}
+            <td>{% scoreForObject brightStar currentTime user %}</td>
+            <td><a href="{{brightStar.getUrl}}">{{brightStar.identifier}}</a></td>
+            <td>{% formatRADec brightStar.ra brightStar.dec %}</td>
+            <td>{{brightStar.magFit|floatformat:2}}</td>
+            <tr>
+        {% endfor %}
+    </table>
+</div>
 
 <div id=asteroidDiv style="display: inline-block; margin: 2em;">
     <p>There are {{asteroids|length}} asteroids within {{windowSize}} degrees of your zenith.</p>
