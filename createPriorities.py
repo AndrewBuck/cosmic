@@ -24,7 +24,7 @@ priority, created = ProcessPriority.objects.get_or_create(
 
 priority, created = ProcessPriority.objects.get_or_create(
     name = 'generateThumbnails',
-    priority = 5000,
+    priority = 10000,
     priorityClass = 'batch'
     )
 

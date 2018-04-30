@@ -15,8 +15,8 @@ CosmicVariable.setVariable('astrometryNetDepth2', 'string', '12,20,25')
 CosmicVariable.setVariable('astrometryNetRadius', 'float', '10')
 
 CosmicVariable.setVariable('sextractorThreshold', 'float', '2.0')
-CosmicVariable.setVariable('daofindThreshold', 'float', '3.0')
-CosmicVariable.setVariable('starfindThreshold', 'float', '3.0')
+CosmicVariable.setVariable('daofindThreshold', 'float', '4.0')
+CosmicVariable.setVariable('starfindThreshold', 'float', '3.5')
 
 CosmicVariable.setVariable('histogramMaxBins', 'int', '255')
 CosmicVariable.setVariable('histogramRejectionExponent', 'float', '100.0')
