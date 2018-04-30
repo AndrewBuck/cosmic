@@ -6,15 +6,11 @@
 {% block extrahead %}
 {% include "./jquery.html" %}
 <script src="/static/cosmicapp/imageTable.js"></script>
+<script src="/static/cosmicapp/math.min.js" type="text/javascript"></script>
 {% endblock extrahead %}
 
 {% block mainbody %}
 
-<head>
-  <script src="/static/cosmicapp/math.min.js" type="text/javascript"></script>
-</head>
-
-<!-- TODO Make this a 'select' input. -->
 Thumbnail size:
 <select id="thumbnailSizeInput">
     <option value=Large>Large</option>
