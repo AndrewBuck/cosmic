@@ -75,7 +75,7 @@ class CosmicVariable(models.Model):
 
 class InstrumentComponent(models.Model):
     """
-    An Optical tube assembly that forms the core of the optical path of an instrument.
+    An abstract base class holding common properties and functions for all hardware types.
     """
     make = models.CharField(db_index=True, max_length=64, null=True, blank=True)
     model = models.CharField(db_index=True, max_length=64, null=True, blank=True)
@@ -108,12 +108,23 @@ class ComponentInstance(models.Model):
     comments = GenericRelation('TextBlob')
 
 class InstrumentConfiguration(models.Model):
+    """
+    A database record to tie together all of the information about a particular
+    configuration of specific pieces of hardware to form a description of the instrument
+    used to acquire a particular image.
+    """
     user = models.ForeignKey(User, db_index=True, on_delete=models.CASCADE)
     name = models.TextField(null=True)
 
     comments = GenericRelation('TextBlob')
 
 class InstrumentConfigurationLink(models.Model):
+    """
+    A database link representing the physical attachment of one component to another in a
+    particular instrument configuration.  A given piece of physical hardware can only be
+    used once in a single instrument configuration, but can be re-used in other ones (for
+    example a user who owns one camera and two telescopes).
+    """
     configuration = models.ForeignKey("InstrumentConfiguration", db_index=True, on_delete=models.CASCADE, related_name="configurationLinks")
 
     attachedFrom = models.ForeignKey("ComponentInstance", on_delete=models.CASCADE, related_name="attachedFromLinks")
@@ -167,6 +178,11 @@ class Camera(InstrumentComponent):
     comments = GenericRelation('TextBlob')
 
 class Pier(InstrumentComponent):
+    """
+    The permanant pier or tripod, etc, that the telescope mount is connected to.  A pier
+    should not connect to anything, since it is effectively connected to the ground at the
+    observatory.
+    """
     pierType = models.CharField(max_length=64, null=True, blank=True)
     maxPayload = models.FloatField(null=True, blank=True)
 

@@ -1445,6 +1445,7 @@ def initSourcefind(method, image):
             elif rangeString in ['tooFew', 'wayTooFew']:
                 minValid = max(minValid, numExpected*(1+aboutRightRange))
 
+        #TODO: We should subtract the number of sources found by the previous run which are flagged as hot pixels, etc, before doing this comparison.
         if feedbackFound:
             outputText += "Valid range of results is between {} and {}.\n".format(minValid, maxValid)
             if previousRunNumFound <= 0.1*minValid:
