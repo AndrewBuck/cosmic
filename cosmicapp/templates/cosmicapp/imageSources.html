@@ -338,6 +338,7 @@ function adjustSliderValue(sliderSelector, increment)
 {
     var slider = document.getElementById(sliderSelector);
     slider.value = Number(slider.value) + Number(increment);
+    drawSources();
 };
 
 function drawStroked(c, text, x, y, ignoreDistance=false)
@@ -1065,7 +1066,11 @@ function drawSources(forceDraw=true)
     if($('#objectsEnabledCheckbox').is(':checked'))
     for(i = 0; i < objectsInImage.length && !lmbDown; i++)
     {
-        if(objectsInImage[i].mag < limitingMag)
+        var mag = objectsInImage[i].mag;
+        if(mag < 0.00001)
+            mag = 1000;
+
+        if(mag < limitingMag || (limitingMag > 15 && mag > 999))
             if(objectsInImage[i].catalog == 'UCAC4')
                 drawSource(context, objectsInImage[i].pixelX, objectsInImage[i].pixelY, 2.0, math.min(18-objectsInImage[i].mag, 7), 1.0);
             else
