@@ -97,10 +97,16 @@ def upload(request):
     objectDec = request.GET.get('objectDec', '')
     overlapsImage = request.GET.get('image', '')
     plateScale = request.GET.get('plateScale', '')
+
     try:
         observatoryID = int(request.GET.get('observatoryID', -1))
     except:
         observatoryID = -1
+
+    try:
+        instrumentID = int(request.GET.get('instrumentID', -1))
+    except:
+        instrumentID = -1
 
     context['object'] = objectIdentifier
     context['objectRA'] = objectRA
@@ -108,6 +114,7 @@ def upload(request):
     context['image'] = overlapsImage
     context['plateScale'] = plateScale
     context['observatoryID'] = observatoryID
+    context['instrumentID'] = instrumentID
 
     defaultObservatory = request.user.profile.defaultObservatory
     otherObservatories = Observatory.objects.filter(user=request.user)
@@ -115,8 +122,16 @@ def upload(request):
         otherObservatories = otherObservatories.exclude(pk=defaultObservatory.pk)
     otherObservatories = otherObservatories.order_by('-pk')
 
+    defaultInstrument = request.user.profile.defaultInstrument
+    otherInstruments = InstrumentConfiguration.objects.filter(user=request.user)
+    if defaultInstrument != None:
+        otherInstruments = otherInstruments.exclude(pk=defaultInstrument.pk)
+    otherInstruments = otherInstruments.order_by('-pk')
+
     context['defaultObservatory'] = defaultObservatory
     context['otherObservatories'] = otherObservatories
+    context['defaultInstrument'] = defaultInstrument
+    context['otherInstruments'] = otherInstruments
 
     if request.method == 'POST' and 'myfiles' in request.FILES:
         # Create a record for this upload session so that all the UploadedFileRecords can link to it.
@@ -172,6 +187,12 @@ def upload(request):
                     observatory = Observatory.objects.filter(pk=int(observatoryID)).first()
                     if observatory is not None:
                         image.observatory = observatory
+                        image.save()
+
+                if instrumentID != -1:
+                    instrument = InstrumentConfiguration.objects.filter(pk=int(instrumentID)).first()
+                    if instrument is not None:
+                        image.instrument = instrument
                         image.save()
 
         context['upload_successful'] = True

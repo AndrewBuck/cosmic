@@ -114,6 +114,21 @@ Object Name: <input id=foo type=text name=object value="{{object}}">&emsp;<a cla
     {% endfor %}
 </select>
 
+<br>Instrument Used:
+<select name=instrumentID>
+    <option value="">Select instrument</option>
+
+    {% if defaultInstrument %}
+        <option value="{{defaultInstrument.pk}}" {% if defaultInstrument.pk == instrumentID %}selected="selected"{% endif %}>{{defaultInstrument.name}}
+        </option>
+    {% endif %}
+
+    {% for otherInstrument in otherInstruments %}
+        <option value="{{otherInstrument.pk}}" {% if otherInstrument.pk == instrumentID %}selected="selected"{% endif %}>{{otherInstrument.name}}
+        </option>
+    {% endfor %}
+</select>
+
 <br><input type=submit value="Update: Click before uploading if setting any of these manually.">
 </form>
 </div>

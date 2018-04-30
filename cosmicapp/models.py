@@ -213,6 +213,7 @@ class Profile(models.Model):
     """
     user = models.OneToOneField(User, db_index=True, on_delete=models.CASCADE)
     defaultObservatory = models.ForeignKey('Observatory', on_delete=models.CASCADE, null=True)
+    defaultInstrument = models.ForeignKey('InstrumentConfiguration', on_delete=models.CASCADE, null=True)
     birthDate = models.DateField(null=True, blank=True)
     limitingMag = models.FloatField(null=True, blank=True)
     modPoints = models.PositiveIntegerField()
@@ -458,7 +459,7 @@ class Image(models.Model, SkyObject, BookmarkableItem):
     """
     fileRecord = models.ForeignKey(UploadedFileRecord, db_index=True, on_delete=models.PROTECT, null=True, related_name='image')
     parentImages = models.ManyToManyField('self', symmetrical=False, related_name='childImages')
-    instrument = models.ForeignKey(Instrument, on_delete=models.PROTECT, null=True)
+    instrument = models.ForeignKey(InstrumentConfiguration, on_delete=models.PROTECT, null=True)
     observatory = models.ForeignKey(Observatory, on_delete=models.PROTECT, null=True)
     dimX = models.IntegerField(null=True)
     dimY = models.IntegerField(null=True)
