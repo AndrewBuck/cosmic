@@ -923,7 +923,7 @@ class ProcessOutputFile(models.Model):
 
 
 
-class SourceFindResult(models.Model):
+class SourceFindResult(models.Model, SkyObject):
     """
     An abstract base class containing the fields common to all source finding methods, such as position and confidence.
     Records of this type cannot be created directly and there is no actual table for this type in the database.  Rather one
@@ -954,6 +954,14 @@ class SourceFindResult(models.Model):
             return (None, None)
 
         return plateSolution.getRaDec(self.pixelX, self.pixelY)
+
+    def isMobile(self):
+        return 0
+
+    def getSkyCoords(self, dateTime=datetime.now()):
+        return (self.ra, self.dec)
+
+    #TODO: Implement getMag() in all the child classes.
 
     class Meta:
         abstract = True

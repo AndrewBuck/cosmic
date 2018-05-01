@@ -559,6 +559,17 @@ def objectInfo(request, method, pk):
             return render(request, "cosmicapp/objectnotfound.html", context)
 
         context['obj'] = obj
+
+        #TODO: Provide a time to getSkyCoords(), maybe from an http get parameter?
+        if isinstance(obj, SkyObject):
+            ra, dec = obj.getSkyCoords()
+            queryGeometry = GEOSGeometry('POINT({} {})'.format(ra, dec))
+            imageIds = PlateSolution.objects.filter(geometry__dwithin=(queryGeometry, 0.0001))\
+                .distinct('image_id').order_by('-image_id').values_list('image_id', flat=True)
+            coveringImages = Image.objects.filter(pk__in=imageIds)
+            context['numCoveringImages'] = coveringImages.count()
+            context['coveringImages'] = coveringImages[:50]
+
         return render(request, "cosmicapp/object_info_" + method + ".html", context)
     else:
         return HttpResponse('Catalog "' + method + '" not found.', status=400, reason='not found.')

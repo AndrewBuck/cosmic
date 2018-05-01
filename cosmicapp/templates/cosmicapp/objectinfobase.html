@@ -37,6 +37,7 @@ Upload images of this object</a>
 {% block mainbody %}{% endblock %}
 
 {% block bottomSection %}
+
 {% if obj.getLinks %}
     <h3>External Links</h3>
     <p>
@@ -46,4 +47,32 @@ Upload images of this object</a>
     </p>
 {% endif %}
 <br>
+
+<h3>Images Containing This Object</h3>
+<p>
+{% if coveringImages %}
+    {% if numCoveringImages > 50 %}
+        Showing the first 50 of {{numCoveringImages}} images.
+    {% else %}
+        Showing {{numCoveringImages}} images.
+    {% endif %}
+    </p>
+
+    {% for image in coveringImages %}
+        <div style="margin: .3em; float: left; display: inline-block;">
+        <font size=-1>
+        <a href="/image/{{image.pk}}/">
+        {% comment %}TODO: Draw this thumbnail on a canvas with a reticle centered on the star.{% endcomment %}
+        <img src="{{image.getThumbnailUrlSmall|safe}}">
+        </a>
+        <br>{{image.getBestPlateSolution.resolutionX|floatformat:2}} x {{image.getBestPlateSolution.resolutionY|floatformat:2}}
+        <br>arcsec/pixel
+        <br><a href="/image/{{image.pk}}/sources/">(sources)</a>
+        </font>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class=clearfix></div>
+
 {% endblock bottomSection %}
