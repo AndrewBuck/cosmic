@@ -2113,7 +2113,7 @@ def astrometryNet(filename, processInputId):
     ra, dec = image.getBestRaDec()
     objectRA = image.getImageProperty('objectRA')
     objectDec = image.getImageProperty('objectDec')
-    #TODO: Also take into account the observatory location (if set) and the image time.
+    overlapsImage = image.getImageProperty('overlapsImage')
     if ra is not None:
         argArray.append('--ra')
         argArray.append(str(ra))
@@ -2124,6 +2124,25 @@ def astrometryNet(filename, processInputId):
 
         outputText += 'Image has a previous plate solution.\n'
         outputText += 'Searching a {} degree radius around the ra, dec of ({}, {})\n'.format(models.CosmicVariable.getVariable('astrometryNetRadius'), ra, dec)
+
+    elif overlapsImage is not None:
+        overlappingImage = models.Image.objects.filter(pk=int(overlapsImage)).first()
+        if overlappingImage is not None:
+            ra, dec = overlappingImage.getBestRaDec()
+            if ra is not None:
+                argArray.append('--ra')
+                argArray.append(str(ra))
+                argArray.append('--dec')
+                argArray.append(str(dec))
+                argArray.append('--radius')
+                argArray.append(str(models.CosmicVariable.getVariable('astrometryNetRadius')))
+
+                outputText += 'Image overlaps image {} which has a plate solution.\n'.format(overlapsImage)
+                outputText += 'Searching a {} degree radius around the ra, dec of ({}, {})\n'.format(models.CosmicVariable.getVariable('astrometryNetRadius'), ra, dec)
+            else:
+                outputText += 'Image overlaps image {} but that image does not have a plate solution.\n'.format(overlapsImage)
+        else:
+            outputText += 'ERROR: Could not find overlapping image with id "{}".\n'.format(overlapsImage)
 
     elif objectRA != None and objectDec != None:
         # Change the spaces into ':' symbols in the HMS and DMS positions which is what solve-field expects.
@@ -2163,7 +2182,6 @@ def astrometryNet(filename, processInputId):
     else:
         outputText += 'Image has no plate solution or header data indicating where to search, searching the whole sky.\n'
 
-    #TODO: Also check the ImageProperty overlapsImage to see if that image has a plate solution or objectRA, etc.
     ps = image.getBestPlateSolution()
     if ps is not None:
         resolution = (ps.resolutionX + ps.resolutionY)/2.0
