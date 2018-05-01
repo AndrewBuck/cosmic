@@ -2140,6 +2140,26 @@ def astrometryNet(filename, processInputId):
         outputText += 'Image has target RA and Dec in the image header.\n'
         outputText += 'Searching a {} degree radius around the ra, dec of ({}, {})\n'.format(models.CosmicVariable.getVariable('astrometryNetRadius'), objectRA, objectDec)
 
+    elif image.dateTime is not None and image.observatory is not None:
+        outputText += 'Image has an obervatory and a time set, only searching the half of the sky which is visible from that site at that time.\n'
+        observer = ephem.Observer()
+        observer.lat = image.observatory.lat*(math.pi/180)
+        observer.lon = image.observatory.lon*(math.pi/180)
+        observer.elevation = image.observatory.elevation
+        observer.date = image.dateTime
+
+        zenithRA, zenithDec = observer.radec_of('0', '90')
+
+        argArray.append('--ra')
+        argArray.append(str(zenithRA))
+        argArray.append('--dec')
+        argArray.append(str(zenithDec))
+        argArray.append('--radius')
+        argArray.append(str(models.CosmicVariable.getVariable('astrometryNetZenithRadius')))
+
+        outputText += 'Searching a {} degree radius around the observer\'s zenith ra, dec of ({} {})\n'\
+            .format(models.CosmicVariable.getVariable('astrometryNetZenithRadius'), zenithRA, zenithDec)
+
     else:
         outputText += 'Image has no plate solution or header data indicating where to search, searching the whole sky.\n'
 

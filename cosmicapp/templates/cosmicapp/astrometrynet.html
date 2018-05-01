@@ -86,9 +86,11 @@ Astrometry.net in answering these questions:
 
 * Where on the sky is the image?
 
-    * *(Not yet implemented)* If we assume the user uploading the image took it, we can reasonably guess it was taken
+    * If we assume the user uploading the image took it, we can reasonably guess it was taken
       from the same location as their other images and the portion of the sky imaged must
-      have been visible from there at that time.  *This cuts the search space roughly in half.*
+      have been visible from there at that time.  *This cuts the search space roughly in
+      half.* Currently we do this for images where the observatory is set and the image
+      acquisition time is known.
 
     * *(Not yet implemented)* If other images uploaded by the same user were taken around the same time, they
       likely are of the same object (or one fairly close to it).  *For time series
