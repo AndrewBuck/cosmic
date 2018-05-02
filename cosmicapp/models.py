@@ -250,7 +250,6 @@ def savePlateSolution(sender, instance, **kwargs):
     When we save a plate solution it may have changed the best plate solution for the
     image.  If so, we need to re-compute the ra-dec for all objects detected in the image.
     """
-    print("Re-computing ra-dec for sources.")
     sourceFindMatchResults = [
         instance.image.sextractorResults.all(),
         instance.image.image2xyResults.all(),
@@ -277,7 +276,6 @@ def savePlateSolution(sender, instance, **kwargs):
 
                     result.save()
 
-    print("Done.")
 
 #TODO: Add a check when a user adds a bookmark to see if they should be shown a tutorial popup assosciated with the newly added bookmark.
 class Bookmark(models.Model):
