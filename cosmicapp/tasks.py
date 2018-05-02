@@ -32,7 +32,7 @@ from astropy.stats import sigma_clipped_stats
 from astropy.table import Table
 from astropy.nddata import CCDData
 from photutils import make_source_mask, DAOStarFinder, IRAFStarFinder
-from ccdproc import Combiner
+from ccdproc import Combiner, wcs_project
 from collections import Counter
 from sortedcontainers import SortedList, SortedDict, SortedListWithKey
 
@@ -2968,6 +2968,15 @@ def imageCombine(argList, processInputId):
     dataArray = []
     exposureSum = 0
     exposureCount = 0
+    doReproject = True
+    for image in images:
+        if image.getBestPlateSolution() is None:
+            outputText += 'Image {} does not have a plate solution, not reprojecting.'.format(image.pk)
+            doReproject = False
+
+    if doReproject:
+        referenceWCS = images[0].getBestPlateSolution().wcs()
+
     for image in images:
         outputText += "Loading image {}: {}\n".format(image.pk, image.fileRecord.originalFileName)
         hdulist = fits.open(settings.MEDIA_ROOT + image.fileRecord.onDiskFileName)
@@ -3024,7 +3033,15 @@ def imageCombine(argList, processInputId):
 
             data /= masterFlatData
 
-        dataArray.append(CCDData(data, unit=u.adu))
+        if doReproject:
+            outputText += 'Reprojecting image.\n'
+            hdulist[0].data = data
+            dataToProject = CCDData(data, wcs=image.getBestPlateSolution().wcs(), unit=u.adu)
+            data = wcs_project(dataToProject, referenceWCS)
+            dataArray.append(data)
+        else:
+            outputText += 'Not Reprojecting image.\n'
+            dataArray.append(CCDData(data, unit=u.adu))
 
         if imageExposure is not None and imageExposure != 'unknown':
             exposureSum += float(imageExposure)

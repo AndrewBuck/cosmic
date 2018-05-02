@@ -197,7 +197,7 @@ Master Dark Image ID (required): <input type=text name=lightMasterDarkId>
 Master Flat Image ID (required): <input type=text name=lightMasterFlatId>
 <br>
 
-{% include "./imageTable.html" with queryParams="imageProperty=imageType=light:imageProperty=flatCorrected=unknown:user="|concat:user|safe imageOnclickFunction="handleImageClick" galleryName="lightGallery" includeLinks="false" thumbnailSize="Medium" %}
+{% include "./imageTable.html" with queryParams="imageProperty=imageType=light:imageProperty=astrometryNet=success:imageProperty=flatCorrected=unknown:user="|concat:user|safe imageOnclickFunction="handleImageClick" galleryName="lightGallery" includeLinks="false" thumbnailSize="Medium" %}
 
 <h4>Stacked light frames</h4>
 
