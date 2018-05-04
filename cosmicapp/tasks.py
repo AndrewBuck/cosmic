@@ -227,6 +227,7 @@ def imagestats(filename, processInputId):
 
             models.storeImageLocation(image, w, 'original')
         else:
+            image.addImageProperty('numPlateSolutions', 0)
             outputText += "WCS not found in header" + "\n"
 
 
