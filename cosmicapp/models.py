@@ -32,6 +32,49 @@ from .tasks import computeSingleEphemeris
 
 #TODO: Check all TextField and CharField and remove null=True so you only have to check for empty string as null, not both empty string and null.
 
+def storeImageLocation(image, w, sourceString):
+    #TODO: should check w.lattyp and w.lontyp to make sure we are storing these world coordinates correctly.
+    raCen, decCen = w.all_pix2world(image.dimX/2, image.dimY/2, 1)    #TODO: Determine if this 1 should be a 0.
+    raScale, decScale = wcs.utils.proj_plane_pixel_scales(w)
+    raScale *= 3600.0
+    decScale *= 3600.0
+
+    #TODO: Replace a lot of this code with astropy.wcs.calc_footprint
+    polygonPixelsList = [
+        (1, 1),
+        (image.dimX, 1),
+        (image.dimX, image.dimY),
+        (1, image.dimY),
+        (1, 1)
+        ]
+
+    polygonCoordsList = []
+    geometryString = 'POLYGON(('
+    commaString = ''
+
+    for x, y in polygonPixelsList:
+        ra, dec = w.all_pix2world(x, y, 1)    #TODO: Determine if this 1 should be a 0.
+        geometryString += commaString + str(ra) + ' ' + str(dec)
+        commaString = ', '
+
+    geometryString += '))'
+
+    #TODO: Store image.centerRot
+    ps = PlateSolution(
+        image = image,
+        wcsHeader = w.to_header_string(True),
+        source = sourceString,
+        centerRA = raCen,
+        centerDec = decCen,
+        centerRot = None,
+        resolutionX = raScale,
+        resolutionY = decScale,
+        geometry = geometryString
+        )
+
+    ps.area = ps.geometry.area
+    ps.save()
+
 class CosmicVariable(models.Model):
     name = models.CharField(db_index=True, unique=True, max_length=64)
     variableType = models.CharField(max_length=32)

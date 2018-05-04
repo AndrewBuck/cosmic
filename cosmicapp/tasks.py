@@ -54,48 +54,6 @@ def longestCommonPrefix(string1, string2):
 def sigmoid(x):
     return 1 / (1 + math.exp(-x))
 
-def storeImageLocation(image, w, sourceString):
-    #TODO: should check w.lattyp and w.lontyp to make sure we are storing these world coordinates correctly.
-    raCen, decCen = w.all_pix2world(image.dimX/2, image.dimY/2, 1)    #TODO: Determine if this 1 should be a 0.
-    raScale, decScale = wcs.utils.proj_plane_pixel_scales(w)
-    raScale *= 3600.0
-    decScale *= 3600.0
-
-    polygonPixelsList = [
-        (1, 1),
-        (image.dimX, 1),
-        (image.dimX, image.dimY),
-        (1, image.dimY),
-        (1, 1)
-        ]
-
-    polygonCoordsList = []
-    geometryString = 'POLYGON(('
-    commaString = ''
-
-    for x, y in polygonPixelsList:
-        ra, dec = w.all_pix2world(x, y, 1)    #TODO: Determine if this 1 should be a 0.
-        geometryString += commaString + str(ra) + ' ' + str(dec)
-        commaString = ', '
-
-    geometryString += '))'
-
-    #TODO: Store image.centerRot
-    ps = models.PlateSolution(
-        image = image,
-        wcsHeader = w.to_header_string(True),
-        source = sourceString,
-        centerRA = raCen,
-        centerDec = decCen,
-        centerRot = None,
-        resolutionX = raScale,
-        resolutionY = decScale,
-        geometry = geometryString
-        )
-
-    ps.area = ps.geometry.area
-    ps.save()
-
 def constructProcessOutput(outputText, errorText, executionTime=None):
     processOutput = {
         'outputText': outputText,
@@ -267,7 +225,7 @@ def imagestats(filename, processInputId):
         if w.has_celestial:
             outputText += "WCS found in header" + "\n"
 
-            storeImageLocation(image, w, 'original')
+            models.storeImageLocation(image, w, 'original')
         else:
             outputText += "WCS not found in header" + "\n"
 
@@ -2231,7 +2189,7 @@ def astrometryNet(filename, processInputId):
         outputText += '\n\nPlate solved successfully.' + "\n"
         w = wcs.WCS(settings.MEDIA_ROOT + filename + '.sources.wcs')
 
-        storeImageLocation(image, w, 'astrometry.net')
+        models.storeImageLocation(image, w, 'astrometry.net')
         image.addImageProperty('astrometryNet', 'success')
     else:
         outputText += '\n\nNo plate solution found.' + "\n"
