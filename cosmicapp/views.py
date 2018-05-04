@@ -754,7 +754,7 @@ def allImageProperties(request):
     properties = propertiesQuery\
         .values('key', 'value')\
         .annotate(count=Count('id'))\
-        .order_by('-count', 'key', 'value')
+        .order_by('-count', 'key', 'value')[:100]
 
     context['properties'] = properties
 
@@ -767,7 +767,7 @@ def allImageProperties(request):
         .exclude(key__in=settings.NON_PROPERTY_KEYS)\
         .values('key', 'value')\
         .annotate(countOccurrences=Count('id'), countLinks=Count('properties__id'))\
-        .order_by('countLinks', '-countOccurrences')
+        .order_by('countLinks', '-countOccurrences')[:100]
 
     context['headers'] = headers
 
