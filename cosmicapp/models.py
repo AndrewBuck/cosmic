@@ -1310,6 +1310,14 @@ class UCAC4Record(models.Model, BookmarkableItem, SkyObject, ScorableObject):
         return "/catalog/UCAC4/" + str(self.pk)
 
     @property
+    def getLinks(self):
+        links =  [
+            ("http://simbad.u-strasbg.fr/simbad/sim-id?Ident=UCAC4 "+self.identifier, "SIMBAD")
+            ]
+
+        return links
+
+    @property
     def getDisplayName(self):
         return self.identifier
 
