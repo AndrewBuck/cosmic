@@ -1408,7 +1408,7 @@ def initSourcefind(method, image):
         if feedbackFound:
             outputText += "Valid range of results is between {} and {}.\n".format(minValid, maxValid)
             if previousRunNumFound <= 0.1*minValid:
-                detectThresholdMultiplier -= 1.0
+                detectThresholdMultiplier -= 0.7 + 0.3*(.1*minValid)/previousRunNumFound
                 outputText += "Last run was less than 10% of the user submitted range, reducing detection threshold a lot.\n"
             elif previousRunNumFound <= minValid:
                 detectThresholdMultiplier -= 0.25
@@ -1420,7 +1420,7 @@ def initSourcefind(method, image):
                 detectThresholdMultiplier += 0.25
                 outputText += "Last run was more than {}% of the user submitted range, increasing detection threshold a little.\n".format(100*(1+aboutRightRange))
             else:
-                detectThresholdMultiplier += 1.0
+                detectThresholdMultiplier += 0.7 + 0.3*previousRunNumFound/(10*maxValid)
                 outputText += "Last run was more than 10 times the user submitted figure, increasing detection threshold a lot.\n"
 
     if detectThresholdMultiplier < 0.1:
