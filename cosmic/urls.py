@@ -60,6 +60,7 @@ urlpatterns = [
     url(r'^save/transform/$', views.saveTransform),
     url(r'^save/userComputedWCS/$', views.saveUserComputedWCS),
     url(r'^save/userSubmittedSourceResults/$', views.saveUserSubmittedSourceResults),
+    url(r'^save/userSubmittedRADec/$', views.saveUserSubmittedRADec),
     url(r'^save/userSubmittedFeedback/$', views.saveUserSubmittedFeedback),
     url(r'^save/userOwnedEquipment/$', views.saveUserOwnedEquipment),
     url(r'^save/instrumentConfigurationLink/$', views.saveInstrumentConfigurationLink),

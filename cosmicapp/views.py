@@ -1752,6 +1752,26 @@ def saveUserSubmittedSourceResults(request):
 
 @login_required
 @require_http_methods(['POST'])
+def saveUserSubmittedRADec(request):
+    try:
+        id = int(request.POST.get('userSubmittedResultId', None))
+        ra = float(request.POST.get('ra', None))
+        dec = float(request.POST.get('dec', None))
+    except:
+        return HttpResponse(json.dumps({'text': 'Error: "userSubmittedResultId", "ra", and "dec" are required.'}), status=400)
+
+    source = UserSubmittedResult.objects.get(pk=id)
+    if source.ra is not None or source.dec is not None:
+        return HttpResponse(json.dumps({'text': 'Error: Source has a non null ra or dec, cannot overwrite.'}), status=400)
+
+    source.ra = ra
+    source.dec = dec
+    source.save()
+
+    return HttpResponse(json.dumps({'text': 'Response Saved Successfully'}), status=200)
+
+@login_required
+@require_http_methods(['POST'])
 def saveUserSubmittedFeedback(request):
     id = int(request.POST.get('imageId', '-1'))
     if id != -1:

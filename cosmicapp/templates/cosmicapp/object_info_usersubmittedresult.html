@@ -7,7 +7,19 @@
 <h3>User Submitted Source Result</h3>
 Image: <a href="/image/{{obj.image_id}}">{{obj.image_id}}</a><br>
 Image Coordinates (x, y): ({{obj.pixelX|floatformat:2}}, {{obj.pixelY|floatformat:2}})<br>
+
 Confidence: {{obj.confidence}}<br>
+RA Dec:
+{% if obj.ra and obj.dec %}
+    {% formatRADec obj.ra obj.dec %}
+{% else %}
+    <form method=post action="/save/userSubmittedRADec/">
+    {% csrf_token %}
+    <input type=hidden name=userSubmittedResultId value={{obj.pk}}>
+    <input type=text name=ra> <input type=text name=dec> <input type=submit value="Submit RA/Dec">
+    </form>
+{% endif %}
+
 
 <h3>Flags</h3>
 Hot Pixel: {{obj.flagHotPixel}}<br>
