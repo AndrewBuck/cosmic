@@ -563,12 +563,13 @@ def objectInfo(request, method, pk):
         #TODO: Provide a time to getSkyCoords(), maybe from an http get parameter?
         if isinstance(obj, SkyObject):
             ra, dec = obj.getSkyCoords()
-            queryGeometry = GEOSGeometry('POINT({} {})'.format(ra, dec))
-            imageIds = PlateSolution.objects.filter(geometry__dwithin=(queryGeometry, 0.0001))\
-                .distinct('image_id').order_by('-image_id').values_list('image_id', flat=True)
-            coveringImages = Image.objects.filter(pk__in=imageIds)
-            context['numCoveringImages'] = coveringImages.count()
-            context['coveringImages'] = coveringImages[:50]
+            if ra is not None and dec is not None:
+                queryGeometry = GEOSGeometry('POINT({} {})'.format(ra, dec))
+                imageIds = PlateSolution.objects.filter(geometry__dwithin=(queryGeometry, 0.0001))\
+                    .distinct('image_id').order_by('-image_id').values_list('image_id', flat=True)
+                coveringImages = Image.objects.filter(pk__in=imageIds)
+                context['numCoveringImages'] = coveringImages.count()
+                context['coveringImages'] = coveringImages[:50]
 
         return render(request, "cosmicapp/object_info_" + method + ".html", context)
     else:
@@ -871,9 +872,13 @@ def query(request):
         resultList = []
         for result in results:
             ra, dec = result.getSkyCoords(image.dateTime)
-            x, y = w.all_world2pix(ra, dec, 1)    #TODO: Determine if this 1 should be a 0.
-            x = numpy.asscalar(x)
-            y = numpy.asscalar(y)
+            if w is not None:
+                x, y = w.all_world2pix(ra, dec, 1)    #TODO: Determine if this 1 should be a 0.
+                x = numpy.asscalar(x)
+                y = numpy.asscalar(y)
+            else:
+                x, y = (None, None)
+
             d = result.__dict__
             del d['_state']
             for key in d:
@@ -1136,24 +1141,32 @@ def query(request):
             imageResultsDict = {}
 
             plateSolution = image.getBestPlateSolution()
-            if plateSolution == None:
-                continue
+            #TODO: Check to see if we can make a gemoetry from the objectRA and objectDec image properties and use that instead of plateSolution.geometry in the queries.
+            if plateSolution is not None:
+                w = wcs.WCS(header=plateSolution.wcsHeader)
+                queryGeometry = plateSolution.geometry
+            else:
+                objectRA = image.getImageProperty('objectRA')
+                objectDec = image.getImageProperty('objectDec')
+                if objectRA != None and objectDec != None:
+                    w = None
+                    queryGeometry = GEOSGeometry('POINT({} {})'.format(objectRA, objectDec))
+                else:
+                    continue
 
-            w = wcs.WCS(header=plateSolution.wcsHeader)
 
             #TODO: Consider adding the details of the plate solution to the queryresult.
-
-            twoMassXSCResults = TwoMassXSCRecord.objects.filter(geometry__dwithin=(plateSolution.geometry, bufferDistance))
-            messierResults = MessierRecord.objects.filter(geometry__dwithin=(plateSolution.geometry, bufferDistance))
-            gcvsResults = GCVSRecord.objects.filter(geometry__dwithin=(plateSolution.geometry, bufferDistance))
-            asteroidResults = getAsteroidsAroundGeometry(plateSolution.geometry, bufferDistance, image.dateTime, 999, 1000)
-            exoplanetResults = ExoplanetRecord.objects.filter(geometry__dwithin=(plateSolution.geometry, bufferDistance))
-            ucac4Results = UCAC4Record.objects.filter(geometry__dwithin=(plateSolution.geometry, bufferDistance))
+            twoMassXSCResults = TwoMassXSCRecord.objects.filter(geometry__dwithin=(queryGeometry, bufferDistance))
+            messierResults = MessierRecord.objects.filter(geometry__dwithin=(queryGeometry, bufferDistance))
+            gcvsResults = GCVSRecord.objects.filter(geometry__dwithin=(queryGeometry, bufferDistance))
+            asteroidResults = getAsteroidsAroundGeometry(queryGeometry, bufferDistance, image.dateTime, 999, 1000)
+            exoplanetResults = ExoplanetRecord.objects.filter(geometry__dwithin=(queryGeometry, bufferDistance))
+            ucac4Results = UCAC4Record.objects.filter(geometry__dwithin=(queryGeometry, bufferDistance))
 
             imageResultsDict['2MassXSC'] = dumpJsonAndAddXY(twoMassXSCResults, w)
             imageResultsDict['Messier'] = dumpJsonAndAddXY(messierResults, w)
             imageResultsDict['GCVS'] = dumpJsonAndAddXY(gcvsResults, w)
-            imageResultsDict['Asteroid'] = dumpJsonAndAddXY(asteroidResults, w)
+            #imageResultsDict['Asteroid'] = dumpJsonAndAddXY(asteroidResults, w)
             imageResultsDict['Exoplanet'] = dumpJsonAndAddXY(exoplanetResults, w)
             imageResultsDict['UCAC4'] = dumpJsonAndAddXY(ucac4Results, w)
 
@@ -1628,6 +1641,34 @@ def saveTransform(request):
     record.save()
 
     return HttpResponse('')
+
+@login_required
+@require_http_methods(['POST'])
+def saveUserComputedWCS(request):
+    id = int(request.POST.get('imageId', '-1'))
+    if id != -1:
+        image = Image.objects.get(pk=id)
+    else:
+        return HttpResponse(json.dumps({'text': 'Image Not Found: ' + str(request.POST.get('imageId')),}), status=400,  reason='Image Not Found.')
+
+    crpix1 = float(request.POST.get('crpix1', ''))
+    crpix2 = float(request.POST.get('crpix2', ''))
+    crval1 = float(request.POST.get('crval1', ''))
+    crval2 = float(request.POST.get('crval2', ''))
+    cdelt1 = float(request.POST.get('cdelt1', ''))
+    cdelt2 = float(request.POST.get('cdelt2', ''))
+    crota1 = float(request.POST.get('crota1', ''))
+    crota2 = float(request.POST.get('crota2', ''))
+
+    w = wcs.WCS(naxis=2)
+    w.wcs.crpix = [crpix1, crpix2]
+    w.wcs.cdelt = [cdelt1, cdelt2]
+    w.wcs.crval = [crval1, crval2]
+    w.wcs.crota = [crota1, crota2]
+    w.wcs.ctype = ["RA---TAN", "DEC--TAN"]
+    storeImageLocation(image, w, 'user')
+
+    return HttpResponse(json.dumps({'text': 'Response Saved Successfully'}), status=200)
 
 @login_required
 @require_http_methods(['POST'])

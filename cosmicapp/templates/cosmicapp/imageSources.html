@@ -270,6 +270,74 @@ colors are defined in javascript, we need to do this in the window.onload functi
 <div id=objectsLimitingMagDiv style="display: inline-block"></div>
 <br>
 
+<div id="catalogTransformDiv" style="display: inline-block; float:right; border:2px solid lightgrey">
+<table>
+<tr>
+<td colspan=2>Image to get plate solution from: <input type=text name=queryImageId value={{image.pk}}></td>
+</tr>
+<tr>
+<td colspan=2>Plate Scale (arcsec/pixel): <input type=text name=plateScale value=1></td>
+</tr>
+<tr>
+<td><input type=button value="Query" onclick="getObjectsInImage()"></td>
+</tr>
+<tr><td colspan=2 align=center> <a class=functionLink onclick="resetCatalogTransform()">Reset</a> </td></tr>
+<tr>
+    <td> Button increment: </td>
+    <td align=center>
+    <input style="width: 300px;" id="transformIncrementSlider" type=range min="1" max="10" value="5" onchange="updateTransformIncrement()">
+    </td>
+</tr>
+<tr>
+    <td> X Offset: </td>
+    <td align=center>
+    <input type=button value="-" onclick="adjustSliderValue('xOffsetSlider', -transformIncrement)">
+    <input style="width: 300px;" id="xOffsetSlider" type=range min="-{{image.dimX}}" max="{{image.dimX}}" value="0" oninput="drawSources()">
+    <input type=button value="+" onclick="adjustSliderValue('xOffsetSlider', transformIncrement)">
+    </td>
+</tr>
+
+<tr>
+    <td> X Scale: </td>
+    <td align=center>
+    <input type=button value="-" onclick="adjustSliderValue('xScaleSlider', -transformIncrement)">
+    <input style="width: 300px;" id="xScaleSlider" type=range min="-1000" max="1000" value="200" oninput="drawSources()">
+    <input type=button value="+" onclick="adjustSliderValue('xScaleSlider', transformIncrement)">
+    </td>
+</tr>
+
+<tr>
+    <td> Y Offset: </td>
+    <td align=center>
+    <input type=button value="-" onclick="adjustSliderValue('yOffsetSlider', -transformIncrement)">
+    <input style="width: 300px;" id="yOffsetSlider" type=range min="-{{image.dimY}}" max="{{image.dimY}}" value="0" oninput="drawSources()">
+    <input type=button value="+" onclick="adjustSliderValue('yOffsetSlider', transformIncrement)">
+    </td>
+</tr>
+
+<tr>
+    <td> Y Scale: </td>
+    <td align=center>
+    <input type=button value="-" onclick="adjustSliderValue('yScaleSlider', -transformIncrement)">
+    <input style="width: 300px;" id="yScaleSlider" type=range min="-1000" max="1000" value="200" oninput="drawSources()">
+    <input type=button value="+" onclick="adjustSliderValue('yScaleSlider', transformIncrement)">
+    </td>
+</tr>
+
+<tr>
+    <td> Rotation: </td>
+    <td align=center>
+    <input type=button value="-" onclick="adjustSliderValue('rotationSlider', -transformIncrement)">
+    <input style="width: 300px;" id="rotationSlider" type=range min="-540" max="540" value="0" oninput="drawSources()">
+    <input type=button value="+" onclick="adjustSliderValue('rotationSlider', transformIncrement)">
+    </td>
+</tr>
+</table>
+
+<input type=button value="Save Plate Solution" onclick="savePlateSolution()">
+
+</div>
+
 <canvas id="sourcesCanvas" width="{{image.dimX}}" height="{{image.dimY}}" style="border:4px solid #00A030">
 Your browser does not support the HTML5 canvas tag.
 </canvas>
@@ -281,6 +349,8 @@ Your browser does not support the HTML5 canvas tag.
 var imageId = {{id}};
 var limitPerSource = 25000;  //TODO: Add a notice in each of the loading methods if the number returned equals this limit.
 var objectsInImage = [];
+var transformIncrement;
+var minRA, maxRA, minDec, maxDec;
 var sextractorResults = [], image2xyResults = [], daofindResults = [], starfindResults = [];
 var userCreatedResults = [], userSubmittedResults = [];
 var userCreatedHotPixels = [], userSubmittedHotPixels = [];
@@ -339,6 +409,62 @@ function adjustSliderValue(sliderSelector, increment)
     var slider = document.getElementById(sliderSelector);
     slider.value = Number(slider.value) + Number(increment);
     drawSources();
+};
+
+function updateTransformIncrement()
+{
+    transformIncrement = document.getElementById('transformIncrementSlider').value;
+};
+
+function resetCatalogTransform()
+{
+    $('#xOffsetSlider').val(0);
+    $('#yOffsetSlider').val(0);
+    $('#rotationSlider').val(0);
+    $('#xScaleSlider').val(100);
+    $('#yScaleSlider').val(100);
+    drawSources();
+};
+
+function transformRADec(ra, dec)
+{
+    rot = (math.pi/180)*crota1
+    xCoord = ((ra - crval1)*math.cos((math.pi/180.0)*dec)) / cdelt1
+    yCoord = (dec - crval2) / cdelt2
+    xRot = xCoord*math.cos(rot) + yCoord*math.sin(rot)
+    yRot = -xCoord*math.sin(rot) + yCoord*math.cos(rot)
+    xCoord = xRot + crpix1;
+    yCoord = yRot + crpix2;
+    return [xCoord, yCoord];
+};
+
+function savePlateSolution()
+{
+    $.ajax({
+        url : "/save/userComputedWCS/",
+        type : "post",
+        data: {
+            imageId: imageId,
+            crpix1: crpix1,
+            crpix2: crpix2,
+            crval1: crval1,
+            crval2: crval2,
+            cdelt1: cdelt1,
+            cdelt2: cdelt2,
+            crota1: crota1,
+            crota2: crota2
+            },
+        dataType: 'json',
+        success : function(response)
+        {
+            alert(response.text);
+        },
+        error : function(response)
+        {
+            response = response.responseJSON;
+            alert(response.text);
+        },
+    });
 };
 
 function drawStroked(c, text, x, y, ignoreDistance=false)
@@ -463,18 +589,28 @@ function addHistogramToPlot(data, nBins, lineColor, legendStr, dashArray)
 function getObjectsInImage()
 {
     var i, j;
+    var plateScale = document.getElementsByName('plateScale')[0].value;
+    var queryImageId = document.getElementsByName('queryImageId')[0].value;
+    document.getElementById('xScaleSlider').value = (200/plateScale);
+    document.getElementById('yScaleSlider').value = (200/plateScale);
+    bufferDistance = 4.0 * ({{image.dimX}}+{{image.dimY}})/4.0 * plateScale / 3600.0;
+
+    objectsInImage = [];
 
     $.ajax({
-        url : "/query/?queryfor=objectsInImage&limit=" + limitPerSource + "&imageId=" + imageId,
+        url : "/query/?queryfor=objectsInImage&bufferDistance=" + bufferDistance + "&limit=" + limitPerSource + "&imageId=" + queryImageId,
         type : "get",
         async: true,
         dataType: 'json',
         success : function(response)
         {
-            typeArray = [ '2MassXSC', 'Messier', 'GCVS', 'Asteroid', 'Exoplanet', 'UCAC4' ];
+            //TODO: Need to add back in 'Asteroid'
+            typeArray = [ '2MassXSC', 'Messier', 'GCVS', 'Exoplanet', 'UCAC4' ];
 
             for(image in response)
             {
+                //TODO: Check image id number matches this image?
+
                 for(j = 0; j < typeArray.length; j++)
                 {
                     var catalog = typeArray[j];
@@ -501,9 +637,30 @@ function getObjectsInImage()
                 }
             }
 
+            minRA = objectsInImage[0].ra;
+            maxRA = objectsInImage[0].ra;
+            minDec = objectsInImage[0].dec;
+            maxDec = objectsInImage[0].dec;
+            for(i = 0; i < objectsInImage.length; i++)
+            {
+                if(objectsInImage[i].ra < minRA)
+                    minRA = objectsInImage[i].ra
+
+                if(objectsInImage[i].ra > maxRA)
+                    maxRA = objectsInImage[i].ra
+
+                if(objectsInImage[i].dec < minDec)
+                    minDec = objectsInImage[i].dec
+
+                if(objectsInImage[i].dec > maxDec)
+                    maxDec = objectsInImage[i].dec
+            }
+
             drawSources();
         }
     });
+
+    drawSources();
 };
 
 function getSextractorResults()
@@ -1062,6 +1219,24 @@ function drawSources(forceDraw=true)
     context.strokeStyle = objectsColor;
     context.fillStyle = objectsColor;
     limitingMag = $('#objectsLimitingMagSlider').val()/10;
+    var xOffset = Number($('#xOffsetSlider').val());
+    var yOffset = Number($('#yOffsetSlider').val());
+    var rotation = $('#rotationSlider').val()/3.0*(math.pi/180.0);
+    var xScale = 200.0/$('#xScaleSlider').val();
+    var yScale = 200.0/$('#yScaleSlider').val();
+    raRange = maxRA - minRA;
+    decRange = maxDec - minDec;
+
+    crpix1 = 0.5*({{image.dimX}}+1) + xOffset;
+    crpix2 = 0.5*({{image.dimY}}+1) + yOffset;
+    crval1 = minRA + 0.5*raRange;
+    crval2 = minDec + 0.5*decRange;
+    cdelt1 = xScale/3600.0;
+    cdelt2 = yScale/3600.0;
+    crota1 = (180.0/math.pi)*rotation
+    crota2 = (180.0/math.pi)*rotation
+    drawStroked(context, 'Plate scale: ' + (cdelt1*3600).toFixed(2) + 'x' + (cdelt2*3600).toFixed(2) + 'arcsec/pixel', 10, 20);
+
     $('#objectsLimitingMagDiv').html("Catalog objects limiting Magnitude: " + limitingMag);
     if($('#objectsEnabledCheckbox').is(':checked'))
     for(i = 0; i < objectsInImage.length && !lmbDown; i++)
@@ -1070,13 +1245,27 @@ function drawSources(forceDraw=true)
         if(mag < 0.00001)
             mag = 1000;
 
+        var xCoord, yCoord;
         if(mag < limitingMag || (limitingMag > 15 && mag > 999))
-            if(objectsInImage[i].catalog == 'UCAC4')
-                drawSource(context, objectsInImage[i].pixelX, objectsInImage[i].pixelY, 2.0, math.min(18-objectsInImage[i].mag, 7), 1.0);
+        {
+            if(objectsInImage[i].pixelX != null || objectsInImage[i].pixelY != null)
+            {
+                xCoord = objectsInImage[i].pixelX
+                yCoord = objectsInImage[i].pixelY
+            }
             else
-                drawReticle(context, objectsInImage[i].pixelX, objectsInImage[i].pixelY, math.min(30-objectsInImage[i].mag, 15), objectsColor, 1.0);
-    }
+            {
+                xyCoords = transformRADec(objectsInImage[i].ra, objectsInImage[i].dec)
+                xCoord = xyCoords[0]
+                yCoord = xyCoords[1]
+            }
 
+            if(objectsInImage[i].catalog == 'UCAC4')
+                drawSource(context, xCoord, yCoord, 2.0, math.max(18-mag, 1), 1.0);
+            else
+                drawReticle(context, xCoord, yCoord, math.max(20-mag, 5), objectsColor, 1.0);
+        }
+    }
 
     context.strokeStyle = sextractorColor;
     context.fillStyle = sextractorColor;
@@ -1586,8 +1775,17 @@ function handleMouseMove(event)
         for(var j = 0; j < currentList.length; j++)
         {
             currentSource = sourceLists[i][0][j];
-            x = currentSource.pixelX;
-            y = currentSource.pixelY;
+            if(currentSource.pixelX != null)
+            {
+                x = currentSource.pixelX;
+                y = currentSource.pixelY;
+            }
+            else
+            {
+                xyCoords = transformRADec(currentSource.ra, currentSource.dec)
+                x = xyCoords[0]
+                y = xyCoords[1]
+            }
             deltaX = mouseX - x;
             deltaY = mouseY - y;
             dsq = deltaX*deltaX + deltaY*deltaY;
@@ -1759,6 +1957,7 @@ window.onload = function()
     $(document).keydown(handleKeyDown);
     $(document).keyup(handleKeyUp);
     countKeysPressed();
+    updateTransformIncrement();
 
     $('#uploadMarkedStarsButton').prop( "disabled", true );
 
