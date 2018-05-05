@@ -16,6 +16,7 @@ RA Dec:
     <form method=post action="/save/userSubmittedRADec/">
     {% csrf_token %}
     <input type=hidden name=userSubmittedResultId value={{obj.pk}}>
+    {% comment %}TODO: Add a search system like the one on the upload page once it is a bit more refined.{% endcomment %}
     <input type=text name=ra> <input type=text name=dec> <input type=submit value="Submit RA/Dec">
     </form>
 {% endif %}

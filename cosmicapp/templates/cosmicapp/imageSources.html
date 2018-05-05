@@ -348,7 +348,7 @@ Your browser does not support the HTML5 canvas tag.
 <script>
 var imageId = {{id}};
 var limitPerSource = 25000;  //TODO: Add a notice in each of the loading methods if the number returned equals this limit.
-var objectsInImage = [];
+var objectsInImage = [], raDecMappingObjects = [];
 var transformIncrement;
 var minRA, maxRA, minDec, maxDec;
 var sextractorResults = [], image2xyResults = [], daofindResults = [], starfindResults = [];
@@ -596,6 +596,7 @@ function getObjectsInImage()
     bufferDistance = 4.0 * ({{image.dimX}}+{{image.dimY}})/4.0 * plateScale / 3600.0;
 
     objectsInImage = [];
+    raDecMappingObjects = [];
 
     $.ajax({
         url : "/query/?queryfor=objectsInImage&bufferDistance=" + bufferDistance + "&limit=" + limitPerSource + "&imageId=" + queryImageId,
@@ -709,7 +710,13 @@ function getUserSubmittedResults()
         dataType: 'json',
         success : function(response)
         {
+            var i;
             userSubmittedResults = response;
+            raDecMappingObjects = [];
+            for(i = 0; i < userSubmittedResults.length; i++)
+                if(userSubmittedResults[i].ra != null && userSubmittedResults[i].dec != null)
+                    raDecMappingObjects[raDecMappingObjects.length] = userSubmittedResults[i];
+
             Promise.resolve(true);
             drawSources();
         }
@@ -1227,12 +1234,40 @@ function drawSources(forceDraw=true)
     raRange = maxRA - minRA;
     decRange = maxDec - minDec;
 
-    crpix1 = 0.5*({{image.dimX}}+1) + xOffset;
-    crpix2 = 0.5*({{image.dimY}}+1) + yOffset;
-    crval1 = minRA + 0.5*raRange;
-    crval2 = minDec + 0.5*decRange;
-    cdelt1 = xScale/3600.0;
-    cdelt2 = yScale/3600.0;
+    if(raDecMappingObjects.length > 0)
+    {
+        crpix1 = raDecMappingObjects[0].pixelX;
+        crpix2 = raDecMappingObjects[0].pixelY;
+        crval1 = raDecMappingObjects[0].ra;
+        crval2 = raDecMappingObjects[0].dec;
+        //alert(crpix1 + ' ' + crpix2 + ' ' + crval1 + ' ' + crval2)
+
+    }
+    else
+    {
+        crpix1 = 0.5*({{image.dimX}}+1) + xOffset;
+        crpix2 = 0.5*({{image.dimY}}+1) + yOffset;
+        crval1 = minRA + 0.5*raRange;
+        crval2 = minDec + 0.5*decRange;
+    }
+
+    // TODO: Re-enable the extra constraints if you have 2 or more known sources.  For now, a single constraint
+    // makes manual solving so easy that making the second constraint work is less critical.
+    //if(raDecMappingObjects.length > 1)
+    if(false)
+    {
+        dx = raDecMappingObjects[1].pixelX - raDecMappingObjects[0].pixelX;
+        dy = raDecMappingObjects[1].pixelY - raDecMappingObjects[0].pixelY;
+        dRA = raDecMappingObjects[1].ra - raDecMappingObjects[0].ra;
+        dDec = raDecMappingObjects[1].dec - raDecMappingObjects[0].dec;
+        cdelt1 = dRA/dx;
+        cdelt2 = dDec/dy;
+    }
+    else
+    {
+        cdelt1 = xScale/3600.0;
+        cdelt2 = yScale/3600.0;
+    }
     crota1 = (180.0/math.pi)*rotation
     crota2 = (180.0/math.pi)*rotation
     drawStroked(context, 'Plate scale: ' + (cdelt1*3600).toFixed(2) + 'x' + (cdelt2*3600).toFixed(2) + 'arcsec/pixel', 10, 20);
