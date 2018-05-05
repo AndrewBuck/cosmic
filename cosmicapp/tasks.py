@@ -2808,6 +2808,13 @@ def parseHeaders(imageId, processInputId):
             if imageProperty is None:
                 image.addImageProperty(key, 'unknown');
 
+        # Examine the filename of the original file and see if there are parts of the file
+        # name that make sense now because of the headers we have parsed in.
+        filenameMask = [''] * len(image.fileRecord.originalFileName)
+        for c, i in zip(image.fileRecord.originalFileName, range(len(image.fileRecord.originalFileName))):
+            if c in [' ', '_', '-']:
+                filenameMask[i] = c
+
     return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 
 @shared_task
@@ -3024,7 +3031,7 @@ def imageCombine(argList, processInputId):
             dataArray.append(CCDData(data, unit=u.adu))
 
         if imageExposure is not None and imageExposure != 'unknown':
-            exposureSum += float(imageExposure)
+            exposureSum += float(imageExposure.strip().strip("'"))
             exposureCount += 1
 
     exposureMean = exposureSum / exposureCount
