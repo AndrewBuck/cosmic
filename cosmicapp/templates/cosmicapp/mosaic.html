@@ -919,7 +919,7 @@ function onImageTableLoad()
 
     $('img').off('click').on('click', function()
     {
-        clickedId = $(this).parent().parent().attr('id');
+        clickedId = $(this).parent().parent().attr('id').split('_')[3];
         hideButtonId = '#hideButton' + clickedId
 
         arrayIndex = getSelectedImagesIndexById(clickedId);
