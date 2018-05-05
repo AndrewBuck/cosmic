@@ -147,6 +147,7 @@ class ComponentInstance(models.Model):
     dateOnline = models.DateField(null=True, blank=True)
     dateOffline = models.DateField(null=True, blank=True)
     cost = models.FloatField(null=True, blank=True)
+    askingPrice = models.FloatField(null=True, blank=True)
 
     comments = GenericRelation('TextBlob')
 
