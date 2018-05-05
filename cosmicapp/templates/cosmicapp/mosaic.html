@@ -408,10 +408,7 @@ function drawCanvas()
 		workingImageMatrix = selectedImages[i].transformMatrix;
 
 		if (selectedImages[i].active)
-		{
-			selectedImages[i].alpha = 1.0;
 			workingImageMatrix = math.multiply(temporaryImageMatrix, workingImageMatrix);
-		}
 
 		workingImageMatrix = math.multiply(workingCanvasMatrix, workingImageMatrix);
 
