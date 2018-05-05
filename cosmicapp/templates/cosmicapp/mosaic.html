@@ -383,6 +383,41 @@ function saveTransforms()
     return false;
 };
 
+function stackImages()
+{
+    var i;
+
+    idList = [];
+    for(i = 0; i < selectedImages.length; i++)
+        idList[idList.length] = selectedImages[i].id
+
+    masterBiasId = document.getElementsByName('masterBiasId')[0].value;
+    masterDarkId = document.getElementsByName('masterDarkId')[0].value;
+    masterFlatId = document.getElementsByName('masterFlatId')[0].value;
+
+    $.ajax({
+        url : "/process/combineImageIds/",
+        type : "post",
+        async: true,
+        dataType: 'json',
+        data: {
+            combineType: 'light',
+            idList: JSON.stringify(idList),
+            masterBiasId: masterBiasId,
+            masterDarkId: masterDarkId,
+            masterFlatId: masterFlatId
+        },
+        success : function(response)
+        {
+            alert(response.message);
+        },
+        error : function(response)
+        {
+            alert(response.responseText);
+        }
+    });
+};
+
 function drawCanvas()
 {
     canvas.width = canvas.offsetWidth;
@@ -963,6 +998,14 @@ $(document).ready(function()
 
 <input type=button class=button value="Save Offsets" onclick="saveTransforms()">
 <input type=button class=button value="Load Offsets" onclick="loadTransforms(true, true)">
+<input type=button class=button value="Stack Images" onclick="stackImages()">
+<br>
+Master Bias Image ID (required for stacking): <input type=text name=masterBiasId>
+<br>
+Master Dark Image ID (required for stacking): <input type=text name=masterDarkId>
+<br>
+Master Flat Image ID (required for stacking): <input type=text name=masterFlatId>
+<br>
 
 <p style="text-align: center">
 <a href="#">Desktop</a>

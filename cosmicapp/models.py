@@ -828,6 +828,13 @@ class ImageTransform(models.Model):
     m11 = models.FloatField()
     m12 = models.FloatField()
 
+    def matrix(self):
+        return numpy.matrix([
+            [self.m00, self.m01, self.m02],
+            [self.m10, self.m11, self.m12],
+            [0, 0, 1]
+            ])
+
 class PlateSolution(models.Model):
     """
     A record for storing the WCS plate solution of an image to be stored in the database.  The WCS is stored as a text blob

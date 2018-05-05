@@ -2930,18 +2930,32 @@ def imageCombine(argList, processInputId):
     doReproject = True
     for image in images:
         if image.getBestPlateSolution() is None:
-            outputText += 'Image {} does not have a plate solution, not reprojecting.'.format(image.pk)
+            outputText += 'Image {} does not have a plate solution, not reprojecting.\n'.format(image.pk)
             doReproject = False
 
     if doReproject:
         referenceWCS = images[0].getBestPlateSolution().wcs()
 
     for image in images:
+        #TODO: Look into using ccdproc.ccd_process() to do the bias, dark, flat, etc, corrections.
         outputText += "Loading image {}: {}\n".format(image.pk, image.fileRecord.originalFileName)
         hdulist = fits.open(settings.MEDIA_ROOT + image.fileRecord.onDiskFileName)
 
         imageExposure = image.getImageProperty('exposureTime')
         outputText += "Image exposure time is: {}\n".format(imageExposure)
+
+        imageTransforms = models.ImageTransform.objects.filter(subjectImage=image)
+        doMatrixTransform = False
+        imageTransform = None
+        for transform in imageTransforms:
+            for otherImage in images:
+                if transform.referenceImage == otherImage:
+                    doMatrixTransform = True
+                    imageTransform = transform
+                    break
+
+            if doMatrixTransform:
+                break
 
         #TODO: Do a better job than just choosing the first frame like we do now.
         data = hdulist[0].data
@@ -2998,6 +3012,13 @@ def imageCombine(argList, processInputId):
             dataToProject = CCDData(data, wcs=image.getBestPlateSolution().wcs(), unit=u.adu)
             data = wcs_project(dataToProject, referenceWCS)
             dataArray.append(data)
+
+        elif doMatrixTransform:
+            outputText += 'Doing matrix transform. Reference: {}   Subject: {}\n'\
+                .format(imageTransform.referenceImage.pk, imageTransform.subjectImage.pk)
+            transformedData = scipy.ndimage.interpolation.affine_transform(data, imageTransform.matrix().I)
+            dataArray.append(CCDData(transformedData, unit=u.adu))
+
         else:
             outputText += 'Not Reprojecting image.\n'
             dataArray.append(CCDData(data, unit=u.adu))
