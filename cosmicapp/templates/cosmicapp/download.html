@@ -7,6 +7,7 @@
 
 {% block extrahead %}
 {% include "./jquery.html" %}
+<script src="/static/cosmicapp/raDec.js"></script>
 {% if user.is_authenticated %}<script src="/static/cosmicapp/bookmark.js"></script>{% endif %}
 
 <script>
@@ -139,7 +140,7 @@ $(document).ready(function()
                     <div style="display: inline-block; float: left; border: 1px dashed grey; padding: .5em; margin-left: 1em; margin-top: 1em;">
                     <input type=checkbox class="plateSolutionCheckbox_{{item.pk}}" name="imageWCS_{{item.pk}}_plateSolution_{{ps.pk}}" {% if forloop.first %}checked{% endif %}>
                     {{ps.source}}
-                    <br>&emsp;&emsp;{{ps.centerRA|formatRA}} {{ps.centerDec|formatDec}}
+                    <br>&emsp;&emsp;{% formatRADec ps.centerRA ps.centerDec %}
                     <br>&emsp;&emsp;{{ps.resolutionX|floatformat:2}}x{{ps.resolutionY|floatformat:2}} arcsec/pixel
                     </div>
                 {% endfor %}

@@ -6,7 +6,7 @@
 
 <h3>Messier Object</h3>
 Identifier: {{obj.identifier}}<br>
-RA, Dec: {{obj.ra|formatRA}}&emsp;{{obj.dec|formatDec}}<br>
+RA, Dec: {% formatRADec obj.ra obj.dec %}<br>
 Object Type: {{obj.objectType}}<br>
 Spectral Type: {{obj.spectralType}}<br>
 Mag U: {{obj.magU}}<br>

@@ -6,7 +6,7 @@
 <h3>UCAC4 Catalog Entry</h3>
 
 Identifier: {{obj.identifier}}<br>
-RA, Dec: {{obj.ra|formatRA}}&emsp;{{obj.dec|formatDec}}<br>
+RA, Dec: {% formatRADec obj.ra obj.dec %}<br>
 Proper Motion RA, Dec: {{obj.pmra}}&emsp;{{obj.pmdec}}<br>
 Mag Fit: {{obj.magFit}}<br>
 Mag Aperture: {{obj.magAperture}}<br>

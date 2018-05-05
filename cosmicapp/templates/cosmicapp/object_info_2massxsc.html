@@ -6,7 +6,7 @@
 <h3>2Mass Extended Sky Catalog Entry</h3>
 
 Identifier: {{obj.identifier}}<br>
-RA, Dec: {{obj.ra|formatRA}}&emsp;{{obj.dec|formatDec}}<br>
+RA, Dec: {% formatRADec obj.ra obj.dec %}
 
 <h3>Isophotal K-Band Flux</h3>
 Semi-major Axis (arcsec): {{obj.isophotalKSemiMajor}}<br>

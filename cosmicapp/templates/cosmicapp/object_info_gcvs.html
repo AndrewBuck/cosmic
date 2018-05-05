@@ -9,7 +9,7 @@ Identifier: {{obj.identifier}}<br>
 Constellation Number: {{obj.constellationNumber}}<br>
 Star Number: {{obj.starNumber}}<br>
 Spectral Type: {{obj.spectralType}}<br>
-RA, Dec: {{obj.ra|formatRA}}&emsp;{{obj.dec|formatDec}}<br>
+RA, Dec: {% formatRADec obj.ra obj.dec %}<br>
 Proper Motion RA, Dec: {{obj.pmra}}&emsp;{{obj.pmdec}}<br>
 
 <h3>Stellar Variability</h3>

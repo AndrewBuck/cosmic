@@ -9,7 +9,7 @@ Identifier (id 2): {{obj.identifier}} {{obj.identifier2}}<br>
 Star Identifier: {{obj.starIdentifier}}<br>
 Component: {{obj.component}}<br>
 Number of Components: {{obj.numComponents}}<br>
-RA, Dec: {{obj.ra|formatRA}}&emsp;{{obj.dec|formatDec}}<br>
+RA, Dec: {% formatRADec obj.ra obj.dec %}<br>
 Distance: {{obj.dist}} parsecs<br>
 Next Transit:
 {% if obj.getTransitTime %}
