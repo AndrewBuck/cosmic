@@ -293,7 +293,7 @@ def savePlateSolution(sender, instance, **kwargs):
     When we save a plate solution it may have changed the best plate solution for the
     image.  If so, we need to re-compute the ra-dec for all objects detected in the image.
     """
-    instance.image.addImageProperty('numPlateSolutions', image.plateSolutions.all().count(), True)
+    instance.image.addImageProperty('numPlateSolutions', instance.image.plateSolutions.all().count(), True)
 
     sourceFindMatchResults = [
         instance.image.sextractorResults.all(),
