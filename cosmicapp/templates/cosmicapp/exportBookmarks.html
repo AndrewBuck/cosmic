@@ -14,13 +14,13 @@
 <script>
 var responseArray;
 
-function defaultIfNull(x, ifNull = '')
+function defaultIfNull(x, ifNull = '', ifNotNull = x)
 {
     //TODO: Check for NaN, etc.
-    if(x == null || x == undefined || x === undefined)
+    if(x == null || x == undefined || x === undefined || Number.isNaN(x))
         return ifNull
     else
-        return x
+        return ifNotNull
 };
 
 function getCurrentDate()
@@ -198,15 +198,14 @@ function updateBookmarkTable()
                 {
                     var r = response[i];
 
-                    //TODO: Include a check to see if the object is never visible and if so, don't check the include checkbox by default.
                     tableHTML += '\n<tr>';
                     tableHTML += '\n<td><input type=checkbox class=includeForObservation id="' + r['divID'] +
                                  '_includeCheckbox" ' + r['defaultSelected'] + '></td>';
-                    tableHTML += '\n<td>' + Number(r['score']).toFixed(2) + '</td>';
-                    tableHTML += '\n<td>' + r['type'] + '</td>';
+                    tableHTML += '\n<td>' + defaultIfNull(r['score'], '', Number(r['score']).toFixed(2)) + '</td>';
+                    tableHTML += '\n<td>' + defaultIfNull(r['type']) + '</td>';
                     //TODO: Should include a bookmark link here when we have a way to do so with a javascript function.
-                    tableHTML += '\n<td>' + r['identifier'] + '</td>';
-                    tableHTML += '\n<td>' + defaultIfNull(r['mag']) + '</td>';
+                    tableHTML += '\n<td>' + defaultIfNull(r['identifier']) + '</td>';
+                    tableHTML += '\n<td>' + defaultIfNull(r['mag'], '', Number(r['mag']).toFixed(2)) + '</td>';
                     tableHTML += '\n<td>' + defaultIfNull(r['ra']) + '</td>';
                     tableHTML += '\n<td>' + defaultIfNull(r['dec']) + '</td>';
                     tableHTML += '\n<td>' + defaultIfNull(r['nextRising']) + '<br>' + defaultIfNull(r['nextTransit']) + '<br>' + defaultIfNull(r['nextSetting']) + '</td>';
@@ -215,8 +214,8 @@ function updateBookmarkTable()
                     tableHTML += '<input type=text id="' + r['divID'] + '_startTimeText" value="' + r['startTime'] + '">';
                     tableHTML += '</td>';
 
-                    tableHTML += '\n<td><input type=text id="' + r['divID'] + '_numExposuresText" value="' + r['numExposures'] + '"></td>';
-                    tableHTML += '\n<td><input type=text id="' + r['divID'] + '_exposureTimeText" value="' + r['exposureTime'] + '"></td>';
+                    tableHTML += '\n<td><input type=text style="width: 6em;" id="' + r['divID'] + '_numExposuresText" value="' + defaultIfNull(r['numExposures']) + '"></td>';
+                    tableHTML += '\n<td><input type=text style="width: 6em;" id="' + r['divID'] + '_exposureTimeText" value="' + defaultIfNull(r['exposureTime']) + '"></td>';
                     tableHTML += '\n</tr>';
                 }
 

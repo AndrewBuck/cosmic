@@ -91,6 +91,7 @@ def formulateObservingPlan(user, observatory, targets, includeOtherTargets, star
         d['identifier'] = calibrationType
         d['divID'] = 'calibration_' + str(random.Random().randint(0, 1e9))
         d['type'] = 'Calibration Image'
+        d['typeInternal'] = 'calibration'
         d['score'] = 0.1
         d['peakScore'] = 0.1
         d['peakScoreTime'] = str(startTime)
@@ -117,6 +118,7 @@ def formulateObservingPlan(user, observatory, targets, includeOtherTargets, star
     observingPlan = []
 
     # Beginning of session calibration.
+    #TODO: Weather report.
     #TODO: We should add one set of dark exposures for each duration of image we are likely to take (including for flat images).
     d, calFinishTime = addCalibrationTarget('Flat', 10, 5, startTime)
     observingPlan.append(d)
@@ -281,6 +283,9 @@ def formulateObservingPlan(user, observatory, targets, includeOtherTargets, star
     obs['startTime'] = str(startTime-timedelta(seconds=1))
     obs['startTimeDatetime'] = dateparser.parse(obs['startTime'])
     obs['timeNeeded'] = timedelta(seconds=0)
+    obs['score'] = None
+    obs['divID'] = 'startOfObserving'
+    obs['typeInternal'] = 'start'
     observingPlan.append(obs)
 
     obs = {}
@@ -288,6 +293,9 @@ def formulateObservingPlan(user, observatory, targets, includeOtherTargets, star
     obs['startTime'] = str(endTime+timedelta(seconds=1))
     obs['startTimeDatetime'] = dateparser.parse(obs['startTime'])
     obs['timeNeeded'] = timedelta(seconds=0)
+    obs['score'] = None
+    obs['divID'] = 'endOfObserving'
+    obs['typeInternal'] = 'end'
     observingPlan.append(obs)
 
     observingPlan.sort(key=lambda x: x['startTimeDatetime'])
