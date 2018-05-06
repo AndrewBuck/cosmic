@@ -532,6 +532,7 @@ class Image(models.Model, SkyObject, BookmarkableItem):
     comments = GenericRelation('TextBlob')
     bookmarks = GenericRelation('Bookmark')
 
+    @property
     def getDisplayName(self):
         return "Image {}".format(self.pk)
 
@@ -1077,6 +1078,7 @@ class UserSubmittedResult(SourceFindResult, BookmarkableItem):
     def getUrl(self):
         return '/detectedSource/userSubmittedResult/' + str(self.pk)
 
+    @property
     def getDisplayName(self):
         return 'Image {}: User Submitted Source {}'.format(self.image.pk, self.pk)
 
@@ -1092,6 +1094,7 @@ class UserSubmittedHotPixel(SourceFindResult, BookmarkableItem):
     def getUrl(self):
         return '/detectedSource/userHotPixel/' + str(self.pk)
 
+    @property
     def getDisplayName(self):
         return 'Image {}: User Submitted Hot Pixel {}'.format(self.image.pk, self.pk)
 
