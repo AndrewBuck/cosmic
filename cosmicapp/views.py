@@ -2861,6 +2861,17 @@ def exportBookmarks(request):
     # this will help in finding plate solutions for tricky plates, etc.
     context = {"user" : request.user}
 
+    typeInternalDict = {
+        'image': [Image],
+        'asteroid': [AstorbRecord],
+        'exoplanet': [ExoplanetRecord],
+        'variableStar': [GCVSRecord],
+        'messierObject': [MessierRecord],
+        '2massXSC': [TwoMassXSCRecord],
+        'userSubmittedResult': [UserSubmittedResult],
+        'userSubmittedHotPixel': [UserSubmittedHotPixel]
+        }
+
     if request.method == "POST":
         fileName = 'export.txt'
         fileContent = ''
@@ -2906,22 +2917,56 @@ def exportBookmarks(request):
             #TODO: Include details about date/location/etc/user and maybe a unique ID.
             fileContent += 'Observing plan:\n\n\n'
             for t in observingPlan:
-                #TODO: Include magnitude.
-                fileContent += (
-                    '========== {} ==========\n'
-                    'Object Type: {}\n'
-                    'RA: {}    Dec: {}\n'
-                    'Score: {}\n'
+                if t['typeInternal'] in typeInternalDict:
+                    obj = typeInternalDict[t['typeInternal']][0].objects.filter(pk=t['id']).first()
+                else:
+                    obj = None
+
+                if obj is not None:
+                    mag = obj.getMag(dateparser.parse(t['startTime']))
+                    ra, dec = obj.getSkyCoords(dateparser.parse(t['startTime']))
+                else:
+                    mag = None
+                    ra = t['ra']
+                    dec = t['dec']
+
+                formatString = '========== {identifier} ==========\n'\
+                    'Object Type: {typeString}\n'
+
+                if ra is not None and dec is not None:
+                    formatString += 'RA: {ra}    Dec: {dec}\n'
+
+                if mag is not None:
+                    formatString += 'Mag: {mag}\n'
+
+                if t['score'] is not None:
+                    formatString += 'Score: {score}\n'
+
+                formatString += '\nObservation Start Time: {startTime}\n'
+
+                if t['nextRising'] is not None or t['nextTransit'] is not None or t['nextSetting'] is not None:
+                    formatString += 'Rise: {nextRising}    Transit: {nextTransit}    Set: {nextSetting}\n'
                     '\n'
-                    'Observation Start Time: {}\n'
-                    'Rise: {}    Transit: {}    Set: {}\n'
-                    '\n'
-                    'Scheduled for {} exposures of {} seconds each.\n'
-                    '\n'
-                    'Observing Notes: \n\n\n\n\n' #TODO: Add Fields for seeing, weather, etc.
-                    '\n'
-                    ).format(t['identifier'], t['type'], t['ra'], t['dec'], t['score'], t['startTime'], t['nextRising'], t['nextTransit'],
-                             t['nextSetting'], t['numExposures'], t['exposureTime'])
+
+                if t['numExposures'] is not None or t['exposureTime']:
+                    formatString += 'Scheduled for {numExposures} exposures of {exposureTime} seconds each.\n'
+
+                #TODO: Add Fields for seeing, weather, etc.
+                formatString += '\nObserving Notes: \n\n\n\n\n\n'
+
+                fileContent += formatString.format(identifier=t['identifier'],
+                             typeString=t['type'],
+                             ra=ra,
+                             dec=dec,
+                             mag=mag,
+                             score=t['score'],
+                             startTime=t['startTime'],
+                             nextRising=t['nextRising'],
+                             nextTransit=t['nextTransit'],
+                             nextSetting=t['nextSetting'],
+                             numExposures=t['numExposures'],
+                             exposureTime=t['exposureTime']
+                             )
 
         else:
             return HttpResponse('bad request: unknown file format', status=400)
