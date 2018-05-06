@@ -14,6 +14,15 @@
 <script>
 var responseArray;
 
+function defaultIfNull(x, ifNull = '')
+{
+    //TODO: Check for NaN, etc.
+    if(x == null || x == undefined || x === undefined)
+        return ifNull
+    else
+        return x
+};
+
 function getCurrentDate()
 {
     var d = new Date();
@@ -197,10 +206,10 @@ function updateBookmarkTable()
                     tableHTML += '\n<td>' + r['type'] + '</td>';
                     //TODO: Should include a bookmark link here when we have a way to do so with a javascript function.
                     tableHTML += '\n<td>' + r['identifier'] + '</td>';
-                    tableHTML += '\n<td>' + r['mag'] + '</td>';
-                    tableHTML += '\n<td>' + r['ra'] + '</td>';
-                    tableHTML += '\n<td>' + r['dec'] + '</td>';
-                    tableHTML += '\n<td>' + r['nextRising'] + '<br>' + r['nextTransit'] + '<br>' + r['nextSetting'] + '</td>';
+                    tableHTML += '\n<td>' + defaultIfNull(r['mag']) + '</td>';
+                    tableHTML += '\n<td>' + defaultIfNull(r['ra']) + '</td>';
+                    tableHTML += '\n<td>' + defaultIfNull(r['dec']) + '</td>';
+                    tableHTML += '\n<td>' + defaultIfNull(r['nextRising']) + '<br>' + defaultIfNull(r['nextTransit']) + '<br>' + defaultIfNull(r['nextSetting']) + '</td>';
 
                     tableHTML += '\n<td>';
                     tableHTML += '<input type=text id="' + r['divID'] + '_startTimeText" value="' + r['startTime'] + '">';
