@@ -1238,7 +1238,8 @@ def query(request):
                 (AstorbRecord.objects.filter(name__icontains=name), 'Asteroid'),
                 (ExoplanetRecord.objects.filter(identifier__icontains=name), 'Exoplanet'),
                 (GCVSRecord.objects.filter(identifier__icontains=name), 'Variable Star'),
-                (ExoplanetRecord.objects.filter(identifier__icontains=name), 'Exoplanet'),
+                #TODO: Enable searching the UCAC4 catalog when full text searching is implemented with an index.  For now it is too slow.
+                #(UCAC4Record.objects.filter(identifier__icontains=name), 'UCAC4'),
                 (MessierRecord.objects.filter(identifier__icontains=name), 'Messier'),
                 (TwoMassXSCRecord.objects.filter(identifier__icontains=name), 'TwoMassXSC')
                 ]:
