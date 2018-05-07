@@ -50,7 +50,7 @@ def getAsteroidsAroundGeometry(geometry, bufferSize, targetTime, limitingMag, li
 
     # Start by performing a query which returns all asteroids that pass within the
     # bufferDistance around the targetTime.
-    asteroidsApprox = models.AstorbEphemeris.objects.filter(
+    asteroidsApprox = models.AstorbEphemeris.objects.prefetch_related('astorbRecord').filter(
         geometry__dwithin=(geometry, largeBufferSize),
         startTime__lte=targetTime,
         endTime__gte=targetTime,
