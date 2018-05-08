@@ -127,7 +127,9 @@ td.numMatchResults
             {% for ps in plateSolutions %}
             <font size=-1>
             <br>&emsp;<b>{{ps.source}}:</b>
-            <br>&emsp;&emsp;{% formatRADec ps.centerRA ps.centerDec %}
+            <br>&emsp;&emsp;{% formatRADec ps.centerRA ps.centerDec %}&emsp;
+            <a class=functionLink
+            href="/ccdSimulator/?plateSolutionId={{ps.pk}}&dimX={{image.dimX}}&dimY={{image.dimY}}">(Simulate)</a>
             <br>&emsp;&emsp;{{ps.resolutionX|floatformat:2}}x{{ps.resolutionY|floatformat:2}} arcsec/pixel
             <br>&emsp;&emsp;Approximate dimensions:
             {% comment %} TODO: Need to fix this.  Divide by cosine of declination? {% endcomment %}
