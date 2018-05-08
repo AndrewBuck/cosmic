@@ -2832,6 +2832,31 @@ def observing(request):
     else:
         windowSize = 30
 
+    if 'dimX' in request.GET:
+        dimX = float(request.GET['dimX'])
+    else:
+        dimX = 256
+
+    if 'dimY' in request.GET:
+        dimY = float(request.GET['dimY'])
+    else:
+        dimY = 256
+
+    if 'pixelScaleX' in request.GET:
+        pixelScaleX = float(request.GET['pixelScaleX'])
+    else:
+        pixelScaleX = 2
+
+    if 'pixelScaleY' in request.GET:
+        pixelScaleY = float(request.GET['pixelScaleY'])
+    else:
+        pixelScaleY = 2
+
+    if 'rotation' in request.GET:
+        rotation = float(request.GET['rotation'])
+    else:
+        rotation = 0
+
     #TODO: Provide a input field like the ones for lat/lon/etc to set the observation date and then use position to calculate evening/midnight/morning for that location.
 
     lat = None
@@ -2875,6 +2900,11 @@ def observing(request):
     context['limitingMag'] = limitingMag
     context['windowSize'] = windowSize
     context['limit'] = limit
+    context['dimX'] = dimX
+    context['dimY'] = dimY
+    context['pixelScaleX'] = pixelScaleX
+    context['pixelScaleY'] = pixelScaleY
+    context['rotation'] = rotation
 
     context['promptProfileEdit'] = promptProfileEdit
     context['profileMissingFields'] = profileMissingFields
