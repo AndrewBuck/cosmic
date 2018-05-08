@@ -2192,6 +2192,11 @@ def astrometryNet(filename, processInputId):
 
         models.storeImageLocation(image, w, 'astrometry.net')
         image.addImageProperty('astrometryNet', 'success')
+        #TODO: Check to see if this image has an overlapsImage image property and if
+        # so, check to see if that image has a plate solution.  If not, try solving it
+        # with this location as a hint.  Also need to check for images which have an
+        # overlapsImage pointing to this image that we just solved.  Check all of these to
+        # see if they have plate solutions and if not, try solving with this location as a hint.
     else:
         outputText += '\n\nNo plate solution found.' + "\n"
         image.addImageProperty('astrometryNet', 'failure')
