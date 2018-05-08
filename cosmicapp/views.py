@@ -1288,12 +1288,6 @@ def ccdSimulator(request):
     if dimY > 2048:
         dimY = 2048
 
-    if pixelScaleX > 5/3600:
-        pixelScaleX = 5/3600
-
-    if pixelScaleY > 5/3600:
-        pixelScaleY = 5/3600
-
     if plateSolution is not None:
         w = plateSolution.wcs()
         dRA = dimX*plateSolution.resolutionX/3600
@@ -1302,6 +1296,12 @@ def ccdSimulator(request):
         ra = plateSolution.centerRA
         dec = plateSolution.centerDec
     else:
+        if pixelScaleX > 5/3600:
+            pixelScaleX = 5/3600
+
+        if pixelScaleY > 5/3600:
+            pixelScaleY = 5/3600
+
         w = wcs.WCS(naxis=2)
         w.wcs.crpix = [dimX/2, dimY/2]
         #TODO: Need to check that the pixel scale here is correct, but this seems reasonable.
