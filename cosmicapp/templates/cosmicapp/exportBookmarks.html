@@ -41,6 +41,7 @@ function handleStartTimeDropdown(updateStartEndTimes)
     var observingDuration = document.getElementById("observingDurationDropdown").value;
     var explanation
 
+    //TODO: Make this a dictionary.
     switch(observingDuration)
     {
         case "0":
@@ -64,6 +65,7 @@ function handleStartTimeDropdown(updateStartEndTimes)
             break;
     }
 
+    //TODO: Make this a dictionary.
     switch(timeString)
     {
         case "rightNow":
@@ -167,6 +169,12 @@ function updateBookmarkTable()
     var limitingMag = document.getElementsByName("limitingMag")[0].value;
     var minimumScore = document.getElementsByName("minimumScore")[0].value;
     var observatoryID = document.getElementsByName("observatoryID")[0].value;
+
+    // If the bookmark folder or observing site, etc, are changed before we set the
+    // start/end time from the server response, then we need to quit here or we will send
+    // a malformed request to the server by mistake.
+    if($.trim(startTime) == '' || $.trim(endTime) == '')
+        return;
 
     var tableHTML = "<tr>\
                      <th>Include</th>\
@@ -272,6 +280,15 @@ $(document).ready(function()
     $('#inputDateEntry').val(getCurrentDate());
 
     handleStartTimeDropdown(false);
+
+    // Clear the start and end time entry fields in case a browser auto populated them to
+    // keep from sending requests to the server before all the options have been set by the
+    // user.  There is no error that happens if these requests get sent, they just cause
+    // server load for requests that don't get shown to the user anyway.
+    document.getElementById("startTimeDateEntry").value = ''
+    document.getElementById("startTimeTimeEntry").value = ''
+    document.getElementById("endTimeDateEntry").value = ''
+    document.getElementById("endTimeTimeEntry").value = ''
 });
 </script>
 
