@@ -24,8 +24,10 @@ from django.db.utils import IntegrityError
 
 from lxml import etree
 import ephem
+import astropy
 from astropy import wcs
 from astropy.io import fits
+from photutils.datasets import make_gaussian_sources_image
 
 from .models import *
 from .forms import *
@@ -1261,6 +1263,124 @@ def query(request):
             jsonResponse = json.dumps(resultArray)
 
     return HttpResponse(jsonResponse)
+
+def ccdSimulator(request):
+    plateSolution = None
+
+    try:
+        dimX = int(request.GET.get('dimX', ''))
+        dimY = int(request.GET.get('dimY', ''))
+        plateSolutionId = int(request.GET.get('plateSolutionId', ''))
+        plateSolution = PlateSolution.objects.filter(pk=plateSolutionId).first()
+    except:
+        try:
+            ra = float(request.GET.get('ra', ''))
+            dec = float(request.GET.get('dec', ''))
+            pixelScaleX = float(request.GET.get('pixelScaleX', ''))/3600
+            pixelScaleY = float(request.GET.get('pixelScaleY', ''))/3600
+            rotation = float(request.GET.get('rotation', ''))
+        except:
+            return HttpResponse('', status=400, reason='Parameters missing.')
+
+    if dimX > 2048:
+        dimX = 2048
+
+    if dimY > 2048:
+        dimY = 2048
+
+    if pixelScaleX > 5/3600:
+        pixelScaleX = 5/3600
+
+    if pixelScaleY > 5/3600:
+        pixelScaleY = 5/3600
+
+    if plateSolution is not None:
+        w = plateSolution.wcs()
+        dRA = dimX*plateSolution.resolutionX/3600
+        dDec = dimY*plateSolution.resolutionY/3600
+        bufferDistance = 1.25*math.sqrt(dRA*dRA + dDec*dDec)
+        ra = plateSolution.centerRA
+        dec = plateSolution.centerDec
+    else:
+        w = wcs.WCS(naxis=2)
+        w.wcs.crpix = [dimX/2, dimY/2]
+        #TODO: Need to check that the pixel scale here is correct, but this seems reasonable.
+        w.wcs.cdelt = [pixelScaleX*math.cos((math.pi/180)*dec), pixelScaleY]
+        w.wcs.crval = [ra, dec]
+        w.wcs.crota = [rotation, rotation]
+        w.wcs.ctype = ["RA---TAN", "DEC--TAN"]
+        dx = dimX * pixelScaleX
+        dy = dimY * pixelScaleY
+        bufferDistance = math.sqrt(dx*dx + dy*dy)
+
+    #TODO: Make the geometry an actual polygon to account for projection issues in images around or containing the celestial poles.
+    print(ra, dec, bufferDistance)
+    queryGeometry = GEOSGeometry('POINT({} {})'.format(ra, dec))
+
+    xVals = []
+    yVals = []
+    amplitudeVals = []
+    xStdDevVals = []
+    yStdDevVals = []
+    thetaVals = []
+
+    ucac4Results = UCAC4Record.objects.filter(geometry__dwithin=(queryGeometry, bufferDistance))
+    for result in ucac4Results:
+        x, y = w.all_world2pix(result.ra, result.dec, 1)    #TODO: Determine if this 1 should be a 0.
+        if result.magFit is not None:
+            mag = result.magFit
+        else:
+            if result.magAperture is not None:
+                mag = result.magAperture
+            else:
+                #TODO: Figure out a better fallback?
+                mag = 16
+
+        xVals.append(x)
+        yVals.append(y)
+        #TODO: These amplitude and stddev values work reasonably well to reproduce how
+        # images taken by a camera and processed by our site look.  It has no actual
+        # scientific basis so these frames are only useable as guide images for humans, not
+        # for scientific analysis.
+        amplitudeVals.append((17-math.pow(mag, 0.9))*200)
+        xStdDevVals.append((17-math.pow(mag, 0.9))*0.4)
+        yStdDevVals.append((17-math.pow(mag, 0.9))*0.4)
+        thetaVals.append(0)
+
+    twoMassXSCResults = TwoMassXSCRecord.objects.filter(geometry__dwithin=(queryGeometry, bufferDistance))
+    for result in twoMassXSCResults:
+        x, y = w.all_world2pix(result.ra, result.dec, 1)    #TODO: Determine if this 1 should be a 0.
+        raScale, decScale = wcs.utils.proj_plane_pixel_scales(w)
+        raScale *= 3600
+        decScale *= 3600
+
+        if result.isophotalKMag is not None:
+            mag = result.isophotalKMag
+        else:
+            mag = 9
+
+        if result.isophotalKSemiMajor is None or result.isophotalKMinorMajor is None:
+            continue
+
+        xVals.append(x)
+        yVals.append(y)
+        amplitudeVals.append((12-math.pow(mag, 0.9))*100)
+        xStdDevVals.append(decScale*result.isophotalKSemiMajor*result.isophotalKMinorMajor/4.0)
+        yStdDevVals.append(raScale*result.isophotalKSemiMajor/4.0)
+        thetaVals.append(-(math.pi/180)*result.isophotalKAngle)
+
+    table = astropy.table.Table()
+    table['amplitude'] = amplitudeVals
+    table['x_mean'] = xVals
+    table['y_mean'] = yVals
+    table['x_stddev'] = xStdDevVals
+    table['y_stddev'] = yStdDevVals
+    table['theta'] = thetaVals
+
+    data = make_gaussian_sources_image( (dimY, dimX), table)
+    image_data = imageio.imwrite(imageio.RETURN_BYTES, numpy.flip(data, axis=0), format='png', optimize=True, bits=8)
+
+    return HttpResponse(image_data, content_type="image/png")
 
 def questions(request):
     context = {"user" : request.user}
