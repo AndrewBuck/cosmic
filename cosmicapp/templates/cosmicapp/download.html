@@ -71,6 +71,7 @@ $(document).ready(function()
         imageFormatChanged(imageFormatDropdowns[i]);
 });
 
+var rowBreak = '<br>';
 </script>
 
 {% endblock extrahead %}
@@ -92,6 +93,9 @@ $(document).ready(function()
     <tr class=downloadItemRow>
     {% if item|typeOf == "<class 'cosmicapp.models.Image'>" %}
         <td>
+        <a class=functionLink
+        onclick="$(this).parent().parent().replaceWith($(this).parent().parent().clone(), $(this).parent().parent().clone())">
+        (Duplicate<br>this<br>entry)<br><br></a>
         <input type=checkbox class=downloadEnabled name="downloadEnabled_image_{{item.pk}}" checked>
         </td>
 
