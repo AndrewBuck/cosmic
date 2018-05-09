@@ -71,7 +71,7 @@ def learn(request, page=None):
 
     page = page.strip().lower().replace(' ', '_')
     if page in validPages:
-        return render(request, "cosmicapp/learn_" + page + ".html", context)
+        return render(request, "cosmicapp/learn/" + page + ".html", context)
     else:
         return HttpResponse('Learning page "' + page + '" not found.', status=404)
 
