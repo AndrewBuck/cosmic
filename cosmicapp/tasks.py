@@ -2948,6 +2948,38 @@ def imageCombine(argList, processInputId):
     if doReproject:
         referenceWCS = images[0].getBestPlateSolution().wcs()
 
+        minX = None
+        minY = None
+        maxX = None
+        maxY = None
+        for image in images:
+            outputText += 'image footprint for image {}\n'.format(image.pk)
+            for coord in image.getBestPlateSolution().wcs().calc_footprint(axes=(image.dimX, image.dimY)):
+                ra = numpy.asscalar(coord[0])
+                dec = numpy.asscalar(coord[1])
+                x, y = referenceWCS.all_world2pix(ra, dec, 1)
+                outputText += '   {} {}\n'.format(x, y)
+
+                if minX is None:
+                    minX = maxX = x
+                    minY = maxY = y
+                else:
+                    if x < minX:
+                        minX = x
+
+                    if x > maxX:
+                        maxX = x
+
+                    if y < minY:
+                        minY = y
+
+                    if y > maxY:
+                        maxY = y
+
+        outputShape = (int(numpy.asscalar(maxX-minX)), int(numpy.asscalar(maxY-minY)))
+        outputText += 'Output mosaic coordinates:\n   Min X - Max X: {} - {}\n   Min Y - Max Y: {} {}\n'\
+            .format(minY, maxY, minX, maxX)
+
     for image in images:
         #TODO: Look into using ccdproc.ccd_process() to do the bias, dark, flat, etc, corrections.
         outputText += "Loading image {}: {}\n".format(image.pk, image.fileRecord.originalFileName)
@@ -3022,7 +3054,7 @@ def imageCombine(argList, processInputId):
             outputText += 'Reprojecting image.\n'
             hdulist[0].data = data
             dataToProject = CCDData(data, wcs=image.getBestPlateSolution().wcs(), unit=u.adu)
-            data = wcs_project(dataToProject, referenceWCS)
+            data = wcs_project(dataToProject, referenceWCS, target_shape=outputShape)
             dataArray.append(data)
 
         elif doMatrixTransform:
@@ -3112,6 +3144,4 @@ def imageCombine(argList, processInputId):
     #TODO: Set instrument/observatory if it was set on the parent images.
 
     return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
-
-
 
