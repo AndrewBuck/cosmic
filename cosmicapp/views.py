@@ -1351,9 +1351,9 @@ def ccdSimulator(request):
         # images taken by a camera and processed by our site look.  It has no actual
         # scientific basis so these frames are only useable as guide images for humans, not
         # for scientific analysis.
-        amplitudeVals.append((17-math.pow(mag, 0.9))*200)
-        xStdDevVals.append((17-math.pow(mag, 0.9))*0.4)
-        yStdDevVals.append((17-math.pow(mag, 0.9))*0.4)
+        amplitudeVals.append(max(0.2, (17-math.pow(mag, 2.0)))*200)
+        xStdDevVals.append(max(1.0, (math.pow(17-mag, 1.3)))*0.4)
+        yStdDevVals.append(max(1.0, (math.pow(17-mag, 1.3)))*0.4)
         thetaVals.append(0)
 
     twoMassXSCResults = TwoMassXSCRecord.objects.filter(geometry__dwithin=(queryGeometry, bufferDistance))
@@ -1373,7 +1373,7 @@ def ccdSimulator(request):
 
         xVals.append(x)
         yVals.append(y)
-        amplitudeVals.append((12-math.pow(mag, 0.9))*100)
+        amplitudeVals.append(max(0.1, (12-math.pow(mag, 0.95)))*100)
         xStdDevVals.append(decScale*result.isophotalKSemiMajor*result.isophotalKMinorMajor/4.0)
         yStdDevVals.append(raScale*result.isophotalKSemiMajor/4.0)
         thetaVals.append(-(math.pi/180)*result.isophotalKAngle)
