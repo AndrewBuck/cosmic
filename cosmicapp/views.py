@@ -2467,7 +2467,6 @@ def combineImageIds(request):
         filteredIdList.append('masterFlatId=int:' + str(masterFlatId))
 
     for image in images:
-        print('image pk is ', image.pk)
         totalSize += image.fileRecord.uploadSize
         filteredIdList.append(image.pk)
 
