@@ -2986,7 +2986,7 @@ def imageCombine(argList, processInputId):
         hdulist = fits.open(settings.MEDIA_ROOT + image.fileRecord.onDiskFileName)
 
         imageExposure = image.getImageProperty('exposureTime')
-        outputText += "Image exposure time is: {}\n".format(imageExposure)
+        outputText += "   Image exposure time is: {}\n".format(imageExposure)
 
         imageTransforms = models.ImageTransform.objects.filter(subjectImage=image)
         doMatrixTransform = False
@@ -3032,12 +3032,12 @@ def imageCombine(argList, processInputId):
                 try:
                     darkScaleFactor = float(imageExposure) / float(darkExposure)
                 except:
-                    outputText += 'Warning: using dark scale factor of 1.0 instead of \'{}\' / \'{}\'\n'.format(imageExposure, darkExposure)
+                    outputText += '   Warning: using dark scale factor of 1.0 instead of \'{}\' / \'{}\'\n'.format(imageExposure, darkExposure)
                     darkScaleFactor = 1.0
             else:
                 darkScaleFactor = 1.0
 
-            outputText += 'Dark scale factor: {}\n'.format(darkScaleFactor)
+            outputText += '   Dark scale factor: {}\n'.format(darkScaleFactor)
             data -= masterDarkData * darkScaleFactor
 
         if masterFlatImage is not None:
@@ -3051,20 +3051,20 @@ def imageCombine(argList, processInputId):
             data /= masterFlatData
 
         if doReproject:
-            outputText += 'Reprojecting image.\n'
+            outputText += '   Reprojecting image.\n'
             hdulist[0].data = data
             dataToProject = CCDData(data, wcs=image.getBestPlateSolution().wcs(), unit=u.adu)
             data = wcs_project(dataToProject, referenceWCS, target_shape=outputShape)
             dataArray.append(data)
 
         elif doMatrixTransform:
-            outputText += 'Doing matrix transform. Reference: {}   Subject: {}\n'\
+            outputText += '   Doing matrix transform. Reference: {}   Subject: {}\n'\
                 .format(imageTransform.referenceImage.pk, imageTransform.subjectImage.pk)
             transformedData = scipy.ndimage.interpolation.affine_transform(data, imageTransform.matrix().I)
             dataArray.append(CCDData(transformedData, unit=u.adu))
 
         else:
-            outputText += 'Not Reprojecting image.\n'
+            outputText += '   Not Reprojecting image.\n'
             dataArray.append(CCDData(data, unit=u.adu))
 
         if imageExposure is not None and imageExposure != 'unknown':
@@ -3072,17 +3072,17 @@ def imageCombine(argList, processInputId):
             exposureCount += 1
 
     exposureMean = exposureSum / exposureCount
-    outputText += '\nExposure sum: {}\nExposure mean: {}\n'.format(exposureSum, exposureMean)
+    outputText += 'Exposure sum: {}\nExposure mean: {}\n'.format(exposureSum, exposureMean)
 
-    outputText += "\nCreating Combiner.\n"
+    outputText += "Creating Combiner.\n"
     combiner = Combiner(dataArray)
 
     if argDict['combineType'] == 'flat':
-        outputText += "\nCombine type is 'flat' - scaling input images by their individual mean values.\n"
+        outputText += "Combine type is 'flat' - scaling input images by their individual mean values.\n"
         scaling_func = lambda arr: 1/numpy.ma.average(arr)
         combiner.scaling = scaling_func
 
-    outputText += "\nPerforming median combine.\n"
+    outputText += "Performing median combine.\n"
     combinedData = combiner.median_combine()
 
     primaryHDU = fits.PrimaryHDU(combinedData)
