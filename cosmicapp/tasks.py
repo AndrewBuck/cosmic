@@ -3112,6 +3112,15 @@ def imageCombine(argList, processInputId):
         imageString = 'Image ' + str(masterFlatImage.pk) + ':  ' + masterFlatImage.fileRecord.originalFileName
         primaryHDU.header.append( ('flatcor', imageString) )
 
+    if doReproject:
+        wcsHeader = referenceWCS.to_header()
+        for card in wcsHeader:
+            primaryHDU.header[card] = wcsHeader[card]
+
+    else:
+        #TODO: Look at the headers of the input images to see if they have ra-dec properties set.
+        pass
+
     combinedHDUList = fits.HDUList([primaryHDU])
     outputText += "\nWriting image.\n"
     combinedHDUList.writeto(settings.MEDIA_ROOT + outputFilename)
