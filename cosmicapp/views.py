@@ -61,10 +61,19 @@ def processes(request, process=None):
     else:
         return HttpResponse('Process "' + process + '" not found.', status=400, reason='Parameters missing.')
 
-def learn(request, process=None):
+def learn(request, page=None):
     context = {"user" : request.user}
 
-    return render(request, "cosmicapp/learn.html", context)
+    if page == None:
+        return render(request, "cosmicapp/learn.html", context)
+
+    validPages = ['plate_solution']
+
+    page = page.strip().lower().replace(' ', '_')
+    if page in validPages:
+        return render(request, "cosmicapp/learn_" + page + ".html", context)
+    else:
+        return HttpResponse('Learning page "' + page + '" not found.', status=404)
 
 def createuser(request):
     context = {"user" : request.user}

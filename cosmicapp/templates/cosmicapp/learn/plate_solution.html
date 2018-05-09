@@ -1,0 +1,18 @@
+{% extends "cosmicapp/base.html" %}
+{% load static %}
+{% load cosmicapp_extras %}
+
+{% block extratitle %} - Plate Solution {% endblock extratitle %}
+
+{% block extrahead %}
+{% endblock extrahead %}
+
+{% block mainbody %}
+{% filter markdownParse %}
+## Plate Solution ##
+
+A plate solution is a set of information which allows positions in an
+image to be mapped onto locations on the sky.
+
+{% endfilter %}
+{% endblock mainbody %}
