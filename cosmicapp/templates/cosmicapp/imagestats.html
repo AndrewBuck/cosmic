@@ -1,12 +1,53 @@
 {% extends "cosmicapp/processDescriptionTemplate.html" %}
+{% load static %}
+{% load cosmicapp_extras %}
 
 {% block extratitle %} - About imagestats {% endblock extratitle %}
 
 {% block processName %}imagestats{% endblock %}
 
 {% block synopsis %}
+{% filter markdownParse %}
+Imagestats is a task which reads the basic information about an image and writes its
+results to the database for other tools on Cosmic to use.
+{% endfilter %}
 {% endblock %}
 
 {% block description %}
+{% filter markdownParse %}
+The imagestats task relies primarily on the underlying
+[Image Magick](https://www.imagemagick.org) suite of command line utilities to quickly
+read basic information about images uploaded to or created by Cosmic.  The task reads and
+stores the following information:
+
+* Image dimensions: The image width, height, number of channels, etc.  Also, for each
+  channel it stores the mean, median and standard deviation; as well as these same three
+  values for the background only (after *n* iterations of pixels beyond *m* standard
+  deviations away from the mean have been rejected).
+
+* Image metadata: Exif, png, or fits headers are read and written into the database
+  directly as ImageHeader entries with no attempt to clean or process them.  A later task,
+  [parseHeaders](/about/processes/parseHeaders), reads these ImageHeader entries
+  and stores cleaned up versions of the keys it recognizes as ImageProperty entries.
+
+* Image WCS: If the image is a fits image and it has a world coordinate system in its
+  image headers the WCS is read in and stored in the Cosmic database as a PlateSolution
+  entry with a source field of 'original' indicating that the WCS is from the original
+  file uploaded to us by the user.
+
+* The image pixel data is read and processed to find the mean, median, and standard deviation
+  for both the image as a whole, as well as for just the background pixels.  In addition
+  to this, the image histogram is computed and stored in the database.  After the
+  histogram is computed it is used to compute values for a bathtub pixel rejection
+  algorithm (which rejects very commonly occuring values at the low or high end of the
+  data, such as non-data borders around the image).  Lastly the histogram is used to compute
+  the parameters for a [gamma correction](https://en.wikipedia.org/wiki/Gamma_correction)
+  to be applied to turn the actual ADU counts into pixel brightness values.
+
+* After the gamma correction parameters have been determined they are used to create a full
+  sized image thumbnail (in 8-bit png format) which is written to disk and will be used as
+  the source image for the [generate thumbnails](/about/processes/generateThumbnails) task.
+
+{% endfilter %}
 {% endblock %}
 

@@ -66,6 +66,16 @@ def constructProcessOutput(outputText, errorText, executionTime=None):
 
 @shared_task
 def imagestats(filename, processInputId):
+    """
+    A celery task to read an image file and record stats about the basic structure of the
+    image into the database.  Some things calculated and stored by this routine are:
+
+    * Image dimensions (width, height, number of channels, multi-hdu fits files, etc)
+    * Image metadata (exif data, fits headers, etc)
+    * Image WCS (check fits header and store wcs with source = 'original' if it has one)
+    * Image histogram and basic pixel rejection masking
+    * Write a full size, gamma corrected png thumbnail
+    """
     outputText = ""
     errorText = ""
     taskStartTime = time.time()
@@ -1236,6 +1246,10 @@ def depricatedHistogram(frame) :
 
 @shared_task
 def generateThumbnails(filename, processInputId):
+    """
+    A celery task to produce thumbnails of several standard sizes starting from the
+    original full size png.
+    """
     outputText = ""
     errorText = ""
     taskStartTime = time.time()
@@ -1851,6 +1865,13 @@ def starfind(filename, processInputId):
 
 @shared_task
 def starmatch(filename, processInputId):
+    """
+    A celery task to loop over every pair of source finding methods, and for every pair,
+    try to match corresponding sources between the two methods.  After every pair of
+    methods has been compared against each other, the matched results are combined into
+    "super matches" which are then stored in the database with links to the individual
+    source method results that contributed to the given super match.
+    """
     outputText = ""
     errorText = ""
     taskStartTime = time.time()
