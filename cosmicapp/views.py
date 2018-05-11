@@ -24,8 +24,10 @@ from django.db.utils import IntegrityError
 
 from lxml import etree
 import ephem
+import astropy
 from astropy import wcs
 from astropy.io import fits
+from photutils.datasets import make_gaussian_sources_image
 
 from .models import *
 from .forms import *
@@ -59,10 +61,19 @@ def processes(request, process=None):
     else:
         return HttpResponse('Process "' + process + '" not found.', status=400, reason='Parameters missing.')
 
-def learn(request, process=None):
+def learn(request, page=None):
     context = {"user" : request.user}
 
-    return render(request, "cosmicapp/learn.html", context)
+    if page == None:
+        return render(request, "cosmicapp/learn.html", context)
+
+    validPages = ['plate_solution']
+
+    page = page.strip().lower().replace(' ', '_')
+    if page in validPages:
+        return render(request, "cosmicapp/learn/" + page + ".html", context)
+    else:
+        return HttpResponse('Learning page "' + page + '" not found.', status=404)
 
 def createuser(request):
     context = {"user" : request.user}
@@ -1238,7 +1249,8 @@ def query(request):
                 (AstorbRecord.objects.filter(name__icontains=name), 'Asteroid'),
                 (ExoplanetRecord.objects.filter(identifier__icontains=name), 'Exoplanet'),
                 (GCVSRecord.objects.filter(identifier__icontains=name), 'Variable Star'),
-                (ExoplanetRecord.objects.filter(identifier__icontains=name), 'Exoplanet'),
+                #TODO: Enable searching the UCAC4 catalog when full text searching is implemented with an index.  For now it is too slow.
+                #(UCAC4Record.objects.filter(identifier__icontains=name), 'UCAC4'),
                 (MessierRecord.objects.filter(identifier__icontains=name), 'Messier'),
                 (TwoMassXSCRecord.objects.filter(identifier__icontains=name), 'TwoMassXSC')
                 ]:
@@ -1260,6 +1272,124 @@ def query(request):
             jsonResponse = json.dumps(resultArray)
 
     return HttpResponse(jsonResponse)
+
+def ccdSimulator(request):
+    plateSolution = None
+
+    try:
+        dimX = int(request.GET.get('dimX', ''))
+        dimY = int(request.GET.get('dimY', ''))
+        plateSolutionId = int(request.GET.get('plateSolutionId', ''))
+        plateSolution = PlateSolution.objects.filter(pk=plateSolutionId).first()
+    except:
+        try:
+            ra = float(request.GET.get('ra', ''))
+            dec = float(request.GET.get('dec', ''))
+            pixelScaleX = float(request.GET.get('pixelScaleX', ''))/3600
+            pixelScaleY = float(request.GET.get('pixelScaleY', ''))/3600
+            rotation = float(request.GET.get('rotation', ''))
+        except:
+            return HttpResponse('', status=400, reason='Parameters missing.')
+
+    if dimX > 2048:
+        dimX = 2048
+
+    if dimY > 2048:
+        dimY = 2048
+
+    if plateSolution is not None:
+        w = plateSolution.wcs()
+        dRA = dimX*plateSolution.resolutionX/3600
+        dDec = dimY*plateSolution.resolutionY/3600
+        bufferDistance = 1.25*math.sqrt(dRA*dRA + dDec*dDec)
+        ra = plateSolution.centerRA
+        dec = plateSolution.centerDec
+    else:
+        if pixelScaleX > 5/3600:
+            pixelScaleX = 5/3600
+
+        if pixelScaleY > 5/3600:
+            pixelScaleY = 5/3600
+
+        w = wcs.WCS(naxis=2)
+        w.wcs.crpix = [dimX/2, dimY/2]
+        #TODO: Need to check that the pixel scale here is correct, but this seems reasonable.
+        w.wcs.cdelt = [pixelScaleX*math.cos((math.pi/180)*dec), pixelScaleY]
+        w.wcs.crval = [ra, dec]
+        w.wcs.crota = [rotation, rotation]
+        w.wcs.ctype = ["RA---TAN", "DEC--TAN"]
+        dx = dimX * pixelScaleX
+        dy = dimY * pixelScaleY
+        bufferDistance = math.sqrt(dx*dx + dy*dy)
+
+    #TODO: Make the geometry an actual polygon to account for projection issues in images around or containing the celestial poles.
+    print(ra, dec, bufferDistance)
+    queryGeometry = GEOSGeometry('POINT({} {})'.format(ra, dec))
+
+    xVals = []
+    yVals = []
+    amplitudeVals = []
+    xStdDevVals = []
+    yStdDevVals = []
+    thetaVals = []
+
+    ucac4Results = UCAC4Record.objects.filter(geometry__dwithin=(queryGeometry, bufferDistance))
+    for result in ucac4Results:
+        x, y = w.all_world2pix(result.ra, result.dec, 1)    #TODO: Determine if this 1 should be a 0.
+        if result.magFit is not None:
+            mag = result.magFit
+        else:
+            if result.magAperture is not None:
+                mag = result.magAperture
+            else:
+                #TODO: Figure out a better fallback?
+                mag = 16
+
+        xVals.append(x)
+        yVals.append(y)
+        #TODO: These amplitude and stddev values work reasonably well to reproduce how
+        # images taken by a camera and processed by our site look.  It has no actual
+        # scientific basis so these frames are only useable as guide images for humans, not
+        # for scientific analysis.
+        amplitudeVals.append(max(0.2, (17-math.pow(mag, 2.0)))*200)
+        xStdDevVals.append(max(1.0, (math.pow(17-mag, 1.3)))*0.4)
+        yStdDevVals.append(max(1.0, (math.pow(17-mag, 1.3)))*0.4)
+        thetaVals.append(0)
+
+    twoMassXSCResults = TwoMassXSCRecord.objects.filter(geometry__dwithin=(queryGeometry, bufferDistance))
+    for result in twoMassXSCResults:
+        x, y = w.all_world2pix(result.ra, result.dec, 1)    #TODO: Determine if this 1 should be a 0.
+        raScale, decScale = wcs.utils.proj_plane_pixel_scales(w)
+        raScale *= 3600
+        decScale *= 3600
+
+        if result.isophotalKMag is not None:
+            mag = result.isophotalKMag
+        else:
+            mag = 9
+
+        if result.isophotalKSemiMajor is None or result.isophotalKMinorMajor is None:
+            continue
+
+        xVals.append(x)
+        yVals.append(y)
+        amplitudeVals.append(max(0.1, (12-math.pow(mag, 0.95)))*100)
+        xStdDevVals.append(decScale*result.isophotalKSemiMajor*result.isophotalKMinorMajor/4.0)
+        yStdDevVals.append(raScale*result.isophotalKSemiMajor/4.0)
+        thetaVals.append(-(math.pi/180)*result.isophotalKAngle)
+
+    table = astropy.table.Table()
+    table['amplitude'] = amplitudeVals
+    table['x_mean'] = xVals
+    table['y_mean'] = yVals
+    table['x_stddev'] = xStdDevVals
+    table['y_stddev'] = yStdDevVals
+    table['theta'] = thetaVals
+
+    data = make_gaussian_sources_image( (dimY, dimX), table)
+    image_data = imageio.imwrite(imageio.RETURN_BYTES, numpy.flip(data, axis=0), format='png', optimize=True, bits=8)
+
+    return HttpResponse(image_data, content_type="image/png")
 
 def questions(request):
     context = {"user" : request.user}
@@ -2337,7 +2467,6 @@ def combineImageIds(request):
         filteredIdList.append('masterFlatId=int:' + str(masterFlatId))
 
     for image in images:
-        print('image pk is ', image.pk)
         totalSize += image.fileRecord.uploadSize
         filteredIdList.append(image.pk)
 
@@ -2711,6 +2840,31 @@ def observing(request):
     else:
         windowSize = 30
 
+    if 'dimX' in request.GET:
+        dimX = float(request.GET['dimX'])
+    else:
+        dimX = 256
+
+    if 'dimY' in request.GET:
+        dimY = float(request.GET['dimY'])
+    else:
+        dimY = 256
+
+    if 'pixelScaleX' in request.GET:
+        pixelScaleX = float(request.GET['pixelScaleX'])
+    else:
+        pixelScaleX = 2
+
+    if 'pixelScaleY' in request.GET:
+        pixelScaleY = float(request.GET['pixelScaleY'])
+    else:
+        pixelScaleY = 2
+
+    if 'rotation' in request.GET:
+        rotation = float(request.GET['rotation'])
+    else:
+        rotation = 0
+
     #TODO: Provide a input field like the ones for lat/lon/etc to set the observation date and then use position to calculate evening/midnight/morning for that location.
 
     lat = None
@@ -2754,6 +2908,11 @@ def observing(request):
     context['limitingMag'] = limitingMag
     context['windowSize'] = windowSize
     context['limit'] = limit
+    context['dimX'] = dimX
+    context['dimY'] = dimY
+    context['pixelScaleX'] = pixelScaleX
+    context['pixelScaleY'] = pixelScaleY
+    context['rotation'] = rotation
 
     context['promptProfileEdit'] = promptProfileEdit
     context['profileMissingFields'] = profileMissingFields
@@ -2861,6 +3020,17 @@ def exportBookmarks(request):
     # this will help in finding plate solutions for tricky plates, etc.
     context = {"user" : request.user}
 
+    typeInternalDict = {
+        'image': [Image],
+        'asteroid': [AstorbRecord],
+        'exoplanet': [ExoplanetRecord],
+        'variableStar': [GCVSRecord],
+        'messierObject': [MessierRecord],
+        '2massXSC': [TwoMassXSCRecord],
+        'userSubmittedResult': [UserSubmittedResult],
+        'userSubmittedHotPixel': [UserSubmittedHotPixel]
+        }
+
     if request.method == "POST":
         fileName = 'export.txt'
         fileContent = ''
@@ -2906,22 +3076,56 @@ def exportBookmarks(request):
             #TODO: Include details about date/location/etc/user and maybe a unique ID.
             fileContent += 'Observing plan:\n\n\n'
             for t in observingPlan:
-                #TODO: Include magnitude.
-                fileContent += (
-                    '========== {} ==========\n'
-                    'Object Type: {}\n'
-                    'RA: {}    Dec: {}\n'
-                    'Score: {}\n'
+                if t['typeInternal'] in typeInternalDict:
+                    obj = typeInternalDict[t['typeInternal']][0].objects.filter(pk=t['id']).first()
+                else:
+                    obj = None
+
+                if obj is not None:
+                    mag = obj.getMag(dateparser.parse(t['startTime']))
+                    ra, dec = obj.getSkyCoords(dateparser.parse(t['startTime']))
+                else:
+                    mag = None
+                    ra = t['ra']
+                    dec = t['dec']
+
+                formatString = '========== {identifier} ==========\n'\
+                    'Object Type: {typeString}\n'
+
+                if ra is not None and dec is not None:
+                    formatString += 'RA: {ra}    Dec: {dec}\n'
+
+                if mag is not None:
+                    formatString += 'Mag: {mag}\n'
+
+                if t['score'] is not None:
+                    formatString += 'Score: {score}\n'
+
+                formatString += '\nObservation Start Time: {startTime}\n'
+
+                if t['nextRising'] is not None or t['nextTransit'] is not None or t['nextSetting'] is not None:
+                    formatString += 'Rise: {nextRising}    Transit: {nextTransit}    Set: {nextSetting}\n'
                     '\n'
-                    'Observation Start Time: {}\n'
-                    'Rise: {}    Transit: {}    Set: {}\n'
-                    '\n'
-                    'Scheduled for {} exposures of {} seconds each.\n'
-                    '\n'
-                    'Observing Notes: \n\n\n\n\n' #TODO: Add Fields for seeing, weather, etc.
-                    '\n'
-                    ).format(t['identifier'], t['type'], t['ra'], t['dec'], t['score'], t['startTime'], t['nextRising'], t['nextTransit'],
-                             t['nextSetting'], t['numExposures'], t['exposureTime'])
+
+                if t['numExposures'] is not None or t['exposureTime']:
+                    formatString += 'Scheduled for {numExposures} exposures of {exposureTime} seconds each.\n'
+
+                #TODO: Add Fields for seeing, weather, etc.
+                formatString += '\nObserving Notes: \n\n\n\n\n\n'
+
+                fileContent += formatString.format(identifier=t['identifier'],
+                             typeString=t['type'],
+                             ra=ra,
+                             dec=dec,
+                             mag=mag,
+                             score=t['score'],
+                             startTime=t['startTime'],
+                             nextRising=t['nextRising'],
+                             nextTransit=t['nextTransit'],
+                             nextSetting=t['nextSetting'],
+                             numExposures=t['numExposures'],
+                             exposureTime=t['exposureTime']
+                             )
 
         else:
             return HttpResponse('bad request: unknown file format', status=400)

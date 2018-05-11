@@ -8,6 +8,33 @@
 {% include "./jquery.html" %}
 {% if user.is_authenticated %}<script src="/static/cosmicapp/bookmark.js"></script>{% endif %}
 <script src="/static/cosmicapp/raDec.js"></script>
+
+<script>
+function simulateCCD(clicked, ra, dec)
+{
+    var dimX = document.getElementsByName('dimX')[0].value;
+    var dimY = document.getElementsByName('dimY')[0].value;
+    var pixelScaleX = document.getElementsByName('pixelScaleX')[0].value;
+    var pixelScaleY = document.getElementsByName('pixelScaleY')[0].value;
+    var rotation = document.getElementsByName('rotation')[0].value;
+
+    html = '';
+    html += '<div class="imageGalleryZoomWindow">';
+    html += '<img src="/ccdSimulator/?ra=' + ra + '&dec=' + dec + '&dimX=' + dimX +
+            '&dimY=' + dimY + '&pixelScaleX=' + pixelScaleX + '&pixelScaleY=' + pixelScaleY +
+            '&rotation=' + rotation + '">';
+    html += '</div>';
+
+    $(document.body).append(html);
+
+    $('.imageGalleryZoomWindow').click(function()
+    {
+        $(this).remove();
+    });
+};
+
+</script>
+
 {% endblock extrahead %}
 
 {% block mainbody %}
@@ -99,6 +126,36 @@
             <td>(The maximum number of objects to display in each table: max 500)</td>
             </tr>
 
+            <tr>
+            <td>Plate<br>dim x:</td>
+            <td><input type=text name=dimX value={{dimX}}></td>
+            <td>(The simulated ccd resolution in pixels: max 2048)</td>
+            </tr>
+
+            <tr>
+            <td>Plate<br>dim y:</td>
+            <td><input type=text name=dimY value={{dimY}}></td>
+            <td>(The simulated ccd resolution in pixels: max 2048)</td>
+            </tr>
+
+            <tr>
+            <td>Plate<br>scale x:</td>
+            <td><input type=text name=pixelScaleX value={{pixelScaleX}}></td>
+            <td>(The simulated ccd resolution in arcseconds per pixel: max 5)</td>
+            </tr>
+
+            <tr>
+            <td>Plate<br>scale y:</td>
+            <td><input type=text name=pixelScaleY value={{pixelScaleY}}></td>
+            <td>(The simulated ccd resolution in arcseconds per pixel: max 5)</td>
+            </tr>
+
+            <tr>
+            <td>Plate<br>rotation:</td>
+            <td><input type=text name=rotation value={{rotation}}></td>
+            <td>(The simulated ccd rotation angle)</td>
+            </tr>
+
             {% comment %} TODO: Add options for VSP plots and other similar options for other external links? {% endcomment %}
 
             {% if user.is_authenticated and promptProfileEdit %}
@@ -149,7 +206,8 @@
             {% bookmark "ucac4" brightStar.pk "Observing Targets" "<td>" "</td>" %}
             <td>{% scoreForObject brightStar currentTime user %}</td>
             <td><a href="{{brightStar.getUrl}}">{{brightStar.identifier}}</a></td>
-            <td>{% formatRADec brightStar.ra brightStar.dec %}</td>
+            <td>{% formatRADec brightStar.ra brightStar.dec %}&emsp;
+            <a class=functionLink onclick="simulateCCD(this, {{brightStar.ra}}, {{brightStar.dec}})">(Simulate)</a></td>
             <td>{{brightStar.magFit|floatformat:2}}</td>
             <tr>
         {% endfor %}
@@ -169,7 +227,8 @@
             {% bookmark "asteroid" asteroid.record.pk "Observing Targets" "<td>" "</td>" %}
             <td>{% scoreForObject asteroid.record currentTime user %}</td>
             <td><a href="{{asteroid.record.getUrl}}">{{asteroid.record.name}}</a></td>
-            <td>{% formatRADec_rad asteroid.ephem.ra asteroid.ephem.dec %}</td>
+            <td>{% formatRADec_rad asteroid.ephem.ra asteroid.ephem.dec %}&emsp;
+            <a class=functionLink onclick="simulateCCD(this, {{asteroid.ephem.ra|multiply:57.295779513}}, {{asteroid.ephem.dec|multiply:57.295779513}})">(Simulate)</a></td>
             <td>{{asteroid.ephem.mag|floatformat:2}}</td>
             <td>{{asteroid.record.ceu|floatformat:3}}</td>
             <td>{{asteroid.record.astrometryNeededCode}}</td>
@@ -196,7 +255,8 @@
             {% bookmark "exoplanet" exoplanet.pk "Observing Targets" "<td>" "</td>" %}
             <td>{% scoreForObject exoplanet currentTime user %}</td>
             <td><a href="{{exoplanet.getUrl}}">{{exoplanet.identifier}}</a></td>
-            <td>{% formatRADec exoplanet.ra exoplanet.dec %}</td>
+            <td>{% formatRADec exoplanet.ra exoplanet.dec %}&emsp;
+            <a class=functionLink onclick="simulateCCD(this, {{exoplanet.ra}}, {{exoplanet.dec}})">(Simulate)</a></td>
             <td>{{exoplanet.magV|floatformat:2}}</td>
             <td>
             {% for link in exoplanet.getLinks %}
@@ -222,7 +282,8 @@
             {% bookmark "variableStar" variableStar.pk "Observing Targets" "<td>" "</td>" %}
             <td>{% scoreForObject variableStar currentTime user %}</td>
             <td><a href="{{variableStar.getUrl}}">{{variableStar.identifier}}</a></td>
-            <td>{% formatRADec variableStar.ra variableStar.dec %}</td>
+            <td>{% formatRADec variableStar.ra variableStar.dec %}&emsp;
+            <a class=functionLink onclick="simulateCCD(this, {{variableStar.ra}}, {{variableStar.dec}})">(Simulate)</a></td>
             <td>{{variableStar.magMax|floatformat:2}}</td>
             <td>{{variableStar.magMin|floatformat:2}}</td>
             <td>{{variableStar.period|floatformat:2}}</td>
@@ -252,7 +313,8 @@
             {% bookmark "messierObject" messierObject.pk "Observing Targets" "<td>" "</td>" %}
             <td>{% scoreForObject messierObject currentTime user %}</td>
             <td><a href="{{messierObject.getUrl}}">{{messierObject.identifier}}</td>
-            <td>{% formatRADec messierObject.ra messierObject.dec %}</td>
+            <td>{% formatRADec messierObject.ra messierObject.dec %}&emsp;
+            <a class=functionLink onclick="simulateCCD(this, {{messierObject.ra}}, {{messierObject.dec}})">(Simulate)</a></td>
             <td>{{messierObject.objectType}}</td>
             <td>{{messierObject.magV|floatformat:2}}</td>
             <td>
@@ -278,7 +340,8 @@
             {% bookmark "2MassXSC" extendedSource.pk "Observing Targets" "<td>" "</td>" %}
             <td>{% scoreForObject extendedSource currentTime user %}</td>
             <td><a href="{{extendedSource.getUrl}}">{{extendedSource.identifier}}</a></td>
-            <td>{% formatRADec extendedSource.ra extendedSource.dec %}</td>
+            <td>{% formatRADec extendedSource.ra extendedSource.dec %}&emsp;
+            <a class=functionLink onclick="simulateCCD(this, {{extendedSource.ra}}, {{extendedSource.dec}})">(Simulate)</a></td>
             <td>{{extendedSource.isophotalKMag|floatformat:2}}</td>
             <td>{{extendedSource.isophotalKSemiMajor|floatformat:2}}</td>
             <td>{{extendedSource.isophotalKMinorMajor|floatformat:2}}</td>

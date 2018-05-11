@@ -14,6 +14,15 @@
 <script>
 var responseArray;
 
+function defaultIfNull(x, ifNull = '', ifNotNull = x)
+{
+    //TODO: Check for NaN, etc.
+    if(x == null || x == undefined || x === undefined || Number.isNaN(x))
+        return ifNull
+    else
+        return ifNotNull
+};
+
 function getCurrentDate()
 {
     var d = new Date();
@@ -32,6 +41,7 @@ function handleStartTimeDropdown(updateStartEndTimes)
     var observingDuration = document.getElementById("observingDurationDropdown").value;
     var explanation
 
+    //TODO: Make this a dictionary.
     switch(observingDuration)
     {
         case "0":
@@ -55,6 +65,7 @@ function handleStartTimeDropdown(updateStartEndTimes)
             break;
     }
 
+    //TODO: Make this a dictionary.
     switch(timeString)
     {
         case "rightNow":
@@ -159,6 +170,12 @@ function updateBookmarkTable()
     var minimumScore = document.getElementsByName("minimumScore")[0].value;
     var observatoryID = document.getElementsByName("observatoryID")[0].value;
 
+    // If the bookmark folder or observing site, etc, are changed before we set the
+    // start/end time from the server response, then we need to quit here or we will send
+    // a malformed request to the server by mistake.
+    if($.trim(startTime) == '' || $.trim(endTime) == '')
+        return;
+
     var tableHTML = "<tr>\
                      <th>Include</th>\
                      <th>Score</th>\
@@ -189,25 +206,24 @@ function updateBookmarkTable()
                 {
                     var r = response[i];
 
-                    //TODO: Include a check to see if the object is never visible and if so, don't check the include checkbox by default.
                     tableHTML += '\n<tr>';
                     tableHTML += '\n<td><input type=checkbox class=includeForObservation id="' + r['divID'] +
                                  '_includeCheckbox" ' + r['defaultSelected'] + '></td>';
-                    tableHTML += '\n<td>' + Number(r['score']).toFixed(2) + '</td>';
-                    tableHTML += '\n<td>' + r['type'] + '</td>';
+                    tableHTML += '\n<td>' + defaultIfNull(r['score'], '', Number(r['score']).toFixed(2)) + '</td>';
+                    tableHTML += '\n<td>' + defaultIfNull(r['type']) + '</td>';
                     //TODO: Should include a bookmark link here when we have a way to do so with a javascript function.
-                    tableHTML += '\n<td>' + r['identifier'] + '</td>';
-                    tableHTML += '\n<td>' + r['mag'] + '</td>';
-                    tableHTML += '\n<td>' + r['ra'] + '</td>';
-                    tableHTML += '\n<td>' + r['dec'] + '</td>';
-                    tableHTML += '\n<td>' + r['nextRising'] + '<br>' + r['nextTransit'] + '<br>' + r['nextSetting'] + '</td>';
+                    tableHTML += '\n<td>' + defaultIfNull(r['identifier']) + '</td>';
+                    tableHTML += '\n<td>' + defaultIfNull(r['mag'], '', Number(r['mag']).toFixed(2)) + '</td>';
+                    tableHTML += '\n<td>' + defaultIfNull(r['ra']) + '</td>';
+                    tableHTML += '\n<td>' + defaultIfNull(r['dec']) + '</td>';
+                    tableHTML += '\n<td>' + defaultIfNull(r['nextRising']) + '<br>' + defaultIfNull(r['nextTransit']) + '<br>' + defaultIfNull(r['nextSetting']) + '</td>';
 
                     tableHTML += '\n<td>';
                     tableHTML += '<input type=text id="' + r['divID'] + '_startTimeText" value="' + r['startTime'] + '">';
                     tableHTML += '</td>';
 
-                    tableHTML += '\n<td><input type=text id="' + r['divID'] + '_numExposuresText" value="' + r['numExposures'] + '"></td>';
-                    tableHTML += '\n<td><input type=text id="' + r['divID'] + '_exposureTimeText" value="' + r['exposureTime'] + '"></td>';
+                    tableHTML += '\n<td><input type=text style="width: 6em;" id="' + r['divID'] + '_numExposuresText" value="' + defaultIfNull(r['numExposures']) + '"></td>';
+                    tableHTML += '\n<td><input type=text style="width: 6em;" id="' + r['divID'] + '_exposureTimeText" value="' + defaultIfNull(r['exposureTime']) + '"></td>';
                     tableHTML += '\n</tr>';
                 }
 
@@ -264,6 +280,15 @@ $(document).ready(function()
     $('#inputDateEntry').val(getCurrentDate());
 
     handleStartTimeDropdown(false);
+
+    // Clear the start and end time entry fields in case a browser auto populated them to
+    // keep from sending requests to the server before all the options have been set by the
+    // user.  There is no error that happens if these requests get sent, they just cause
+    // server load for requests that don't get shown to the user anyway.
+    document.getElementById("startTimeDateEntry").value = ''
+    document.getElementById("startTimeTimeEntry").value = ''
+    document.getElementById("endTimeDateEntry").value = ''
+    document.getElementById("endTimeTimeEntry").value = ''
 });
 </script>
 

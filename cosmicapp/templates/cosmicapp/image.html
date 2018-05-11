@@ -56,7 +56,7 @@ td.numMatchResults
         <tr>
             <td><img width=75px src="{{image.imageChannels.all.0.getRowMeanUrl}}"></td>
             <td><a href="{{image.getThumbnailUrlFull|safe}}">
-            <img src="{{image.getThumbnailUrlLarge|safe}}"></a></td>
+            <img width=900px src="{{image.getThumbnailUrlLarge|safe}}"></a></td>
         </tr>
     </table>
 </div>
@@ -127,7 +127,9 @@ td.numMatchResults
             {% for ps in plateSolutions %}
             <font size=-1>
             <br>&emsp;<b>{{ps.source}}:</b>
-            <br>&emsp;&emsp;{% formatRADec ps.centerRA ps.centerDec %}
+            <br>&emsp;&emsp;{% formatRADec ps.centerRA ps.centerDec %}&emsp;
+            <a class=functionLink
+            href="/ccdSimulator/?plateSolutionId={{ps.pk}}&dimX={{image.dimX}}&dimY={{image.dimY}}">(Simulate)</a>
             <br>&emsp;&emsp;{{ps.resolutionX|floatformat:2}}x{{ps.resolutionY|floatformat:2}} arcsec/pixel
             <br>&emsp;&emsp;Approximate dimensions:
             {% comment %} TODO: Need to fix this.  Divide by cosine of declination? {% endcomment %}
@@ -135,6 +137,7 @@ td.numMatchResults
             degrees
             <br>&emsp;&emsp;{{ps.area|floatformat:2}} square deg
             <br>&emsp;&emsp;1 / {{ps.area|divide:41253|invert|floatformat:0|intcomma}} of the whole sky
+            <br>&emsp;&emsp;Airmass: {{ps.airmass}}
             </font>
             {% endfor %}
             </td>

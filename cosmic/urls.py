@@ -48,6 +48,7 @@ urlpatterns = [
     url(r'^imageProperties/$', views.allImageProperties),
 
     url(r'^query/$', views.query),
+    url(r'^ccdSimulator/$', views.ccdSimulator),
 
     url(r'^image/(?P<id>[-0-9]+)/question/$', views.questionImage),
     url(r'^image/(?P<id>[0-9]+)/getquestion/$', views.getQuestionImage),
@@ -91,6 +92,7 @@ urlpatterns = [
     url(r'^about/processes/(?P<process>[a-zA-Z0-9]+)$', views.processes),
 
     url(r'^learn/$', views.learn),
+    url(r'^learn/(?P<page>.*)/$', views.learn),
 
     url(r'^export/bookmarks/$', views.exportBookmarks),
 

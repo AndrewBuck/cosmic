@@ -322,6 +322,25 @@ def savePlateSolution(sender, instance, **kwargs):
 
                     result.save()
 
+    # If it is possible, compute the airmass and store it in the PlateSolution record.
+    if instance.image.dateTime is not None and instance.image.observatory is not None:
+        body = ephem.FixedBody()
+        body._ra = (math.pi/180.0)*instance.centerRA
+        body._dec = (math.pi/180.0)*instance.centerDec
+        body._epoch = '2000'  #TODO: Determine if this should be different.
+
+        observer = ephem.Observer()
+        observer.lat = instance.image.observatory.lat*(math.pi/180)
+        observer.lon = instance.image.observatory.lon*(math.pi/180)
+        observer.elevation = instance.image.observatory.elevation
+        observer.date = instance.image.dateTime
+
+        body.compute(observer)
+        print(1.0*body.alt)
+        #TODO: Use a better formula or library to determine the airmass.  This only works down to about 30 degrees above the horizon.
+        #TODO: Correct airmass for observer's elevation and atmospheric pressure (from weather database?)
+        airmass = 1.0/math.cos(math.pi/2.0-1.0*body.alt)
+        PlateSolution.objects.filter(pk=instance.pk).update(airmass=airmass)
 
 #TODO: Add a check when a user adds a bookmark to see if they should be shown a tutorial popup assosciated with the newly added bookmark.
 class Bookmark(models.Model):
@@ -532,6 +551,7 @@ class Image(models.Model, SkyObject, BookmarkableItem):
     comments = GenericRelation('TextBlob')
     bookmarks = GenericRelation('Bookmark')
 
+    @property
     def getDisplayName(self):
         return "Image {}".format(self.pk)
 
@@ -854,6 +874,7 @@ class PlateSolution(models.Model):
     centerRot = models.FloatField(null=True)
     resolutionX = models.FloatField(null=True)
     resolutionY = models.FloatField(null=True)
+    airmass = models.FloatField(null=True)
     geometry = models.PolygonField(srid=40000, db_index=True, geography=False, dim=2, null=True)
     area = models.FloatField(null=True)
     createdDateTime = models.DateTimeField(auto_now=True, db_index=True, null=True)
@@ -1077,6 +1098,7 @@ class UserSubmittedResult(SourceFindResult, BookmarkableItem):
     def getUrl(self):
         return '/detectedSource/userSubmittedResult/' + str(self.pk)
 
+    @property
     def getDisplayName(self):
         return 'Image {}: User Submitted Source {}'.format(self.image.pk, self.pk)
 
@@ -1092,6 +1114,7 @@ class UserSubmittedHotPixel(SourceFindResult, BookmarkableItem):
     def getUrl(self):
         return '/detectedSource/userHotPixel/' + str(self.pk)
 
+    @property
     def getDisplayName(self):
         return 'Image {}: User Submitted Hot Pixel {}'.format(self.image.pk, self.pk)
 
@@ -1290,6 +1313,7 @@ class UCAC4Record(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     """
     A record storing a single entry from the UCAC4 catalog of stars.
     """
+    #build index on this for search.
     identifier = models.CharField(max_length=10, null=True)
     ra = models.FloatField(null=True)
     dec = models.FloatField(null=True)

@@ -50,7 +50,7 @@ def getAsteroidsAroundGeometry(geometry, bufferSize, targetTime, limitingMag, li
 
     # Start by performing a query which returns all asteroids that pass within the
     # bufferDistance around the targetTime.
-    asteroidsApprox = models.AstorbEphemeris.objects.filter(
+    asteroidsApprox = models.AstorbEphemeris.objects.prefetch_related('astorbRecord').filter(
         geometry__dwithin=(geometry, largeBufferSize),
         startTime__lte=targetTime,
         endTime__gte=targetTime,
@@ -83,11 +83,61 @@ def getAsteroidsAroundGeometry(geometry, bufferSize, targetTime, limitingMag, li
     return asteroids[:limit]
 
 def formulateObservingPlan(user, observatory, targets, includeOtherTargets, startTime, endTime, minTimeBetween, maxTimeBetween, limitingMag, minimumScore):
-    #TODO: Also include calibration images at the beginning, middle, and end of the observing session.
+    def addCalibrationTarget(calibrationType, numExposures, exposureTime, startTime):
+        #TODO: Accept an instrument configuration as a parameter and use the readout time of the instrument.
+        readoutTime = 2
+
+        d = {}
+        d['identifier'] = calibrationType
+        d['divID'] = 'calibration_' + str(random.Random().randint(0, 1e9))
+        d['type'] = 'Calibration Image'
+        d['typeInternal'] = 'calibration'
+        d['score'] = 0.1
+        d['peakScore'] = 0.1
+        d['peakScoreTime'] = str(startTime)
+        d['ra'] = None
+        d['dec'] = None
+        d['mag'] = None
+        d['nextRising'] = None
+        d['nextTransit'] = None
+        d['nextSetting'] = None
+        d['startTime'] = str(startTime)
+        d['startTimeDatetime'] = startTime
+        d['numExposures'] = numExposures
+        d['exposureTime'] = exposureTime
+        d['defaultSelected'] = "checked"
+        d['timeNeeded'] = timedelta(seconds=numExposures*(exposureTime + readoutTime))
+
+        endTime = startTime + d['timeNeeded']
+
+        return d, endTime
+
     minTimeBetweenTimedelta = timedelta(minutes=minTimeBetween)
     maxTimeBetweenTimedelta = timedelta(minutes=maxTimeBetween)
 
     observingPlan = []
+
+    # Beginning of session calibration.
+    #TODO: Weather report.
+    #TODO: We should add one set of dark exposures for each duration of image we are likely to take (including for flat images).
+    d, calFinishTime = addCalibrationTarget('Flat', 10, 5, startTime)
+    observingPlan.append(d)
+    d, calFinishTime = addCalibrationTarget('Bias', 25, 0.001, calFinishTime + minTimeBetweenTimedelta)
+    observingPlan.append(d)
+    d, calFinishTime = addCalibrationTarget('Dark', 10, 30, calFinishTime + minTimeBetweenTimedelta) #To match light frames.
+    observingPlan.append(d)
+    d, calFinishTime = addCalibrationTarget('Dark', 10, 5, calFinishTime + minTimeBetweenTimedelta) #To match flat frames.
+    observingPlan.append(d)
+    d, calFinishTime = addCalibrationTarget('Allsky', 1, 1, calFinishTime + minTimeBetweenTimedelta) #Cell phone camera of sky conditions right around sunset.
+    observingPlan.append(d)
+    calFinishTime += minTimeBetweenTimedelta
+
+    # End of session calibration.
+    d, tempTime = addCalibrationTarget('Bias', 25, 0.001, endTime + timedelta(seconds=2))
+    observingPlan.append(d)
+    d, tempTime = addCalibrationTarget('Dark', 10, 30, tempTime + minTimeBetweenTimedelta) #To match light frames.
+    observingPlan.append(d)
+
     for target in targets:
         d = {}
         d['target'] = target
@@ -103,7 +153,7 @@ def formulateObservingPlan(user, observatory, targets, includeOtherTargets, star
             d['identifier'] = target.content_object.getDisplayName
 
             if isinstance(target.content_object, models.ScorableObject):
-                peakScoreTuple = target.content_object.getPeakScoreForInterval(startTime, endTime, user, observatory)
+                peakScoreTuple = target.content_object.getPeakScoreForInterval(calFinishTime, endTime, user, observatory)
                 d['peakScore'] = round(peakScoreTuple[0], 2)
                 d['peakScoreTime'] = str(peakScoreTuple[1])
 
@@ -116,15 +166,15 @@ def formulateObservingPlan(user, observatory, targets, includeOtherTargets, star
                 d['score'] = "None"
                 defaultSelected = False
                 d['peakScore'] = 'None'
-                d['peakScoreTime'] = str(startTime)
+                d['peakScoreTime'] = str(calFinishTime)
 
             if isinstance(target.content_object, models.SkyObject):
                 if d['peakScore'] != 'None':
                     ra, dec = target.content_object.getSkyCoords(peakScoreTuple[1])
                     mag = target.content_object.getMag(peakScoreTuple[1])
                 else:
-                    ra, dec = target.content_object.getSkyCoords(startTime)
-                    mag = target.content_object.getMag(startTime)
+                    ra, dec = target.content_object.getSkyCoords(calFinishTime)
+                    mag = target.content_object.getMag(calFinishTime)
 
                 if mag != None:
                     if mag > limitingMag:
@@ -151,7 +201,7 @@ def formulateObservingPlan(user, observatory, targets, includeOtherTargets, star
             if d['peakScore'] != 'None':
                 observer.date = peakScoreTuple[1]
             else:
-                observer.date = startTime
+                observer.date = calFinishTime
 
             #TODO: There should be a UI interface to disable this day/night check or set a specific behaviour, etc.
             # If the sun is above -6 degrees from the horizon (twighlight) then do not select it by default.
@@ -173,8 +223,10 @@ def formulateObservingPlan(user, observatory, targets, includeOtherTargets, star
                 defaultSelected = False
 
         #TODO: Add a function to models.py to compute an observing program for each object.
+        #TODO: Decide what filter(s) to use as part of the observing program for each object.
         d['numExposures'] = 1
         d['exposureTime'] = 30
+        d['timeNeeded'] = timedelta(seconds=d['numExposures'] * d['exposureTime'])
 
         if defaultSelected:
             d['defaultSelected'] = "checked"
@@ -183,11 +235,11 @@ def formulateObservingPlan(user, observatory, targets, includeOtherTargets, star
 
         observingPlan.append(d)
 
-    observingPlan.sort(key=lambda x: x['startTime'])
+    observingPlan.sort(key=lambda x: x['startTimeDatetime'])
 
     observationsToRemove = []
     for observation in observingPlan:
-        observingTime = timedelta(seconds=observation['numExposures'] * observation['exposureTime'])
+        observingTime = observation['timeNeeded']
 
         #TODO: This whole loop can be gotten rid of and replaced by a one liner that does the same thing.
         skip = True
@@ -200,12 +252,13 @@ def formulateObservingPlan(user, observatory, targets, includeOtherTargets, star
                     continue
                 continue
 
-            otherObservingTime = timedelta(seconds=otherObservation['numExposures'] * otherObservation['exposureTime'])
-            t1 = dateparser.parse(observation['startTime'])
-            t2 = dateparser.parse(otherObservation['startTime'])
+            otherObservingTime = otherObservation['timeNeeded']
+            t1 = observation['startTimeDatetime']
+            t2 = otherObservation['startTimeDatetime']
             deltaT = t2 - t1
+
             #TODO: Need to take into account the order of the two observations and compare deltaT to the correct observing time.
-            if deltaT < otherObservingTime or deltaT < observingTime:
+            if (t2 <= t1 and deltaT < otherObservingTime) or (t1 <= t2 and deltaT < observingTime):
                 if observation['score'] < otherObservation['score']:
                     observationsToRemove.append(observation)
                 else:
@@ -225,42 +278,68 @@ def formulateObservingPlan(user, observatory, targets, includeOtherTargets, star
 
     removedObservations.sort(key=lambda x: observationSortKey(x), reverse=True)
 
-    # If there are 0 or 1 entries in the observingPlan the next loop will exit without doing anything so we pad out the
-    # list before we start that loop to ensure this does not happen.
     obs = {}
     obs['identifier'] = "Start of Observing"
     obs['startTime'] = str(startTime-timedelta(seconds=1))
     obs['startTimeDatetime'] = dateparser.parse(obs['startTime'])
+    obs['timeNeeded'] = timedelta(seconds=0)
+    obs['score'] = None
+    obs['divID'] = 'startOfObserving'
+    obs['typeInternal'] = 'start'
     observingPlan.append(obs)
+
     obs = {}
     obs['identifier'] = "End of Observing"
     obs['startTime'] = str(endTime+timedelta(seconds=1))
     obs['startTimeDatetime'] = dateparser.parse(obs['startTime'])
+    obs['timeNeeded'] = timedelta(seconds=0)
+    obs['score'] = None
+    obs['divID'] = 'endOfObserving'
+    obs['typeInternal'] = 'end'
     observingPlan.append(obs)
-    observingPlan.sort(key=lambda x: x['startTime'])
 
+    observingPlan.sort(key=lambda x: x['startTimeDatetime'])
+
+    observationsAddedSinceCalibration = 0
     for observation in removedObservations:
-        observingTime = observation['numExposures'] * observation['exposureTime']
-        observingTimeTimedelta = timedelta(seconds=observingTime) + minTimeBetweenTimedelta
+        observingTime = observation['timeNeeded']
+        observingTimeTimedelta = observingTime + minTimeBetweenTimedelta
 
         for i1, i2 in zip(observingPlan[0:], observingPlan[1:]):
-            i1ObservingTime = timedelta(seconds=observation['numExposures'] * observation['exposureTime'])
-            openTimeWindow = i2['startTimeDatetime'] - i1['startTimeDatetime']
+            i1ObservingTime = i1['timeNeeded']
+            if 'timeNeeded' in i1:
+                openTimeWindow = i2['startTimeDatetime'] - i1['startTimeDatetime'] - i1['timeNeeded']
+            else:
+                print('Warning: No timeNeeded in observation: ', i1)
+                openTimeWindow = i2['startTimeDatetime'] - i1['startTimeDatetime']
 
             if openTimeWindow > observingTimeTimedelta:
                 observation['startTime'] = str(i1['startTimeDatetime'] + i1ObservingTime + minTimeBetweenTimedelta)
                 observation['startTimeDatetime'] = dateparser.parse(observation['startTime'])
 
-                if isinstance(target.content_object, models.ScorableObject):
+                if isinstance(target.content_object, models.ScorableObject) and 'target' in observation:
                     observation['score'] = observation['target'].content_object.getScoreForTime(observation['startTimeDatetime'], user, observatory)
 
                 observingPlan.append(observation)
-                observingPlan.sort(key=lambda x: x['startTime'])
+                if observation['defaultSelected'] == 'checked':
+                    observationsAddedSinceCalibration += 1
+
+                # Check to see if we should acquire more calibration frames.
+                if observationsAddedSinceCalibration > 5:
+                    observationsAddedSinceCalibration = 0
+                    calStartTime = observation['startTimeDatetime'] + observation['timeNeeded'] + minTimeBetweenTimedelta
+                    d, tempTime = addCalibrationTarget('Bias', 10, 0.001, calStartTime)
+                    observingPlan.append(d)
+                    d, tempTime = addCalibrationTarget('Dark', 5, 30, tempTime + minTimeBetweenTimedelta) #To match light frames.
+                    observingPlan.append(d)
+
+                observingPlan.sort(key=lambda x: x['startTimeDatetime'])
                 break
 
     for observation in observingPlan:
         observation.pop('target', None)
         observation.pop('startTimeDatetime', None)
+        observation.pop('timeNeeded', None)
 
     return observingPlan
 

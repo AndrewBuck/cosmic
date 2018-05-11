@@ -113,13 +113,14 @@ def imagestats(filename, processInputId):
             channelColors.append( (numChannels, color) )
             numChannels += 1
 
+    # Store the image dimensionality.
     #NOTE: These assume that all channels have the same width, height, and depth.  This may not always be true.
-    image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
-    image.dimX = jsonObject[0]['width']
-    image.dimY = jsonObject[0]['height']
-    image.bitDepth = jsonObject[0]['depth']
-
     with transaction.atomic():
+        image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
+        image.dimX = jsonObject[0]['width']
+        image.dimY = jsonObject[0]['height']
+        image.bitDepth = jsonObject[0]['depth']
+
         if numChannels > 0:
             image.dimZ = numChannels
             image.save()
@@ -2192,6 +2193,11 @@ def astrometryNet(filename, processInputId):
 
         models.storeImageLocation(image, w, 'astrometry.net')
         image.addImageProperty('astrometryNet', 'success')
+        #TODO: Check to see if this image has an overlapsImage image property and if
+        # so, check to see if that image has a plate solution.  If not, try solving it
+        # with this location as a hint.  Also need to check for images which have an
+        # overlapsImage pointing to this image that we just solved.  Check all of these to
+        # see if they have plate solutions and if not, try solving with this location as a hint.
     else:
         outputText += '\n\nNo plate solution found.' + "\n"
         image.addImageProperty('astrometryNet', 'failure')
@@ -2943,13 +2949,45 @@ def imageCombine(argList, processInputId):
     if doReproject:
         referenceWCS = images[0].getBestPlateSolution().wcs()
 
+        minX = None
+        minY = None
+        maxX = None
+        maxY = None
+        for image in images:
+            outputText += 'image footprint for image {}\n'.format(image.pk)
+            for coord in image.getBestPlateSolution().wcs().calc_footprint(axes=(image.dimX, image.dimY)):
+                ra = numpy.asscalar(coord[0])
+                dec = numpy.asscalar(coord[1])
+                x, y = referenceWCS.all_world2pix(ra, dec, 1)
+                outputText += '   {} {}\n'.format(x, y)
+
+                if minX is None:
+                    minX = maxX = x
+                    minY = maxY = y
+                else:
+                    if x < minX:
+                        minX = x
+
+                    if x > maxX:
+                        maxX = x
+
+                    if y < minY:
+                        minY = y
+
+                    if y > maxY:
+                        maxY = y
+
+        outputShape = (int(numpy.asscalar(maxX-minX)), int(numpy.asscalar(maxY-minY)))
+        outputText += 'Output mosaic coordinates:\n   Min X - Max X: {} - {}\n   Min Y - Max Y: {} {}\n'\
+            .format(minY, maxY, minX, maxX)
+
     for image in images:
         #TODO: Look into using ccdproc.ccd_process() to do the bias, dark, flat, etc, corrections.
         outputText += "Loading image {}: {}\n".format(image.pk, image.fileRecord.originalFileName)
         hdulist = fits.open(settings.MEDIA_ROOT + image.fileRecord.onDiskFileName)
 
         imageExposure = image.getImageProperty('exposureTime')
-        outputText += "Image exposure time is: {}\n".format(imageExposure)
+        outputText += "   Image exposure time is: {}\n".format(imageExposure)
 
         imageTransforms = models.ImageTransform.objects.filter(subjectImage=image)
         doMatrixTransform = False
@@ -2995,12 +3033,12 @@ def imageCombine(argList, processInputId):
                 try:
                     darkScaleFactor = float(imageExposure) / float(darkExposure)
                 except:
-                    outputText += 'Warning: using dark scale factor of 1.0 instead of \'{}\' / \'{}\'\n'.format(imageExposure, darkExposure)
+                    outputText += '   Warning: using dark scale factor of 1.0 instead of \'{}\' / \'{}\'\n'.format(imageExposure, darkExposure)
                     darkScaleFactor = 1.0
             else:
                 darkScaleFactor = 1.0
 
-            outputText += 'Dark scale factor: {}\n'.format(darkScaleFactor)
+            outputText += '   Dark scale factor: {}\n'.format(darkScaleFactor)
             data -= masterDarkData * darkScaleFactor
 
         if masterFlatImage is not None:
@@ -3014,20 +3052,20 @@ def imageCombine(argList, processInputId):
             data /= masterFlatData
 
         if doReproject:
-            outputText += 'Reprojecting image.\n'
+            outputText += '   Reprojecting image.\n'
             hdulist[0].data = data
             dataToProject = CCDData(data, wcs=image.getBestPlateSolution().wcs(), unit=u.adu)
-            data = wcs_project(dataToProject, referenceWCS)
+            data = wcs_project(dataToProject, referenceWCS, target_shape=outputShape)
             dataArray.append(data)
 
         elif doMatrixTransform:
-            outputText += 'Doing matrix transform. Reference: {}   Subject: {}\n'\
+            outputText += '   Doing matrix transform. Reference: {}   Subject: {}\n'\
                 .format(imageTransform.referenceImage.pk, imageTransform.subjectImage.pk)
             transformedData = scipy.ndimage.interpolation.affine_transform(data, imageTransform.matrix().I)
             dataArray.append(CCDData(transformedData, unit=u.adu))
 
         else:
-            outputText += 'Not Reprojecting image.\n'
+            outputText += '   Not Reprojecting image.\n'
             dataArray.append(CCDData(data, unit=u.adu))
 
         if imageExposure is not None and imageExposure != 'unknown':
@@ -3035,17 +3073,17 @@ def imageCombine(argList, processInputId):
             exposureCount += 1
 
     exposureMean = exposureSum / exposureCount
-    outputText += '\nExposure sum: {}\nExposure mean: {}\n'.format(exposureSum, exposureMean)
+    outputText += 'Exposure sum: {}\nExposure mean: {}\n'.format(exposureSum, exposureMean)
 
-    outputText += "\nCreating Combiner.\n"
+    outputText += "Creating Combiner.\n"
     combiner = Combiner(dataArray)
 
     if argDict['combineType'] == 'flat':
-        outputText += "\nCombine type is 'flat' - scaling input images by their individual mean values.\n"
+        outputText += "Combine type is 'flat' - scaling input images by their individual mean values.\n"
         scaling_func = lambda arr: 1/numpy.ma.average(arr)
         combiner.scaling = scaling_func
 
-    outputText += "\nPerforming median combine.\n"
+    outputText += "Performing median combine.\n"
     combinedData = combiner.median_combine()
 
     primaryHDU = fits.PrimaryHDU(combinedData)
@@ -3074,6 +3112,15 @@ def imageCombine(argList, processInputId):
     if masterFlatImage is not None:
         imageString = 'Image ' + str(masterFlatImage.pk) + ':  ' + masterFlatImage.fileRecord.originalFileName
         primaryHDU.header.append( ('flatcor', imageString) )
+
+    if doReproject:
+        wcsHeader = referenceWCS.to_header()
+        for card in wcsHeader:
+            primaryHDU.header[card] = wcsHeader[card]
+
+    else:
+        #TODO: Look at the headers of the input images to see if they have ra-dec properties set.
+        pass
 
     combinedHDUList = fits.HDUList([primaryHDU])
     outputText += "\nWriting image.\n"
@@ -3107,6 +3154,4 @@ def imageCombine(argList, processInputId):
     #TODO: Set instrument/observatory if it was set on the parent images.
 
     return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
-
-
 
