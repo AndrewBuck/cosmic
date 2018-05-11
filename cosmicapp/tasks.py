@@ -226,7 +226,13 @@ def imagestats(filename, processInputId):
         if w.has_celestial:
             outputText += "WCS found in header" + "\n"
 
-            models.storeImageLocation(image, w, 'original')
+            # If the image was created by cosmic itself we will have set a wcsSource image
+            # property when we wrote the wcs to the fits file.
+            source = image.getImageProperty('wcsSource')
+            if source is None:
+                source = 'original'
+
+            models.storeImageLocation(image, w, source)
         else:
             image.addImageProperty('numPlateSolutions', 0)
             outputText += "WCS not found in header" + "\n"
@@ -2191,7 +2197,7 @@ def astrometryNet(filename, processInputId):
         outputText += '\n\nPlate solved successfully.' + "\n"
         w = wcs.WCS(settings.MEDIA_ROOT + filename + '.sources.wcs')
 
-        models.storeImageLocation(image, w, 'astrometry.net')
+        models.storeImageLocation(image, w, 'cosmic:astrometry.net')
         image.addImageProperty('astrometryNet', 'success')
         #TODO: Check to see if this image has an overlapsImage image property and if
         # so, check to see if that image has a plate solution.  If not, try solving it
@@ -3145,9 +3151,13 @@ def imageCombine(argList, processInputId):
 
     fileRecord.save()
 
-    createTasksForNewImage(fileRecord, processInput.requestor)
-
-    #TODO: User is not saved for image since there is no upload session, need to remedy this.
+    #TODO: Make this function call take a reference to this task so it can give it as a
+    # pre-requisite to all of the created tasks so that none of them (for example image
+    # stats) can run before the remainder of this function finishes.  An unlikely scenario
+    # but still a possible race condition none the less.
+    image = createTasksForNewImage(fileRecord, processInput.requestor)
+    if doReproject:
+        image.addImageProperty('wcsSource', 'cosmic:stack-reproject')
 
     #TODO: Set parentImages on the newly created image.
 
