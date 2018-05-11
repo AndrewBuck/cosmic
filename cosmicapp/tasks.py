@@ -55,6 +55,7 @@ def sigmoid(x):
     return 1 / (1 + math.exp(-x))
 
 def constructProcessOutput(outputText, errorText, executionTime=None):
+    """ A Simple convenience function to construct a ProcessOutput object to be returned to the dispatcher. """
     processOutput = {
         'outputText': outputText,
         'outputErrorText': errorText,
@@ -69,6 +70,9 @@ def imagestats(filename, processInputId):
     errorText = ""
     taskStartTime = time.time()
 
+    # Run the command line tool 'identify' (part of image magick) with a format string
+    # given to it, causing it to return JSON formatted output which we then parse with the
+    # standard JSON parsing library.
     formatString = '{"width" : %w, "height" : %h, "depth" : %z, "channels" : "%[channels]"},'
     proc = subprocess.Popen(['identify', '-format', formatString, settings.MEDIA_ROOT + filename],
         stdout=subprocess.PIPE,
@@ -90,6 +94,11 @@ def imagestats(filename, processInputId):
 
     jsonObject = json.loads(output)
 
+    # Loop over the channels that image magick found and for each one, record what kind of
+    # color channel image magick thought it was.  We also handle multicolor entries like
+    # RGB or RGBA where one returned output line from image magick actually represents a
+    # full 3 or 4 channel image.  At the end of the loop numChannels should be the true
+    # total for images like this.
     numChannels = 0
     channelColors = []
     for frame in jsonObject:
@@ -137,6 +146,8 @@ def imagestats(filename, processInputId):
         else:
             image.save()
 
+    # Run the command line tool 'identify' (part of image magick) with a format string to
+    # print all key-value metadata pairs in the image header.
     formatString = '%[*]'
     proc = subprocess.Popen(['identify', '-format', formatString, settings.MEDIA_ROOT + filename],
         stdout=subprocess.PIPE,
@@ -1318,6 +1329,11 @@ def generateThumbnails(filename, processInputId):
 
         outputText += "generateThumbnails: " + tempFilename + "\n"
 
+        # Read through the standard error output from image magick and parse the output to
+        # grab the exact sizes and number of thumbnails that were created.  The output
+        # sizes of the thumbnails will not exactly match the requested sizes since in general,
+        # the aspect ratios will be different.  For images with more than one channel
+        # image magick will also sometimes create extra thumbnails for each channel in the input image.
         with transaction.atomic():
             for line in error.splitlines():
                 if '=>' in line:
@@ -1352,6 +1368,22 @@ def generateThumbnails(filename, processInputId):
     return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 
 def initSourcefind(method, image):
+    """
+    This is a small helper function that parses the standard configuration options common
+    to all or most of the source finding methods.  This function returns a tuple of
+    information containting:
+
+        detectionThresholdMultiplier - the number of standard deviations above background
+        to consider a valid source.
+
+        shouldReturn - a bool, if true the source find method does not need to be run at
+        all for some reason.  For example, it is a calibration frame, or it already has
+        found the nunmber of sources the user said it should in a previous run.
+
+        outputText and errorText - strings to be appended to the current output and error
+        text streams for the task.  These strings contain information on how the other
+        returned values were determined.
+    """
     methodDict = {
         'sextractor': models.SextractorResult,
         'image2xy': models.Image2xyResult,
@@ -1436,6 +1468,19 @@ def initSourcefind(method, image):
     return (detectThresholdMultiplier, shouldReturn, outputText, errorText)
 
 def checkIfCalibrationImage(image, propertyKeyToSet, propertyValueToSet):
+    """
+    A simple helper function which returns a tuple whose first entry is True if the image
+    is a calibration image of some sort and False if it is unknown or a science image.
+    The second entry in the tuple is the output text to append to the output stream of the
+    task calling this function.
+
+    If the image is a calibration image then then in addition to returning true, the image
+    will get an image property added to it with the specified key and value.  This can be
+    used to tag the image as having been skipped for processing by the calling routine if
+    it is a calibration image.
+
+    TODO: Allow propertyKeyToSet, etc, to be None and skip creating the image property if so.
+    """
     outputText = ''
 
     imageType = image.getImageProperty('imageType')
@@ -1851,8 +1896,10 @@ def starmatch(filename, processInputId):
 
         outputText += 'Matching {} {} results with {} {} results'.format(len(results1), i1['name'], len(results2), i2['name']) + "\n"
 
-        # Loop over all the pairs of results in the two current methods and record
-        # any match pairs that are within 3 pixels of eachother.
+        # Loop over all the pairs of results in the two current methods and for each item
+        # in the first result set, find the closest item in the second result set that is
+        # within the specified maxAllowedDistance.  If such a result is found add it to
+        # the matches array.
         matches = []
         maxAllowedDistance = 3.0
         for r1 in results1:
@@ -1862,6 +1909,10 @@ def starmatch(filename, processInputId):
             x1 = r1.pixelX
             y1 = r1.pixelY
 
+            # This inner loop loops over the second result set, but since the result sets
+            # are sorted by pixelX, we only loop over the portion of the result set where
+            # the pixelX is within the maxAllowedDistance.  Limiting the search like this
+            # speeds this function up by several orders of magnitude.
             for r2 in results2.irange_key(r1.pixelX - maxAllowedDistance, r1.pixelX + maxAllowedDistance):
                 dx = r2.pixelX - x1
                 dy = r2.pixelY - y1
@@ -1875,6 +1926,8 @@ def starmatch(filename, processInputId):
             if nearestResult != None:
                 matches.append( (r1, nearestResult) )
 
+        # Now that we have found all the matches between these two methods, store this
+        # list of matches (and which two methods they are from) in the matchedResults array.
         outputText += '   Found {} matches.'.format(len(matches)) + "\n"
         matchedResults.append( (i1, i2, matches) )
 
@@ -1890,7 +1943,7 @@ def starmatch(filename, processInputId):
 
         return average/len(superMatch.values())
 
-    # Now that we have all the matches between every two individual methods, combine them into 'superMatches' where 3
+    # Now that we have all the matches between every two individual methods, combine them into 'superMatches' where 2
     # or more different match types all agree on the same star.
     outputText += 'Calculating super matches:' + "\n"
     superMatches = SortedListWithKey(key=lambda x: sortKeyForSuperMatch(x))
@@ -1997,7 +2050,7 @@ def starmatch(filename, processInputId):
         outputText += "Image has a plate solution, forcing a save to trigger update of RA, Dec for all source find results.\n"
         ps.save()
     else:
-        outputText += "No plate solution found.\n"
+        outputText += "No plate solution found, not pre-caclulating RA-Dec values for source find results.\n"
 
     newMillis = int(round(time.time() * 1000))
     deltaT = newMillis - millis
@@ -2008,6 +2061,11 @@ def starmatch(filename, processInputId):
 
 @shared_task
 def astrometryNet(filename, processInputId):
+    """
+    A celery task to run the astrometry.net plate solver with a custom list of detected
+    sources from the SourceFindMatch table.  The plate solver is also fed as much
+    information as possible with regard to the known location of the plate.
+    """
     outputText = ""
     errorText = ""
     taskStartTime = time.time()
@@ -2025,10 +2083,13 @@ def astrometryNet(filename, processInputId):
     #TODO: Move this to after we know if the task actually has to run or not.
     superMatches = models.SourceFindMatch.objects.filter(image=image)
 
+    # Loop over the super matches and add the x-y and confidence values to the appropriate
+    # arrays since construction the fits table requires a separate array for each column.
     xValues = []
     yValues = []
     confidenceValues = []
     for star in superMatches:
+        #TODO: Add a check here to skip the source if the confidence is too low, or it is flagged as a false positive, etc.
         xValues.append(star.pixelX)
         yValues.append(star.pixelY)
         confidenceValues.append(star.confidence)
