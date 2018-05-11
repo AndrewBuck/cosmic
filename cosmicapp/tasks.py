@@ -252,7 +252,7 @@ def imagestats(filename, processInputId):
     #       will be passed back into the image analysis queue
     #   3: Detect haze and clouds
 
-    outputText += "imagestats: " + filename + "\n"
+    outputText += "imagestats:histogram: " + filename + "\n"
     if os.path.splitext(filename)[-1].lower() in settings.SUPPORTED_IMAGE_TYPES:
         hdulist = fits.open(settings.MEDIA_ROOT + filename)
         with transaction.atomic():
@@ -1283,9 +1283,6 @@ def generateThumbnails(filename, processInputId):
     #           Normalize image to [0,1]
     #           Mark dead any pixel with value = 0
     
-    # TODO: Generate transformation by looking at plate solutions for subsections of
-    #   full image and extracting coeffecients
-
     #TODO: For the really commonly loaded sizes like the ones in search results, etc, we
     # should consider sending a smaller size and scaling it up to the size we want on screen
     # to save bandwidth and decrease load times.
@@ -1301,7 +1298,6 @@ def generateThumbnails(filename, processInputId):
 
         #TODO: Small images will actually get thumbnails made which are bigger than the original, should implement
         # protection against this - will need to test all callers to make sure that is safe.
-        #TODO: Play around with the 'convolve' kernel here to see what the best one to use is.
         # Consider bad horiz/vert lines, also bad pixels, and finally noise.
         # For bad lines use low/negative values along the middle row/col in the kernel.
         proc = subprocess.Popen(['convert', '-verbose', '-strip', '-filter', 'Box', '-resize', sizeArg,
@@ -1450,6 +1446,7 @@ def checkIfCalibrationImage(image, propertyKeyToSet, propertyValueToSet):
         image.addImageProperty(propertyKeyToSet, propertyValueToSet)
         return (True, outputText)
     else:
+        outputText += "\n\n\nNot returning, image is not known to be a calibration image (bias, dark, flat, etc)\n"
         return (False, outputText)
 
 @shared_task
