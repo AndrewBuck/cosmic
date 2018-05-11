@@ -1537,8 +1537,6 @@ def sextractor(filename, processInputId):
     outputText += '\n ==================== End of process output ====================\n\n'
     errorText += '\n ==================== End of process error =====================\n\n'
 
-    outputText += "sextractor: " + filename + "\n"
-
     with open(catfileName, 'r') as catfile:
         fieldDict = {}
         with transaction.atomic():
@@ -1682,9 +1680,6 @@ def image2xy(filename, processInputId):
     errorText += error
     outputText += '\n ==================== End of process output ====================\n\n'
     errorText += '\n ==================== End of process error =====================\n\n'
-
-    outputText += "image2xy: " + filename + "\n"
-    sys.stdout.flush()
 
     table = Table.read(outputFilename, format='fits')
 
@@ -1984,7 +1979,6 @@ def starmatch(filename, processInputId):
 
     # Loop over all the superMatch entries and create a database entry for each one.
     outputText += 'Found {} super matches.  Writing them to the DB...'.format(len(superMatches)) + "\n"
-    sys.stdout.flush()
     with transaction.atomic():
         models.SourceFindMatch.objects.filter(image=image).delete()
         sourceFindMatches = []
