@@ -113,13 +113,14 @@ def imagestats(filename, processInputId):
             channelColors.append( (numChannels, color) )
             numChannels += 1
 
+    # Store the image dimensionality.
     #NOTE: These assume that all channels have the same width, height, and depth.  This may not always be true.
-    image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
-    image.dimX = jsonObject[0]['width']
-    image.dimY = jsonObject[0]['height']
-    image.bitDepth = jsonObject[0]['depth']
-
     with transaction.atomic():
+        image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
+        image.dimX = jsonObject[0]['width']
+        image.dimY = jsonObject[0]['height']
+        image.bitDepth = jsonObject[0]['depth']
+
         if numChannels > 0:
             image.dimZ = numChannels
             image.save()
