@@ -850,8 +850,8 @@ class ImageTransform(models.Model):
 
     def matrix(self):
         return numpy.matrix([
-            [self.m00, self.m01, self.m02],
-            [self.m10, self.m11, self.m12],
+            [self.m11, self.m10, self.m12],
+            [self.m01, self.m00, -self.m02],
             [0, 0, 1]
             ])
 
