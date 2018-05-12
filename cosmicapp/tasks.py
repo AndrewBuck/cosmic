@@ -3148,7 +3148,7 @@ def imageCombine(argList, processInputId):
         elif doMatrixTransform:
             outputText += '   Doing matrix transform. Reference: {}   Subject: {}\n'\
                 .format(imageTransform.referenceImage.pk, imageTransform.subjectImage.pk)
-            transformedData = scipy.ndimage.interpolation.affine_transform(data, imageTransform.matrix().I)
+            transformedData = scipy.ndimage.interpolation.affine_transform(data, imageTransform.matrix())
             dataArray.append(CCDData(transformedData, unit=u.adu))
 
         else:
