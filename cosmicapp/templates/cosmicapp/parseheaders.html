@@ -1,12 +1,62 @@
 {% extends "cosmicapp/processDescriptionTemplate.html" %}
+{% load cosmicapp_extras %}
 
 {% block extratitle %} - About parseHeaders {% endblock extratitle %}
 
 {% block processName %}parseHeaders{% endblock %}
 
 {% block synopsis %}
+{% filter markdownParse %}
+ParseHeaders is a task which loops over all the ImageHeader records which were read in by
+the [imagestats](/about/processes/imagestats) task and attempts to parse and interpret the
+data stored in these records.  Any data which is properly recognised and parsed will be
+stored as ImageProperty records or in rare cases stored elsewhere in the Cosmic database.
+{% endfilter %}
 {% endblock %}
 
 {% block description %}
+{% filter markdownParse %}
+
+Although there are general guidelines and in some cases even something approaching a
+standard with regards to fits header names and meanings, in reality fits images found in
+the wild exhibit a huge variety of different practices with regard to how information is
+recorded in these headers.  Because of the complexity and variation present in fits header
+fields the task of understanding it is split into two parts.  The job of the imagestats
+task is to read the source image file, and record the raw header info in the database to
+allow it to be easily queried and re-examined at a later date if necessary.  After this is
+finished, the job of the parseHeaders task is to actually do the examination and record
+what actual knowledge about the files can be extracted.
+
+A fits header card consists of a *key* and a *value*, both of which are strings.  The key
+is limited to 8 characters in length and the value is limited to 68 characters.  Because
+of the 8 character limit for key names, some names are heavily abbreviated and a
+dictionary of header keys and their meanings must be consulted.  The situation is more
+complicated than this though, since for many types of metadata there is more than 1 key in
+use which has the same meaning.  Additionally, the information encoded in the value
+portion of the card can be encoded differently as well (for example, using decimal degrees
+or degrees-minutes-seconds for angular measures).  Lastly, the value portion can contain
+an optional comment string separated by a front slash.  Discarding the comment portion can
+be non-trivial since headers can also contain the front slash as a normal character with
+no escaping (this is especially true in headers containing file names or urls).
+
+After all this cleaning and normalizing of the header cards has been done, the remaing
+data portion of the value tag is stored with an appropriate key as an *ImageProperty*.
+A list of all the image properties in the database, as well as the image headers most of
+them are sourced from can be seen on the [image properties](/imageProperties/) page, and a
+more detailed list for each individual image can be found linked from each image details
+page.
+
+Although the majority of key value pairs in the image properties table are almost
+identical to their fits header counterparts, there are some key differences.  First, keys
+and values in image properties can be any length, so the abbreviations in fits are done
+away with for more human readable forms.  Second, any comment data in the value portion of
+the card is thrown away in the image property to make it easily parseable elsewhere on
+Cosmic.  Lastly, the data is cleaned up by stripping away several iterations of leading
+and trailing white space, quote characters, and other occasional padding that is present
+in many commonly found fits header layouts.  All of this cleaning and filtering of
+comments is done on a case by case basis with a small block of python code dedicated to
+the parsing of each fits key (or group of keys with identical meaning).
+
+{% endfilter %}
 {% endblock %}
 
