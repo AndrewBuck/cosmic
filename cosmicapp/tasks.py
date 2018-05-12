@@ -3034,31 +3034,39 @@ def imageCombine(argList, processInputId):
         maxY = None
         for image in images:
             outputText += 'image footprint for image {}\n'.format(image.pk)
+            outputText += '  ra, dec ; x, y\n'
             for coord in image.getBestPlateSolution().wcs().calc_footprint(axes=(image.dimX, image.dimY)):
                 ra = numpy.asscalar(coord[0])
                 dec = numpy.asscalar(coord[1])
+
+                # NOTE: The third parameter is the origin.  From the documentation:
+                #   Here, *origin* is the coordinate in the upper left corner of the
+                #   image.  In FITS and Fortran standards, this is 1.  In Numpy and C
+                #   standards this is 0.  0 for Fortan / FITS, 1 for C / Numpy
                 x, y = referenceWCS.all_world2pix(ra, dec, 1)
-                outputText += '   {} {}\n'.format(x, y)
+                outputText += '  {}, {} ; {}, {}\n'.format(ra, dec, x, y)
 
                 if minX is None:
                     minX = maxX = x
                     minY = maxY = y
-                else:
-                    if x < minX:
-                        minX = x
 
-                    if x > maxX:
-                        maxX = x
+                minX = min(minX, x)
+                maxX = max(maxX, x)
+                minY = min(minY, y)
+                maxY = max(maxY, y)
 
-                    if y < minY:
-                        minY = y
+        outputText += 'Output mosaic coordinates:\n'
+        outputText += '     x, y ; ra, dec\n'
+        minRaXY, minDecXY = referenceWCS.all_pix2world(minX, minY, 1)
+        outputText += 'min: {}, {} ; {}, {}\n'.format(minX, minY, minRaXY, minDecXY)
+        maxRaXY, maxDecXY = referenceWCS.all_pix2world(maxX, maxY, 1)
+        outputText += 'max: {}, {} ; {}, {}\n'.format(maxX, maxY, maxRaXY, maxDecXY)
+        dimX = int(maxX - minX)
+        dimY = int(maxY - minY)
+        outputText += 'dim: {}, {}\n'.format(dimX, dimY)
 
-                    if y > maxY:
-                        maxY = y
-
-        outputShape = (int(numpy.asscalar(maxX-minX)), int(numpy.asscalar(maxY-minY)))
-        outputText += 'Output mosaic coordinates:\n   Min X - Max X: {} - {}\n   Min Y - Max Y: {} {}\n'\
-            .format(minY, maxY, minX, maxX)
+        outputShape = (dimY+2, dimX+2)
+        referenceWCS.wcs.crpix -= [minX+1, minY+1]
 
     for image in images:
         #TODO: Look into using ccdproc.ccd_process() to do the bias, dark, flat, etc, corrections.
