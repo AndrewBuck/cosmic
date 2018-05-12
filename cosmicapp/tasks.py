@@ -3240,7 +3240,13 @@ def imageCombine(argList, processInputId):
     if doReproject:
         image.addImageProperty('wcsSource', 'cosmic:stack-reproject')
 
-    #TODO: Set parentImages on the newly created image.
+    # Set parentImages on the newly created image.
+    for parent in images:
+        image.parentImages.add(parent)
+
+    for calibrationImage in [masterBiasImage, masterDarkImage, masterFlatImage]:
+        if calibrationImage is not None:
+            image.parentImages.add(calibrationImage)
 
     #TODO: Set instrument/observatory if it was set on the parent images.
 

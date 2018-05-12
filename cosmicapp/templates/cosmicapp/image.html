@@ -230,9 +230,29 @@ td.numMatchResults
         </tr>
     </table>
 
+{% if image.parentImages.all %}
+    <span style="min-width: 300px; max-width: 60%; float: left">
+    <p>This image was derived from these {{image.parentImages.all.count}} images:</p>
+
+    {% for parent in image.parentImages.all %}
+        {{parent.getThumbnailMedium|safe}}
+    {% endfor %}
+    </span>
+{% endif %}
+
+{% if image.childImages.all %}
+    <span style="min-width: 300px; max-width: 60%; float: left">
+    <p>These {{image.childImages.all.count}} images are derived from this image:</p>
+
+    {% for child in image.childImages.all %}
+        {{child.getThumbnailMedium|safe}}
+    {% endfor %}
+    </span>
+{% endif %}
+
 {% if image.plateSolutions.count > 0 %}
     <span style="min-width: 300px; max-width: 60%; float: left">
-    <p>This image overlaps with {{overlappingPlates|length}} other images.</p>
+    <p>This image overlaps with {{overlappingPlates|length}} other images:</p>
 
     <div style="margin: .3em; float: left; display: inline-block;">
     <img src={{image.getThumbnailUrlSmall|safe}}>
