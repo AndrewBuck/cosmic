@@ -293,6 +293,23 @@ image2xy - A source extraction tool that comes with astrometry.net (this is the
 	automatically with astrometry.net but good to double check.
 
 
+
+
+
+
+
+Javascript libraries in use:
+
+https://github.com/chris-rudmin/opus-recorder
+
+Record ogg/opus audio from javascript.  A copy of the dist/ directory is checked into our
+git for easy development environment setup, but a better solution should be set up for a
+production server.
+
+
+
+
+
 Catalogs
 
 The Cosmic website uses imported astronomical catalogs to aid in plate solving,

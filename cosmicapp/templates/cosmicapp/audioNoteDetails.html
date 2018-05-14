@@ -1,0 +1,24 @@
+{% extends "cosmicapp/base.html" %}
+
+{% load static %}
+{% load cosmicapp_extras %}
+
+{% block extratitle %} - Audio Note {{audioNote.id}} {% endblock extratitle %}
+
+{% block extrahead %}
+{% endblock extrahead %}
+
+{% block mainbody %}
+<h2>Audio note {{audioNote.id}}</h2>
+<p>
+Uploaded By User: <a href="/user/{{audioNote.fileRecord.user}}/">{{audioNote.fileRecord.user}}</a>
+<br>On: {{audioNote.fileRecord.uploadDateTime}} ({{audioNote.fileRecord.uploadDateTime|timesince}} ago)
+<br>Length: {{audioNote.length}}
+<br>
+<br><audio controls src="/audioNote/{{audioNote.id}}/audio/"></audio>
+</p>
+
+<h3>Transcriptions</h3>
+
+{% endblock mainbody %}
+

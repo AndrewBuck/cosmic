@@ -133,6 +133,29 @@
         <br><br>This user has not created any download sessions.
     {% endif %}
 {% endif %}
+
+{% if audioNotes %}
+    <br><br>
+    {% if user == foruser %}
+        Your recent audio notes:
+    {% else %}
+        Audio notes for this user:
+    {% endif %}
+
+    <br><br>
+
+    {% for audioNote in audioNotes %}
+        <a href="/audioNote/{{audioNote.id}}">{{audioNote.dateTime}} ({{audioNote.length}}
+        seconds)</a><br>
+    {% endfor %}
+{% else %}
+    {% if user == foruser %}
+        <br><br>You have not yet uploaded any audio notes.<br>
+        You can create these on the <a href="/audioNote/">Audio Note</a> page.
+    {% else %}
+        <br><br>This user has not created any audio notes.
+    {% endif %}
+{% endif %}
 {% endif %}
 </td>
 </tr>

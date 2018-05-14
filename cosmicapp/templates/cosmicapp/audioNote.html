@@ -1,0 +1,210 @@
+{% extends "cosmicapp/base.html" %}
+
+{% load static %}
+{% load cosmicapp_extras %}
+
+{% block extratitle %} - Audio Note {% endblock extratitle %}
+
+
+{% block extrahead %}
+{% include "./jquery.html" %}
+<script src="/static/cosmicapp/opus-recorder/recorder.min.js"></script>
+{% comment %}
+{% if user.is_authenticated %}<script src="/static/cosmicapp/bookmark.js"></script>{% endif %}
+<script src="/static/cosmicapp/imageTable.js"></script>
+<script src="/static/cosmicapp/raDec.js"></script>
+<script src="/static/cosmicapp/math.min.js" type="text/javascript"></script>
+<link rel="stylesheet" href="/static/cosmicapp/bokeh-0.12.9.min.css">
+<script src="/static/cosmicapp/bokeh-0.12.9.min.js"></script>
+<script src="/static/cosmicapp/bokeh-api-0.12.9.min.js"></script>
+{% endcomment %}
+
+
+{% endblock extrahead %}
+
+{% block mainbody %}
+<h2>Options</h2>
+
+<div>
+<label>Monitor Gain (0 to 1):</label>
+<input id="monitorGain" type="number" value="0.0" step="0.05" />
+Echoes back the recorded audio as you record, make sure to use headphones if you enable this.
+</div>
+
+<div>
+<label>Recording Gain (0 to 1):</label>
+<input id="recordingGain" type="number" value="0.25" step="0.05" />
+The volume level of the recording.
+</div>
+
+<button id="init">Setup recorder with options</button>
+
+<h2>Recorder Commands</h2>
+<button id="start" disabled>start</button>
+<button id="pause" disabled>pause</button>
+<button id="resume" disabled>resume</button>
+<button id="stopButton" disabled>stop</button>
+
+<h2>Recordings</h2>
+<ul id="recordingslist"></ul>
+
+<h2>Log</h2>
+<pre id="log"></pre>
+
+<script>
+function upload(blob, progressBar, clickedElement)
+{
+    var csrftoken = getCookie('csrftoken');
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '', true);
+    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+    //xhr.setRequestHeader("MyCustomHeader", "Put anything you need in here, like an ID");
+
+    var progressBar = $(clickedElement).parent().children('progress').get(0);
+    //document.querySelector('progress');
+    xhr.upload.onprogress = function(e)
+    {
+        if (e.lengthComputable)
+        {
+            progressBar.value = (e.loaded / e.total) * 100;
+            progressBar.textContent = progressBar.value; // Fallback for unsupported browsers.
+        }
+    };
+
+    xhr.upload.onload = function(e)
+    {
+        $(clickedElement).parent().hide(1000, function(){$(this).remove()});
+    };
+
+    xhr.upload.onerror = function(e)
+    {
+        alert('Error: Upload failed.');
+    };
+
+    xhr.send(blob);
+};
+
+function screenLogger(text, data)
+{
+    log.innerHTML += "\n" + text + " " + (data || '');
+}
+
+if (!Recorder.isRecordingSupported())
+{
+    screenLogger("Recording features are not supported in your browser.");
+}
+else
+{
+    init.addEventListener( "click", function()
+    {
+        init.disabled = true;
+        start.disabled = false;
+        monitorGain.disabled = true;
+        recordingGain.disabled = true;
+
+        var recorder = new Recorder({
+            monitorGain: parseFloat(monitorGain.value, 10),
+            recordingGain: parseFloat(recordingGain.value, 10),
+            numberOfChannels: 1,
+            encoderBitRate: 32000,
+            encoderSampleRate: 24000,
+            encoderPath: "/static/cosmicapp/opus-recorder/encoderWorker.min.js"
+            });
+
+        pause.addEventListener( "click", function(){ recorder.pause(); });
+        resume.addEventListener( "click", function(){ recorder.resume(); });
+        stopButton.addEventListener( "click", function(){ recorder.stop(); });
+        start.addEventListener( "click", function()
+        { 
+            recorder.start().catch(function(e)
+            {
+                screenLogger('Error encountered:', e.message );
+            });
+        });
+
+        recorder.onstart = function(e)
+        {
+            screenLogger('Recorder is started');
+            start.disabled = resume.disabled = true;
+            pause.disabled = stopButton.disabled = false;
+        };
+
+        recorder.onstop = function(e)
+        {
+            screenLogger('Recorder is stopped');
+            start.disabled = false;
+            pause.disabled = resume.disabled = stopButton.disabled = true;
+        };
+
+        recorder.onpause = function(e)
+        {
+            screenLogger('Recorder is paused');
+            pause.disabled = start.disabled = true;
+            resume.disabled = stopButton.disabled = false;
+        };
+
+        recorder.onresume = function(e)
+        {
+            screenLogger('Recorder is resuming');
+            start.disabled = resume.disabled = true;
+            pause.disabled = stopButton.disabled = false;
+        };
+
+        recorder.ondataavailable = function( typedArray )
+        {
+            var dataBlob = new Blob( [typedArray], { type: 'audio/ogg' } );
+            var fileName = new Date().toISOString() + ".opus";
+            var url = URL.createObjectURL( dataBlob );
+
+            var audioDiv = document.createElement('div');
+            audioDiv.style = 'border: 2px solid lightgrey;';
+
+            var deleteButton = document.createElement('input');
+            deleteButton.type = 'button';
+            deleteButton.value = 'Delete This';
+            $(deleteButton).click(function()
+            {
+                $(deleteButton).parent().hide(1000, function(){$(this).remove()});
+            });
+
+            var audio = document.createElement('audio');
+            audio.controls = true;
+            audio.src = url;
+
+            var link = document.createElement('a');
+            link.href = url;
+            link.download = fileName;
+            link.innerHTML = 'Download';
+
+            var progress = document.createElement('progress');
+            progress.min = 0;
+            progress.max = 100;
+            progress.value = 0;
+            var progressText = document.createTextNode("Progress: ");
+
+            var uploadButton = document.createElement('button');
+            var t = document.createTextNode("Upload");
+            uploadButton.id = 'uploadButton';
+            uploadButton.appendChild(t);
+            uploadButton.onclick = function()
+            {
+                upload(dataBlob, progress, this);  
+            };
+
+            var li = document.createElement('li');
+            li.appendChild(deleteButton);
+            li.appendChild(link);
+            li.appendChild(audio);
+            li.appendChild(uploadButton);
+            li.appendChild(progressText);
+            li.appendChild(progress);
+
+            audioDiv.appendChild(li);
+            recordingslist.appendChild(audioDiv);
+        };
+    });
+}
+</script>
+{% endblock mainbody %}
+

@@ -1,5 +1,6 @@
 import hashlib
 import os
+import io
 import math
 import random
 import time
@@ -12,6 +13,7 @@ from django.shortcuts import render
 from django.template import loader
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
+from django.core.files import File
 from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponseRedirect
 from django.utils import timezone
@@ -160,6 +162,7 @@ def upload(request):
             filename = fs.save(myfile.name, myfile)
 
             #TODO: Instead of replacing spaces we should rename the file to a hash name or something with no chance of
+            #TODO: This should be done before calling fs.save
             # special characters that would break other processes.
             filenameNoSpaces = filename.replace(' ', '_')
             os.rename(settings.MEDIA_ROOT + filename, settings.MEDIA_ROOT + filenameNoSpaces)
@@ -411,6 +414,59 @@ def download(request):
 
     return render(request, "cosmicapp/download.html", context)
 
+@login_required
+def audioNote(request):
+    context = {"user" : request.user}
+
+    if request.method == 'POST':
+        originalFilename = 'audio.opus'
+        fs = FileSystemStorage()
+        djangoFile = File(io.BytesIO(request.body))
+        filename = fs.save(originalFilename, djangoFile)
+
+        hashObject = hashlib.sha256()
+        for chunk in djangoFile.chunks():
+            hashObject.update(chunk)
+
+        fileRecord = UploadedFileRecord(
+            uploadSession = None,
+            user = request.user,
+            originalFileName = originalFilename,
+            onDiskFileName = filename,
+            fileSha256 = hashObject.hexdigest(),
+            uploadSize = len(request.body)
+            )
+
+        fileRecord.save()
+
+        audioNote = AudioNote(
+            fileRecord = fileRecord,
+            observatory = None, #TODO: Set this via an input field on the page.
+            instrument = None, #TODO: Set this via an input field on the page.
+            length = None #TODO: Set this.
+            )
+
+        audioNote.save()
+
+        return HttpResponse('ok')
+
+    return render(request, "cosmicapp/audioNote.html", context)
+
+def audioNoteDetails(request, noteId):
+    context = {"user" : request.user}
+
+    context['audioNote'] = AudioNote.objects.filter(pk=int(noteId)).first()
+
+    return render(request, "cosmicapp/audioNoteDetails.html", context)
+
+def audioNoteAudio(request, noteId):
+    context = {"user" : request.user}
+
+    audioNote = AudioNote.objects.filter(pk=int(noteId)).first()
+
+    with open(settings.MEDIA_ROOT + audioNote.fileRecord.onDiskFileName, "rb") as audioFile:
+        return HttpResponse(audioFile.read(), content_type="audio/ogg")
+
 def userpage(request, username):
     context = {"user" : request.user}
 
@@ -430,6 +486,7 @@ def userpage(request, username):
 
     context['uploadSessions'] = UploadSession.objects.filter(uploadingUser=foruser).order_by('-dateTime')[:10]
     context['downloadSessions'] = DownloadSession.objects.filter(user=foruser).order_by('-dateTime')[:10]
+    context['audioNotes'] = AudioNote.objects.filter(fileRecord__user=foruser).order_by('-dateTime')[:10]
 
     if request.method == 'POST':
         if 'edit' in request.POST:

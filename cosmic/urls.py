@@ -97,5 +97,8 @@ urlpatterns = [
     url(r'^export/bookmarks/$', views.exportBookmarks),
 
     url(r'^upload/$', views.upload),
-    url(r'^download/$', views.download)
+    url(r'^download/$', views.download),
+    url(r'^audioNote/$', views.audioNote),
+    url(r'^audioNote/(?P<noteId>[0-9]+)/audio/$', views.audioNoteAudio),
+    url(r'^audioNote/(?P<noteId>[0-9]+)/$', views.audioNoteDetails),
 ]

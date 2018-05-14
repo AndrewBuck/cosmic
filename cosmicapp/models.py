@@ -855,6 +855,16 @@ class ImageTransform(models.Model):
             [0, 0, 1]
             ])
 
+class AudioNote(models.Model):
+    fileRecord = models.ForeignKey(UploadedFileRecord, db_index=True, on_delete=models.PROTECT, null=True, related_name='audioNote')
+    observatory = models.ForeignKey(Observatory, on_delete=models.PROTECT, null=True)
+    instrument = models.ForeignKey(InstrumentConfiguration, on_delete=models.PROTECT, null=True)
+    dateTime = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
+    length = models.FloatField(null=True)
+    #TODO: Add a through link to this to allow other users to mark transcriptions correct, etc?
+    transcriptions = models.ManyToManyField('TextBlob', symmetrical=False, related_name='audioNotes')
+    #TODO: Add flags for inaudible audio notes, etc.
+
 class PlateSolution(models.Model):
     """
     A record for storing the WCS plate solution of an image to be stored in the database.  The WCS is stored as a text blob
