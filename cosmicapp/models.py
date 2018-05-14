@@ -26,7 +26,7 @@ from .tasks import computeSingleEphemeris
 
 #TODO:  Need to review the null constraint for all fields and try to minimize use of null=True, this is best done after the database is in a more stable state.
 
-#TODO: Check all DateTime and similar type fields to see if they should be auto_now=True.
+#TODO: Check all DateTime and similar type fields to see if they should be auto_now_add=True.
 
 #TODO: Check all CharField fields to see if they should be TextFields instead.
 
@@ -394,7 +394,7 @@ class Bookmark(models.Model):
 class BookmarkFolder(models.Model):
     user = models.ForeignKey(User, db_index=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=256, null=True)
-    dateTime = models.DateTimeField(auto_now=True)
+    dateTime = models.DateTimeField(auto_now_add=True)
 
     comments = GenericRelation('TextBlob')
 
@@ -410,7 +410,7 @@ class BookmarkFolder(models.Model):
 class BookmarkFolderLink(models.Model):
     bookmark = models.ForeignKey(Bookmark, db_index=True, on_delete=models.CASCADE)
     folder = models.ForeignKey(BookmarkFolder, db_index=True, on_delete=models.CASCADE)
-    dateTime = models.DateTimeField(auto_now=True)
+    dateTime = models.DateTimeField(auto_now_add=True)
 
 class BookmarkableItem:
     """
@@ -490,7 +490,7 @@ class Observatory(models.Model):
 
 class UploadSession(models.Model):
     uploadingUser = models.ForeignKey(User, db_index=True, on_delete=models.CASCADE, related_name='uploadSessions')
-    dateTime = models.DateTimeField(auto_now=True)
+    dateTime = models.DateTimeField(auto_now_add=True)
 
     comments = GenericRelation('TextBlob')
 
@@ -507,12 +507,12 @@ class UploadedFileRecord(models.Model):
     originalFileName = models.CharField(db_index=True, max_length=256)
     onDiskFileName = models.CharField(db_index=True, max_length=256)
     fileSha256 = models.CharField(db_index=True, max_length=64)
-    uploadDateTime = models.DateTimeField(auto_now=True)
+    uploadDateTime = models.DateTimeField(auto_now_add=True)
     uploadSize = models.IntegerField()
 
 class DownloadSession(models.Model):
     user = models.ForeignKey(User, db_index=True, on_delete=models.CASCADE, related_name='downloadSessions')
-    dateTime = models.DateTimeField(auto_now=True)
+    dateTime = models.DateTimeField(auto_now_add=True)
     stillActive = models.BooleanField(default=True)
     outputText = models.TextField(null=True)
     postData = models.TextField(null=True)
@@ -545,7 +545,7 @@ class Image(models.Model, SkyObject, BookmarkableItem):
     dimZ = models.IntegerField(null=True)
     bitDepth = models.IntegerField(null=True)
     frameType = models.CharField(max_length=32)
-    dateTime = models.DateTimeField(db_index=True, null=True)
+    dateTime = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
 
     answers = GenericRelation('Answer')
     comments = GenericRelation('TextBlob')
@@ -769,7 +769,7 @@ class ImageProperty(models.Model):
     header = models.ForeignKey(ImageHeaderField, db_index=True, on_delete=models.CASCADE, null=True, related_name='properties')  #TODO: Make this many to many?
     key = models.TextField(db_index=True)
     value = models.TextField()
-    createDateTime = models.DateTimeField(auto_now=True)
+    createDateTime = models.DateTimeField(auto_now_add=True)
 
     comments = GenericRelation('TextBlob')
 
@@ -877,7 +877,7 @@ class PlateSolution(models.Model):
     airmass = models.FloatField(null=True)
     geometry = models.PolygonField(srid=40000, db_index=True, geography=False, dim=2, null=True)
     area = models.FloatField(null=True)
-    createdDateTime = models.DateTimeField(auto_now=True, db_index=True, null=True)
+    createdDateTime = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
 
     comments = GenericRelation('TextBlob')
 
@@ -904,7 +904,7 @@ class ProcessPriority(models.Model):
     name = models.CharField(db_index=True, max_length=64)
     priorityClass = models.CharField(db_index=True, max_length=64)
     priority = models.FloatField(null=True)
-    setDateTime = models.DateTimeField(auto_now=True, null=True)
+    setDateTime = models.DateTimeField(auto_now_add=True, null=True)
 
     @staticmethod
     def getPriorityForProcess(processName, processClass='batch'):
@@ -935,7 +935,7 @@ class ProcessInput(models.Model):
     prerequisites = models.ManyToManyField('self', db_index=True, symmetrical=False)
     process = models.CharField(max_length=32)
     requestor = models.ForeignKey(User, db_index=True, null=True, on_delete=models.CASCADE)
-    submittedDateTime = models.DateTimeField(auto_now=True)
+    submittedDateTime = models.DateTimeField(auto_now_add=True)
     startedDateTime = models.DateTimeField(null=True)
     priority = models.FloatField(null=True)
     estCostCPU = models.FloatField(null=True)
@@ -963,7 +963,7 @@ class ProcessInput(models.Model):
 
 class ProcessOutput(models.Model):
     processInput = models.ForeignKey(ProcessInput, db_index=True, on_delete=models.CASCADE, related_name='processOutput')
-    finishedDateTime = models.DateTimeField(auto_now=True, null=True)
+    finishedDateTime = models.DateTimeField(auto_now_add=True, null=True)
     actualCostCPU = models.FloatField(null=True)
     actualCostBandwidth = models.FloatField(null=True)
     actualCostStorage = models.FloatField(null=True)
@@ -1151,7 +1151,7 @@ class Catalog(models.Model):
     vizierUrl = models.TextField(null=True)
     url = models.TextField(null=True)
     cosmicNotes = models.TextField(null=True)
-    importDateTime = models.DateTimeField(auto_now=True, null=True)
+    importDateTime = models.DateTimeField(auto_now_add=True, null=True)
     importPeriod = models.FloatField(null=True)
 
     comments = GenericRelation('TextBlob')
@@ -2083,7 +2083,7 @@ class AnswerPreconditionCondition(models.Model):
 
 class TextBlob(models.Model):
     user = models.ForeignKey(User, null=True, db_index=True, on_delete=models.CASCADE)
-    dateTime = models.DateTimeField(auto_now=True)
+    dateTime = models.DateTimeField(auto_now_add=True)
     markdownText = models.TextField()
     score = models.IntegerField(default=0)
 
@@ -2107,24 +2107,24 @@ class CommentModeration(models.Model):
     user = models.ForeignKey(User, null=True, db_index=True, on_delete=models.CASCADE)
     modValue = models.TextField(db_index=True)
     comment = models.ForeignKey('TextBlob', on_delete=models.CASCADE, related_name='moderations')
-    dateTime = models.DateTimeField(auto_now=True)
+    dateTime = models.DateTimeField(auto_now_add=True)
 
 class CommentFlag(models.Model):
     user = models.ForeignKey(User, null=True, db_index=True, on_delete=models.CASCADE)
     flagValue = models.TextField(db_index=True)
     comment = models.ForeignKey('TextBlob', on_delete=models.CASCADE, related_name='flags')
-    dateTime = models.DateTimeField(auto_now=True)
+    dateTime = models.DateTimeField(auto_now_add=True)
 
 class CommentNeedsResponse(models.Model):
     user = models.ForeignKey(User, null=True, db_index=True, on_delete=models.CASCADE)
     responseValue = models.TextField(db_index=True)
     comment = models.ForeignKey('TextBlob', on_delete=models.CASCADE, related_name='needsResponses')
-    dateTime = models.DateTimeField(auto_now=True)
+    dateTime = models.DateTimeField(auto_now_add=True)
 
 class SavedQuery(models.Model):
     name = models.TextField(null=True, db_index=True, unique=True)
     user = models.ForeignKey(User, null=True, db_index=True, on_delete=models.CASCADE)
-    dateTime = models.DateTimeField(auto_now=True)
+    dateTime = models.DateTimeField(auto_now_add=True)
     text = models.ForeignKey(TextBlob, on_delete=models.CASCADE)
     header = models.TextField()
     queryParams = models.TextField()
