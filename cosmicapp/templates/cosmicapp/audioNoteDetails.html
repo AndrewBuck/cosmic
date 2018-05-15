@@ -20,5 +20,26 @@ Uploaded By User: <a href="/user/{{audioNote.fileRecord.user}}/">{{audioNote.fil
 
 <h3>Transcriptions</h3>
 
+<div style="margin: 0.5em;">
+<form action="/audioNote/{{audioNote.id}}/" method=POST>
+{% csrf_token %}
+
+New Transcription:
+<br><textarea rows=10 cols=50 name=transcriptionText>{{transcriptionText}}</textarea>
+<br><input type=submit value="Create new transcription">
+</form>
+</div>
+
+{% for transcription in transcriptions %}
+    <div style="border: 2px solid lightgrey; margin: 0.5em;">
+    Created by user: <a href="/user/{{transcription.user}}/">{{transcription.user}}</a>
+    on {{transcription.dateTime}} ({{transcription.dateTime|timesince}} ago)&emsp;&emsp;
+    <a href="/audioNote/{{audioNote.id}}/?transcriptionId={{transcription.pk}}">Edit</a>
+    <br>
+    <br>
+    {{transcription.transcription|safe}}
+    </div>
+{% endfor %}
+
 {% endblock mainbody %}
 

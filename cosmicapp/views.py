@@ -455,7 +455,39 @@ def audioNote(request):
 def audioNoteDetails(request, noteId):
     context = {"user" : request.user}
 
-    context['audioNote'] = AudioNote.objects.filter(pk=int(noteId)).first()
+    audioNote = AudioNote.objects.filter(pk=int(noteId)).first()
+    context['audioNote'] = audioNote
+
+    transcriptions = AudioNoteTranscriptionLink.objects.filter(audioNote=audioNote).order_by('-dateTime')
+    context['transcriptions'] = transcriptions
+
+    transcriptionId = int(request.GET.get('transcriptionId', -1))
+    if transcriptionId != -1:
+        transcription = AudioNoteTranscriptionLink.objects.filter(pk=transcriptionId).first()
+        if transcription is not None:
+            context['transcriptionText'] = transcription.transcription.markdownText
+
+    if request.method == 'POST' and request.user.is_authenticated:
+        transcriptionText = request.POST.get('transcriptionText', None)
+        if transcriptionText is None or transcriptionText == '':
+            return HttpResponse('Error: No transcription text given', status=400)
+
+        transcription = TextBlob(
+            user = request.user,
+            markdownText = transcriptionText
+            )
+
+        transcription.save()
+
+        link = AudioNoteTranscriptionLink(
+            user = request.user,
+            audioNote = audioNote,
+            transcription = transcription
+            )
+
+        link.save()
+
+        return render(request, "cosmicapp/audioNoteDetails.html", context)
 
     return render(request, "cosmicapp/audioNoteDetails.html", context)
 

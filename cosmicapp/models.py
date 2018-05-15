@@ -861,9 +861,14 @@ class AudioNote(models.Model):
     instrument = models.ForeignKey(InstrumentConfiguration, on_delete=models.PROTECT, null=True)
     dateTime = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
     length = models.FloatField(null=True)
-    #TODO: Add a through link to this to allow other users to mark transcriptions correct, etc?
-    transcriptions = models.ManyToManyField('TextBlob', symmetrical=False, related_name='audioNotes')
+    transcriptions = models.ManyToManyField('TextBlob', symmetrical=False, related_name='audioNotes', through='AudioNoteTranscriptionLink')
     #TODO: Add flags for inaudible audio notes, etc.
+
+class AudioNoteTranscriptionLink(models.Model):
+    dateTime = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
+    user = models.ForeignKey(User, db_index=True, on_delete=models.CASCADE)
+    audioNote = models.ForeignKey('AudioNote', db_index=True, on_delete=models.CASCADE)
+    transcription = models.ForeignKey('TextBlob', db_index=True, on_delete=models.CASCADE)
 
 class PlateSolution(models.Model):
     """
