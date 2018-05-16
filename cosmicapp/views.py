@@ -7,6 +7,9 @@ import time
 from datetime import datetime, timedelta
 import dateparser
 
+#TODO: The pysoundfile library does not support opus yet, uncomment these when it does.
+#import soundfile
+
 from django.middleware import csrf
 from django.http import HttpResponse
 from django.shortcuts import render
@@ -424,6 +427,11 @@ def audioNote(request):
         djangoFile = File(io.BytesIO(request.body))
         filename = fs.save(originalFilename, djangoFile)
 
+        #TODO: The pysoundfile library does not support opus yet, uncomment these when it does.
+        #soundFileData, soundFileSampleRate = soundfile.read(fs.path(filename))
+        #soundLength = len(soundFileData)/soundFileSampleRate
+        soundLength = None
+
         hashObject = hashlib.sha256()
         for chunk in djangoFile.chunks():
             hashObject.update(chunk)
@@ -443,7 +451,7 @@ def audioNote(request):
             fileRecord = fileRecord,
             observatory = None, #TODO: Set this via an input field on the page.
             instrument = None, #TODO: Set this via an input field on the page.
-            length = None #TODO: Set this.
+            length = soundLength
             )
 
         audioNote.save()
