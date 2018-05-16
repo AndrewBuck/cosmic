@@ -23,7 +23,32 @@
 {% endblock extrahead %}
 
 {% block mainbody %}
-<h2>Options</h2>
+<h2>Audio Note Recorder</h2>
+
+{% filter markdownParse %}
+<font color=red>
+Privacy Notice: Any audio notes that you record and upload on this page are intended to be
+a public record and **will be shared** with all users of this website.  Please do not
+record and upload anything you don't want stored, transcribed, and saved along with your
+observing notes.
+</font>
+
+This page allows you to record audio notes right from your web browser, on a computer or a
+phone, or wherever.  Click the *initialize* button below to set up the recorder with the desired
+volume settings and then click *start* to start recording.  You can *pause* and *resume* as many
+times as you like to make a long recording in multiple pieces or click stop to do each
+piece separately.
+
+After you have recorded some audio notes, you can listen to them right on
+this page before they are uploaded and any notes which you want to discard can then be gotten
+rid of by clicking the *delete this* button.  If you click the *download* button for a clip
+you will download a copy to your computer (but the audio is not saved to the cosmic server
+yet).  When you press *upload* the file will be saved to the cosmic server with a
+timestamp and will be available to be transcribed into text.
+
+{% endfilter %}
+
+<h3>Options</h3>
 
 <div>
 <label>Monitor Gain (0 to 1):</label>
@@ -39,16 +64,16 @@ The volume level of the recording.
 
 <button id="init">Setup recorder with options</button>
 
-<h2>Recorder Commands</h2>
+<h3>Recorder Commands</h3>
 <button id="start" disabled>start</button>
 <button id="pause" disabled>pause</button>
 <button id="resume" disabled>resume</button>
 <button id="stopButton" disabled>stop</button>
 
-<h2>Recordings</h2>
+<h3>Recordings</h3>
 <ul id="recordingslist"></ul>
 
-<h2>Log</h2>
+<h3>Log</h3>
 <pre id="log"></pre>
 
 <script>
@@ -153,6 +178,9 @@ else
 
         recorder.ondataavailable = function( typedArray )
         {
+            //TODO: Need to store the time the audio file is created and pass that to the
+            //server so that the recorded time is for the actual note time, not just when
+            //they uploaded it.
             var dataBlob = new Blob( [typedArray], { type: 'audio/ogg' } );
             var fileName = new Date().toISOString() + ".opus";
             var url = URL.createObjectURL( dataBlob );
