@@ -6,6 +6,55 @@
 {% block extratitle %} - Audio Note {{audioNote.id}} {% endblock extratitle %}
 
 {% block extrahead %}
+{% include "./jquery.html" %}
+<script>
+var segmentStart = 0;
+var segmentEnd = null;
+
+function playSegment(extend=false)
+{
+    var audioControl = document.getElementById('audioControl');
+    var segmentLengthObj = document.getElementById('segmentLength');
+    if(extend == true)
+    {
+        segmentEnd = segmentStart + 2*Number(segmentLengthObj.value)
+        audioControl.currentTime = segmentStart;
+        audioControl.play();
+        segmentStart += Number(segmentLengthObj.value)
+    }
+    else
+    {
+        segmentEnd = segmentStart + Number(segmentLengthObj.value)
+        audioControl.currentTime = segmentStart;
+        audioControl.play();
+    }
+};
+
+function segmentTranscribed()
+{
+    var segmentLengthObj = document.getElementById('segmentLength');
+    playSegment(true);
+};
+
+function playWholeFile()
+{
+    var audioControl = document.getElementById('audioControl');
+    segmentEnd = null;
+    audioControl.currentTime = 0;
+    audioControl.play();
+}
+
+$(document).ready(function()
+{
+    var audioControl = document.getElementById('audioControl');
+    audioControl.ontimeupdate = function()
+    {
+        if(segmentEnd != null)
+            if(audioControl.currentTime >= segmentEnd)
+                audioControl.pause();
+    }
+});
+</script>
 {% endblock extrahead %}
 
 {% block mainbody %}
@@ -15,31 +64,36 @@ Uploaded By User: <a href="/user/{{audioNote.fileRecord.user}}/">{{audioNote.fil
 <br>On: {{audioNote.fileRecord.uploadDateTime}} ({{audioNote.fileRecord.uploadDateTime|timesince}} ago)
 <br>Length: {{audioNote.length}}
 <br>
-<br><audio controls style="width: 90%;" src="/audioNote/{{audioNote.id}}/audio/"></audio>
+<br><audio controls id=audioControl style="width: 90%;" src="/audioNote/{{audioNote.id}}/audio/"></audio>
 </p>
 
 <h3>Transcriptions</h3>
-
-<div style="margin: 0.5em;">
-<form action="/audioNote/{{audioNote.id}}/" method=POST>
-{% csrf_token %}
-
-New Transcription:
-<br><textarea rows=10 cols=50 name=transcriptionText>{{transcriptionText}}</textarea>
-<br><input type=submit value="Create new transcription">
-</form>
-</div>
 
 {% for transcription in transcriptions %}
     <div style="border: 2px solid lightgrey; margin: 0.5em;">
     Created by user: <a href="/user/{{transcription.user}}/">{{transcription.user}}</a>
     on {{transcription.dateTime}} ({{transcription.dateTime|timesince}} ago)&emsp;&emsp;
-    <a href="/audioNote/{{audioNote.id}}/?transcriptionId={{transcription.pk}}">Edit</a>
+    <a href="/audioNote/{{audioNote.id}}/?transcriptionId={{transcription.pk}}#newTranscription">Edit</a>
     <br>
     <br>
     {{transcription.transcription|safe}}
     </div>
 {% endfor %}
+
+<div style="margin: 0.5em;">
+<form action="/audioNote/{{audioNote.id}}/" method=POST>
+{% csrf_token %}
+
+<h3 id=newTranscription>New Transcription</h3>
+
+<input type=button value="Play Segment" onclick="playSegment()">
+<input type=text id=segmentLength value=2>
+<input type=button value="Segment Transcribed" onclick="segmentTranscribed()">
+<input type=button value="Play Whole File" onclick="playWholeFile()">
+<br><textarea rows=10 cols=65 name=transcriptionText>{{transcriptionText}}</textarea>
+<br><input type=submit value="Create new transcription">
+</form>
+</div>
 
 {% endblock mainbody %}
 
