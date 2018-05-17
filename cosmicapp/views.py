@@ -842,6 +842,7 @@ def allImageProperties(request):
 
     keyContainsList = request.GET.get('keyContains', '').split('|')
     valueContainsList = request.GET.get('valueContains', '').split('|')
+    uniqueKeys = request.GET.get('uniqueKeys', '')
 
     keyQ = Q()
     for keyContains in keyContainsList:
@@ -859,10 +860,17 @@ def allImageProperties(request):
 
     propertiesQuery = ImageProperty.objects.filter(queryQ)
 
-    properties = propertiesQuery\
-        .values('key', 'value')\
-        .annotate(count=Count('id'))\
-        .order_by('-count', 'key', 'value')[:100]
+    if uniqueKeys != '':
+        context['uniqueKeys'] = True
+        properties = propertiesQuery.distinct('key')\
+            .values('key', 'value')\
+            .order_by('key', 'value')[:100]
+    else:
+        context['uniqueKeys'] = False
+        properties = propertiesQuery\
+            .values('key', 'value')\
+            .annotate(count=Count('id'))\
+            .order_by('-count', 'key', 'value')[:100]
 
     context['properties'] = properties
 
@@ -870,12 +878,20 @@ def allImageProperties(request):
     for curProperty in propertiesQuery:
         linkedImageHeaders.append(curProperty.header_id)
 
-    headers = ImageHeaderField.objects.all()\
-        .filter(queryQ | Q(pk__in=linkedImageHeaders))\
-        .exclude(key__in=settings.NON_PROPERTY_KEYS)\
-        .values('key', 'value')\
-        .annotate(countOccurrences=Count('id'), countLinks=Count('properties__id'))\
-        .order_by('countLinks', '-countOccurrences')[:100]
+    if uniqueKeys != '':
+        headers = ImageHeaderField.objects.all()\
+            .filter(queryQ | Q(pk__in=linkedImageHeaders))\
+            .exclude(key__in=settings.NON_PROPERTY_KEYS)\
+            .values('key', 'value')\
+            .distinct('key')\
+            .order_by('key', 'value')[:100]
+    else:
+        headers = ImageHeaderField.objects.all()\
+            .filter(queryQ | Q(pk__in=linkedImageHeaders))\
+            .exclude(key__in=settings.NON_PROPERTY_KEYS)\
+            .values('key', 'value')\
+            .annotate(countOccurrences=Count('id'), countLinks=Count('properties__id'))\
+            .order_by('countLinks', '-countOccurrences')[:100]
 
     context['headers'] = headers
 

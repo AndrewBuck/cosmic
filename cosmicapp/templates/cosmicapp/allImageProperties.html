@@ -32,6 +32,7 @@ Key contains: <input type=text name=keyContains value="{{request.GET.keyContains
 And Value contains: <input type=text name=valueContains value="{{request.GET.valueContains}}">
 &emsp;&emsp;
 <input type=submit value="Search (case sensitive)">
+<br>Unique keys: <input type=checkbox name=uniqueKeys {% if uniqueKeys %}checked{% endif %}>
 </p>
 </form>
 
