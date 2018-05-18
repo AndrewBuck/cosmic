@@ -400,7 +400,7 @@ class BookmarkFolder(models.Model):
 
     def getItemsInFolder(user, folderName):
         items = []
-        links = BookmarkFolderLink.objects.filter(folder__user=user, folder__name=folderName)
+        links = BookmarkFolderLink.objects.filter(folder__user=user, folder__name=folderName).prefetch_related('bookmark')
         for link in links:
             item = link.bookmark.content_object
             items.append(item)
@@ -717,7 +717,7 @@ class ImageThumbnail(models.Model):
     A record containing details about an individual thumbnail for an image on the site.  Each uploaded image gets multiple
     size thumbnails made of it, each with its own ImageThumbnail record.
     """
-    image = models.ForeignKey(Image, db_index=True, on_delete=models.CASCADE)
+    image = models.ForeignKey(Image, db_index=True, on_delete=models.CASCADE, related_name='thumbnails')
     size = models.CharField(max_length=10)
     width = models.IntegerField()
     height = models.IntegerField()
