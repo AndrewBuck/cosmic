@@ -259,7 +259,7 @@ td.numMatchResults
     <font size=-1>
     <br> This image.
     <br>
-    {{image.getBestPlateSolution.resolutionX|floatformat:2}} x {{image.getBestPlateSolution.resolutionY|floatformat:2}}
+    {{bestPlateSolution.resolutionX|floatformat:2}} x {{bestPlateSolution.resolutionY|floatformat:2}}
     <br>arcsec/pixel
     </font>
     </div>
@@ -271,8 +271,8 @@ td.numMatchResults
     <font size=-1>
     <br>Image {{ps.plate.image.pk}}</a>
     <br>
-    {% filter floatformat:0 %}{% percentage image.getBestPlateSolution.resolutionX ps.plate.resolutionX %}{% endfilter %}% x
-    {% filter floatformat:0 %}{% percentage image.getBestPlateSolution.resolutionY ps.plate.resolutionY %}{% endfilter %}%
+    {% filter floatformat:0 %}{% percentage bestPlateSolution.resolutionX ps.plate.resolutionX %}{% endfilter %}% x
+    {% filter floatformat:0 %}{% percentage bestPlateSolution.resolutionY ps.plate.resolutionY %}{% endfilter %}%
     <br> Overlap:
     {% filter floatformat:0 %}{% percentage ps.overlapArea imagePlateArea %}{% endfilter %}%
     </font>

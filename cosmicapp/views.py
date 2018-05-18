@@ -761,10 +761,12 @@ def image(request, id):
 
     overlappingPlates = []
     plateSolution = image.getBestPlateSolution()
+    context['bestPlateSolution'] = plateSolution
     imagePlateArea = None
     if plateSolution != None:
         imagePlateArea = plateSolution.geometry.area
         overlappingPlatesObjects = PlateSolution.objects.filter(geometry__overlaps=plateSolution.geometry)\
+            .prefetch_related('image')\
             .distinct('image').exclude(image_id=image.pk)
 
         for plate in overlappingPlatesObjects:
