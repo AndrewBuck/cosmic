@@ -524,9 +524,9 @@ def userpage(request, username):
     if foruser.profile.defaultObservatory != None:
         context['otherObservatories'] = context['otherObservatories'].exclude(pk=foruser.profile.defaultObservatory.pk)
 
-    context['uploadSessions'] = UploadSession.objects.filter(uploadingUser=foruser).order_by('-dateTime')[:10]
-    context['downloadSessions'] = DownloadSession.objects.filter(user=foruser).order_by('-dateTime')[:10]
-    context['audioNotes'] = AudioNote.objects.filter(fileRecord__user=foruser).order_by('-dateTime')[:10]
+    context['uploadSessions'] = UploadSession.objects.filter(uploadingUser=foruser).prefetch_related('uploadedFileRecords').order_by('-dateTime')[:10]
+    context['downloadSessions'] = DownloadSession.objects.filter(user=foruser).prefetch_related('fileRecords').order_by('-dateTime')[:10]
+    context['audioNotes'] = AudioNote.objects.filter(fileRecord__user=foruser).prefetch_related('transcriptions').order_by('-dateTime')[:10]
 
     if request.method == 'POST':
         if 'edit' in request.POST:
