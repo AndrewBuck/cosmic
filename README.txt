@@ -2,7 +2,7 @@ Install Django:
 
 sudo apt-get install python3-dev
 
-sudo pip3 install Django django-extensions bokeh sqlparse dateparser lxml pytz markdown
+sudo pip3 install Django django-extensions django-debug-toolbar bokeh sqlparse dateparser lxml pytz markdown
 imageio ccdproc cffi pysoundfile
 
 ============== IMPORTANT ==============

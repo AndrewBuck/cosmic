@@ -26,6 +26,7 @@ SECRET_KEY = 'THIS_IS_NOT_SECRET____IN_GIT_REPO____MUST_CHANGE_FOR_PRODUCTION_SI
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
+INTERNAL_IPS = '127.0.0.1'
 
 
 # Application definition
@@ -40,12 +41,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
+    'debug_toolbar',
 
     'django_extensions',
 
     'django.contrib.gis',
 
     'django_celery_results',
+
 ]
 
 MIDDLEWARE = [
@@ -56,6 +59,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = 'cosmic.urls'
