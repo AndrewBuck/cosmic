@@ -1335,7 +1335,7 @@ class UCAC4Record(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     geometry = models.PointField(db_index=True, srid=40000, geography=False, dim=2, null=True)
     pmra = models.FloatField(null=True)     # proper motion in ra (mas/yr)      #TODO: Units
     pmdec = models.FloatField(null=True)    # proper motion in dec (mas/yr)     #TODO: Units
-    magFit = models.FloatField(null=True)   # magnitude by fitting a psf 
+    magFit = models.FloatField(db_index=True, null=True)   # magnitude by fitting a psf
     magAperture = models.FloatField(null=True) # magnitude by aperture photometry
     magError = models.FloatField(null=True)
     id2mass = models.CharField(max_length=10, null=True) # 2MASS identifier if present in 2MASS
