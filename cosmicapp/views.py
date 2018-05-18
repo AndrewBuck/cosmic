@@ -1389,6 +1389,9 @@ def query(request):
 def ccdSimulator(request):
     plateSolution = None
 
+    dimX = 256
+    dimY = 256
+
     try:
         dimX = int(request.GET.get('dimX', ''))
         dimY = int(request.GET.get('dimY', ''))
