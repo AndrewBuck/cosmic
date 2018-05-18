@@ -146,7 +146,7 @@
 
     {% for audioNote in audioNotes %}
         <a href="/audioNote/{{audioNote.id}}">{{audioNote.dateTime}} ({{audioNote.length}}
-        seconds)</a><br>
+        seconds) ({{audioNote.transcriptions.all.count}} transcriptions)</a><br>
     {% endfor %}
 {% else %}
     {% if user == foruser %}
