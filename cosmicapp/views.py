@@ -608,8 +608,14 @@ def observatory(request, id):
 def processQueue(request):
     context = {"user" : request.user}
 
-    processInputsUncompleted = ProcessInput.objects.filter(completed=None).order_by('-priority', 'submittedDateTime')[:50]
-    processInputsCompleted = ProcessInput.objects.filter(~Q(completed=None)).order_by('-startedDateTime')[:50]
+    processInputsUncompleted = ProcessInput.objects.filter(completed=None)\
+        .prefetch_related('processOutput', 'requestor')\
+        .order_by('-priority', 'submittedDateTime')[:50]
+
+    processInputsCompleted = ProcessInput.objects.filter(~Q(completed=None))\
+        .prefetch_related('processOutput', 'requestor')\
+        .order_by('-startedDateTime')[:50]
+
     context['processInputsUncompleted'] = processInputsUncompleted
     context['processInputsCompleted'] = processInputsCompleted
 
