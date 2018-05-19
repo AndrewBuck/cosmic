@@ -1339,6 +1339,7 @@ class UCAC4Record(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     magAperture = models.FloatField(null=True) # magnitude by aperture photometry
     magError = models.FloatField(null=True)
     id2mass = models.CharField(max_length=10, null=True) # 2MASS identifier if present in 2MASS
+    #TODO: Should include at least B an V mags for stars that have them so we have some indication of color.
 
     bookmarks = GenericRelation('Bookmark')
     comments = GenericRelation('TextBlob')
