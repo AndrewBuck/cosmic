@@ -4,6 +4,7 @@ import astropy
 
 from django.contrib.gis.geos import GEOSGeometry, Point
 from photutils.datasets import make_gaussian_sources_image
+from photutils.datasets import make_noise_image
 
 from cosmicapp import models
 from .tasks import *
