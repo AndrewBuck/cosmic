@@ -1580,7 +1580,10 @@ def mapTile(request, body, zoom, tileX, tileY):
         imageData = imageio.imwrite(imageio.RETURN_BYTES, data, format='png', optimize=True, bits=8)
 
     if not os.path.exists(folder):
-        os.makedirs(folder)
+        try:
+            os.makedirs(folder)
+        except FileExistsError:
+            pass
 
     imageFile = open(folder + imageFileFilename, 'wb')
     imageFile.write(imageData)
