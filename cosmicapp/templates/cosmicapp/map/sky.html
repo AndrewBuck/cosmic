@@ -25,9 +25,14 @@
     crossorigin=""></script>
 
 <script>
+var mlat = '{{markerLat}}';
+var mlon = '{{markerLon}}';
 $( document ).ready(function()
 {
-    var mymap = L.map('mapid').setView([41.269444444444, 0.71230555555556], 7);
+    var mymap = L.map('mapid').setView([{{startingLat}}, {{startingLon}}], {{startingZoom}});
+
+    if(mlat != '' && mlon != '')
+        var marker = L.marker([{{markerLat}}, {{markerLon}}]).addTo(mymap);
 
     L.tileLayer('/map/{id}/tiles/{z}/{x}/{y}.png',
     {
@@ -35,6 +40,21 @@ $( document ).ready(function()
         maxZoom: 18,
         id: 'sky',
     }).addTo(mymap);
+
+    mymap.on('moveend', function(ev)
+    {
+        var html = '';
+        var center = mymap.getCenter();
+        html += '<a href="/map/sky/?zoom=' + mymap.getZoom() + '&lat=' + center.lat + '&lon=' + center.lng;
+
+        if(mlat != '' && mlon != '')
+            html += '&mlat=' + mlat + '&mlon=' + mlon;
+
+        html += '">Permalink</a>';
+        $('#permalinkDiv').html(html);
+    });
+
+    mymap.fire('moveend');
 });
 </script>
 
@@ -42,6 +62,8 @@ $( document ).ready(function()
 
 {% block mainbody %}
 <h2>Sky map</h2>
+
+<div id="permalinkDiv"></div>
 
 <div id="mapid" style="height: 600px; width: 80%; margin: auto;"></div>
 

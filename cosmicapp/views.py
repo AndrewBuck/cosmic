@@ -1455,6 +1455,27 @@ def ccdSimulator(request):
 def getMap(request, body):
     context = {"user" : request.user}
 
+    context['startingLat'] = 36.46131    #NOTE: Coordinates are for Messier 13.
+    context['startingLon'] = 250.4234
+    context['startingZoom'] = 8
+    context['markerLat'] = ''
+    context['markerLon'] = ''
+
+    if 'lat' in request.GET:
+        context['startingLat'] = float(request.GET.get('lat', ""))
+
+    if 'lon' in request.GET:
+        context['startingLon'] = float(request.GET.get('lon', ""))
+
+    if 'zoom' in request.GET:
+        context['startingZoom'] = int(request.GET.get('zoom', ""))
+
+    if 'mlat' in request.GET:
+        context['markerLat'] = float(request.GET.get('mlat', ""))
+
+    if 'mlon' in request.GET:
+        context['markerLon'] = float(request.GET.get('mlon', ""))
+
     return render(request, "cosmicapp/map/sky.html", context)
 
 def mapTile(request, body, zoom, tileX, tileY):
@@ -1573,7 +1594,6 @@ def mapTile(request, body, zoom, tileX, tileY):
 
     data = make_gaussian_sources_image( (256, 256), table)
     data = numpy.digitize(data, range(255)).astype(numpy.uint8)
-    print(data.dtype)
     if ucac4Results.count() == 0 and twoMassXSCResults.count() == 0:
         return HttpResponseRedirect('/static/cosmicapp/black256x256.png')
     else:
