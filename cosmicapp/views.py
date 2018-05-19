@@ -1508,6 +1508,7 @@ def mapTile(request, body, zoom, tileX, tileY):
 
     left = 256 * tileX
     top = 256 * tileY
+    limitingMag = max(6.5, zoom + 3.5)
     limitingMag = zoom+2
     ucac4Results = UCAC4Record.objects.filter(geometry__dwithin=(queryGeometry, bufferDistance), magFit__lt=limitingMag)[:1000]
     print('num ucac4: ', ucac4Results.count())
@@ -1532,9 +1533,9 @@ def mapTile(request, body, zoom, tileX, tileY):
         # images taken by a camera and processed by our site look.  It has no actual
         # scientific basis so these frames are only useable as guide images for humans, not
         # for scientific analysis.
-        amplitudeVals.append(max(0.2, (17-math.pow(mag, 1.1)))*200)
-        xStdDevVals.append(max(1.0, (math.pow(limitingMag-mag, 1.3)))*0.2)
-        yStdDevVals.append(max(1.0, (math.pow(limitingMag-mag, 1.3)))*0.2)
+        amplitudeVals.append(max(0.0, 256 * math.pow( (limitingMag - mag)/(limitingMag - 4), 0.666)))
+        xStdDevVals.append(max(1.0, 0.333 * math.pow(limitingMag-mag, 1.333)))
+        yStdDevVals.append(max(1.0, 0.333 * math.pow(limitingMag-mag, 1.333)))
         thetaVals.append(0)
 
     arcsecPerPixel = 360 * 3600 / (256 * 2**zoom)
@@ -1556,6 +1557,7 @@ def mapTile(request, body, zoom, tileX, tileY):
 
         xVals.append(x)
         yVals.append(y)
+        amplitudeVals.append(max(0.5, (limitingMag/2 - math.pow(mag, 0.95))*100))
         amplitudeVals.append(max(0.5, (limitingMag/2-math.pow(mag, 0.95)))*100)
         semiMajorArcsec = result.isophotalKSemiMajor
         semiMinorArcsec = result.isophotalKSemiMajor*result.isophotalKMinorMajor
@@ -1572,6 +1574,7 @@ def mapTile(request, body, zoom, tileX, tileY):
     table['theta'] = thetaVals
 
     data = make_gaussian_sources_image( (256, 256), table)
+    data += 3
     data = numpy.digitize(data, range(255)).astype(numpy.uint8)
     print(data.dtype)
     if ucac4Results.count() == 0 and twoMassXSCResults.count() == 0:
