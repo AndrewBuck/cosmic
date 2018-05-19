@@ -1533,14 +1533,17 @@ def mapTile(request, body, zoom, tileX, tileY):
 
     left = 256 * tileX
     top = 256 * tileY
-    limitingMag = max(6.5, zoom + 3.5)
+    limitingMag = max(6.5, zoom + 3.75)
     ucac4Results = UCAC4Record.objects.filter(geometry__dwithin=(queryGeometry, bufferDistance), magFit__lt=limitingMag)[:1000]
     print('num ucac4: ', ucac4Results.count())
+    interiorStars = 0
     for result in ucac4Results :
         lon = result.ra * (math.pi/180)
         lat = result.dec * (math.pi/180)
         x = ((256/(2*math.pi)) * 2**zoom * lon) - left
         y = ((256/(2*math.pi)) * 2**zoom * (math.pi - math.log(math.tan( (math.pi/4.0) + (lat/2.0))))) - top
+        if x>0 and y>0 and x<255 and y<255 :
+            interiorStars += 1
 
         if result.magFit is not None:
             mag = result.magFit
@@ -1558,9 +1561,13 @@ def mapTile(request, body, zoom, tileX, tileY):
         # scientific basis so these frames are only useable as guide images for humans, not
         # for scientific analysis.
         amplitudeVals.append(max(0.0, 256 * math.pow( (limitingMag - mag)/(limitingMag - 4), 0.666)))
-        xStdDevVals.append(max(1.0, 0.333 * math.pow(limitingMag-mag, 1.333)))
-        yStdDevVals.append(max(1.0, 0.333 * math.pow(limitingMag-mag, 1.333)))
+        xStdDevVals.append(max(0.707, 0.707 * math.log(1.0 + limitingMag - mag, 2.512)))
+        yStdDevVals.append(max(0.707, 0.707 * math.log(1.0 + limitingMag - mag, 2.512)))
         thetaVals.append(0)
+
+    if ucac4Results.count() > 0 :
+        print('ucac4 in image: ', interiorStars)
+        print('fraction ucac4 in image: ', interiorStars / ucac4Results.count())
 
     arcsecPerPixel = 360 * 3600 / (256 * 2**zoom)
     twoMassXSCResults = TwoMassXSCRecord.objects.filter(geometry__dwithin=(queryGeometry, bufferDistance), isophotalKSemiMajor__gt=3*arcsecPerPixel, isophotalKMag__lt=limitingMag)
@@ -1582,7 +1589,6 @@ def mapTile(request, body, zoom, tileX, tileY):
         xVals.append(x)
         yVals.append(y)
         amplitudeVals.append(max(0.5, (limitingMag/2 - math.pow(mag, 0.95))*100))
-        amplitudeVals.append(max(0.5, (limitingMag/2-math.pow(mag, 0.95)))*100)
         semiMajorArcsec = result.isophotalKSemiMajor
         semiMinorArcsec = result.isophotalKSemiMajor*result.isophotalKMinorMajor
         xStdDevVals.append(semiMinorArcsec/arcsecPerPixel)
