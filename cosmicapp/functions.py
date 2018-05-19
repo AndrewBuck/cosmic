@@ -1,6 +1,9 @@
-from django.contrib.gis.geos import GEOSGeometry, Point
 import sqlparse
 import ephem
+import astropy
+
+from django.contrib.gis.geos import GEOSGeometry, Point
+from photutils.datasets import make_gaussian_sources_image
 
 from cosmicapp import models
 from .tasks import *
@@ -682,4 +685,74 @@ def computeAsteroidEphemerides(ephemTimeStart, ephemTimeEnd, clearFirst):
             sys.stdout.flush()
 
     return True
+
+def getSimulatedCCDImage(queryGeometry, bufferDistance, w, dimX, dimY):
+    xVals = []
+    yVals = []
+    amplitudeVals = []
+    xStdDevVals = []
+    yStdDevVals = []
+    thetaVals = []
+
+    scale = astropy.wcs.utils.proj_plane_pixel_scales(w)
+    print(scale)
+
+    ucac4Results = models.UCAC4Record.objects.filter(geometry__dwithin=(queryGeometry, bufferDistance))
+    for result in ucac4Results:
+        x, y = w.all_world2pix(result.ra, result.dec, 1)    #TODO: Determine if this 1 should be a 0.
+        if result.magFit is not None:
+            mag = result.magFit
+        else:
+            if result.magAperture is not None:
+                mag = result.magAperture
+            else:
+                #TODO: Figure out a better fallback?
+                mag = 16
+
+        xVals.append(x)
+        yVals.append(y)
+        #TODO: These amplitude and stddev values work reasonably well to reproduce how
+        # images taken by a camera and processed by our site look.  It has no actual
+        # scientific basis so these frames are only useable as guide images for humans, not
+        # for scientific analysis.
+        amplitudeVals.append(max(0.2, (17-math.pow(mag, 2.0)))*200)
+        print(max(0.2, (17-math.pow(mag, 2.0)))*200)
+        xStdDevVals.append(max(1.0, (math.pow(17-mag, 1.3)))*0.1)
+        yStdDevVals.append(max(1.0, (math.pow(17-mag, 1.3)))*0.1)
+        thetaVals.append(0)
+
+    twoMassXSCResults = models.TwoMassXSCRecord.objects.filter(geometry__dwithin=(queryGeometry, bufferDistance))
+    for result in twoMassXSCResults:
+        x, y = w.all_world2pix(result.ra, result.dec, 1)    #TODO: Determine if this 1 should be a 0.
+        raScale, decScale = wcs.utils.proj_plane_pixel_scales(w)
+        raScale *= 3600
+        decScale *= 3600
+
+        if result.isophotalKMag is not None:
+            mag = result.isophotalKMag
+        else:
+            mag = 9
+
+        if result.isophotalKSemiMajor is None or result.isophotalKMinorMajor is None:
+            continue
+
+        xVals.append(x)
+        yVals.append(y)
+        amplitudeVals.append(max(0.1, (12-math.pow(mag, 0.95)))*100)
+        xStdDevVals.append(decScale*result.isophotalKSemiMajor*result.isophotalKMinorMajor/4.0)
+        yStdDevVals.append(raScale*result.isophotalKSemiMajor/4.0)
+        thetaVals.append(-(math.pi/180)*result.isophotalKAngle)
+
+    table = astropy.table.Table()
+    table['amplitude'] = amplitudeVals
+    table['x_mean'] = xVals
+    table['y_mean'] = yVals
+    table['x_stddev'] = xStdDevVals
+    table['y_stddev'] = yStdDevVals
+    table['theta'] = thetaVals
+
+    data = make_gaussian_sources_image( (dimY, dimX), table)
+    imageData = imageio.imwrite(imageio.RETURN_BYTES, numpy.flip(data, axis=0), format='png', optimize=True, bits=8)
+
+    return imageData
 

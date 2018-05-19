@@ -32,7 +32,6 @@ import ephem
 import astropy
 from astropy import wcs
 from astropy.io import fits
-from photutils.datasets import make_gaussian_sources_image
 
 from .models import *
 from .forms import *
@@ -1447,8 +1446,58 @@ def ccdSimulator(request):
         bufferDistance = math.sqrt(dx*dx + dy*dy)
 
     #TODO: Make the geometry an actual polygon to account for projection issues in images around or containing the celestial poles.
-    print(ra, dec, bufferDistance)
     queryGeometry = GEOSGeometry('POINT({} {})'.format(ra, dec))
+
+    imageData = getSimulatedCCDImage(queryGeometry, bufferDistance, w, dimX, dimY)
+
+    return HttpResponse(imageData, content_type="image/png")
+
+def getMap(request, body):
+    context = {"user" : request.user}
+
+    return render(request, "cosmicapp/map/sky.html", context)
+
+def mapTile(request, body, zoom, tileX, tileY):
+    def num2deg(xtile, ytile, zoom):
+        n = 2.0 ** zoom
+        lon_deg = 360.0 * ( xtile / n )
+        lat_rad = math.atan(math.sinh(math.pi * (1.0 - 2.0 * ytile / n)))
+        lat_deg = math.degrees(lat_rad)
+        return (lat_deg, lon_deg)
+
+    try:
+        tileX = int(tileX)
+        tileY = int(tileY)
+        zoom = int(zoom)
+    except:
+        return HttpResponse('Parameters missing', status=400)
+
+    folder = '{}tiles/{}/{}/{}/'.format(settings.MEDIA_ROOT, body, zoom, tileX)
+    imageFileFilename = '{}.png'.format(tileY)
+
+    # Check to see if there is already a cached version of the tile on disk, and if so, just return it directly.
+    try:
+        imageFile = open(folder + imageFileFilename, 'rb')
+        print('Returning cached image.')
+        return HttpResponse(imageFile, content_type="image/png")
+    except FileNotFoundError:
+        # If the file does not exist on disk, that is ok, we will generate it and then return the data to the user.
+        pass
+
+    # The file was not found in the cache, generate it from scratch.
+    #lat1, lon1 = num2deg(tileX, tileY, zoom)
+    #lat2, lon2 = num2deg(tileX+1, tileY, zoom)
+    #lat3, lon3 = num2deg(tileX+1, tileY+1, zoom)
+    #lat4, lon4 = num2deg(tileX, tileY+1, zoom)
+
+    #queryGeometry = GEOSGeometry('POLYGON(({} {}, {} {}, {} {}, {} {}, {} {}))'\
+        #.format(lon1, lat1, lon2, lat2, lon3, lat3, lon4, lat4, lon1, lat1))
+
+    #bufferDistance = 0.000001
+
+    lat, lon = num2deg(tileX+0.5, tileY+0.5, zoom)
+    queryGeometry = GEOSGeometry('POINT({} {})'.format(lon, lat))
+    bufferDistance = 1.414 * 180 / (2**zoom)
 
     xVals = []
     yVals = []
@@ -1457,9 +1506,17 @@ def ccdSimulator(request):
     yStdDevVals = []
     thetaVals = []
 
-    ucac4Results = UCAC4Record.objects.filter(geometry__dwithin=(queryGeometry, bufferDistance))
-    for result in ucac4Results:
-        x, y = w.all_world2pix(result.ra, result.dec, 1)    #TODO: Determine if this 1 should be a 0.
+    left = 256 * tileX
+    top = 256 * tileY
+    limitingMag = zoom+2
+    ucac4Results = UCAC4Record.objects.filter(geometry__dwithin=(queryGeometry, bufferDistance), magFit__lt=limitingMag)[:1000]
+    print('num ucac4: ', ucac4Results.count())
+    for result in ucac4Results :
+        lon = result.ra * (math.pi/180)
+        lat = result.dec * (math.pi/180)
+        x = ((256/(2*math.pi)) * 2**zoom * lon) - left
+        y = ((256/(2*math.pi)) * 2**zoom * (math.pi - math.log(math.tan( (math.pi/4.0) + (lat/2.0))))) - top
+
         if result.magFit is not None:
             mag = result.magFit
         else:
@@ -1475,17 +1532,19 @@ def ccdSimulator(request):
         # images taken by a camera and processed by our site look.  It has no actual
         # scientific basis so these frames are only useable as guide images for humans, not
         # for scientific analysis.
-        amplitudeVals.append(max(0.2, (17-math.pow(mag, 2.0)))*200)
-        xStdDevVals.append(max(1.0, (math.pow(17-mag, 1.3)))*0.4)
-        yStdDevVals.append(max(1.0, (math.pow(17-mag, 1.3)))*0.4)
+        amplitudeVals.append(max(0.2, (17-math.pow(mag, 1.1)))*200)
+        xStdDevVals.append(max(1.0, (math.pow(limitingMag-mag, 1.3)))*0.2)
+        yStdDevVals.append(max(1.0, (math.pow(limitingMag-mag, 1.3)))*0.2)
         thetaVals.append(0)
 
-    twoMassXSCResults = TwoMassXSCRecord.objects.filter(geometry__dwithin=(queryGeometry, bufferDistance))
+    arcsecPerPixel = 360 * 3600 / (256 * 2**zoom)
+    twoMassXSCResults = TwoMassXSCRecord.objects.filter(geometry__dwithin=(queryGeometry, bufferDistance), isophotalKSemiMajor__gt=3*arcsecPerPixel, isophotalKMag__lt=limitingMag)
+    print('num twomass: ', twoMassXSCResults.count())
     for result in twoMassXSCResults:
-        x, y = w.all_world2pix(result.ra, result.dec, 1)    #TODO: Determine if this 1 should be a 0.
-        raScale, decScale = wcs.utils.proj_plane_pixel_scales(w)
-        raScale *= 3600
-        decScale *= 3600
+        lon = result.ra * (math.pi/180)
+        lat = result.dec * (math.pi/180)
+        x = ((256/(2*math.pi)) * 2**zoom * lon) - left
+        y = ((256/(2*math.pi)) * 2**zoom * (math.pi - math.log(math.tan( (math.pi/4.0) + (lat/2.0))))) - top
 
         if result.isophotalKMag is not None:
             mag = result.isophotalKMag
@@ -1497,9 +1556,11 @@ def ccdSimulator(request):
 
         xVals.append(x)
         yVals.append(y)
-        amplitudeVals.append(max(0.1, (12-math.pow(mag, 0.95)))*100)
-        xStdDevVals.append(decScale*result.isophotalKSemiMajor*result.isophotalKMinorMajor/4.0)
-        yStdDevVals.append(raScale*result.isophotalKSemiMajor/4.0)
+        amplitudeVals.append(max(0.5, (limitingMag/2-math.pow(mag, 0.95)))*100)
+        semiMajorArcsec = result.isophotalKSemiMajor
+        semiMinorArcsec = result.isophotalKSemiMajor*result.isophotalKMinorMajor
+        xStdDevVals.append(semiMinorArcsec/arcsecPerPixel)
+        yStdDevVals.append(semiMajorArcsec/arcsecPerPixel)
         thetaVals.append(-(math.pi/180)*result.isophotalKAngle)
 
     table = astropy.table.Table()
@@ -1510,10 +1571,23 @@ def ccdSimulator(request):
     table['y_stddev'] = yStdDevVals
     table['theta'] = thetaVals
 
-    data = make_gaussian_sources_image( (dimY, dimX), table)
-    image_data = imageio.imwrite(imageio.RETURN_BYTES, numpy.flip(data, axis=0), format='png', optimize=True, bits=8)
+    data = make_gaussian_sources_image( (256, 256), table)
+    data = numpy.digitize(data, range(255)).astype(numpy.uint8)
+    print(data.dtype)
+    if ucac4Results.count() == 0 and twoMassXSCResults.count() == 0:
+        return HttpResponseRedirect('/static/cosmicapp/black256x256.png')
+    else:
+        imageData = imageio.imwrite(imageio.RETURN_BYTES, data, format='png', optimize=True, bits=8)
 
-    return HttpResponse(image_data, content_type="image/png")
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+
+    imageFile = open(folder + imageFileFilename, 'wb')
+    imageFile.write(imageData)
+    imageFile.close()
+
+    print('Returning generated image.')
+    return HttpResponse(imageData, content_type="image/png")
 
 def questions(request):
     context = {"user" : request.user}

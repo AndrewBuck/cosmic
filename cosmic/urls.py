@@ -51,6 +51,9 @@ urlpatterns = [
     url(r'^query/$', views.query),
     url(r'^ccdSimulator/$', views.ccdSimulator),
 
+    url(r'^map/(?P<body>.+)/tiles/(?P<zoom>[0-9]+)/(?P<tileX>[0-9]+)/(?P<tileY>[0-9]+).png$', views.mapTile),
+    url(r'^map/(?P<body>.+)/$', views.getMap),
+
     url(r'^image/(?P<id>[-0-9]+)/question/$', views.questionImage),
     url(r'^image/(?P<id>[0-9]+)/getquestion/$', views.getQuestionImage),
     url(r'^image/gallery/$', views.imageGallery),
