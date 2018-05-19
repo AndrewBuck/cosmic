@@ -124,7 +124,9 @@ def formulateObservingPlan(user, observatory, targets, includeOtherTargets, star
     # Beginning of session calibration.
     #TODO: Weather report.
     #TODO: We should add one set of dark exposures for each duration of image we are likely to take (including for flat images).
-    d, calFinishTime = addCalibrationTarget('Flat', 10, 5, startTime)
+    d, calFinishTime = addCalibrationTarget('Allsky', 1, 1, startTime) #Cell phone camera of sky conditions right around sunset.
+    observingPlan.append(d)
+    d, calFinishTime = addCalibrationTarget('Flat', 10, 5, calFinishTime + minTimeBetweenTimedelta)
     observingPlan.append(d)
     d, calFinishTime = addCalibrationTarget('Bias', 25, 0.001, calFinishTime + minTimeBetweenTimedelta)
     observingPlan.append(d)
