@@ -1578,7 +1578,10 @@ def mapTile(request, body, zoom, tileX, tileY):
         print('fraction ucac4 in image: ', interiorStars / ucac4Results.count())
 
     arcsecPerPixel = 360 * 3600 / (256 * 2**zoom)
-    twoMassXSCResults = TwoMassXSCRecord.objects.filter(geometry__dwithin=(queryGeometry, bufferDistance), isophotalKSemiMajor__gt=3*arcsecPerPixel, isophotalKMag__lt=limitingMag)
+    twoMassXSCResults = TwoMassXSCRecord.objects.filter(
+        geometry__dwithin=(queryGeometry, bufferDistance+0.5),
+        isophotalKSemiMajor__gt=1.414*arcsecPerPixel,
+        isophotalKMag__lt=limitingMag)
     print('num twomass: ', twoMassXSCResults.count())
     for result in twoMassXSCResults:
         lon = result.ra * (math.pi/180)
@@ -1596,7 +1599,8 @@ def mapTile(request, body, zoom, tileX, tileY):
 
         xVals.append(x)
         yVals.append(y)
-        amplitudeVals.append(max(0.5, (limitingMag/2 - math.pow(mag, 0.95))*100))
+        print('magnitude of extended sky object: ', mag)
+        amplitudeVals.append(max(0.5, 256 * math.pow((limitingMag - mag)/(2 * limitingMag), 0.95)))
         semiMajorArcsec = result.isophotalKSemiMajor
         semiMinorArcsec = result.isophotalKSemiMajor*result.isophotalKMinorMajor
         xStdDevVals.append(semiMinorArcsec/arcsecPerPixel)
