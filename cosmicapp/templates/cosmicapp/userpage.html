@@ -145,8 +145,8 @@
     <br><br>
 
     {% for audioNote in audioNotes %}
-        <a href="/audioNote/{{audioNote.id}}">{{audioNote.dateTime}} ({{audioNote.length}}
-        seconds) ({{audioNote.transcriptions.all.count}} transcriptions)</a><br>
+        <a href="/audioNote/{{audioNote.id}}">{{audioNote.dateTime}} ({{audioNote.length}} s)
+        ({{audioNote.transcriptions.all.count}} transcriptions)</a><br>
     {% endfor %}
 {% else %}
     {% if user == foruser %}
