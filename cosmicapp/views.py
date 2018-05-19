@@ -1065,6 +1065,7 @@ def query(request):
                 footprintArray.append([dec, ra])
 
             d['footprint'] = footprintArray
+            del d['wcsHeader']
 
             #TODO: Consider leaving this _state key in since it contains useful related tables sometimes.
             del d['_state']
