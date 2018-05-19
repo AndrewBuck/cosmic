@@ -1560,8 +1560,10 @@ def mapTile(request, body, zoom, tileX, tileY):
         yStdDevVals.append(max(0.707, 0.707 * math.log(1.0 + limitingMag - mag, 2.512)))
         thetaVals.append(0)
 
-    print('ucac4 in image: ', interiorStars)
-    print('fraction ucac4 in image: ', interiorStars / ucac4Results.count())
+    if ucac4Results.count() > 0 :
+        print('ucac4 in image: ', interiorStars)
+        print('fraction ucac4 in image: ', interiorStars / ucac4Results.count())
+
     arcsecPerPixel = 360 * 3600 / (256 * 2**zoom)
     twoMassXSCResults = TwoMassXSCRecord.objects.filter(geometry__dwithin=(queryGeometry, bufferDistance), isophotalKSemiMajor__gt=3*arcsecPerPixel, isophotalKMag__lt=limitingMag)
     print('num twomass: ', twoMassXSCResults.count())
