@@ -1498,6 +1498,11 @@ def mapTile(request, body, zoom, tileX, tileY):
 
     # Check to see if there is already a cached version of the tile on disk, and if so, just return it directly.
     try:
+        if os.path.islink(folder + imageFileFilename):
+            if os.readlink(folder + imageFileFilename).endswith('black256x256.png'):
+                print('Redirecting from symlink to "black256x256.png".')
+                return HttpResponseRedirect('/static/cosmicapp/black256x256.png')
+
         imageFile = open(folder + imageFileFilename, 'rb')
         print('Returning cached image.')
         return HttpResponse(imageFile, content_type="image/png")
@@ -1594,16 +1599,18 @@ def mapTile(request, body, zoom, tileX, tileY):
 
     data = make_gaussian_sources_image( (256, 256), table)
     data = numpy.digitize(data, range(255)).astype(numpy.uint8)
-    if ucac4Results.count() == 0 and twoMassXSCResults.count() == 0:
-        return HttpResponseRedirect('/static/cosmicapp/black256x256.png')
-    else:
-        imageData = imageio.imwrite(imageio.RETURN_BYTES, data, format='png', optimize=True, bits=8)
 
     if not os.path.exists(folder):
         try:
             os.makedirs(folder)
         except FileExistsError:
             pass
+
+    if ucac4Results.count() == 0 and twoMassXSCResults.count() == 0:
+        os.symlink(staticDirectory + 'black256x256.png', folder + imageFileFilename)
+        return HttpResponseRedirect('/static/cosmicapp/black256x256.png')
+    else:
+        imageData = imageio.imwrite(imageio.RETURN_BYTES, data, format='png', optimize=True, bits=8)
 
     imageFile = open(folder + imageFileFilename, 'wb')
     imageFile.write(imageData)
