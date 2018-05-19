@@ -122,11 +122,16 @@ td.numMatchResults
             {% endif %}
             </font>
             <br>
-            <br> <font size=-1>This image has {{plateSolutions.count}} plate solutions.</font>
+            <font size=-1>
+            <br> This image has {{plateSolutions.count}} plate solutions.
+            {% if plateSolutions %}
+            <br> <a href="/map/sky/?plateSolution={{plateSolutionsIdString}}">View all plate solutions on map</a>
+            {% endif %}
+            </font>
 
             {% for ps in plateSolutions %}
             <font size=-1>
-            <br>&emsp;<b>{{ps.source}}:</b>
+            <br>&emsp;<b>{{ps.source}}:</b> <a href="/map/sky/?plateSolution={{ps.pk}}">View on map</a>
             <br>&emsp;&emsp;{% formatRADec ps.centerRA ps.centerDec %}&emsp;
             <a class=functionLink
             href="/ccdSimulator/?plateSolutionId={{ps.pk}}&dimX={{image.dimX}}&dimY={{image.dimY}}">(Simulate)</a>
@@ -252,7 +257,8 @@ td.numMatchResults
 
 {% if image.plateSolutions.count > 0 %}
     <span style="min-width: 300px; max-width: 60%; float: left">
-    <p>This image overlaps with {{overlappingPlates|length}} other images:</p>
+    <p>This image overlaps with {{overlappingPlates|length}} other images:
+    <br> <a href="/map/sky/?plateSolution={{overlappingPlatesIdString}}">View all plate solutions on map</a></p>
 
     <div style="margin: .3em; float: left; display: inline-block;">
     <img src={{image.getThumbnailUrlSmall|safe}}>

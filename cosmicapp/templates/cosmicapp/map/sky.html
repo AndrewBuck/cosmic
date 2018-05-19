@@ -27,6 +27,9 @@
 <script>
 var mlat = '{{markerLat}}';
 var mlon = '{{markerLon}}';
+var plateSolution = '{{plateSolution}}';
+var plateSolutions = [];
+
 $( document ).ready(function()
 {
     var mymap = L.map('mapid').setView([{{startingLat}}, {{startingLon}}], {{startingZoom}});
@@ -55,6 +58,33 @@ $( document ).ready(function()
     });
 
     mymap.fire('moveend');
+
+    if(plateSolution != '')
+    {
+        $.ajax({
+            url : "/query/?queryfor=plateSolution&id=" + plateSolution,
+            type : "get",
+            async: true,
+            dataType: 'json',
+            success : function(response)
+            {
+                var bounds;
+
+                plateSolutions = response;
+                for(i = 0; i < plateSolutions.length; i++)
+                {
+                    var polygon = L.polygon(plateSolutions[i].footprint, {color: 'red'}).addTo(mymap);
+                    if(i == 0)
+                        bounds = polygon.getBounds();
+                    else
+                        bounds = bounds.extend(polygon.getBounds());
+                }
+
+                if(plateSolutions.length > 0)
+                    mymap.fitBounds(bounds);
+            }
+        });
+    }
 });
 </script>
 

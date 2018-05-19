@@ -757,6 +757,10 @@ def image(request, id):
     context['image'] = image
 
     context['plateSolutions'] = PlateSolution.objects.filter(image=image).order_by('createdDateTime')
+    plateSolutionIds = []
+    for ps in context['plateSolutions']:
+        plateSolutionIds.append(str(ps.pk))
+    context['plateSolutionsIdString'] = '|'.join(plateSolutionIds)
 
     overlappingPlates = []
     plateSolution = image.getBestPlateSolution()
@@ -777,6 +781,11 @@ def image(request, id):
                 })
 
     context['overlappingPlates'] = overlappingPlates
+    overlappingPlatesIds = []
+    for ps in context['overlappingPlates']:
+        overlappingPlatesIds.append(str(ps['plate'].pk))
+    context['overlappingPlatesIdString'] = '|'.join(overlappingPlatesIds)
+
     context['imagePlateArea'] = imagePlateArea
 
     numSextractorSources = SextractorResult.objects.filter(image_id=image.pk).count()
@@ -1035,6 +1044,28 @@ def query(request):
             d['thumbUrlMedium'] = result.getThumbnailUrlMedium()
             d['thumbUrlLarge'] = result.getThumbnailUrlLarge()
             d['thumbUrlFull'] = result.getThumbnailUrlFull()
+            resultList.append(d)
+
+        return resultList
+
+    def dumpJsonAndAddFootprint(results):
+        resultList = []
+        for result in results:
+            d = result.__dict__
+            for key in d:
+                if type(d[key]) == datetime:
+                    d[key] = str(d[key])
+
+            footprintArray = []
+            for coord in result.wcs().calc_footprint(axes=(result.image.dimX, result.image.dimY)):
+                ra = numpy.asscalar(coord[0])
+                dec = numpy.asscalar(coord[1])
+                footprintArray.append([dec, ra])
+
+            d['footprint'] = footprintArray
+
+            #TODO: Consider leaving this _state key in since it contains useful related tables sometimes.
+            del d['_state']
             resultList.append(d)
 
         return resultList
@@ -1391,6 +1422,17 @@ def query(request):
 
             jsonResponse = json.dumps(resultArray)
 
+    elif request.GET['queryfor'] == 'plateSolution':
+        results = PlateSolution.objects
+
+        if 'id' in request.GET:
+            for valueString in request.GET.getlist('id'):
+                values = cleanupQueryValues(valueString, 'int')
+                if len(values) > 0:
+                    results = results.filter(pk__in=values)
+
+        jsonResponse = json.dumps(dumpJsonAndAddFootprint(results), default=lambda o: o.__dict__)
+
     return HttpResponse(jsonResponse)
 
 def ccdSimulator(request):
@@ -1475,6 +1517,9 @@ def getMap(request, body):
 
     if 'mlon' in request.GET:
         context['markerLon'] = float(request.GET.get('mlon', ""))
+
+    if 'plateSolution' in request.GET:
+        context['plateSolution'] = request.GET.get('plateSolution', "")
 
     return render(request, "cosmicapp/map/sky.html", context)
 
