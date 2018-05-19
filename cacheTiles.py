@@ -29,7 +29,7 @@ for x in range(2**zoom):
         timeTaken = (reqEndTime - reqStartTime)/1000
         #TODO: Also store which z, x, y this time is for so that for the slowest X percent of tiles we can also go a couple extra zoom levels down and pre-cache those as well since they are likely to be slower on average.
         timeTakenArray.append(timeTaken)
-        print('{:.2%} Zoom {}:   x: {}   y: {}      Request took {:.2} seconds'.format(tileCounter/2**(2*zoom), zoom, x, y, timeTaken))
+        print('{:.2%} Zoom {}:   x: {}   y: {}      Request took {} seconds'.format(tileCounter/2**(2*zoom), zoom, x, y, round(timeTaken, 2)))
         if delay is not None:
             time.sleep(delay)
 
