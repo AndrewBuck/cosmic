@@ -1481,7 +1481,7 @@ def getMap(request, body):
 def mapTile(request, body, zoom, tileX, tileY):
     def num2deg(xtile, ytile, zoom):
         n = 2.0 ** zoom
-        lon_deg = 360.0 * ( xtile / n )
+        lon_deg = 360.0 * ( xtile - n//2 ) / n
         lat_rad = math.atan(math.sinh(math.pi * (1.0 - 2.0 * ytile / n)))
         lat_deg = math.degrees(lat_rad)
         return (lat_deg, lon_deg)
@@ -1515,14 +1515,20 @@ def mapTile(request, body, zoom, tileX, tileY):
     lat2, lon2 = num2deg(tileX+1, tileY, zoom)
     lat3, lon3 = num2deg(tileX+1, tileY+1, zoom)
     lat4, lon4 = num2deg(tileX, tileY+1, zoom)
+    while lon1>360.0 or lon2>360.0 or lon3>360.0 or lon4>360.0 :
+        lon1 -= 360.0
+        lon2 -= 360.0
+        lon3 -= 360.0
+        lon4 -= 360.0
+    while lon1<0.0 or lon2<0.0 or lon3<0.0 or lon4<0.0 :
+        lon1 += 360.0
+        lon2 += 360.0
+        lon3 += 360.0
+        lon4 += 360.0
 
     bufferDistance = 0.05 * 180 / (2**zoom)
     queryGeometry = GEOSGeometry('POLYGON(({} {}, {} {}, {} {}, {} {}, {} {}))'\
         .format(lon1, lat1, lon2, lat2, lon3, lat3, lon4, lat4, lon1, lat1))
-
-    #bufferDistance = 1.414 * 180 / (2**zoom)
-    #lat, lon = num2deg(tileX+0.5, tileY+0.5, zoom)
-    #queryGeometry = GEOSGeometry('POINT({} {})'.format(lon, lat))
 
     xVals = []
     yVals = []
@@ -1531,10 +1537,10 @@ def mapTile(request, body, zoom, tileX, tileY):
     yStdDevVals = []
     thetaVals = []
 
-    left = 256 * tileX
+    left = 256 * ( (tileX + 2**zoom - 2**(zoom-1))%2**zoom )
     top = 256 * tileY
     limitingMag = max(6.5, zoom + 3.75)
-    ucac4Results = UCAC4Record.objects.filter(geometry__dwithin=(queryGeometry, bufferDistance), magFit__lt=limitingMag)[:1000]
+    ucac4Results = UCAC4Record.objects.filter(geometry__dwithin=(queryGeometry, bufferDistance), magFit__lt=limitingMag)
     print('num ucac4: ', ucac4Results.count())
     interiorStars = 0
     for result in ucac4Results :
@@ -1542,6 +1548,8 @@ def mapTile(request, body, zoom, tileX, tileY):
         lat = result.dec * (math.pi/180)
         x = ((256/(2*math.pi)) * 2**zoom * lon) - left
         y = ((256/(2*math.pi)) * 2**zoom * (math.pi - math.log(math.tan( (math.pi/4.0) + (lat/2.0))))) - top
+        if zoom == 0 and x < 0.0 :
+            x += 256.0
         if x>0 and y>0 and x<255 and y<255 :
             interiorStars += 1
 
