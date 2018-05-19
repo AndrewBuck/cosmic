@@ -1529,7 +1529,6 @@ def mapTile(request, body, zoom, tileX, tileY):
     left = 256 * tileX
     top = 256 * tileY
     limitingMag = max(6.5, zoom + 3.5)
-    limitingMag = zoom+2
     ucac4Results = UCAC4Record.objects.filter(geometry__dwithin=(queryGeometry, bufferDistance), magFit__lt=limitingMag)[:1000]
     print('num ucac4: ', ucac4Results.count())
     for result in ucac4Results :
