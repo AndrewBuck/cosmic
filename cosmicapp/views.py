@@ -1505,7 +1505,7 @@ def mapTile(request, body, zoom, tileX, tileY):
 
         imageFile = open(folder + imageFileFilename, 'rb')
         print('Returning cached image.')
-        return HttpResponse(imageFile, content_type="image/png")
+        return HttpResponse(imageFile, content_type="image/png", status=200)
     except FileNotFoundError:
         # If the file does not exist on disk, that is ok, we will generate it and then return the data to the user.
         pass
@@ -1624,7 +1624,7 @@ def mapTile(request, body, zoom, tileX, tileY):
     imageFile.close()
 
     print('Returning generated image.')
-    return HttpResponse(imageData, content_type="image/png")
+    return HttpResponse(imageData, content_type="image/png", status=201)
 
 def questions(request):
     context = {"user" : request.user}
