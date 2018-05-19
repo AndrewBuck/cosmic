@@ -39,6 +39,10 @@ Upload images of this object</a>
 
 {% block bottomSection %}
 
+{% if obj.ra and obj.dec %}
+    <br><a href="/map/sky/?zoom=8&lat={{obj.dec}}&lon={{obj.ra}}&mlat={{obj.dec}}&mlon={{obj.ra}}">View this object on the sky map</a>
+{% endif %}
+
 {% if obj.getLinks %}
     <h3>External Links</h3>
     <p>
