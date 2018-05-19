@@ -1511,19 +1511,18 @@ def mapTile(request, body, zoom, tileX, tileY):
         pass
 
     # The file was not found in the cache, generate it from scratch.
-    #lat1, lon1 = num2deg(tileX, tileY, zoom)
-    #lat2, lon2 = num2deg(tileX+1, tileY, zoom)
-    #lat3, lon3 = num2deg(tileX+1, tileY+1, zoom)
-    #lat4, lon4 = num2deg(tileX, tileY+1, zoom)
+    lat1, lon1 = num2deg(tileX, tileY, zoom)
+    lat2, lon2 = num2deg(tileX+1, tileY, zoom)
+    lat3, lon3 = num2deg(tileX+1, tileY+1, zoom)
+    lat4, lon4 = num2deg(tileX, tileY+1, zoom)
 
-    #queryGeometry = GEOSGeometry('POLYGON(({} {}, {} {}, {} {}, {} {}, {} {}))'\
-        #.format(lon1, lat1, lon2, lat2, lon3, lat3, lon4, lat4, lon1, lat1))
+    bufferDistance = 0.05 * 180 / (2**zoom)
+    queryGeometry = GEOSGeometry('POLYGON(({} {}, {} {}, {} {}, {} {}, {} {}))'\
+        .format(lon1, lat1, lon2, lat2, lon3, lat3, lon4, lat4, lon1, lat1))
 
-    #bufferDistance = 0.000001
-
-    lat, lon = num2deg(tileX+0.5, tileY+0.5, zoom)
-    queryGeometry = GEOSGeometry('POINT({} {})'.format(lon, lat))
-    bufferDistance = 1.414 * 180 / (2**zoom)
+    #bufferDistance = 1.414 * 180 / (2**zoom)
+    #lat, lon = num2deg(tileX+0.5, tileY+0.5, zoom)
+    #queryGeometry = GEOSGeometry('POINT({} {})'.format(lon, lat))
 
     xVals = []
     yVals = []
@@ -1535,7 +1534,6 @@ def mapTile(request, body, zoom, tileX, tileY):
     left = 256 * tileX
     top = 256 * tileY
     limitingMag = max(6.5, zoom + 3.5)
-    limitingMag = zoom+2
     ucac4Results = UCAC4Record.objects.filter(geometry__dwithin=(queryGeometry, bufferDistance), magFit__lt=limitingMag)[:1000]
     print('num ucac4: ', ucac4Results.count())
     for result in ucac4Results :
