@@ -125,13 +125,13 @@ td.numMatchResults
             <font size=-1>
             <br> This image has {{plateSolutions.count}} plate solutions.
             {% if plateSolutions %}
-            <br> <a href="/map/sky/?plateSolution={{plateSolutionsIdString}}">View all plate solutions on map</a>
+            <br> <a href="/map/sky/?plateSolution={{plateSolutionsIdString}}{% if objectRA and objectDec %}&mlat={{objectDec}}&mlon={{objectRA}}{% endif %}">View all plate solutions on map</a>
             {% endif %}
             </font>
 
             {% for ps in plateSolutions %}
             <font size=-1>
-            <br>&emsp;<b>{{ps.source}}:</b> <a href="/map/sky/?plateSolution={{ps.pk}}">View on map</a>
+            <br>&emsp;<b>{{ps.source}}:</b> <a href="/map/sky/?plateSolution={{ps.pk}}{% if objectRA and objectDec %}&mlat={{objectDec}}&mlon={{objectRA}}{% endif %}">View on map</a>
             <br>&emsp;&emsp;{% formatRADec ps.centerRA ps.centerDec %}&emsp;
             <a class=functionLink
             href="/ccdSimulator/?plateSolutionId={{ps.pk}}&dimX={{image.dimX}}&dimY={{image.dimY}}">(Simulate)</a>
@@ -258,7 +258,7 @@ td.numMatchResults
 {% if image.plateSolutions.count > 0 %}
     <span style="min-width: 300px; max-width: 60%; float: left">
     <p>This image overlaps with {{overlappingPlates|length}} other images:
-    <br> <a href="/map/sky/?plateSolution={{overlappingPlatesIdString}}">View all plate solutions on map</a></p>
+    <br> <a href="/map/sky/?plateSolution={{overlappingPlatesIdString}}{% if objectRA and objectDec %}&mlat={{objectDec}}&mlon={{objectRA}}{% endif %}">View all plate solutions on map</a></p>
 
     <div style="margin: .3em; float: left; display: inline-block;">
     <img src={{image.getThumbnailUrlSmall|safe}}>

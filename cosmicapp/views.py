@@ -755,6 +755,8 @@ def image(request, id):
         return render(request, "cosmicapp/imagenotfound.html", context)
 
     context['image'] = image
+    context['objectRA'] = image.getImageProperty('objectRA')
+    context['objectDec'] = image.getImageProperty('objectDec')
 
     context['plateSolutions'] = PlateSolution.objects.filter(image=image).order_by('createdDateTime')
     plateSolutionIds = []
@@ -1497,8 +1499,8 @@ def ccdSimulator(request):
 def getMap(request, body):
     context = {"user" : request.user}
 
-    context['startingLat'] = 36.46131    #NOTE: Coordinates are for Messier 13.
-    context['startingLon'] = 250.4234
+    context['startingLat'] = ''
+    context['startingLon'] = ''
     context['startingZoom'] = 8
     context['markerLat'] = ''
     context['markerLon'] = ''

@@ -25,6 +25,8 @@
     crossorigin=""></script>
 
 <script>
+var startingLat = '{{startingLat}}';
+var startingLon = '{{startingLon}}';
 var mlat = '{{markerLat}}';
 var mlon = '{{markerLon}}';
 var plateSolution = '{{plateSolution}}';
@@ -32,7 +34,11 @@ var plateSolutions = [];
 
 $( document ).ready(function()
 {
-    var mymap = L.map('mapid').setView([{{startingLat}}, {{startingLon}}], {{startingZoom}});
+    var mymap;
+    if(startingLat != '' && startingLon != '')
+        mymap = L.map('mapid').setView([startingLat, startingLon], {{startingZoom}});
+    else
+        mymap = L.map('mapid').setView([36.46131, 250.4234], {{startingZoom}});
 
     if(mlat != '' && mlon != '')
         var marker = L.marker([{{markerLat}}, {{markerLon}}]).addTo(mymap);
@@ -83,7 +89,10 @@ $( document ).ready(function()
                         bounds = bounds.extend(polygon.getBounds());
                 }
 
-                if(plateSolutions.length > 0)
+                if(startingLat == '' && startingLon == '' && plateSolutions.length > 0)
+                    if(mlat != '' && mlon != '')
+                        bounds = bounds.extend(L.latLng(Number(mlat), Number(mlon)))
+
                     mymap.fitBounds(bounds);
             }
         });
