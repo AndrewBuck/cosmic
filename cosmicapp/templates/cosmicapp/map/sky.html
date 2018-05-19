@@ -50,6 +50,9 @@ $( document ).ready(function()
         var center = mymap.getCenter();
         html += '<a href="/map/sky/?zoom=' + mymap.getZoom() + '&lat=' + center.lat + '&lon=' + center.lng;
 
+        if(plateSolution != '')
+            html += '&plateSolution=' + plateSolution;
+
         if(mlat != '' && mlon != '')
             html += '&mlat=' + mlat + '&mlon=' + mlon;
 
