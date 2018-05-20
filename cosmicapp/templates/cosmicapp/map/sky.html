@@ -45,7 +45,7 @@ $( document ).ready(function()
 
     L.tileLayer('/map/{id}/tiles/{z}/{x}/{y}.png',
     {
-        attribution: 'Cosmic.science',
+        attribution: 'Cosmic.science | <div id="permalinkDiv" style="display: inline-block;"></div>',
         maxZoom: 18,
         id: 'sky',
     }).addTo(mymap);
@@ -103,15 +103,13 @@ $( document ).ready(function()
 
 $(window).on("resize", function ()
 {
-    $("#mapid").height($(window).height()-62); mymap.invalidateSize();
+    $("#mapid").height($(window).height()-43); mymap.invalidateSize();
 });
 </script>
 
 {% endblock extrahead %}
 
 {% block mainbody %}
-<div id="permalinkDiv"></div>
-
 <div id="mapid" style="height: 100px; width: 100%; margin: auto;"></div>
 
 {% endblock mainbody %}
