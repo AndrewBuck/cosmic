@@ -32,6 +32,7 @@ var mlon = '{{markerLon}}';
 var plateSolution = '{{plateSolution}}';
 var plateSolutions = [];
 var mymap;
+var layerControl;
 
 $( document ).ready(function()
 {
@@ -40,15 +41,22 @@ $( document ).ready(function()
     else
         mymap = L.map('mapid').setView([36.46131, 250.4234], {{startingZoom}});
 
-    if(mlat != '' && mlon != '')
-        var marker = L.marker([{{markerLat}}, {{markerLon}}]).addTo(mymap);
+    layerControl = L.control.layers(undefined, undefined).addTo(mymap);
 
-    L.tileLayer('/map/{id}/tiles/{z}/{x}/{y}.png',
+    if(mlat != '' && mlon != '')
+    {
+        var marker = L.marker([{{markerLat}}, {{markerLon}}]).addTo(mymap);
+        layerControl.addOverlay(marker, 'Marker');
+    }
+
+    var tileLayer = L.tileLayer('/map/{id}/tiles/{z}/{x}/{y}.png',
     {
         attribution: 'Cosmic.science | <div id="permalinkDiv" style="display: inline-block;"></div>',
         maxZoom: 18,
         id: 'sky',
     }).addTo(mymap);
+
+    layerControl.addBaseLayer(tileLayer, 'Simulated Sky Map');
 
     mymap.on('moveend', function(ev)
     {
@@ -83,6 +91,9 @@ $( document ).ready(function()
                 for(i = 0; i < plateSolutions.length; i++)
                 {
                     var polygon = L.polygon(plateSolutions[i].footprint, {color: 'red'}).addTo(mymap);
+                    layerControl.addOverlay(polygon, 'Image ' + plateSolutions[i].image_id +
+                        ' ps ' + plateSolutions[i].id + ' - ' + plateSolutions[i].source);
+
                     if(i == 0)
                         bounds = polygon.getBounds();
                     else
