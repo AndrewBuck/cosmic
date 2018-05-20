@@ -31,10 +31,10 @@ var mlat = '{{markerLat}}';
 var mlon = '{{markerLon}}';
 var plateSolution = '{{plateSolution}}';
 var plateSolutions = [];
+var mymap;
 
 $( document ).ready(function()
 {
-    var mymap;
     if(startingLat != '' && startingLon != '')
         mymap = L.map('mapid').setView([startingLat, startingLon], {{startingZoom}});
     else
@@ -97,16 +97,21 @@ $( document ).ready(function()
             }
         });
     }
+
+    $(window).trigger("resize");
+});
+
+$(window).on("resize", function ()
+{
+    $("#mapid").height($(window).height()-62); mymap.invalidateSize();
 });
 </script>
 
 {% endblock extrahead %}
 
 {% block mainbody %}
-<h2>Sky map</h2>
-
 <div id="permalinkDiv"></div>
 
-<div id="mapid" style="height: 600px; width: 80%; margin: auto;"></div>
+<div id="mapid" style="height: 100px; width: 100%; margin: auto;"></div>
 
 {% endblock mainbody %}
