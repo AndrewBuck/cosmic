@@ -11,7 +11,8 @@ from cosmicapp.models import *
 textBlob, created = TextBlob.objects.get_or_create(
     user = None,
     markdownText = 'Below you will see the results of a query for all the images in the '
-                   'database where the locally running *astrometry.net* plate solver was unable to find a '
+                   'database where the [locally running astrometry.net](/about/processes/astrometryNet) '
+                   'plate solver was unable to find a '
                    'plate solution for the image.  Very often, the reason for this is that the star '
                    'detection algorithms we ran on the image were either too sensitive (and found a bunch '
                    'of false positive stars) or they were not sensitive enough (and they missed most of '
