@@ -1674,7 +1674,11 @@ def mapTile(request, body, zoom, tileX, tileY):
             pass
 
     if ucac4Results.count() == 0 and twoMassXSCResults.count() == 0:
-        os.symlink(staticDirectory + 'black256x256.png', folder + imageFileFilename)
+        try:
+            os.symlink(staticDirectory + 'black256x256.png', folder + imageFileFilename)
+        except FileExistsError:
+            pass
+
         return HttpResponseRedirect('/static/cosmicapp/black256x256.png')
     else:
         imageData = imageio.imwrite(imageio.RETURN_BYTES, data, format='png', optimize=True, bits=8)
