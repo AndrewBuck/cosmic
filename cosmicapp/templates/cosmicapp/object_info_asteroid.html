@@ -35,5 +35,10 @@ CEU (rate): {{obj.ceu}}&emsp;({{obj.ceuRate}})<br>
 Next PEU (date): {{obj.nextPEU}} @{{obj.nextPEUDate}}<br>
 Ten Year PEU (date) (if observed at next PEU): {{obj.tenYearPEU}} @{{obj.tenYearPEUDate}} ({{obj.tenYearPEUIfObserved}} @{{obj.tenYearPEUDateIfObserved}})
 
+<br>
+<br>
+<a href="/map/sky/?asteroidId={{obj.pk}}">View this asteroid's sky track on a map</a>
+{% comment %}Add current ephemeris position, mag, etc.{% endcomment %}
+
 {% endblock mainbody %}
 

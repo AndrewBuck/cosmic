@@ -33,6 +33,8 @@ var plateSolution = '{{plateSolution}}';
 var plateSolutions = [];
 var mymap;
 var layerControl;
+var asteroidId = '{{asteroidId}}';
+var asteroidResults = null;
 
 $( document ).ready(function()
 {
@@ -67,6 +69,9 @@ $( document ).ready(function()
         if(plateSolution != '')
             html += '&plateSolution=' + plateSolution;
 
+        if(asteroidId != '')
+            html += '&asteroidId=' + asteroidId;
+
         if(mlat != '' && mlon != '')
             html += '&mlat=' + mlat + '&mlon=' + mlon;
 
@@ -85,14 +90,24 @@ $( document ).ready(function()
             dataType: 'json',
             success : function(response)
             {
+                var i;
                 var bounds;
 
                 plateSolutions = response;
                 for(i = 0; i < plateSolutions.length; i++)
                 {
                     var polygon = L.polygon(plateSolutions[i].footprint, {color: 'red'}).addTo(mymap);
-                    layerControl.addOverlay(polygon, 'Image ' + plateSolutions[i].image_id +
-                        ' ps ' + plateSolutions[i].id + ' - ' + plateSolutions[i].source);
+
+                    var popupHtml = 'Image <a href="/image/' + plateSolutions[i].image_id +
+                        '/">' + plateSolutions[i].image_id + '</a> ps ' + plateSolutions[i].id
+                        + ' - ' + plateSolutions[i].source;
+
+                    polygon.bindPopup(popupHtml);
+
+                    var footprintString = 'Image ' + plateSolutions[i].image_id +
+                        ' ps ' + plateSolutions[i].id + ' - ' + plateSolutions[i].source;
+
+                    layerControl.addOverlay(polygon, footprintString);
 
                     if(i == 0)
                         bounds = polygon.getBounds();
@@ -104,7 +119,68 @@ $( document ).ready(function()
                     if(mlat != '' && mlon != '')
                         bounds = bounds.extend(L.latLng(Number(mlat), Number(mlon)))
 
-                    mymap.fitBounds(bounds);
+                mymap.fitBounds(bounds);
+            }
+        });
+    }
+
+    if(asteroidId != '')
+    {
+        $.ajax({
+            url : "/query/?queryfor=asteroidEphemeris&asteroidId=" + asteroidId,
+            type : "get",
+            async: true,
+            dataType: 'json',
+            success : function(response)
+            {
+                var i, j;
+                var bounds;
+
+                asteroidResults = response;
+                var asteroids = JSON.parse(asteroidResults.asteroids)
+                var ephemerisRecords = JSON.parse(asteroidResults.ephemerisRecords)
+                for(i = 0; i < asteroids.length; i++)
+                {
+                    var asteroid = asteroids[i];
+                    var ephemerideLines = [];
+                    for(j = 0; j < ephemerisRecords.length; j++)
+                    {
+                        var ephemeris = ephemerisRecords[j];
+
+                        if(ephemeris.astorbRecord_id != asteroid.id)
+                            continue
+
+                        ephemerideLines[ephemerideLines.length] = ephemeris.geometryArray;
+                    }
+
+                    var polyline = L.polyline(ephemerideLines, {color: 'blue'}).addTo(mymap);
+                    layerControl.addOverlay(polyline, 'Asteroid ' + asteroid.id + ' ephemeride');
+
+                    var popupHtml = 'Asteroid <a href="/catalog/asteroid/' + asteroid.id + '">' + asteroid.id + '</a>';
+                    if(asteroid.number != null)
+                        popupHtml += ' - ' + asteroid.number;
+
+                    if(asteroid.name != null)
+                        popupHtml += ' - ' + asteroid.name;
+
+                    popupHtml += '<br><br>Times of Maximum Positional Uncertainty:<br>Next Peak: '
+                    popupHtml += asteroid.nextPEUDate + '<br>Highest Peak in Next 10 Years: ' + asteroid.tenYearPEUDate;
+
+                    polyline.bindPopup(popupHtml);
+
+                    if(startingLat == '' && startingLon == '')
+                        if(i == 0)
+                            bounds = polyline.getBounds();
+                        else
+                            bounds = bounds.extend(polyline.getBounds());
+
+                    var currentEphem = asteroidResults.currentEphemerides[asteroid.id];
+                    var marker = L.marker([currentEphem.dec*180/3.14159, currentEphem.ra*180/3.14159]).addTo(mymap);
+                    marker.bindPopup('Current position of:<br><br>' + popupHtml);
+                    layerControl.addOverlay(marker, 'Asteroid ' + asteroid.id + ' current position');
+                }
+
+                mymap.fitBounds(bounds);
             }
         });
     }

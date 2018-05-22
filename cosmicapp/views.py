@@ -1073,6 +1073,42 @@ def query(request):
 
         return resultList
 
+    def dumpJsonAndAddLine(results):
+        resultList = []
+        for result in results:
+            d = result.__dict__
+            #TODO: Consider leaving this _state key in since it contains useful related tables sometimes.
+            del d['_state']
+            for key in d:
+                if type(d[key]) in [datetime, date, time]:
+                    d[key] = str(d[key])
+
+            print(str(result.geometry))
+            geometryString = str(result.geometry).split('(')[1].strip(')')
+            geometryArray = []
+            for point in geometryString.split(','):
+                print('point', point)
+                point = point.strip()
+                spl = point.split(' ')
+                ra = float(spl[0])
+                dec = float(spl[1])
+                geometryArray.append([dec, ra])
+
+            d['geometryArray'] = geometryArray
+            resultList.append(d)
+
+        return resultList
+
+    def dumpJsonForEphemeride(result):
+        d = {}
+        d['sun_distance'] = result.sun_distance
+        d['earth_distance'] = result.earth_distance
+        d['phase'] = result.phase
+        d['mag'] = result.mag
+        d['ra'] = result.ra
+        d['dec'] = result.dec
+        return d
+
     print('\n\nTiming:')
     millis = int(round(time.time() * 1000))
 
@@ -1436,6 +1472,30 @@ def query(request):
 
         jsonResponse = json.dumps(dumpJsonAndAddFootprint(results), default=lambda o: o.__dict__)
 
+    elif request.GET['queryfor'] == 'asteroidEphemeris':
+        results = AstorbEphemeris.objects
+
+        asteroids = AstorbRecord.objects
+        if 'asteroidId' in request.GET:
+            for valueString in request.GET.getlist('asteroidId'):
+                values = cleanupQueryValues(valueString, 'int')
+                if len(values) > 0:
+                    asteroids = asteroids.filter(pk__in=values)
+
+        ephemerisRecords = []
+        ephemDict = {}
+        for asteroid in asteroids:
+            for ephemeris in asteroid.ephemerides.all():
+                ephemerisRecords.append(ephemeris)
+
+            ephemDict[asteroid.id] = dumpJsonForEphemeride(computeSingleEphemeris(asteroid, timezone.now()))
+
+        resultDict = {}
+        resultDict['asteroids'] = json.dumps(dumpJson(asteroids), default=lambda o: o.__dict__)
+        resultDict['ephemerisRecords'] = json.dumps(dumpJsonAndAddLine(ephemerisRecords), default=lambda o: o.__dict__)
+        resultDict['currentEphemerides'] = ephemDict
+        jsonResponse = json.dumps(resultDict, default=lambda o: o.__dict__)
+
     return HttpResponse(jsonResponse)
 
 def ccdSimulator(request):
@@ -1523,6 +1583,9 @@ def getMap(request, body):
 
     if 'plateSolution' in request.GET:
         context['plateSolution'] = request.GET.get('plateSolution', "")
+
+    if 'asteroidId' in request.GET:
+        context['asteroidId'] = request.GET.get('asteroidId', "")
 
     return render(request, "cosmicapp/map/sky.html", context)
 

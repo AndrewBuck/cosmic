@@ -1783,7 +1783,7 @@ class AstorbEphemeris(models.Model):
     (stored as a line geometry over the given time span), the min and max apparent magnitude over the interval is
     stored.
     """
-    astorbRecord = models.ForeignKey(AstorbRecord, on_delete=models.CASCADE)
+    astorbRecord = models.ForeignKey(AstorbRecord, on_delete=models.CASCADE, related_name='ephemerides')
     startTime = models.DateTimeField(db_index=True, null=True)
     endTime = models.DateTimeField(db_index=True, null=True)
     dimMag = models.FloatField(db_index=True, null=True)
