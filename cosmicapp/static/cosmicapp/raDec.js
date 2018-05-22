@@ -51,6 +51,8 @@ function handleRADecClick(domObject)
     if(decDecimal > 0)
         html += '+';
     html += decDecimal.toFixed(3) + '&deg;';
+    //TODO: Should set a zoom data- parameter like we do for raDecimal so it can be more contextually appropriate.
+    html += '<br><a href="/map/sky/?zoom=12&lat=' + decDecimal + '&lon=' + raDecimal + '">View on Sky Map</a>'
     html += '</div>';
     if(wasHidden)
         innerSpan.show().html(html)
