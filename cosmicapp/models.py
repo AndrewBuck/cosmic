@@ -1245,6 +1245,11 @@ class ScorableObject:
         Reflects the difficulty related to observing the ScorableObject from a specific observatory at a given time. For
         example: off-zenith observing, light-gathering limitations, below horizion, etc.
         """
+        #TODO: There should be a general set of score adjustments that happen in the base
+        # class that always get executed by the child classes.  One of these is considering
+        # the pointing accuracy of a telescope system.  The less accurate it is, the more we
+        # should increase the score for objects in more dense fields, like in the plane of
+        # the milky way vs out, etc.
         return 1.0
 
     def observatoryCorrections(self, t, user, observatory):
