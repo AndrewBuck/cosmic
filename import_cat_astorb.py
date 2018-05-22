@@ -93,7 +93,10 @@ with open(sys.argv[1], 'r') as f:
                 meanAnomaly = parseFloat(line[115:125]),
                 argPerihelion = parseFloat(line[126:136]),
                 lonAscendingNode = parseFloat(line[137:147]),
-                inclination = parseFloat(line[148:157]),
+                #NOTE: Column 147 actually includes the space separating the previous
+                # column from this one.  This is necessary for the few asteroids with
+                # inclinations >99 degrees.
+                inclination = parseFloat(line[147:157]),
                 eccentricity = parseFloat(line[158:168]),
                 semiMajorAxis = parseFloat(line[170:181]),
                 ceu = parseFloat(line[191:198]),
