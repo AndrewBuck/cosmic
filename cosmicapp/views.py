@@ -989,7 +989,7 @@ def query(request):
             #TODO: Consider leaving this _state key in since it contains useful related tables sometimes.
             del d['_state']
             for key in d:
-                if type(d[key]) == datetime:
+                if type(d[key]) in [datetime, date, time]:
                     d[key] = str(d[key])
             resultList.append(d)
 
