@@ -10,6 +10,9 @@ function searchForObject()
 {
     var objectName = document.getElementsByName('object')[0].value;
 
+    $('#searchResultsDiv').html('Searching...');
+    $('#searchResultsDiv').show();
+
     $.ajax({
         url : "/query/?queryfor=objectsNamed&limit=100&name=" + objectName,
         type : "get",
@@ -32,6 +35,8 @@ function searchForObject()
             else
             {
                 alert('No Results Found.');
+                $('#searchResultsDiv').html('');
+                $('#searchResultsDiv').hide();
             }
         },
         error : function(response)
