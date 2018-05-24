@@ -1690,7 +1690,7 @@ def mapTile(request, body, zoom, tileX, tileY):
 
     arcsecPerPixel = 360 * 3600 / (256 * 2**zoom)
     twoMassXSCResults = TwoMassXSCRecord.objects.filter(
-        geometry__dwithin=(queryGeometry, bufferDistance+0.5),
+        geometry__dwithin=(queryGeometry, bufferDistance + 0.1),
         isophotalKSemiMajor__gt=1.414*arcsecPerPixel,
         isophotalKMag__lt=limitingMag)
     print('num twomass: ', twoMassXSCResults.count())
@@ -1714,8 +1714,8 @@ def mapTile(request, body, zoom, tileX, tileY):
         amplitudeVals.append(max(0.5, 256 * math.pow((limitingMag - mag)/(2 * limitingMag), 0.95)))
         semiMajorArcsec = result.isophotalKSemiMajor
         semiMinorArcsec = result.isophotalKSemiMajor*result.isophotalKMinorMajor
-        xStdDevVals.append(semiMinorArcsec/arcsecPerPixel)
-        yStdDevVals.append(semiMajorArcsec/arcsecPerPixel)
+        xStdDevVals.append(semiMinorArcsec/(2*arcsecPerPixel))
+        yStdDevVals.append(semiMajorArcsec/(2*arcsecPerPixel))
         thetaVals.append(-(math.pi/180)*result.isophotalKAngle)
 
     table = astropy.table.Table()

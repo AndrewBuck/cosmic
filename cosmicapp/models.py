@@ -1467,7 +1467,7 @@ class TwoMassXSCRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject
     ra = models.FloatField(db_index=True)
     dec = models.FloatField(db_index=True)
     #TODO: Should probably make this geometry field a polygon, or add a second geometry field for the polygon and leave this as a point.  Not sure which would be better.
-    geometry = models.PointField(db_index=True, srid=40000, geography=False, dim=2, null=True)
+    geometry = models.PolygonField(db_index=True, srid=40000, geography=False, dim=2, null=True)
     isophotalKSemiMajor = models.FloatField(db_index=True, null=True)
     isophotalKMinorMajor = models.FloatField(null=True)
     isophotalKAngle = models.FloatField(null=True)

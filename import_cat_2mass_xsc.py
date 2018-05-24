@@ -13,6 +13,7 @@ import os
 import sys
 import django
 from django.db import transaction
+from django.contrib.gis.geos import GEOSGeometry
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "cosmic.settings")
 django.setup()
@@ -62,14 +63,24 @@ for filename in sys.argv[1:]:
                 tempRA = parseFloat(fields[2])
                 tempDec = parseFloat(fields[3])
 
+                isophotalKSemiMajor = parseFloat(fields[9])
+                isophotalKMinorMajor = parseFloat(fields[24])
+                isophotalKAngle = parseFloat(fields[25])
+                geometry = GEOSGeometry('POINT({} {})'.format(tempRA, tempDec))
+                #TODO: Make this elliptical, instead of just a circle.
+                if isophotalKSemiMajor is not None:
+                    geometry = geometry.buffer(isophotalKSemiMajor/3600)
+                else:
+                    geometry = geometry.buffer(1/3600)
+
                 record = TwoMassXSCRecord(
                     identifier = '2MASX J' + fields[1].strip(),
                     ra = tempRA,
                     dec = tempDec,
-                    geometry = 'POINT({} {})'.format(tempRA, tempDec),
-                    isophotalKSemiMajor = parseFloat(fields[9]),
-                    isophotalKMinorMajor = parseFloat(fields[24]),
-                    isophotalKAngle = parseFloat(fields[25]),
+                    geometry = geometry,
+                    isophotalKSemiMajor = isophotalKSemiMajor,
+                    isophotalKMinorMajor = isophotalKMinorMajor,
+                    isophotalKAngle = isophotalKAngle,
                     isophotalKMag = parseFloat(fields[16]),
                     isophotalKMagErr = parseFloat(fields[17])
                     )
