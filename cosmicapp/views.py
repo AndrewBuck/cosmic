@@ -1714,8 +1714,8 @@ def mapTile(request, body, zoom, tileX, tileY):
         amplitudeVals.append(max(0.5, 256 * math.pow((limitingMag - mag)/(2 * limitingMag), 0.95)))
         semiMajorArcsec = result.isophotalKSemiMajor
         semiMinorArcsec = result.isophotalKSemiMajor*result.isophotalKMinorMajor
-        xStdDevVals.append(semiMinorArcsec/(2*arcsecPerPixel))
-        yStdDevVals.append(semiMajorArcsec/(2*arcsecPerPixel))
+        xStdDevVals.append(semiMinorArcsec/(arcsecPerPixel))
+        yStdDevVals.append(semiMajorArcsec/(arcsecPerPixel))
         thetaVals.append((math.pi/180)*result.isophotalKAngle)
 
     table = astropy.table.Table()
