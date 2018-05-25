@@ -697,10 +697,15 @@ def getSimulatedCCDImage(queryGeometry, bufferDistance, w, dimX, dimY):
     yStdDevVals = []
     thetaVals = []
 
-    scale = astropy.wcs.utils.proj_plane_pixel_scales(w)
-    print(scale)
+    raScale, decScale = wcs.utils.proj_plane_pixel_scales(w)
+    raScaleArcSec = raScale*3600
+    decScaleArcSec = decScale*3600
 
-    ucac4Results = models.UCAC4Record.objects.filter(geometry__dwithin=(queryGeometry, bufferDistance))
+    skyArea = raScale*dimX * decScale*dimY
+    limitingMag = 5/skyArea + 8
+    print(limitingMag)
+
+    ucac4Results = models.UCAC4Record.objects.filter(geometry__dwithin=(queryGeometry, bufferDistance), magFit__lt=limitingMag)
     for result in ucac4Results:
         x, y = w.all_world2pix(result.ra, result.dec, 1)    #TODO: Determine if this 1 should be a 0.
         if result.magFit is not None:
@@ -718,19 +723,14 @@ def getSimulatedCCDImage(queryGeometry, bufferDistance, w, dimX, dimY):
         # images taken by a camera and processed by our site look.  It has no actual
         # scientific basis so these frames are only useable as guide images for humans, not
         # for scientific analysis.
-        amplitudeVals.append(max(0.2, (17-math.pow(mag, 2.0)))*200)
-        print(max(0.2, (17-math.pow(mag, 2.0)))*200)
-        xStdDevVals.append(max(1.0, (math.pow(17-mag, 1.3)))*0.1)
-        yStdDevVals.append(max(1.0, (math.pow(17-mag, 1.3)))*0.1)
+        amplitudeVals.append(max(0.0, 256 * math.pow( (limitingMag - mag)/(limitingMag - 4), 0.666)))
+        xStdDevVals.append(max(0.707, 0.707 * math.log(1.0 + limitingMag - mag, 2.512)))
+        yStdDevVals.append(max(0.707, 0.707 * math.log(1.0 + limitingMag - mag, 2.512)))
         thetaVals.append(0)
 
-    twoMassXSCResults = models.TwoMassXSCRecord.objects.filter(geometry__dwithin=(queryGeometry, bufferDistance))
+    twoMassXSCResults = models.TwoMassXSCRecord.objects.filter(geometry__dwithin=(queryGeometry, bufferDistance), isophotalKMag__lt=limitingMag)
     for result in twoMassXSCResults:
         x, y = w.all_world2pix(result.ra, result.dec, 1)    #TODO: Determine if this 1 should be a 0.
-        raScale, decScale = wcs.utils.proj_plane_pixel_scales(w)
-        raScale *= 3600
-        decScale *= 3600
-
         if result.isophotalKMag is not None:
             mag = result.isophotalKMag
         else:
@@ -739,12 +739,13 @@ def getSimulatedCCDImage(queryGeometry, bufferDistance, w, dimX, dimY):
         if result.isophotalKSemiMajor is None or result.isophotalKMinorMajor is None:
             continue
 
+        print(raScaleArcSec, decScaleArcSec)
         xVals.append(x)
         yVals.append(y)
-        amplitudeVals.append(max(0.1, (12-math.pow(mag, 0.95)))*100)
-        xStdDevVals.append(decScale*result.isophotalKSemiMajor*result.isophotalKMinorMajor/4.0)
-        yStdDevVals.append(raScale*result.isophotalKSemiMajor/4.0)
-        thetaVals.append(-(math.pi/180)*result.isophotalKAngle)
+        amplitudeVals.append(max(0.5, 256 * math.pow((limitingMag - mag)/(2 * limitingMag), 0.95)))
+        xStdDevVals.append(result.isophotalKSemiMajor*result.isophotalKMinorMajor/(raScaleArcSec))
+        yStdDevVals.append(result.isophotalKSemiMajor/(decScaleArcSec))
+        thetaVals.append((math.pi/180)*result.isophotalKAngle)
 
     table = astropy.table.Table()
     table['amplitude'] = amplitudeVals
@@ -755,6 +756,7 @@ def getSimulatedCCDImage(queryGeometry, bufferDistance, w, dimX, dimY):
     table['theta'] = thetaVals
 
     data = make_gaussian_sources_image( (dimY, dimX), table)
+    data = numpy.digitize(data, range(255)).astype(numpy.uint8)
     imageData = imageio.imwrite(imageio.RETURN_BYTES, numpy.flip(data, axis=0), format='png', optimize=True, bits=8)
 
     return imageData
