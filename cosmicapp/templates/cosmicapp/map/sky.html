@@ -81,6 +81,17 @@ $( document ).ready(function()
 
     mymap.fire('moveend');
 
+    mymap.on('click', function(ev)
+    {
+        var popupContent = '';
+        popupContent += 'RA: ' + ev.latlng.lng.toFixed(3) + '&deg; Dec: ' + ev.latlng.lat.toFixed(3) + '&deg;<br><br>';
+
+        var popup = L.popup()
+            .setLatLng(ev.latlng)
+            .setContent(popupContent)
+            .openOn(mymap);
+    });
+
     if(plateSolution != '')
     {
         $.ajax({
