@@ -365,8 +365,14 @@ class Bookmark(models.Model):
             'gcvsrecord': 'variableStar',
             'messierrecord': 'messierObject',
             'twomassxscrecord': '2MassXSC',
+            'sextractorresult': 'sextractorResult',
+            'image2xyresult': 'image2xyResult',
+            'daofindresult': 'daofindResult',
+            'starfindresult': 'starfindResult',
+            'sourcefindmatch': 'sourceFindMatch',
             'usersubmittedresult': 'userSubmittedResult',
-            'usersubmittedhotpixel': 'userSubmittedHotPixel'
+            'usersubmittedhotpixel': 'userSubmittedHotPixel',
+            'ucac4record': 'ucac4record'
             }
 
         #TODO: Rework these queries to use _id instead of .pk and do this everywhere.
@@ -383,8 +389,14 @@ class Bookmark(models.Model):
             'gcvsrecord': 'Variable Star',
             'messierrecord': 'Messier Object',
             'twomassxscrecord': 'Deep Sky Object',
+            'sextractorresult': 'Sextractor Result',
+            'image2xyresult': 'Image2XY Result',
+            'daofindresult': 'Daofind Result',
+            'starfindresult': 'Starfind Result',
+            'sourcefindmatch': 'Multiple Source Match Result',
             'usersubmittedresult': 'User Submitted Source',
-            'usersubmittedhotpixel': 'User Submitted Hot Pixel'
+            'usersubmittedhotpixel': 'User Submitted Hot Pixel',
+            'ucac4record': 'UCAC4 Star'
             }
 
         t = ContentType.objects.get(pk=self.content_type.pk)
@@ -1053,7 +1065,7 @@ class SourceFindResult(models.Model, SkyObject):
     class Meta:
         abstract = True
 
-class SextractorResult(SourceFindResult):
+class SextractorResult(SourceFindResult, BookmarkableItem):
     """
     A record storing a single source detected in an image by the Source Extractor program.
     """
@@ -1067,7 +1079,19 @@ class SextractorResult(SourceFindResult):
     boxXMax = models.FloatField(null=True)
     boxYMax = models.FloatField(null=True)
 
-class Image2xyResult(SourceFindResult):
+    bookmarks = GenericRelation('Bookmark')
+
+    def getBookmarkTypeString(self):
+        return 'sextractorResult'
+
+    def getUrl(self):
+        return '/detectedSource/sextractor/' + str(self.pk)
+
+    @property
+    def getDisplayName(self):
+        return "Image " + str(self.image.pk) + ": Sextractor Result " + str(self.pk)
+
+class Image2xyResult(SourceFindResult, BookmarkableItem):
     """
     A record storing a single source detected in an image by the image2xy program.
     """
@@ -1075,7 +1099,19 @@ class Image2xyResult(SourceFindResult):
     flux = models.FloatField(null=True)
     background = models.FloatField(null=True)
 
-class DaofindResult(SourceFindResult):
+    bookmarks = GenericRelation('Bookmark')
+
+    def getBookmarkTypeString(self):
+        return 'image2xyResult'
+
+    def getUrl(self):
+        return '/detectedSource/image2xy/' + str(self.pk)
+
+    @property
+    def getDisplayName(self):
+        return "Image " + str(self.image.pk) + ": Image2XY Result " + str(self.pk)
+
+class DaofindResult(SourceFindResult, BookmarkableItem):
     """
     A record storing a single source detected in an image by the daofind algorithm (part of astropy).
     """
@@ -1087,7 +1123,19 @@ class DaofindResult(SourceFindResult):
     sround = models.FloatField(null=True)
     ground = models.FloatField(null=True)
 
-class StarfindResult(SourceFindResult):
+    bookmarks = GenericRelation('Bookmark')
+
+    def getBookmarkTypeString(self):
+        return 'daofindResult'
+
+    def getUrl(self):
+        return '/detectedSource/daofind/' + str(self.pk)
+
+    @property
+    def getDisplayName(self):
+        return "Image " + str(self.image.pk) + ": Daofind Result " + str(self.pk)
+
+class StarfindResult(SourceFindResult, BookmarkableItem):
     """
     A record storing a single source detected in an image by the starfind algorithm (part of astropy).
     """
@@ -1099,6 +1147,18 @@ class StarfindResult(SourceFindResult):
     roundness = models.FloatField(null=True)
     pa = models.FloatField(null=True)
     sharpness = models.FloatField(null=True)
+
+    bookmarks = GenericRelation('Bookmark')
+
+    def getBookmarkTypeString(self):
+        return 'starfindResult'
+
+    def getUrl(self):
+        return '/detectedSource/starfind/' + str(self.pk)
+
+    @property
+    def getDisplayName(self):
+        return "Image " + str(self.image.pk) + ": Starfind Result " + str(self.pk)
 
 #TODO: We should create another model to tie a bunch of results submitted at the same time to a single session.
 class UserSubmittedResult(SourceFindResult, BookmarkableItem):
@@ -1133,7 +1193,7 @@ class UserSubmittedHotPixel(SourceFindResult, BookmarkableItem):
     def getDisplayName(self):
         return 'Image {}: User Submitted Hot Pixel {}'.format(self.image.pk, self.pk)
 
-class SourceFindMatch(SourceFindResult):
+class SourceFindMatch(SourceFindResult, BookmarkableItem):
     """
     A record storing links to the individual SourceFindResult records for sources which are found at the same location in
     an image by two or more individual source find methods.  The confidence of the match is taken to be the "geometric mean"
@@ -1146,6 +1206,18 @@ class SourceFindMatch(SourceFindResult):
     daofindResult = models.ForeignKey(DaofindResult, null=True, on_delete=models.CASCADE)
     starfindResult = models.ForeignKey(StarfindResult, null=True, on_delete=models.CASCADE)
     userSubmittedResult = models.ForeignKey(UserSubmittedResult, null=True, on_delete=models.CASCADE)
+
+    bookmarks = GenericRelation('Bookmark')
+
+    def getBookmarkTypeString(self):
+        return 'sourceFindMatch'
+
+    def getUrl(self):
+        return '/detectedSource/multi/' + str(self.pk)
+
+    @property
+    def getDisplayName(self):
+        return "Image " + str(self.image.pk) + ": Multiple Source Match Result " + str(self.pk)
 
 #TODO: Create a base class for catalog object entries with some standard params in it to make querying more uniform.
 class Catalog(models.Model):

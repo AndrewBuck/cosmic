@@ -2942,7 +2942,13 @@ def bookmark(request):
         '2MassXSC': TwoMassXSCRecord,
         'ucac4': UCAC4Record,
         'userSubmittedResult': UserSubmittedResult,
-        'userSubmittedHotPixel': UserSubmittedHotPixel
+        'userSubmittedHotPixel': UserSubmittedHotPixel,
+        'sextractorResult': SextractorResult,
+        'image2xyResult': Image2xyResult,
+        'daofindResult': DaofindResult,
+        'starfindResult': StarfindResult,
+        'sourceFindMatch': SourceFindMatch,
+        'ucac4record': UCAC4Record
         }
 
     if targetType != None:
