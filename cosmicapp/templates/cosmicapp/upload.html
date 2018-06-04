@@ -5,49 +5,7 @@
 
 {% block extrahead %}
 {% include "./jquery.html" %}
-<script>
-function searchForObject()
-{
-    var objectName = document.getElementsByName('object')[0].value;
-
-    $('#searchResultsDiv').html('Searching...');
-    $('#searchResultsDiv').show();
-
-    $.ajax({
-        url : "/query/?queryfor=objectsNamed&limit=100&name=" + objectName,
-        type : "get",
-        async: true,
-        dataType: 'json',
-        success : function(response)
-        {
-            if(response.length > 0)
-            {
-                var html = '';
-                for(i = 0; i < response.length; i++)
-                {
-                    html += response[i].type + ': <a href="' + response[i].url + '">' + response[i].identifier + '</a>&emsp;'
-                    html += '<a href="/upload/?object=' + response[i].identifier + '&objectRA=' + response[i].ra + '&objectDec=' + response[i].dec + '">(Select)</a>';
-                    html += '<br>';
-                }
-                $('#searchResultsDiv').html(html);
-                $('#searchResultsDiv').show();
-            }
-            else
-            {
-                alert('No Results Found.');
-                $('#searchResultsDiv').html('');
-                $('#searchResultsDiv').hide();
-            }
-        },
-        error : function(response)
-        {
-            var response = response.responseJSON;
-            alert(response.errorMessage);
-        }
-    });
-};
-
-</script>
+<script src="/static/cosmicapp/search.js"></script>
 {% endblock extrahead %}
 
 {% block mainbody %}
@@ -97,7 +55,7 @@ into a single upload.
 
 <div style="margin: 1em; padding: .5em; width: 525px; border: 2px solid lightgrey;">
 <form method="get" action="/upload/">
-Object Name: <input id=foo type=text name=object value="{{object}}">&emsp;<a class=functionLink onclick="searchForObject()">(Search)</a>
+Object Name: <input id=object type=text name=object value="{{object}}">&emsp;<a class=functionLink onclick="searchForObject()">(Search)</a>
 <br>Object RA: <input id=objectRA type=text name=objectRA value="{{objectRA}}">
 <br>Object Dec: <input id=objectDec type=text name=objectDec value="{{objectDec}}">
 <br>Overlapping image ID Number: <input type=text name=image value="{{image}}">
