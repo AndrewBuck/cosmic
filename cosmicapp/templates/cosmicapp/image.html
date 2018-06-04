@@ -79,9 +79,15 @@ td.numMatchResults
             <br>
             Taken on: <font size=-1>{{image.dateTime|default_if_none:"Unknown date/time"}}</font>
             <br>
-            Uploaded:
-            <font size=-1><a href="/uploadSession/{{image.fileRecord.uploadSession.id}}">
-            {{image.fileRecord.uploadSession.dateTime|default_if_none:"Unknown date/time"}}</a></font>
+            {% if image.fileRecord.uploadSession %}
+                Uploaded:
+                <font size=-1><a href="/uploadSession/{{image.fileRecord.uploadSession.id}}">
+                {{image.fileRecord.uploadDateTime|default_if_none:"Unknown date/time"}}</a></font>
+            {% else %}
+                Created:
+                <font size=-1>
+                {{image.fileRecord.uploadDateTime|default_if_none:"Unknown date/time"}}</font>
+            {% endif %}
             <br>
             <font size=-1>
             <br> Has <a href="/image/{{id}}/properties/">{{image.properties.all.count}} image properties</a>.
