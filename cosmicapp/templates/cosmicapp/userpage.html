@@ -31,12 +31,14 @@
         {% if foruser.profile.defaultObservatory %}
             <p>
             Default Observatory:
+            <span style="display: inline-block;">
             <a href="/observatory/{{foruser.profile.defaultObservatory.pk}}">
-            {{foruser.profile.defaultObservatory.name}}
-            (Lat: {{foruser.profile.defaultObservatory.lat}}
-            Lon: {{foruser.profile.defaultObservatory.lon}}
-            Elevation: {{foruser.profile.defaultObservatory.elevation}} m)
+            {{foruser.profile.defaultObservatory.name}}<br>
+            Lat: {{foruser.profile.defaultObservatory.lat|floatformat:1}}
+            Lon: {{foruser.profile.defaultObservatory.lon|floatformat:1}}<br>
+            Elevation: {{foruser.profile.defaultObservatory.elevation|floatformat:1}} m
             </a>
+            </span>
             {% if user.username == foruser.username %}
                 &emsp;&emsp;
                 <form action="/observatory/{{foruser.profile.defaultObservatory.pk}}/" method="POST">
@@ -48,8 +50,11 @@
             </p>
         {% else %}
             <p>
-            Default Observatory: None set
-            {% if user.username == foruser.username %}, create one below and go to its page to choose it as a default{% endif %}
+            Default Observatory:
+            <span style="display: inline-block;">
+            None set
+            {% if user.username == foruser.username %}, create one below and go to<br>its page to choose it as a default.{% endif %}
+            </span>
             </p>
         {% endif %}
 
@@ -145,7 +150,7 @@
     <br><br>
 
     {% for audioNote in audioNotes %}
-        <a href="/audioNote/{{audioNote.id}}">{{audioNote.dateTime}} ({{audioNote.length}} s)
+        <a href="/audioNote/{{audioNote.id}}">{{audioNote.dateTime}} {% comment %}({{audioNote.length}} s){% endcomment %}
         ({{audioNote.transcriptions.all.count}} transcriptions)</a><br>
     {% endfor %}
 {% else %}
