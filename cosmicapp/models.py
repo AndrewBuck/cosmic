@@ -557,7 +557,7 @@ class Image(models.Model, SkyObject, BookmarkableItem):
     dimZ = models.IntegerField(null=True)
     bitDepth = models.IntegerField(null=True)
     frameType = models.CharField(max_length=32)
-    dateTime = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
+    dateTime = models.DateTimeField(db_index=True, null=True)
 
     answers = GenericRelation('Answer')
     comments = GenericRelation('TextBlob')
