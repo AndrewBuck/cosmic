@@ -10,6 +10,7 @@
 {% include "./jquery.html" %}
 <script src="/static/cosmicapp/opus-recorder/recorder.min.js"></script>
 {% comment %}
+<script src="/static/cosmicapp/search.js"></script>
 {% if user.is_authenticated %}<script src="/static/cosmicapp/bookmark.js"></script>{% endif %}
 <script src="/static/cosmicapp/imageTable.js"></script>
 <script src="/static/cosmicapp/raDec.js"></script>
@@ -76,6 +77,51 @@ The volume level of the recording.
 <h3>Log</h3>
 <pre id="log"></pre>
 
+<h3>Observation details</h3>
+<!--
+<div id=searchResultsDiv style="float:right; margin: 1em; padding: .5em; width: 500px; border: 2px solid lightgrey;" hidden>
+</div>
+-->
+
+Object Name: <input id=foo type=text name=object value="{{object}}">
+<!--
+&emsp;<a class=functionLink onclick="searchForObject()">(Search)</a>
+-->
+<br>Object RA: <input id=objectRA type=text name=objectRA value="{{objectRA}}">
+<br>Object Dec: <input id=objectDec type=text name=objectDec value="{{objectDec}}">
+<br>Observing location:
+<select name=observatoryID>
+    <option value="">Select observatory</option>
+
+    {% if defaultObservatory %}
+        <option value="{{defaultObservatory.pk}}" {% if defaultObservatory.pk == observatoryID %}selected="selected"{% endif %}>{{defaultObservatory.name}}
+        ({{defaultObservatory.lat|floatformat:3}}
+        {{defaultObservatory.lon|floatformat:3}})</option>
+    {% endif %}
+
+    {% for otherObservatory in otherObservatories %}
+        <option value="{{otherObservatory.pk}}" {% if otherObservatory.pk == observatoryID %}selected="selected"{% endif %}>{{otherObservatory.name}}
+        ({{otherObservatory.lat|floatformat:3}}
+        {{otherObservatory.lon|floatformat:3}})</option>
+    {% endfor %}
+</select>
+
+<br>Instrument Used:
+<select name=instrumentID>
+    <option value="">Select instrument</option>
+
+    {% if defaultInstrument %}
+        <option value="{{defaultInstrument.pk}}" {% if defaultInstrument.pk == instrumentID %}selected="selected"{% endif %}>{{defaultInstrument.name}}
+        </option>
+    {% endif %}
+
+    {% for otherInstrument in otherInstruments %}
+        <option value="{{otherInstrument.pk}}" {% if otherInstrument.pk == instrumentID %}selected="selected"{% endif %}>{{otherInstrument.name}}
+        </option>
+    {% endfor %}
+</select>
+
+
 <script>
 function upload(blob, progressBar, clickedElement)
 {
@@ -84,7 +130,11 @@ function upload(blob, progressBar, clickedElement)
     var xhr = new XMLHttpRequest();
     xhr.open('POST', '', true);
     xhr.setRequestHeader("X-CSRFToken", csrftoken);
-    //xhr.setRequestHeader("MyCustomHeader", "Put anything you need in here, like an ID");
+    xhr.setRequestHeader('object', document.getElementsByName('object')[0].value);
+    xhr.setRequestHeader('objectRA', document.getElementsByName('objectRA')[0].value);
+    xhr.setRequestHeader('objectDec', document.getElementsByName('objectDec')[0].value);
+    xhr.setRequestHeader('observatoryID', document.getElementsByName('observatoryID')[0].value);
+    xhr.setRequestHeader('instrumentID', document.getElementsByName('instrumentID')[0].value);
 
     var progressBar = $(clickedElement).parent().children('progress').get(0);
     //document.querySelector('progress');
@@ -150,6 +200,7 @@ else
 
         recorder.onstart = function(e)
         {
+            log.innerHTML = '';
             screenLogger('Recorder is started');
             start.disabled = resume.disabled = true;
             pause.disabled = stopButton.disabled = false;

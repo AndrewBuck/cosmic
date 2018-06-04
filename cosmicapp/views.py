@@ -421,6 +421,32 @@ def audioNote(request):
     context = {"user" : request.user}
 
     if request.method == 'POST':
+        objectName = request.META.get('HTTP_OBJECT', '')
+        objectRA = request.META.get('HTTP_OBJECTRA', '')
+        objectDec = request.META.get('HTTP_OBJECTDEC', '')
+        observatoryID = request.META.get('HTTP_OBSERVATORYID', '')
+        instrumentID = request.META.get('HTTP_INSTRUMENTID', '')
+
+        try:
+            #TODO: Handle DMS and HMS formats as well as decimal degrees.
+            objectRA = float(objectRA)
+            objectDec = float(objectDec)
+        except:
+            objectRA = None
+            objectDec = None
+
+        try:
+            observatoryID = int(observatoryID)
+            observatory = Observatory.objects.filter(pk=observatoryID).first()
+        except:
+            observatory = None
+
+        try:
+            instrumentID = int(instrumentID)
+            instrument = InstrumentConfiguration.objects.filter(pk=instrumentID).first()
+        except:
+            instrument = None
+
         originalFilename = 'audio.opus'
         fs = FileSystemStorage()
         djangoFile = File(io.BytesIO(request.body))
@@ -448,14 +474,47 @@ def audioNote(request):
 
         audioNote = AudioNote(
             fileRecord = fileRecord,
-            observatory = None, #TODO: Set this via an input field on the page.
-            instrument = None, #TODO: Set this via an input field on the page.
+            objectName = objectName,
+            objectRA = objectRA,
+            objectDec = objectDec,
+            observatory = observatory,
+            instrument = instrument,
             length = soundLength
             )
 
         audioNote.save()
 
         return HttpResponse('ok')
+
+    try:
+        observatoryID = int(request.GET.get('observatoryID', -1))
+    except:
+        observatoryID = -1
+
+    try:
+        instrumentID = int(request.GET.get('instrumentID', -1))
+    except:
+        instrumentID = -1
+
+    context['observatoryID'] = observatoryID
+    context['instrumentID'] = instrumentID
+
+    defaultObservatory = request.user.profile.defaultObservatory
+    otherObservatories = Observatory.objects.filter(user=request.user)
+    if defaultObservatory != None:
+        otherObservatories = otherObservatories.exclude(pk=defaultObservatory.pk)
+    otherObservatories = otherObservatories.order_by('-pk')
+
+    defaultInstrument = request.user.profile.defaultInstrument
+    otherInstruments = InstrumentConfiguration.objects.filter(user=request.user)
+    if defaultInstrument != None:
+        otherInstruments = otherInstruments.exclude(pk=defaultInstrument.pk)
+    otherInstruments = otherInstruments.order_by('-pk')
+
+    context['defaultObservatory'] = defaultObservatory
+    context['otherObservatories'] = otherObservatories
+    context['defaultInstrument'] = defaultInstrument
+    context['otherInstruments'] = otherInstruments
 
     return render(request, "cosmicapp/audioNote.html", context)
 

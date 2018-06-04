@@ -874,6 +874,9 @@ class AudioNote(models.Model):
     dateTime = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
     length = models.FloatField(null=True)
     transcriptions = models.ManyToManyField('TextBlob', symmetrical=False, related_name='audioNotes', through='AudioNoteTranscriptionLink')
+    objectName = models.TextField()
+    objectRA = models.FloatField(null=True)
+    objectDec = models.FloatField(null=True)
     #TODO: Add flags for inaudible audio notes, etc.
 
 class AudioNoteTranscriptionLink(models.Model):
