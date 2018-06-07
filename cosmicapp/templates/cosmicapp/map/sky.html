@@ -110,7 +110,7 @@ $( document ).ready(function()
                     var polygon = L.polygon(plateSolutions[i].footprint, {color: 'red'}).addTo(mymap);
 
                     var popupHtml = 'Image <a href="/image/' + plateSolutions[i].image_id +
-                        '/">' + plateSolutions[i].image_id + '</a> ps ' + plateSolutions[i].id
+                        '/">' + plateSolutions[i].image_id + '</a> plate solution ' + plateSolutions[i].id
                         + ' - ' + plateSolutions[i].source;
 
                     polygon.bindPopup(popupHtml);
