@@ -277,6 +277,9 @@ def download(request):
                 objectID = int(keySplit[1])
                 imageHeaders[objectID] = value
 
+        if len(objectsToDownload) == 0:
+            return HttpResponse('Error: No objects chosen for download.', status=400)
+
         outputText += "objectsToDownload<br>"
         outputText += str(objectsToDownload)
         outputText += "<br><br>imageFormats<br>"
