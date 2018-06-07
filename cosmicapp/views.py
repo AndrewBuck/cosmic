@@ -557,6 +557,18 @@ def audioNoteDetails(request, noteId):
 
     return render(request, "cosmicapp/audioNoteDetails.html", context)
 
+def transcribe(request):
+    context = {"user" : request.user}
+
+    notesNeedingTranscription = AudioNote.objects\
+        .annotate(numTranscriptions=Count('transcriptions'))\
+        .filter(numTranscriptions=0)\
+        .order_by('-dateTime')[:50]
+
+    context['notesNeedingTranscription'] = notesNeedingTranscription
+
+    return render(request, "cosmicapp/transcribe.html", context)
+
 def audioNoteAudio(request, noteId):
     context = {"user" : request.user}
 

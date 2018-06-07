@@ -105,6 +105,7 @@ urlpatterns = [
     url(r'^audioNote/$', views.audioNote),
     url(r'^audioNote/(?P<noteId>[0-9]+)/audio/$', views.audioNoteAudio),
     url(r'^audioNote/(?P<noteId>[0-9]+)/$', views.audioNoteDetails),
+    url(r'^transcribe/$', views.transcribe),
 ]
 
 if settings.DEBUG:

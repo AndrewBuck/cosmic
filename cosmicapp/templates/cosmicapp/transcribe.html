@@ -1,0 +1,34 @@
+{% extends "cosmicapp/base.html" %}
+
+{% load static %}
+{% load cosmicapp_extras %}
+
+{% block extratitle %} - Transcribe Audio Notes {% endblock extratitle %}
+
+{% block extrahead %}
+{% endblock extrahead %}
+
+{% block mainbody %}
+<h3>Transcribe audio</h3>
+
+<p>
+This page shows audio notes which have not been transcribed yet.  You can help out by
+transcribing what was said in the note so that it can be easily searched and any
+information contained in it can be put into the database as needed.
+</p>
+
+<p>
+{% for audioNote in notesNeedingTranscription %}
+    &emsp;
+    User <a href="/user/{{audioNote.fileRecord.user}}/">{{audioNote.fileRecord.user}}</a>:
+    &emsp;
+    <a href="/audioNote/{{audioNote.id}}">{{audioNote.dateTime}} {% comment %}({{audioNote.length}} s){% endcomment %}</a>
+    <br>
+{% empty %}
+    <i>All audio notes that have been created have been transcribed, there are currently no
+    more needing transcription.</i>
+{% endfor %}
+</p>
+
+{% endblock mainbody %}
+
