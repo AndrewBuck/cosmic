@@ -74,6 +74,21 @@ with open(sys.argv[1], 'r') as f:
                     decDeg = None
                     geometryString = None
 
+                magMax = parseFloat(line[53:58])
+                if magMax is not None:
+                    if magMax < 0.00001:
+                        magMax = None
+
+                magMin = parseFloat(line[64:69])
+                if magMin is not None:
+                    if magMin < 0.00001:
+                        magMin = None
+
+                period = parseFloat(line[111:127])
+                if period is not None:
+                    if period < 0.0000001:
+                        period = None
+
                 catalogEntry = GCVSRecord(
                     constellationNumber = line[0:2],
                     starNumber = line[2:7],
@@ -85,15 +100,15 @@ with open(sys.argv[1], 'r') as f:
                     pmDec = 1000.0 * parseFloat(line[186:192]) if parseFloat(line[186:192]) != None else None,
                     variableType = line[41:51].strip(),
                     variableType2 = line[214:224].strip(),
-                    magMax = parseFloat(line[53:58]),
+                    magMax = magMax,
                     magMaxFlag = line[52:53],
-                    magMin = parseFloat(line[64:69]),
+                    magMin = magMin,
                     magMinFlag = line[62:63],
                     magMin2 = parseFloat(line[76:81]),
                     magMin2Flag = line[75:76],
                     epochMaxMag = parseFloat(line[91:102]),
                     outburstYear = parseInt(line[104:108]),
-                    period = parseFloat(line[111:127]),
+                    period = period,
                     periodRisingPercentage = parseFloat(line[131:133]),
                     spectralType = line[137:154],
                     )
