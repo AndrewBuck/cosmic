@@ -93,6 +93,12 @@ td.numMatchResults
             <font size=-1>
             <br> Has <a href="/image/{{id}}/properties/">{{image.properties.all.count}} image properties</a>.
             <br> Has <a href="/image/{{id}}/question/">{{image.answers.all.count}} questions answered</a> about it.
+            {% for answer in image.answers.all %}
+                {% for kv in answer.kvs.all %}
+                    <br>&emsp;{{kv.key}} = <a
+                    href="/image/gallery/?queryParams=questionAnswer={{kv.key|doubleEscape:':'|urlencode}}={{kv.value|doubleEscape:':'|urlencode}}">{{kv.value}}</a>
+                {% endfor %}
+            {% endfor %}
             </font>
             <br>
             {% comment %}<br> {% bookmark "image" image.pk "Saved Images" %}: Save image in folder{% endcomment %}
