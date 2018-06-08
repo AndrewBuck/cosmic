@@ -1,11 +1,4 @@
 //TODO: Add a parameter with an array of links to include in the hide/zoom div.
-
-//TODO: Try setting a flag after this code is included once and then don't include the parts that shouldn't be
-//duplicated.  This may fix the multiple gallery bugs without too much trouble refactoring.
-
-//TODO: Need to finish refactoring this code to work for multiple galleries on a page.  This class declaration should
-//be moved to a separate file that is included only once and the gallery instantiation needs to be made into some kind
-//of a function call that takes an additional parameter which is the id of a div to fill in on the page.
 function ImageGallery(galleryName, paramString, displayType, includeLinks, imageOnclickFunction, thumbnailSize)
 {
     this.name = galleryName;

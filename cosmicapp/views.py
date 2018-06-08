@@ -164,8 +164,8 @@ def upload(request):
             filename = fs.save(myfile.name, myfile)
 
             #TODO: Instead of replacing spaces we should rename the file to a hash name or something with no chance of
-            #TODO: This should be done before calling fs.save
             # special characters that would break other processes.
+            #TODO: This should be done before calling fs.save
             filenameNoSpaces = filename.replace(' ', '_')
             os.rename(settings.MEDIA_ROOT + filename, settings.MEDIA_ROOT + filenameNoSpaces)
             filename = filenameNoSpaces

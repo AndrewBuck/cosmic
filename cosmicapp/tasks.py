@@ -537,7 +537,6 @@ def imagestats(filename, processInputId):
                     # Digitize and rebin the the value counts to a histogram
                     outputText += "Generating histograms from value counts ... "
                     msec = int(1000 * time.time())
-                    # TODO: Read from cosmic variable
                     thumbnailBitDepth = 8
                     binNumber = pow(2, thumbnailBitDepth)
                     binsLinear = minValue + (maxValue - minValue) * numpy.linspace(0, 1, binNumber)
