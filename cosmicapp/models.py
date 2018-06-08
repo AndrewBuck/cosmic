@@ -325,7 +325,6 @@ class Bookmark(models.Model):
     folders = models.ManyToManyField('BookmarkFolder', symmetrical=False, related_name='folderItems', through='BookmarkFolderLink')
 
     #Generic FK to image or object or whatever the bookmark is linking to.
-    #TODO: Add a reverse generic relation to the relevant classes this will link to (image, asteroid, star, etc).
     content_type = models.ForeignKey(ContentType, db_index=True, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField(db_index=True)
     content_object = GenericForeignKey('content_type', 'object_id')
@@ -579,7 +578,6 @@ class Image(models.Model, SkyObject, BookmarkableItem):
         except:
             return thumbnailNotFound
 
-        #TODO: Delete this?  Should be covered by the try-except block above, not sure why it is still here.
         if len(records) == 0:
             return thumbnailNotFound
 
@@ -1022,14 +1020,6 @@ class SourceFindResult(models.Model, SkyObject):
     flagEdge = models.NullBooleanField()
 
     comments = GenericRelation('TextBlob')
-
-    def getRaDec(self):
-        plateSolution = self.image.getBestPlateSolution()
-
-        if plateSolution == None:
-            return (None, None)
-
-        return plateSolution.getRaDec(self.pixelX, self.pixelY)
 
     def isMobile(self):
         return 0
