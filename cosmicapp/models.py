@@ -98,11 +98,6 @@ class CosmicVariable(models.Model):
             return float(variable.value)
         elif variable.variableType == 'string':
             return variable.value
-        elif variable.variableType == 'bookmark':
-            #TODO: Consider if we want to limit setting bookmarks to user objects, etc.
-            return Bookmark.objects.filter(pk=int(variavle.value))
-        elif variable.variableType == 'bookmarkFolder':
-            return BookmarkFolder.objects.filter(pk=int(variavle.value))
 
         else:
             return None
