@@ -63,6 +63,11 @@ $(document).ready(function()
 Uploaded By User: <a href="/user/{{audioNote.fileRecord.user}}/">{{audioNote.fileRecord.user}}</a>
 <br>On: {{audioNote.fileRecord.uploadDateTime}} ({{audioNote.fileRecord.uploadDateTime|timesince}} ago)
 <br>Length: {{audioNote.length}}
+<br>Instrument Used: {{audioNote.instrument.name}}
+<br>Observing Location: {{audioNote.observatory.name}}
+<br>Observed Object: {{audioNote.objectName}}
+<br>Observed RA, Dec: {{audioNote.objectRA}}, {{audioNote.objectDec}}
+
 <br>
 <br><audio controls id=audioControl style="width: 90%;" src="/audioNote/{{audioNote.id}}/audio/"></audio>
 </p>
