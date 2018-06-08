@@ -229,18 +229,6 @@ class Mount(InstrumentComponent):
 
     comments = GenericRelation('TextBlob')
 
-#TODO: Delete this class.
-class Instrument(models.Model):
-    """
-    An entire assembled telescope optical path.  A single telescope may consist of multiple instruments which have common
-    optical paths for some portion of the setup.
-    """
-    mount = models.ForeignKey(Mount, on_delete=models.CASCADE)
-    ota = models.ForeignKey(OTA, on_delete=models.CASCADE)
-    #TODO: Camera and eyepiece should probably be subclassed and then turn this to a single foreign key
-    eyepiece = models.ForeignKey(Eyepiece, on_delete=models.CASCADE)
-    camera = models.ForeignKey(Camera, on_delete=models.CASCADE)
-
 
 
 #TODO: Add a class for an observing session storing details about equipment used, weather, seeing, goals, etc.
