@@ -1,2 +1,3 @@
-<span class=raDec data-raDecimal="{{raDecimal}}" data-decDecimal="{{decDecimal}}"><a
-class=functionLink onclick="handleRADecClick(this)">{{ra}}&emsp;{{dec}}</a><span hidden></span></span>
+<span class=raDec data-raDecimal="{{raDecimal}}" data-decDecimal="{{decDecimal}}"
+{% if extraMapParams %} data-extraMapParams="{{extraMapParams}}"{% endif %}>
+<a class=functionLink onclick="handleRADecClick(this)">{{ra}}&emsp;{{dec}}</a><span hidden></span></span>

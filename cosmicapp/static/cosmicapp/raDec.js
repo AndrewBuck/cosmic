@@ -3,8 +3,15 @@ function handleRADecClick(domObject)
     var i;
     var raDecimal = Number($(domObject).parent().attr('data-raDecimal'));
     var decDecimal = Number($(domObject).parent().attr('data-decDecimal'));
+    var extraMapParams = $(domObject).parent().attr('data-extraMapParams');
     var innerSpan = $(domObject).parent().children('span');
     var wasHidden;
+    var markerEnabled = true;
+
+    if(extraMapParams === undefined)
+        extraMapParams = "";
+    else
+        markerEnabled = false;
 
     // If the raDec is being clicked on for the first time (i.e. displaying the dropdown)
     if(!innerSpan.is(":visible"))
@@ -52,7 +59,10 @@ function handleRADecClick(domObject)
         html += '+';
     html += decDecimal.toFixed(3) + '&deg;';
     //TODO: Should set a zoom data- parameter like we do for raDecimal so it can be more contextually appropriate.
-    html += '<br><a href="/map/sky/?zoom=12&lat=' + decDecimal + '&lon=' + raDecimal + '">View on Sky Map</a>'
+    html += '<br><a href="/map/sky/?zoom=12&lat=' + decDecimal + '&lon=' + raDecimal;
+    if(markerEnabled)
+        html += '&mlat=' + decDecimal + '&mlon=' + raDecimal;
+    html += extraMapParams + '">View on Sky Map</a>';
     html += '</div>';
     if(wasHidden)
         innerSpan.show().html(html)

@@ -227,7 +227,9 @@ function simulateCCD(clicked, ra, dec)
             {% bookmark "asteroid" asteroid.record.pk "Observing Targets" "<td>" "</td>" %}
             <td>{% scoreForObject asteroid.record currentTime user %}</td>
             <td><a href="{{asteroid.record.getUrl}}">{{asteroid.record.name}}</a></td>
+            {% with "&asteroidId="|concat:asteroid.record.id as extraMapParams %}
             <td>{% formatRADec_rad asteroid.ephem.ra asteroid.ephem.dec %}&emsp;
+            {% endwith %}
             <a class=functionLink onclick="simulateCCD(this, {{asteroid.ephem.ra|multiply:57.295779513}}, {{asteroid.ephem.dec|multiply:57.295779513}})">(Simulate)</a></td>
             <td>{{asteroid.ephem.mag|floatformat:2}}</td>
             <td>{{asteroid.record.ceu|floatformat:3}}</td>
