@@ -761,3 +761,15 @@ def getSimulatedCCDImage(queryGeometry, bufferDistance, w, dimX, dimY):
 
     return imageData
 
+def parseInt(stringToParse):
+    try:
+        return float(stringToParse)
+    except:
+        return None
+
+def parseFloat(stringToParse):
+    try:
+        return float(stringToParse)
+    except:
+        return None
+
