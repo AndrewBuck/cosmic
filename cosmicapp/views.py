@@ -1887,8 +1887,8 @@ def equipment(request):
                 newOTA, created = OTA.objects.get_or_create(
                     make = request.POST['make'].strip(),
                     model = request.POST['model'].strip(),
-                    focalLength = request.POST['focalLength'].strip(),
-                    aperture = request.POST['aperture'].strip(),
+                    focalLength = parseFloat(request.POST['focalLength'].strip()),
+                    aperture = parseFloat(request.POST['aperture'].strip()),
                     design = request.POST['design'].strip()
                     )
 
@@ -1905,15 +1905,15 @@ def equipment(request):
                 newCamera, created = Camera.objects.get_or_create(
                     make = request.POST['make'].strip(),
                     model = request.POST['model'].strip(),
-                    dimX = request.POST['dimX'].strip(),
-                    dimY = request.POST['dimY'].strip(),
-                    pixelDimX = request.POST['pixelDimX'].strip(),
-                    pixelDimY = request.POST['pixelDimY'].strip(),
-                    readNoise = request.POST['readNoise'].strip(),
-                    ePerADU = request.POST['ePerADU'].strip(),
-                    exposureMin = request.POST['exposureMin'].strip(),
-                    exposureMax = request.POST['exposureMax'].strip(),
-                    coolingCapacity = request.POST['coolingCapacity'].strip()
+                    dimX = parseFloat(request.POST['dimX'].strip()),
+                    dimY = parseFloat(request.POST['dimY'].strip()),
+                    pixelDimX = parseFloat(request.POST['pixelDimX'].strip()),
+                    pixelDimY = parseFloat(request.POST['pixelDimY'].strip()),
+                    readNoise = parseFloat(request.POST['readNoise'].strip()),
+                    ePerADU = parseFloat(request.POST['ePerADU'].strip()),
+                    exposureMin = parseFloat(request.POST['exposureMin'].strip()),
+                    exposureMax = parseFloat(request.POST['exposureMax'].strip()),
+                    coolingCapacity = parseFloat(request.POST['coolingCapacity'].strip())
                     )
 
                 if created:
@@ -1930,7 +1930,7 @@ def equipment(request):
                     make = request.POST['make'].strip(),
                     model = request.POST['model'].strip(),
                     pierType = request.POST['pierType'].strip(),
-                    maxPayload = request.POST['maxPayload'].strip()
+                    maxPayload = parseFloat(request.POST['maxPayload'].strip())
                     )
 
                 if created:
@@ -1950,7 +1950,7 @@ def equipment(request):
                     make = request.POST['make'].strip(),
                     model = request.POST['model'].strip(),
                     mountType = request.POST['mountType'].strip(),
-                    maxWeight = request.POST['maxWeight'].strip(),
+                    maxWeight = parseFloat(request.POST['maxWeight'].strip()),
                     autoguideCompatible = autoguideCompatible,
                     gotoCompatible = gotoCompatible
                     )
