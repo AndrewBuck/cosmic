@@ -39,21 +39,12 @@ def storeImageLocation(image, w, sourceString):
     raScale *= 3600.0
     decScale *= 3600.0
 
-    #TODO: Replace a lot of this code with astropy.wcs.calc_footprint
-    polygonPixelsList = [
-        (1, 1),
-        (image.dimX, 1),
-        (image.dimX, image.dimY),
-        (1, image.dimY),
-        (1, 1)
-        ]
-
-    polygonCoordsList = []
     geometryString = 'POLYGON(('
     commaString = ''
 
-    for x, y in polygonPixelsList:
-        ra, dec = w.all_pix2world(x, y, 1)    #TODO: Determine if this 1 should be a 0.
+    raDecArray = list(w.calc_footprint())
+    raDecArray.append([raDecArray[0][0], raDecArray[0][1]])
+    for ra, dec in raDecArray:
         geometryString += commaString + str(ra) + ' ' + str(dec)
         commaString = ', '
 
