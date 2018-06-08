@@ -70,6 +70,7 @@ td.numMatchResults
             </font>
 
             <br> Filename: <font size=-1>{{image.fileRecord.originalFileName}}</font>
+            <br> Filesize: <font size=-1>{{image.fileRecord.uploadSize|filesizeformat}}</font>
 
             <input id=sha256input type=text value="{{image.fileRecord.fileSha256}}" hidden>
             <br> Sha-256: <font size=-1><a class=functionLink title="Click to copy to clipboard:
