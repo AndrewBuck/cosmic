@@ -1786,6 +1786,23 @@ class AstorbRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
 
         return multiplier
 
+    def getAstrometryNeededCodeText(self):
+        astrometryNeededCodeTextDict = {
+            10: "Space mission targets and occultation candidates.",
+            9: "Asteroids useful for mass determination.",
+            8: "Asteroids for which a few observations would upgrade the orbital uncertainty.",
+            7: "MPC Critical list asteroids with future low uncertainties.",
+            6: "Planet crossers of type 6:5.",
+            5: "Asteroids for which a few more observations would lead to numbering them.",
+            4: "",
+            3: "",
+            2: "",
+            1: "",
+            0: ""
+            }
+
+        return astrometryNeededCodeTextDict[self.astrometryNeededCode]
+
     def getDifficultyForTime(self, t):
         #TODO: Properly implement this function.
         # Score increases with increasing error up until errorInDeg is reached and then it drops down from the peak
