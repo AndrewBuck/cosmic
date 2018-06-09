@@ -47,6 +47,21 @@ Total number of images on the site: {{numImages|intcomma}}
 <br>&emsp;&emsp;Min Size: {{minImageSize|filesizeformat}}.
 <br>&emsp;&emsp;Average Size (std dev): {{avgImageSize|filesizeformat}} ({{stdDevImageSize|filesizeformat}}).
 <br>&emsp;&emsp;Max Size: {{maxImageSize|filesizeformat}}.
+
+<br>
+<br>&emsp;Number of images <i>taken</i> during the last:
+<br>&emsp;&emsp;Day: {{numImagesTakenLastDay}}
+<br>&emsp;&emsp;Week: {{numImagesTakenLastWeek}} ({{numImagesTakenLastWeek|divide:7|floatformat:2}} per day)
+<br>&emsp;&emsp;30 Days: {{numImagesTakenLastThirtyDays}} ({{numImagesTakenLastThirtyDays|divide:30|floatformat:2}} per day)
+<br>&emsp;&emsp;Year: {{numImagesTakenLastYear}} ({{numImagesTakenLastYear|divide:365|floatformat:2}} per day)
+
+<br>
+<br>&emsp;Number of images <i>uploaded to this website</i> during the last:
+<br>&emsp;&emsp;Day: {{numImagesUploadedLastDay}}
+<br>&emsp;&emsp;Week: {{numImagesUploadedLastWeek}} ({{numImagesUploadedLastWeek|divide:7|floatformat:2}} per day)
+<br>&emsp;&emsp;30 Days: {{numImagesUploadedLastThirtyDays}} ({{numImagesUploadedLastThirtyDays|divide:30|floatformat:2}} per day)
+<br>&emsp;&emsp;Year: {{numImagesUploadedLastYear}} ({{numImagesUploadedLastYear|divide:365|floatformat:2}} per day)
+
 </p>
 
 <h3>Audio Notes</h3>
@@ -63,6 +78,14 @@ Total number of audio notes on the site: {{numAudioNotes|intcomma}}
 <br>&emsp;&emsp;Min Size: {{minAudioNoteSize|filesizeformat}}.
 <br>&emsp;&emsp;Average Size (std dev): {{avgAudioNoteSize|filesizeformat}} ({{stdDevAudioNoteSize|filesizeformat}}).
 <br>&emsp;&emsp;Max Size: {{maxAudioNoteSize|filesizeformat}}.
+
+<br>
+<br>&emsp;Number of audio notes <i>uploaded to this website</i> during the last:
+<br>&emsp;&emsp;Day: {{numAudioNotesUploadedLastDay}}
+<br>&emsp;&emsp;Week: {{numAudioNotesUploadedLastWeek}} ({{numAudioNotesUploadedLastWeek|divide:7|floatformat:2}} per day)
+<br>&emsp;&emsp;30 Days: {{numAudioNotesUploadedLastThirtyDays}} ({{numAudioNotesUploadedLastThirtyDays|divide:30|floatformat:2}} per day)
+<br>&emsp;&emsp;Year: {{numAudioNotesUploadedLastYear}} ({{numAudioNotesUploadedLastYear|divide:365|floatformat:2}} per day)
+
 </p>
 
 <h3>Text Blobs</h3>
@@ -105,8 +128,8 @@ things like descriptions of saved queries, audio note transcriptions, etc.
 <br>&emsp;Number of text blobs created in the last:
 <br>&emsp;&emsp;Day: {{numTextBlobsLastDay}}
 <br>&emsp;&emsp;Week: {{numTextBlobsLastWeek}} ({{numTextBlobsLastWeek|divide:7|floatformat:2}} per day)
-<br>&emsp;&emsp;30 Days: {{numTextBlobsLastThirtyDays}} ({{numTextBlobsLastWeek|divide:30|floatformat:2}} per day)
-<br>&emsp;&emsp;Year: {{numTextBlobsLastYear}} ({{numTextBlobsLastWeek|divide:365|floatformat:2}} per day)
+<br>&emsp;&emsp;30 Days: {{numTextBlobsLastThirtyDays}} ({{numTextBlobsLastThirtyDays|divide:30|floatformat:2}} per day)
+<br>&emsp;&emsp;Year: {{numTextBlobsLastYear}} ({{numTextBlobsLastYear|divide:365|floatformat:2}} per day)
 </p>
 
 <h3>Equipment</h3>

@@ -845,12 +845,27 @@ def stats(request):
     context['stdDevImageSize'] = Image.objects.all().aggregate(StdDev('fileRecord__uploadSize'))['fileRecord__uploadSize__stddev']
     context['maxImageSize'] = Image.objects.all().aggregate(Max('fileRecord__uploadSize'))['fileRecord__uploadSize__max']
 
+    context['numImagesTakenLastDay'] = Image.objects.filter(dateTime__gt=timezone.now()-timedelta(days=1)).count()
+    context['numImagesTakenLastWeek'] = Image.objects.filter(dateTime__gt=timezone.now()-timedelta(days=7)).count()
+    context['numImagesTakenLastThirtyDays'] = Image.objects.filter(dateTime__gt=timezone.now()-timedelta(days=30)).count()
+    context['numImagesTakenLastYear'] = Image.objects.filter(dateTime__gt=timezone.now()-timedelta(days=365)).count()
+
+    context['numImagesUploadedLastDay'] = Image.objects.filter(fileRecord__uploadDateTime__gt=timezone.now()-timedelta(days=1)).count()
+    context['numImagesUploadedLastWeek'] = Image.objects.filter(fileRecord__uploadDateTime__gt=timezone.now()-timedelta(days=7)).count()
+    context['numImagesUploadedLastThirtyDays'] = Image.objects.filter(fileRecord__uploadDateTime__gt=timezone.now()-timedelta(days=30)).count()
+    context['numImagesUploadedLastYear'] = Image.objects.filter(fileRecord__uploadDateTime__gt=timezone.now()-timedelta(days=365)).count()
+
     context['numAudioNotes'] = AudioNote.objects.all().count()
     context['totalAudioNoteSize'] = AudioNote.objects.all().aggregate(Sum('fileRecord__uploadSize'))['fileRecord__uploadSize__sum']
     context['minAudioNoteSize'] = AudioNote.objects.all().aggregate(Min('fileRecord__uploadSize'))['fileRecord__uploadSize__min']
     context['avgAudioNoteSize'] = AudioNote.objects.all().aggregate(Avg('fileRecord__uploadSize'))['fileRecord__uploadSize__avg']
     context['stdDevAudioNoteSize'] = AudioNote.objects.all().aggregate(StdDev('fileRecord__uploadSize'))['fileRecord__uploadSize__stddev']
     context['maxAudioNoteSize'] = AudioNote.objects.all().aggregate(Max('fileRecord__uploadSize'))['fileRecord__uploadSize__max']
+
+    context['numAudioNotesUploadedLastDay'] = AudioNote.objects.filter(dateTime__gt=timezone.now()-timedelta(days=1)).count()
+    context['numAudioNotesUploadedLastWeek'] = AudioNote.objects.filter(dateTime__gt=timezone.now()-timedelta(days=7)).count()
+    context['numAudioNotesUploadedLastThirtyDays'] = AudioNote.objects.filter(dateTime__gt=timezone.now()-timedelta(days=30)).count()
+    context['numAudioNotesUploadedLastYear'] = AudioNote.objects.filter(dateTime__gt=timezone.now()-timedelta(days=365)).count()
 
     context['numAudioNotesWithTranscriptions'] = AudioNote.objects\
         .annotate(numTranscriptions=Count('transcriptions'))\
