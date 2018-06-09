@@ -859,6 +859,11 @@ def stats(request):
 
     context['numTextBlobs'] = TextBlob.objects.all().count()
 
+    context['numTextBlobsLastDay'] = TextBlob.objects.filter(dateTime__gt=timezone.now()-timedelta(days=1)).count()
+    context['numTextBlobsLastWeek'] = TextBlob.objects.filter(dateTime__gt=timezone.now()-timedelta(days=7)).count()
+    context['numTextBlobsLastThirtyDays'] = TextBlob.objects.filter(dateTime__gt=timezone.now()-timedelta(days=30)).count()
+    context['numTextBlobsLastYear'] = TextBlob.objects.filter(dateTime__gt=timezone.now()-timedelta(days=365)).count()
+
     context['numTextBlobsWithModeration'] = TextBlob.objects\
         .annotate(numModerations=Count('moderations'))\
         .filter(numModerations__gt=0)\

@@ -69,7 +69,7 @@ Total number of audio notes on the site: {{numAudioNotes|intcomma}}
 <p>
 There are a total of {{numTextBlobs|intcomma}} text blobs in the database.  Most of these are for
 comments submitted by users, but some of these are for the site itself, as well as for
-things like descriptions of saved queries, etc.
+things like descriptions of saved queries, audio note transcriptions, etc.
 
 <br>
 <br>&emsp;Of these:
@@ -101,6 +101,12 @@ things like descriptions of saved queries, etc.
 <br>&emsp;&emsp;{{needsResponse.count|intcomma}} comments have been flagged "{{needsResponse.responseValue}}".
 {% endfor %}
 
+<br>
+<br>&emsp;Number of text blobs created in the last:
+<br>&emsp;&emsp;Day: {{numTextBlobsLastDay}}
+<br>&emsp;&emsp;Week: {{numTextBlobsLastWeek}} ({{numTextBlobsLastWeek|divide:7|floatformat:2}} per day)
+<br>&emsp;&emsp;30 Days: {{numTextBlobsLastThirtyDays}} ({{numTextBlobsLastWeek|divide:30|floatformat:2}} per day)
+<br>&emsp;&emsp;Year: {{numTextBlobsLastYear}} ({{numTextBlobsLastWeek|divide:365|floatformat:2}} per day)
 </p>
 
 <h3>Equipment</h3>
