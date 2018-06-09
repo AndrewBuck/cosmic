@@ -42,7 +42,7 @@ def storeImageLocation(image, w, sourceString):
     geometryString = 'POLYGON(('
     commaString = ''
 
-    raDecArray = list(w.calc_footprint())
+    raDecArray = list(w.calc_footprint(axes=(image.dimX, image.dimY)))
     raDecArray.append([raDecArray[0][0], raDecArray[0][1]])
     for ra, dec in raDecArray:
         geometryString += commaString + str(ra) + ' ' + str(dec)
