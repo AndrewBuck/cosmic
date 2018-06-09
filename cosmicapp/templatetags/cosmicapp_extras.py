@@ -90,6 +90,10 @@ def typeOf(value):
     return str(type(value))
 
 @register.filter
+def subtract(value, arg):
+    return value-arg
+
+@register.filter
 def multiply(value, arg):
     return value*arg
 
@@ -102,11 +106,11 @@ def divide(value, arg):
     return value/arg
 
 @register.inclusion_tag('cosmicapp/tag_singleValue.html', takes_context=False)
-def percentage(value, arg, rangeMin=0, rangeMax=100):
+def percentage(value, arg, rangeMin=0, rangeMax=100, decimalPlaces=1):
     if arg == 0:
         return { 'singleValue': 'Undefined' }
 
-    tempDict = { 'singleValue': rangeMin + (rangeMax - rangeMin)*(value/arg) }
+    tempDict = { 'singleValue': round(rangeMin + (rangeMax - rangeMin)*(value/arg), decimalPlaces) }
     return tempDict
 
 @register.filter

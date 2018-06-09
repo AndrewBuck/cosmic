@@ -21,7 +21,7 @@ from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponseRedirect
 from django.utils import timezone
 from django.conf import settings
-from django.db.models import Count, Q, Max, Min, Avg, StdDev
+from django.db.models import Count, Q, Max, Min, Avg, StdDev, Sum
 from django.db import transaction
 from django.views.decorators.http import require_http_methods
 from django.contrib.gis.geos import GEOSGeometry, Point
@@ -820,6 +820,76 @@ def downloadSession(request, pk):
         return HttpResponse('Download session "' + pk + '" not found.', status=400, reason='not found.')
 
     return render(request, "cosmicapp/downloadSession.html", context)
+
+def stats(request):
+    context = {"user" : request.user}
+
+    context['numUsers'] = User.objects.all().count()
+    context['numUploadedImages'] = Image.objects.filter(~Q(fileRecord__uploadSession=None)).count()
+    context['numCreatedImages'] = Image.objects.filter(fileRecord__uploadSession=None).count()
+
+    context['numImagesWithPlateSolutions'] = Image.objects\
+        .annotate(numPlateSolutions=Count('plateSolutions'))\
+        .filter(numPlateSolutions__gt=0)\
+        .count()
+
+    context['numImagesWithAnswers'] = Image.objects\
+        .annotate(numAnswers=Count('answers'))\
+        .filter(numAnswers__gt=0)\
+        .count()
+
+    context['numImages'] = Image.objects.all().count()
+    context['totalImageSize'] = Image.objects.all().aggregate(Sum('fileRecord__uploadSize'))['fileRecord__uploadSize__sum']
+    context['minImageSize'] = Image.objects.all().aggregate(Min('fileRecord__uploadSize'))['fileRecord__uploadSize__min']
+    context['avgImageSize'] = Image.objects.all().aggregate(Avg('fileRecord__uploadSize'))['fileRecord__uploadSize__avg']
+    context['stdDevImageSize'] = Image.objects.all().aggregate(StdDev('fileRecord__uploadSize'))['fileRecord__uploadSize__stddev']
+    context['maxImageSize'] = Image.objects.all().aggregate(Max('fileRecord__uploadSize'))['fileRecord__uploadSize__max']
+
+    context['numAudioNotes'] = AudioNote.objects.all().count()
+    context['totalAudioNoteSize'] = AudioNote.objects.all().aggregate(Sum('fileRecord__uploadSize'))['fileRecord__uploadSize__sum']
+    context['minAudioNoteSize'] = AudioNote.objects.all().aggregate(Min('fileRecord__uploadSize'))['fileRecord__uploadSize__min']
+    context['avgAudioNoteSize'] = AudioNote.objects.all().aggregate(Avg('fileRecord__uploadSize'))['fileRecord__uploadSize__avg']
+    context['stdDevAudioNoteSize'] = AudioNote.objects.all().aggregate(StdDev('fileRecord__uploadSize'))['fileRecord__uploadSize__stddev']
+    context['maxAudioNoteSize'] = AudioNote.objects.all().aggregate(Max('fileRecord__uploadSize'))['fileRecord__uploadSize__max']
+
+    context['numAudioNotesWithTranscriptions'] = AudioNote.objects\
+        .annotate(numTranscriptions=Count('transcriptions'))\
+        .filter(numTranscriptions__gt=0)\
+        .count()
+
+    context['numTextBlobs'] = TextBlob.objects.all().count()
+
+    context['numTextBlobsWithModeration'] = TextBlob.objects\
+        .annotate(numModerations=Count('moderations'))\
+        .filter(numModerations__gt=0)\
+        .count()
+
+    context['moderationBreakdown'] = CommentModeration.objects.values('modValue').annotate(count=Count('id'))
+
+    context['numTextBlobsWithFlags'] = TextBlob.objects\
+        .annotate(numFlags=Count('flags'))\
+        .filter(numFlags__gt=0)\
+        .count()
+
+    context['flagBreakdown'] = CommentFlag.objects.values('flagValue').annotate(count=Count('id'))
+
+    context['numTextBlobsNeedingResponse'] = TextBlob.objects\
+        .annotate(numNeedsResponses=Count('needsResponses'))\
+        .filter(numNeedsResponses__gt=0)\
+        .count()
+
+    context['needsResponseBreakdown'] = CommentNeedsResponse.objects.values('responseValue').annotate(count=Count('id'))
+
+    context['numOTAs'] = OTA.objects.all().count()
+    context['numCameras'] = Camera.objects.all().count()
+    context['numPiers'] = Pier.objects.all().count()
+    context['numMounts'] = Mount.objects.all().count()
+
+    context['numOwnedEquipment'] = ComponentInstance.objects.all().count()
+
+    context['numInstrumentConfigurations'] = InstrumentConfiguration.objects.all().count()
+
+    return render(request, "cosmicapp/stats.html", context)
 
 def image(request, id):
     context = {"user" : request.user}

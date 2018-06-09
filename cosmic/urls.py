@@ -39,6 +39,8 @@ urlpatterns = [
     url(r'^uploadSession/(?P<pk>.+)', views.uploadSession),
     url(r'^downloadSession/(?P<pk>.+)', views.downloadSession),
 
+    url(r'^stats/', views.stats),
+
     url(r'^user/(?P<username>.+)/bookmarks/$', views.bookmarkPage),
     url(r'^user/(?P<username>.+)/', views.userpage),
     url(r'^observatory/(?P<id>.+)/', views.observatory),

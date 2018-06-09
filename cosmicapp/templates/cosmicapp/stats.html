@@ -1,0 +1,126 @@
+{% extends "cosmicapp/base.html" %}
+
+{% load static %}
+{% load humanize %}
+{% load cosmicapp_extras %}
+
+{% block extratitle %} - Site Statistics {% endblock extratitle %}
+
+{% block extrahead %}
+{% comment %}
+{% include "./jquery.html" %}
+{% if user.is_authenticated %}<script src="/static/cosmicapp/bookmark.js"></script>{% endif %}
+<script src="/static/cosmicapp/imageTable.js"></script>
+<script src="/static/cosmicapp/raDec.js"></script>
+<script src="/static/cosmicapp/math.min.js" type="text/javascript"></script>
+<link rel="stylesheet" href="/static/cosmicapp/bokeh-0.12.9.min.css">
+<script src="/static/cosmicapp/bokeh-0.12.9.min.js"></script>
+<script src="/static/cosmicapp/bokeh-api-0.12.9.min.js"></script>
+{% endcomment %}
+{% endblock extrahead %}
+
+{% block mainbody %}
+<h2>Site Statistics</h2>
+
+<h3>Users</h3>
+<p>
+Number of registered users: {{numUsers|intcomma}}
+</p>
+
+<h3>Images</h3>
+<p>
+Total number of images on the site: {{numImages|intcomma}}
+<br>&emsp;Of these:
+<br>&emsp;&emsp;{{numUploadedImages|intcomma}}&emsp;({% percentage numUploadedImages numImages %}%) of the images were uploaded to the site.
+<br>&emsp;&emsp;{{numCreatedImages|intcomma}}&emsp;({% percentage numCreatedImages numImages %}%) of the images were created on the site itself.
+
+<br>
+<br>&emsp;Of these:
+<br>&emsp;&emsp;{{numImagesWithPlateSolutions|intcomma}}&emsp;({% percentage numImagesWithPlateSolutions numImages %}%) of the images have plate solutions.
+<br>&emsp;&emsp;{{numImages|subtract:numImagesWithPlateSolutions|intcomma}}&emsp;({% percentage numImages|subtract:numImagesWithPlateSolutions numImages %}%) of the images do not have plate solutions.
+<br>
+<br>&emsp;Of these:
+<br>&emsp;&emsp;{{numImagesWithAnswers|intcomma}}&emsp;({% percentage numImagesWithAnswers numImages %}%) of the images have questions answered about them.
+<br>&emsp;&emsp;{{numImages|subtract:numImagesWithAnswers|intcomma}}&emsp;({% percentage numImages|subtract:numImagesWithAnswers numImages %}%) of the images do not have questions answered about them.
+<br>
+<br>&emsp;These images total {{totalImageSize|filesizeformat}}.
+<br>&emsp;&emsp;Min Size: {{minImageSize|filesizeformat}}.
+<br>&emsp;&emsp;Average Size (std dev): {{avgImageSize|filesizeformat}} ({{stdDevImageSize|filesizeformat}}).
+<br>&emsp;&emsp;Max Size: {{maxImageSize|filesizeformat}}.
+</p>
+
+<h3>Audio Notes</h3>
+<p>
+Total number of audio notes on the site: {{numAudioNotes|intcomma}}
+
+<br>
+<br>&emsp;Of these:
+<br>&emsp;&emsp;{{numAudioNotesWithTranscriptions|intcomma}}&emsp;({% percentage numAudioNotesWithTranscriptions numAudioNotes %}%) of the audio notes have transcriptions.
+<br>&emsp;&emsp;{{numAudioNotes|subtract:numAudioNotesWithTranscriptions|intcomma}}&emsp;({% percentage numAudioNotes|subtract:numAudioNotesWithTranscriptions numAudioNotes %}%) of the audio notes do not have transcriptions.
+
+<br>
+<br>&emsp;These audio notes total {{totalAudioNoteSize|filesizeformat}}.
+<br>&emsp;&emsp;Min Size: {{minAudioNoteSize|filesizeformat}}.
+<br>&emsp;&emsp;Average Size (std dev): {{avgAudioNoteSize|filesizeformat}} ({{stdDevAudioNoteSize|filesizeformat}}).
+<br>&emsp;&emsp;Max Size: {{maxAudioNoteSize|filesizeformat}}.
+</p>
+
+<h3>Text Blobs</h3>
+<p>
+There are a total of {{numTextBlobs|intcomma}} text blobs in the database.  Most of these are for
+comments submitted by users, but some of these are for the site itself, as well as for
+things like descriptions of saved queries, etc.
+
+<br>
+<br>&emsp;Of these:
+<br>&emsp;&emsp;{{numTextBlobsWithModeration|intcomma}}&emsp;({% percentage numTextBlobsWithModeration numTextBlobs %}%) of the text blobs have been moderated up or down by at least one user.
+<br>&emsp;&emsp;{{numTextBlobs|subtract:numTextBlobsWithModeration|intcomma}}&emsp;({% percentage numTextBlobs|subtract:numTextBlobsWithModeration numTextBlobs %}%) of the text blobs have not been moderated up or down.
+
+<br>
+{% for moderation in moderationBreakdown %}
+<br>&emsp;&emsp;{{moderation.count|intcomma}} comments have been modded "{{moderation.modValue}}".
+{% endfor %}
+
+<br>
+<br>&emsp;Of these:
+<br>&emsp;&emsp;{{numTextBlobsWithFlags|intcomma}}&emsp;({% percentage numTextBlobsWithFlags numTextBlobs %}%) of the text blobs have been flagged by at least one user.
+<br>&emsp;&emsp;{{numTextBlobs|subtract:numTextBlobsWithFlags|intcomma}}&emsp;({% percentage numTextBlobs|subtract:numTextBlobsWithFlags numTextBlobs %}%) of the text blobs have not been flagged.
+
+<br>
+{% for flag in flagBreakdown %}
+<br>&emsp;&emsp;{{flag.count|intcomma}} comments have been flagged "{{flag.flagValue}}".
+{% endfor %}
+
+<br>
+<br>&emsp;Of these:
+<br>&emsp;&emsp;{{numTextBlobsNeedingResponse|intcomma}}&emsp;({% percentage numTextBlobsNeedingResponse numTextBlobs %}%) of the text blobs have been marked as needing a response.
+<br>&emsp;&emsp;{{numTextBlobs|subtract:numTextBlobsNeedingResponse|intcomma}}&emsp;({% percentage numTextBlobs|subtract:numTextBlobsNeedingResponse numTextBlobs %}%) of the text blobs have not been marked as needing a response.
+
+<br>
+{% for needsResponse in needsResponseBreakdown %}
+<br>&emsp;&emsp;{{needsResponse.count|intcomma}} comments have been flagged "{{needsResponse.responseValue}}".
+{% endfor %}
+
+</p>
+
+<h3>Equipment</h3>
+<p>
+The equipment database currently contains decriptions of the following equipment:
+
+<br>
+<br>&emsp;{{numOTAs}} Optical Tube Assemblies (OTAs).
+<br>&emsp;{{numCameras}} Cameras.
+<br>&emsp;{{numPiers}} Piers.
+<br>&emsp;{{numMounts}} Mounts.
+
+<br>
+<br>In total, the users of our site have indicated that they own {{numOwnedEquipment}} pieces
+of the above kinds of equipment.  And they have created a total of
+{{numInstrumentConfigurations}} instrument configurations using these pieces of equipment.
+</p>
+
+<h3>Database</h3>
+<p>
+</p>
+
+{% endblock mainbody %}
