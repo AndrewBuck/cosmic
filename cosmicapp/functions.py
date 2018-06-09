@@ -369,6 +369,7 @@ def createTasksForNewImage(fileRecord, user):
 
         piImagestats.save()
         piImagestats.addArguments([fileRecord.onDiskFileName])
+        piImagestats.images.add(imageRecord)
 
         piThumbnails = models.ProcessInput(
             process = "generateThumbnails",
@@ -382,6 +383,7 @@ def createTasksForNewImage(fileRecord, user):
 
         piThumbnails.save()
         piThumbnails.addArguments([fileRecord.onDiskFileName])
+        piThumbnails.images.add(imageRecord)
 
         piSextractor = models.ProcessInput(
             process = "sextractor",
@@ -395,6 +397,7 @@ def createTasksForNewImage(fileRecord, user):
 
         piSextractor.save()
         piSextractor.addArguments([fileRecord.onDiskFileName])
+        piSextractor.images.add(imageRecord)
 
         piImage2xy = models.ProcessInput(
             process = "image2xy",
@@ -408,6 +411,7 @@ def createTasksForNewImage(fileRecord, user):
 
         piImage2xy.save()
         piImage2xy.addArguments([fileRecord.onDiskFileName])
+        piImage2xy.images.add(imageRecord)
 
         piDaofind = models.ProcessInput(
             process = "daofind",
@@ -421,6 +425,7 @@ def createTasksForNewImage(fileRecord, user):
 
         piDaofind.save()
         piDaofind.addArguments([fileRecord.onDiskFileName])
+        piDaofind.images.add(imageRecord)
 
         piStarfind = models.ProcessInput(
             process = "starfind",
@@ -434,6 +439,7 @@ def createTasksForNewImage(fileRecord, user):
 
         piStarfind.save()
         piStarfind.addArguments([fileRecord.onDiskFileName])
+        piStarfind.images.add(imageRecord)
 
         piFlagSources = models.ProcessInput(
             process = "flagSources",
@@ -447,6 +453,7 @@ def createTasksForNewImage(fileRecord, user):
 
         piFlagSources.save()
         piFlagSources.addArguments([imageRecord.pk])
+        piFlagSources.images.add(imageRecord)
 
         piStarmatch = models.ProcessInput(
             process = "starmatch",
@@ -464,6 +471,7 @@ def createTasksForNewImage(fileRecord, user):
         piStarmatch.prerequisites.add(piDaofind)
         piStarmatch.prerequisites.add(piStarfind)
         piStarmatch.prerequisites.add(piFlagSources)
+        piStarmatch.images.add(imageRecord)
 
         piAstrometryNet = models.ProcessInput(
             process = "astrometryNet",
@@ -480,6 +488,7 @@ def createTasksForNewImage(fileRecord, user):
         piAstrometryNet.addArguments([fileRecord.onDiskFileName])
         piAstrometryNet.prerequisites.add(piImagestats)
         piAstrometryNet.prerequisites.add(piStarmatch)
+        piAstrometryNet.images.add(imageRecord)
 
         piHeaders = models.ProcessInput(
             process = "parseHeaders",
@@ -494,6 +503,7 @@ def createTasksForNewImage(fileRecord, user):
         piHeaders.save()
         piHeaders.addArguments([imageRecord.pk])
         piHeaders.prerequisites.add(piImagestats)
+        piHeaders.images.add(imageRecord)
 
     return imageRecord
 

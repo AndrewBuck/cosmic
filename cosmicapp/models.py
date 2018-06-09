@@ -948,6 +948,8 @@ class ProcessInput(models.Model):
     #NOTE: We may want to add a field or an auto computed field for whether the process can be run now or not.  I.E.
     # whether it has any unmet prerequisites.
 
+    images = models.ManyToManyField('Image', symmetrical=False, related_name='processInputs')
+
     class Meta:
         ordering = ['-priority', 'submittedDateTime']
 

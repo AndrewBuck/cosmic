@@ -791,21 +791,23 @@ def uploadSession(request, pk):
                 scaleAdded = True
 
         if positionAdded or scaleAdded:
-            ps = image.getBestPlateSolution()
+            with transaction.atomic():
+                ps = image.getBestPlateSolution()
 
-            if ps is None:
-                piAstrometryNet = ProcessInput(
-                    process = "astrometryNet",
-                    requestor = User.objects.get(pk=request.user.pk),
-                    priority = ProcessPriority.getPriorityForProcess("astrometryNet", "batch") + 20,
-                    estCostCPU = 100,
-                    estCostBandwidth = 3000,
-                    estCostStorage = 3000,
-                    estCostIO = 10000000000
-                    )
+                if ps is None:
+                    piAstrometryNet = ProcessInput(
+                        process = "astrometryNet",
+                        requestor = User.objects.get(pk=request.user.pk),
+                        priority = ProcessPriority.getPriorityForProcess("astrometryNet", "batch") + 20,
+                        estCostCPU = 100,
+                        estCostBandwidth = 3000,
+                        estCostStorage = 3000,
+                        estCostIO = 10000000000
+                        )
 
-                piAstrometryNet.save()
-                piAstrometryNet.addArguments([image.fileRecord.onDiskFileName])
+                    piAstrometryNet.save()
+                    piAstrometryNet.addArguments([image.fileRecord.onDiskFileName])
+                    piAstrometryNet.images.add(image)
 
     return render(request, "cosmicapp/uploadSession.html", context)
 
@@ -831,6 +833,9 @@ def image(request, id):
     context['image'] = image
     context['objectRA'] = image.getImageProperty('objectRA')
     context['objectDec'] = image.getImageProperty('objectDec')
+
+    context['processInputsUncompleted'] = image.processInputs.filter(completed=None)
+    context['processInputsCompleted'] = image.processInputs.filter(~Q(completed=None))
 
     context['plateSolutions'] = PlateSolution.objects.filter(image=image).order_by('createdDateTime')
     plateSolutionIds = []
@@ -2285,6 +2290,7 @@ def saveUserSubmittedSourceResults(request):
 
         piFlagSources.save()
         piFlagSources.addArguments([str(image.pk)])
+        piFlagSources.images.add(image)
 
         piStarmatch = ProcessInput(
             process = "starmatch",
@@ -2299,6 +2305,7 @@ def saveUserSubmittedSourceResults(request):
         piStarmatch.save()
         piStarmatch.addArguments([image.fileRecord.onDiskFileName])
         piStarmatch.prerequisites.add(piFlagSources)
+        piStarmatch.images.add(image)
 
         piAstrometryNet = ProcessInput(
             process = "astrometryNet",
@@ -2313,6 +2320,7 @@ def saveUserSubmittedSourceResults(request):
         piAstrometryNet.save()
         piAstrometryNet.addArguments([image.fileRecord.onDiskFileName])
         piAstrometryNet.prerequisites.add(piStarmatch)
+        piAstrometryNet.images.add(image)
 
     return HttpResponse(json.dumps({'text': 'Response Saved Successfully'}), status=200)
 
@@ -2373,6 +2381,7 @@ def saveUserSubmittedFeedback(request):
 
         piSextractor.save()
         piSextractor.addArguments([image.fileRecord.onDiskFileName])
+        piSextractor.images.add(image)
 
         piImage2xy = ProcessInput(
             process = "image2xy",
@@ -2386,6 +2395,7 @@ def saveUserSubmittedFeedback(request):
 
         piImage2xy.save()
         piImage2xy.addArguments([image.fileRecord.onDiskFileName])
+        piImage2xy.images.add(image)
 
         piDaofind = ProcessInput(
             process = "daofind",
@@ -2399,6 +2409,7 @@ def saveUserSubmittedFeedback(request):
 
         piDaofind.save()
         piDaofind.addArguments([image.fileRecord.onDiskFileName])
+        piDaofind.images.add(image)
 
         piStarfind = ProcessInput(
             process = "starfind",
@@ -2412,6 +2423,7 @@ def saveUserSubmittedFeedback(request):
 
         piStarfind.save()
         piStarfind.addArguments([image.fileRecord.onDiskFileName])
+        piStarfind.images.add(image)
 
         piFlagSources = ProcessInput(
             process = "flagSources",
@@ -2429,6 +2441,7 @@ def saveUserSubmittedFeedback(request):
         piFlagSources.prerequisites.add(piImage2xy)
         piFlagSources.prerequisites.add(piDaofind)
         piFlagSources.prerequisites.add(piStarfind)
+        piFlagSources.images.add(image)
 
         piStarmatch = ProcessInput(
             process = "starmatch",
@@ -2443,6 +2456,7 @@ def saveUserSubmittedFeedback(request):
         piStarmatch.save()
         piStarmatch.addArguments([image.fileRecord.onDiskFileName])
         piStarmatch.prerequisites.add(piFlagSources)
+        piStarmatch.images.add(image)
 
         # NOTE: This flagSources task is called twice, once to flag the individual source find methods,
         # and then now a second time to also flag the SourceFindMatch results as well.
@@ -2459,6 +2473,7 @@ def saveUserSubmittedFeedback(request):
         piFlagSources.save()
         piFlagSources.addArguments([image.pk])
         piFlagSources.prerequisites.add(piStarmatch)
+        piFlagSources.images.add(image)
 
         piAstrometryNet = ProcessInput(
             process = "astrometryNet",
@@ -2473,6 +2488,7 @@ def saveUserSubmittedFeedback(request):
         piAstrometryNet.save()
         piAstrometryNet.addArguments([image.fileRecord.onDiskFileName])
         piAstrometryNet.prerequisites.add(piStarmatch)
+        piAstrometryNet.images.add(image)
 
     return HttpResponse(json.dumps({'text': 'Response Saved Successfully'}), status=200)
 
@@ -2895,12 +2911,15 @@ def combineImageIds(request):
 
     if masterBiasId != -1:
         filteredIdList.append('masterBiasId=int:' + str(masterBiasId))
+        masterBiasImage = Image.objects.filter(pk=masterBiasId).first()
 
     if masterDarkId != -1:
         filteredIdList.append('masterDarkId=int:' + str(masterDarkId))
+        masterDarkImage = Image.objects.filter(pk=masterDarkId).first()
 
     if masterFlatId != -1:
         filteredIdList.append('masterFlatId=int:' + str(masterFlatId))
+        masterFlatImage = Image.objects.filter(pk=masterFlatId).first()
 
     for image in images:
         totalSize += image.fileRecord.uploadSize
@@ -2919,6 +2938,13 @@ def combineImageIds(request):
 
         piCombine.save()
         piCombine.addArguments(filteredIdList)
+
+        for image in images:
+            piCombine.images.add(image)
+
+        piCombine.images.add(masterBiasImage)
+        piCombine.images.add(masterDarkImage)
+        piCombine.images.add(masterFlatImage)
 
     responseDict['message'] = 'Image combine task for {} images added to process queue.  Your combined image will be available shortly.'.format(len(images))
     return HttpResponse(json.dumps(responseDict), status=200)

@@ -91,6 +91,10 @@ td.numMatchResults
             {% endif %}
             <br>
             <font size=-1>
+            <br> Task Queue:
+            <br>&emsp;{{processInputsUncompleted.count}} uncompleted
+            <br>&emsp;{{processInputsCompleted.count}} completed
+            <br>
             <br> Has <a href="/image/{{id}}/properties/">{{image.properties.all.count}} image properties</a>.
             <br> Has <a href="/image/{{id}}/question/">{{image.answers.all.count}} questions answered</a> about it.
             {% for answer in image.answers.all %}

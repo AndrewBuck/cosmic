@@ -28,8 +28,10 @@ which gets put into this queue until the server has time to execute it.</p>
     <tr bgcolor="#ee3">
         <td>
             <a href="/user/{{processInput.requestor}}/">{{processInput.requestor}}</a>
-            <br><br>
+            <br>
             <a href="/about/processes/{{processInput.process}}">{{processInput.process}}</a>
+            <br>
+            Num Images: {{processInput.images.all.count}}
         </td>
         <td> {{processInput.submittedDateTime|formatTime|safe}} </td>
         <td> {{processInput.startedDateTime|formatTime|safe}} </td>
@@ -50,8 +52,10 @@ which gets put into this queue until the server has time to execute it.</p>
     {% endif %}
         <td>
             <a href="/user/{{processInput.requestor}}/">{{processInput.requestor}}</a>
-            <br><br>
+            <br>
             <a href="/about/processes/{{processInput.process}}">{{processInput.process}}</a>
+            <br>
+            Num Images: {{processInput.images.all.count}}
         </td>
         <td> {{processInput.submittedDateTime|formatTime|safe}} </td>
         <td> {{processInput.startedDateTime|formatTime|safe}} </td>
