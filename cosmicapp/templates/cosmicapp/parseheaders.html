@@ -60,3 +60,10 @@ the parsing of each fits key (or group of keys with identical meaning).
 {% endfilter %}
 {% endblock %}
 
+{% block arguments %}
+{% filter markdownParse %}
+* imageId - The primary key of the Image object whose headers should be read, cleaned up, and stored as image properties.
+* processInputId - The primary key of the ProcessInput object that describes this particular task.
+{% endfilter %}
+{% endblock %}
+

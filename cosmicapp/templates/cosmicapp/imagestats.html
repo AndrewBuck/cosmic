@@ -51,3 +51,9 @@ stores the following information:
 {% endfilter %}
 {% endblock %}
 
+{% block arguments %}
+{% filter markdownParse %}
+* filename - The onDiskFilename of the image to record statistics about.
+* processInputId - The primary key of the ProcessInput object that describes this particular task.
+{% endfilter %}
+{% endblock %}

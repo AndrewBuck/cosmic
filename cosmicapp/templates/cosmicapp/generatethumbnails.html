@@ -35,7 +35,12 @@ only for display on the website, and are never used for actual processing of sci
 data.
 
 {% endfilter %}
-
 {% endblock %}
 
+{% block arguments %}
+{% filter markdownParse %}
+* filename - The onDiskFilename of the image to generate thumnail images for.
+* processInputId - The primary key of the ProcessInput object that describes this particular task.
+{% endfilter %}
+{% endblock %}
 

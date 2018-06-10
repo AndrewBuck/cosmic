@@ -161,6 +161,11 @@ set on it.
 [sextractor]: /about/processes/sextractor
 [image2xy]: /about/processes/image2xy
 {% endfilter %}
-
 {% endblock %}
 
+{% block arguments %}
+{% filter markdownParse %}
+* filename - The onDiskFilename of the image to plate solve.
+* processInputId - The primary key of the ProcessInput object that describes this particular task.
+{% endfilter %}
+{% endblock %}
