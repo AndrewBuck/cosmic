@@ -1,12 +1,42 @@
 {% extends "cosmicapp/processDescriptionTemplate.html" %}
+{% load cosmicapp_extras %}
 
 {% block extratitle %} - About flagSources {% endblock extratitle %}
 
 {% block processName %}flagSources{% endblock %}
 
 {% block synopsis %}
+FlagSources is a task which loops over all detected sources (from each detection method)
+for a given image and adds a flag to any detected objects falling within a certain
+distance of a hot pixel, bad line, bad column, image edge, etc.  These flags can then be
+used by other tools to ignore or modify results computed from these sources due to their
+proximity to bad pixels affecting the quality of measurements made on them.
+{% filter markdownParse %}
+{% endfilter %}
 {% endblock %}
 
 {% block description %}
+{% filter markdownParse %}
+FlagSources is one of the simplest tasks in its operation.  It simply sets the appropriate
+flag columns on all detected sources in a given image based on how far they are away from
+the nearest feature that the given flag pertains to.  Below is a list of the flag columns
+specified in the SourceFindResult base class, which is what all source detection methods
+(including the multiple method matches computed by starmatch) are derived from.
+
+* flagHotPixel - True if the source is within 3 pixels of a user submitted hot pixel (or
+an auto detected one in the future).
+
+* flagBadLine - Not currently set by the task.
+
+* flagBadColumn - Not currently set by the task.
+
+* flagEdge - True if the source is within 10 pixels of the edge of the image.
+{% endfilter %}
 {% endblock %}
 
+{% block arguments %}
+{% filter markdownParse %}
+* imageIdString - The primary key of the image to process (encoded as a string).
+* processInputId - The primary key of the ProcessInput object that describes this particular task.
+{% endfilter %}
+{% endblock %}
