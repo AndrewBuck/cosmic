@@ -1,12 +1,37 @@
 {% extends "cosmicapp/processDescriptionTemplate.html" %}
+{% load cosmicapp_extras %}
 
 {% block extratitle %} - About starmatch {% endblock extratitle %}
 
 {% block processName %}starmatch{% endblock %}
 
 {% block synopsis %}
+{% filter markdownParse %}
+Starmatch is a task which compares the results of multiple, independant source detection
+methods and attempts to match common results found by different methods into the same
+final source result.
+{% endfilter %}
 {% endblock %}
 
 {% block description %}
+{% filter markdownParse %}
+In order to determine which sources from each method correspond to the same celestial
+object, each individual source method in the list of input methods is first compared to
+each other method.  For a given pair of detection methods, we loop over all the stars in
+one method and check for stars within a fixed distance (3 pixels) in the second method.
+If multiple stars are found within 3 pixels, the closest one to the star in the first
+method is chosen.
+
+Once every pair of methods has been checked for close matches a second stage of checking
+happens.  A python dictionary is constructed which contains entries for which method found
+a given source, and the individual ID number of that particular source.  The indiviual
+pairwise matches are then added one by one to this "super match" dictionary which
+conflates together all of the method results for a given source.
+
+Finally, the contents of this super match dictionary are written to the database in the
+*SourceFindMatch* table.  These results can then be used as a quick and easy way to access
+the aggregated results without having to do the cross matching for each individual
+analysis.
+{% endfilter %}
 {% endblock %}
 
