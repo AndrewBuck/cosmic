@@ -258,12 +258,14 @@ def formulateObservingPlan(user, observatory, targets, includeOtherTargets, star
                     continue
                 continue
 
+            # Determine the amount of time between the beginnings of the two observation times.
             otherObservingTime = otherObservation['timeNeeded']
             t1 = observation['startTimeDatetime']
             t2 = otherObservation['startTimeDatetime']
             deltaT = t2 - t1
 
-            #TODO: Need to take into account the order of the two observations and compare deltaT to the correct observing time.
+            # Check if the time window between the two observations is longer than the
+            # time needed to perform the observation.
             if (t2 <= t1 and deltaT < otherObservingTime) or (t1 <= t2 and deltaT < observingTime):
                 if observation['score'] < otherObservation['score']:
                     observationsToRemove.append(observation)
@@ -484,7 +486,6 @@ def createTasksForNewImage(fileRecord, user):
             )
 
         piAstrometryNet.save()
-        #TODO: Add additional arguments for depth, cpu timeout, postion guess, etc.
         piAstrometryNet.addArguments([fileRecord.onDiskFileName])
         piAstrometryNet.prerequisites.add(piImagestats)
         piAstrometryNet.prerequisites.add(piStarmatch)
@@ -529,6 +530,7 @@ def computeSingleEphemeris(asteroid, ephemTime):
     return body
 
 def computeSingleEphemerisRange(asteroid, ephemTimeStart, ephemTimeEnd, tolerance, timeTolerance, startEphemeris, endEphemeris):
+    # Determine if the is the outermost call of this function or if we have already recursed.
     if startEphemeris == None and endEphemeris == None:
         firstCall = True
     else:
@@ -545,15 +547,22 @@ def computeSingleEphemerisRange(asteroid, ephemTimeStart, ephemTimeEnd, toleranc
     if firstCall:
         ephemerideList.append( (ephemTimeStart, startEphemeris) )
 
+    # Compute the distance the asteroid has traveled across the sky and check if it is
+    # greater than the allowed tolerance per time step.
     positionDelta = (180/math.pi)*ephem.separation(startEphemeris, endEphemeris)
     if positionDelta > tolerance:
         steps = math.ceil(positionDelta/tolerance)
         timeDelta = (ephemTimeEnd - ephemTimeStart) / steps
 
+        # This extra time tolerance check really should never happen.
+        #TODO: Consider adding a warning printed here or maybe just an assert, or remove this entirely if it really can never happen.
         if timeDelta > timeTolerance:
             timeDelta = timeTolerance
             steps = math.ceil((ephemTimeEnd - ephemTimeStart) / timeDelta)
 
+        # Compute a new ephemeris for every step in the intervening time interval so that
+        # each computed position should be (hopefully) less than the allowed tolerance.
+        # If the distance is greater, it will be handled by the recursed call of this function.
         s = startEphemeris
         for i in range(steps-1):
             ephemTimeMid = ephemTimeStart + timeDelta
@@ -579,7 +588,11 @@ def computeAsteroidEphemerides(ephemTimeStart, ephemTimeEnd, clearFirst):
     maxAngularDistance = models.CosmicVariable.getVariable('asteroidEphemerideMaxAngularDistance')
 
     def writeAstorbEphemerisToDB(astorbRecord, startTime, endTime, dimMag, brightMag, geometry):
-        #print("saving " + str(startTime) + "       " + str(endTime) + "     " + geometry)
+        """
+        This is a simple helper function to construct an asteroid record and write it to
+        the db.  This is done in a function since it happens in two places inside this
+        outer function and this just avoids the code duplication.
+        """
         record = models.AstorbEphemeris(
             astorbRecord = asteroid,
             startTime = startTime,
