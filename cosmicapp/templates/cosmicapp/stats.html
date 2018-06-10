@@ -40,8 +40,8 @@ Total number of images on the site: {{numImages|intcomma}}
 <br>&emsp;&emsp;{{numImages|subtract:numImagesWithPlateSolutions|intcomma}}&emsp;({% percentage numImages|subtract:numImagesWithPlateSolutions numImages %}%) of the images do not have plate solutions.
 <br>
 <br>&emsp;Of these:
-<br>&emsp;&emsp;{{numImagesWithAnswers|intcomma}}&emsp;({% percentage numImagesWithAnswers numImages %}%) of the images have questions answered about them.
-<br>&emsp;&emsp;{{numImages|subtract:numImagesWithAnswers|intcomma}}&emsp;({% percentage numImages|subtract:numImagesWithAnswers numImages %}%) of the images do not have questions answered about them.
+<br>&emsp;&emsp;{{numImagesWithAnswers|intcomma}}&emsp;({% percentage numImagesWithAnswers numImages %}%) of the images have at least one question answered about them.
+<br>&emsp;&emsp;{{numImages|subtract:numImagesWithAnswers|intcomma}}&emsp;({% percentage numImages|subtract:numImagesWithAnswers numImages %}%) of the images do not have any questions answered about them.
 <br>
 <br>&emsp;These images total {{totalImageSize|filesizeformat}}.
 <br>&emsp;&emsp;Min Size: {{minImageSize|filesizeformat}}.
