@@ -83,8 +83,11 @@ $( document ).ready(function()
 
     mymap.on('click', function(ev)
     {
+        var ra = (ev.latlng.lng % 360).toFixed(3);
+        var dec = ev.latlng.lat.toFixed(3);
+
         var popupContent = '';
-        popupContent += 'RA: ' + ev.latlng.lng.toFixed(3) + '&deg; Dec: ' + ev.latlng.lat.toFixed(3) + '&deg;<br><br>';
+        popupContent += 'RA: ' + ra + '&deg; Dec: ' + dec + '&deg;<br><br>';
 
         var popup = L.popup()
             .setLatLng(ev.latlng)
