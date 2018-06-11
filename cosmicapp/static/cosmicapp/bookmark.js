@@ -114,7 +114,7 @@ function deleteBookmarkFolder(folderName)
         }
     }
 
-    // Send the request to add or remove the bookamrk to the server and update the div when the result comes back.
+    // Send the request to add or remove the bookmark to the server and update the div when the result comes back.
     $.ajax({
         type: "POST",
         url: "/bookmark/",
