@@ -824,6 +824,8 @@ def downloadSession(request, pk):
 def stats(request):
     context = {"user" : request.user}
 
+    context['storageCostPerMonth'] = CosmicVariable.getVariable('storageCostPerMonth')
+
     context['numUsers'] = User.objects.all().count()
     context['numUploadedImages'] = Image.objects.filter(~Q(fileRecord__uploadSession=None)).count()
     context['numCreatedImages'] = Image.objects.filter(fileRecord__uploadSession=None).count()

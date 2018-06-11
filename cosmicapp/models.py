@@ -252,6 +252,7 @@ class Profile(models.Model):
     limitingMag = models.FloatField(null=True, blank=True)
     modPoints = models.PositiveIntegerField()
     commentScore = models.IntegerField()
+    totalCost = models.FloatField(null=True, blank=True)
 
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
@@ -972,6 +973,7 @@ class ProcessOutput(models.Model):
     actualCostBandwidth = models.FloatField(null=True)
     actualCostStorage = models.FloatField(null=True)
     actualCostIO = models.FloatField(null=True)
+    actualCost = models.FloatField(null=True)
     outputText = models.TextField(null=True)
     outputErrorText = models.TextField(null=True)
     outputDBLogText = models.TextField(null=True)
@@ -2210,4 +2212,17 @@ class SavedQuery(models.Model):
     text = models.ForeignKey(TextBlob, on_delete=models.CASCADE)
     header = models.TextField()
     queryParams = models.TextField()
+
+class SiteCost(models.Model):
+    user = models.ForeignKey(User, null=True, db_index=True, on_delete=models.CASCADE)
+    dateTime = models.DateTimeField(auto_now_add=True)
+    text = models.TextField()
+    cost = models.FloatField(blank=True)
+
+class CostTotal(models.Model):
+    user = models.ForeignKey(User, null=True, db_index=True, on_delete=models.CASCADE)
+    startDate = models.DateTimeField(db_index=True)
+    endDate = models.DateTimeField(db_index=True)
+    text = models.TextField()
+    cost = models.FloatField(blank=True)
 

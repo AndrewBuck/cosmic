@@ -130,3 +130,9 @@ priority, created = ProcessPriority.objects.get_or_create(
     priorityClass = 'interactive'
     )
 
+priority, created = ProcessPriority.objects.get_or_create(
+    name = 'calculateUserCostTotals',
+    priority = 9999999,
+    priorityClass = 'batch'
+    )
+

@@ -27,3 +27,7 @@ CosmicVariable.setVariable('histogramIgnoreUpper', 'float', '.25')
 CosmicVariable.setVariable('asteroidEphemerideTolerance', 'float', '5')
 CosmicVariable.setVariable('asteroidEphemerideTimeTolerance', 'float', '90')
 CosmicVariable.setVariable('asteroidEphemerideMaxAngularDistance', 'float', '20')
+
+CosmicVariable.setVariable('storageCostPerMonth', 'float', '0.02')
+CosmicVariable.setVariable('cpuCostPerSecond', 'float', '0.00001')
+

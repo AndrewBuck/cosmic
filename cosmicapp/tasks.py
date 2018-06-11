@@ -5,6 +5,7 @@ from django.conf import settings
 from django.db.models import Avg, StdDev
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.files.storage import FileSystemStorage
+from django.db.models import Sum
 
 import subprocess
 import json
@@ -3248,6 +3249,81 @@ def imageCombine(argList, processInputId):
             image.parentImages.add(calibrationImage)
 
     #TODO: Set instrument/observatory if it was set on the parent images.
+
+    return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
+
+@shared_task
+def calculateUserCostTotals(startTimeString, endTimeString, processInputId):
+    outputText = ""
+    errorText = ""
+    taskStartTime = time.time()
+
+    startTime = dateparser.parse(startTimeString)
+    endTime = dateparser.parse(endTimeString)
+    deltaTime = endTime - startTime
+
+    with transaction.atomic():
+        storageCostPerMonth = models.CosmicVariable.getVariable('storageCostPerMonth')
+        storageCostPerByte = deltaTime.total_seconds() * ((storageCostPerMonth / 1e9) / (86400*30))
+        users = models.User.objects.all()
+        costTotals = []
+        for user in users:
+            storageSize = models.Image.objects\
+                .filter(fileRecord__user=user, fileRecord__uploadDateTime__lt=endTime)\
+                .aggregate(Sum('fileRecord__uploadSize'))['fileRecord__uploadSize__sum']
+
+            if storageSize is not None:
+                storageCost = storageSize * storageCostPerByte
+                print(user, storageSize, storageCost)
+                siteCost = models.SiteCost(
+                    user = user,
+                    text = 'Image storage cost for ' + str(startTime) + ' to ' + str(endTime),
+                    cost = storageCost
+                    )
+
+                siteCost.save()
+
+            storageSize = models.AudioNote.objects\
+                .filter(fileRecord__user=user, fileRecord__uploadDateTime__lt=endTime)\
+                .aggregate(Sum('fileRecord__uploadSize'))['fileRecord__uploadSize__sum']
+
+            if storageSize is not None:
+                storageCost = storageSize * storageCostPerByte
+                print(user, storageSize, storageCost)
+                siteCost = models.SiteCost(
+                    user = user,
+                    text = 'Audio note storage cost for ' + str(startTime) + ' to ' + str(endTime),
+                    cost = storageCost
+                    )
+
+                siteCost.save()
+
+            totalCost = models.SiteCost.objects\
+                .filter(user=user, dateTime__gt=startTime, dateTime__lt=endTime)\
+                .aggregate(Sum('cost'))['cost__sum']
+
+            if totalCost is None:
+                continue
+
+            costTotal = models.CostTotal(
+                user = user,
+                startDate = startTime,
+                endDate = endTime,
+                text = 'Daily cost total for ' + str(startTime),
+                cost = totalCost
+                )
+
+            costTotals.append(costTotal)
+
+        models.CostTotal.objects.bulk_create(costTotals)
+
+        for user in users:
+            userCost = models.CostTotal.objects\
+                .filter(user=user)\
+                .aggregate(Sum('cost'))['cost__sum']
+
+            user.profile.totalCost = userCost
+            user.save()
 
     return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 

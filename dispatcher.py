@@ -116,6 +116,12 @@ while not quit:
 
         celeryResult = imageCombine.delay(argList, pi.pk)
 
+    elif pi.process == 'calculateUserCostTotals':
+        arg0 = pi.arguments.all()[0].arg
+        arg1 = pi.arguments.all()[1].arg
+
+        celeryResult = calculateUserCostTotals.delay(arg0, arg1, pi.pk)
+
     else:
         print("Skipping unknown task type: " + pi.process)
         sys.stdout.flush()
@@ -140,14 +146,24 @@ while not quit:
     # Write the result of the returned value back to the database, either success, failure, or error (early exit).
     #TODO: Pass the return result through directly as a string and modify the individual tasks to return more detailed strings.
     if isinstance(celeryResult.info, dict):
+        cost = celeryResult.info['executionTime'] * CosmicVariable.getVariable('cpuCostPerSecond')
         processOutput = ProcessOutput(
             processInput = pi,
             outputText = celeryResult.info['outputText'],
             outputErrorText = celeryResult.info['outputErrorText'],
-            actualCostCPU = celeryResult.info['executionTime']
+            actualCostCPU = celeryResult.info['executionTime'],
+            actualCost = cost
             )
 
         processOutput.save()
+
+        siteCost = SiteCost(
+            user = pi.requestor,
+            text = 'Process input ' + str(pi.pk),
+            cost = cost
+            )
+
+        siteCost.save()
 
         pi.completed = 'success.'
     else:
