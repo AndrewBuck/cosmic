@@ -97,6 +97,9 @@ td.numMatchResults
             <br>
             <br> Has <a href="/image/{{id}}/properties/">{{image.properties.all.count}} image properties</a>.
             <br> Has <a href="/image/{{id}}/question/">{{image.answers.all.count}} questions answered</a> about it.
+            {% comment %}
+            TODO: Uncomment this when multiple bookmarks can be put on the same page.
+            {% bookmark "image" image.pk "Needs Questions Answered" %}{% endcomment %}
             {% for answer in image.answers.all %}
                 {% for kv in answer.kvs.all %}
                     <br>&emsp;{{kv.key}} = <a
@@ -105,7 +108,9 @@ td.numMatchResults
             {% endfor %}
             </font>
             <br>
-            {% comment %}<br> {% bookmark "image" image.pk "Saved Images" %}: Save image in folder{% endcomment %}
+            {% comment %}
+            TODO: Uncomment this when multiple bookmarks can be put on the same page.
+            <br> {% bookmark "image" image.pk "Saved Images" %}: Save image in folder{% endcomment %}
             <br> {% bookmark "image" image.pk "Marked for Download" %}: Mark for downloading
             <br>
             <br>
