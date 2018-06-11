@@ -1,0 +1,22 @@
+{% extends "cosmicapp/processDescriptionTemplate.html" %}
+{% load cosmicapp_extras %}
+
+{% block extratitle %} - About calculateUserCostTotals {% endblock extratitle %}
+
+{% block processName %}calculateUserCostTotals{% endblock %}
+
+{% block synopsis %}
+{% endblock %}
+
+{% block description %}
+{% endblock %}
+
+{% block arguments %}
+{% filter markdownParse %}
+* startTimeString - a string containing a date and time to define the beginning of the time window to calculate cost totals for.
+* endTimeString - a string containing a date and time to define the end of the time window to calculate cost totals for.
+* processInputId - The primary key of the ProcessInput object that describes this particular task.
+{% endfilter %}
+{% endblock %}
+
+

@@ -1,0 +1,21 @@
+{% extends "cosmicapp/processDescriptionTemplate.html" %}
+{% load cosmicapp_extras %}
+
+{% block extratitle %} - About imageCombine {% endblock extratitle %}
+
+{% block processName %}imageCombine{% endblock %}
+
+{% block synopsis %}
+{% endblock %}
+
+{% block description %}
+{% endblock %}
+
+{% block arguments %}
+{% filter markdownParse %}
+* argList - a list of string parsed by the task itself to specify the images to be combined, and how to combine them.
+* processInputId - The primary key of the ProcessInput object that describes this particular task.
+{% endfilter %}
+{% endblock %}
+
+
