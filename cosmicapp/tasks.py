@@ -3274,7 +3274,6 @@ def calculateUserCostTotals(startTimeString, endTimeString, processInputId):
 
             if storageSize is not None:
                 storageCost = storageSize * storageCostPerByte
-                print(user, storageSize, storageCost)
                 siteCost = models.SiteCost(
                     user = user,
                     text = 'Image storage cost for ' + str(startTime) + ' to ' + str(endTime),
@@ -3289,7 +3288,6 @@ def calculateUserCostTotals(startTimeString, endTimeString, processInputId):
 
             if storageSize is not None:
                 storageCost = storageSize * storageCostPerByte
-                print(user, storageSize, storageCost)
                 siteCost = models.SiteCost(
                     user = user,
                     text = 'Audio note storage cost for ' + str(startTime) + ' to ' + str(endTime),
