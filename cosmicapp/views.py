@@ -681,11 +681,39 @@ def observatory(request, id):
 def processQueue(request):
     context = {"user" : request.user}
 
-    processInputsUncompleted = ProcessInput.objects.filter(completed=None)\
+    imageIdList = request.GET.get('imageId', None)
+
+    try:
+        if imageIdList is not None:
+            imageIdList = imageIdList.split('|')
+            for i in range(len(imageIdList)):
+                imageIdList[i] = int(imageIdList[i])
+    except:
+        imageIdList = None
+
+    processIdList = []
+    if imageIdList is not None:
+        processesForImage = ProcessInput.objects.filter(images__in=imageIdList)
+        for process in processesForImage:
+            processIdList.append(process.pk)
+
+    processInputsUncompleted = ProcessInput.objects.filter(completed=None)
+
+    if imageIdList is not None:
+        processInputsUncompleted = processInputsUncompleted\
+            .filter(pk__in=processIdList)
+
+    processInputsUncompleted = processInputsUncompleted\
         .prefetch_related('processOutput', 'requestor')\
         .order_by('-priority', 'submittedDateTime')[:50]
 
-    processInputsCompleted = ProcessInput.objects.filter(~Q(completed=None))\
+    processInputsCompleted = ProcessInput.objects.filter(~Q(completed=None))
+
+    if imageIdList is not None:
+        processInputsCompleted = processInputsCompleted\
+            .filter(pk__in=processIdList)
+
+    processInputsCompleted = processInputsCompleted\
         .prefetch_related('processOutput', 'requestor')\
         .order_by('-startedDateTime')[:50]
 
