@@ -954,16 +954,16 @@ class ProcessInput(models.Model):
         ordering = ['-priority', 'submittedDateTime']
 
     def addArguments(self, argList):
+        index = 1
         for arg in argList:
-            i = 1
             pa = ProcessArgument(
                 processInput = self,
-                argIndex = i,
+                argIndex = index,
                 arg = str(arg)
                 )
 
             pa.save()
-            i += 1
+            index += 1
 
 class ProcessOutput(models.Model):
     processInput = models.ForeignKey(ProcessInput, db_index=True, on_delete=models.CASCADE, related_name='processOutput')
@@ -988,6 +988,9 @@ class ProcessArgument(models.Model):
     processInput = models.ForeignKey(ProcessInput, db_index=True, on_delete=models.CASCADE, related_name='arguments')
     argIndex = models.IntegerField()
     arg = models.CharField(max_length=256)
+
+    class Meta:
+        ordering = ['argIndex']
 
 class ProcessOutputFile(models.Model):
     processInput = models.ForeignKey(ProcessInput, db_index=True, on_delete=models.CASCADE)
