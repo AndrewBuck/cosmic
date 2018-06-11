@@ -14,8 +14,8 @@ from django.utils import timezone
 from cosmicapp.models import *
 from cosmicapp.tasks import *
 
-startTime = dateparser.parse('2015 UTC')
-endTime = dateparser.parse('2019 UTC')
+startTime = ""
+endTime = ""
 
 if len(sys.argv) > 1:
     startTime = dateparser.parse(sys.argv[1] + 'UTC')
@@ -23,7 +23,7 @@ if len(sys.argv) > 1:
 if len(sys.argv) > 2:
     endTime = dateparser.parse(sys.argv[2] + 'UTC')
 
-print('Calculating user costs {} to {}'.format(startTime, endTime))
+print('Calculating user costs from "{}" to "{}"'.format(startTime, endTime))
 sys.stdout.flush()
 
 with transaction.atomic():

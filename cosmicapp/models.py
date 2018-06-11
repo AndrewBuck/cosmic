@@ -2215,7 +2215,7 @@ class SavedQuery(models.Model):
 
 class SiteCost(models.Model):
     user = models.ForeignKey(User, null=True, db_index=True, on_delete=models.CASCADE)
-    dateTime = models.DateTimeField(auto_now_add=True)
+    dateTime = models.DateTimeField()
     text = models.TextField()
     cost = models.FloatField(blank=True)
 

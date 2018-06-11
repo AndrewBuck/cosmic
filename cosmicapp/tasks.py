@@ -5,7 +5,8 @@ from django.conf import settings
 from django.db.models import Avg, StdDev
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.files.storage import FileSystemStorage
-from django.db.models import Sum
+from django.db.models import Sum, Max
+from django.utils import timezone
 
 import subprocess
 import json
@@ -3258,8 +3259,22 @@ def calculateUserCostTotals(startTimeString, endTimeString, processInputId):
     errorText = ""
     taskStartTime = time.time()
 
-    startTime = dateparser.parse(startTimeString)
-    endTime = dateparser.parse(endTimeString)
+    if startTimeString != '':
+        startTime = dateparser.parse(startTimeString)
+    else:
+        startTime = models.CostTotal.objects.aggregate(Max('endDate'))['endDate__max']
+
+    if endTimeString != '':
+        endTime = dateparser.parse(endTimeString)
+    else:
+        endTime = timezone.now()
+
+    if startTime is None or endTime is None:
+        errorText += 'Exiting due to Null start time or end time.'
+        return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
+
+    outputText += 'Calculating user resource cost totals for the following period.\n'
+    outputText += 'Start Time: {}\nEnd Time: {}\n\n'.format(startTime, endTime)
     deltaTime = endTime - startTime
 
     with transaction.atomic():
@@ -3269,13 +3284,14 @@ def calculateUserCostTotals(startTimeString, endTimeString, processInputId):
         costTotals = []
         for user in users:
             storageSize = models.Image.objects\
-                .filter(fileRecord__user=user, fileRecord__uploadDateTime__lt=endTime)\
+                .filter(fileRecord__user=user, fileRecord__uploadDateTime__lte=endTime)\
                 .aggregate(Sum('fileRecord__uploadSize'))['fileRecord__uploadSize__sum']
 
             if storageSize is not None:
                 storageCost = storageSize * storageCostPerByte
                 siteCost = models.SiteCost(
                     user = user,
+                    dateTime = endTime,
                     text = 'Image storage cost for ' + str(startTime) + ' to ' + str(endTime),
                     cost = storageCost
                     )
@@ -3283,13 +3299,14 @@ def calculateUserCostTotals(startTimeString, endTimeString, processInputId):
                 siteCost.save()
 
             storageSize = models.AudioNote.objects\
-                .filter(fileRecord__user=user, fileRecord__uploadDateTime__lt=endTime)\
+                .filter(fileRecord__user=user, fileRecord__uploadDateTime__lte=endTime)\
                 .aggregate(Sum('fileRecord__uploadSize'))['fileRecord__uploadSize__sum']
 
             if storageSize is not None:
                 storageCost = storageSize * storageCostPerByte
                 siteCost = models.SiteCost(
                     user = user,
+                    dateTime = endTime,
                     text = 'Audio note storage cost for ' + str(startTime) + ' to ' + str(endTime),
                     cost = storageCost
                     )
@@ -3297,7 +3314,7 @@ def calculateUserCostTotals(startTimeString, endTimeString, processInputId):
                 siteCost.save()
 
             totalCost = models.SiteCost.objects\
-                .filter(user=user, dateTime__gt=startTime, dateTime__lt=endTime)\
+                .filter(user=user, dateTime__gt=startTime, dateTime__lte=endTime)\
                 .aggregate(Sum('cost'))['cost__sum']
 
             if totalCost is None:

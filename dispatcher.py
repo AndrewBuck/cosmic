@@ -159,6 +159,7 @@ while not quit:
 
         siteCost = SiteCost(
             user = pi.requestor,
+            dateTime = timezone.now(),
             text = 'Process input ' + str(pi.pk),
             cost = cost
             )
