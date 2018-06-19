@@ -10,7 +10,7 @@ CosmicVariable.setVariable('astrometryNetTimeout1', 'int', '30')
 CosmicVariable.setVariable('astrometryNetDepth1', 'string', '8,12,20')
 
 CosmicVariable.setVariable('astrometryNetTimeout2', 'int', '120')
-CosmicVariable.setVariable('astrometryNetDepth2', 'string', '12,20,25')
+CosmicVariable.setVariable('astrometryNetDepth2', 'string', '12,25,35,45,70')
 
 CosmicVariable.setVariable('astrometryNetRadius', 'float', '10')
 CosmicVariable.setVariable('astrometryNetZenithRadius', 'float', '80')
