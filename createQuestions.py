@@ -50,8 +50,7 @@ r, created = QuestionResponse.objects.get_or_create(
     index = 2,
     inputType = 'checkbox',
     text = 'Out of focus',
-    descriptionText = 'The stars look like doughnuts with a dark spot in the middle and a
-    bright ring around.',
+    descriptionText = 'The stars look like doughnuts with a dark spot in the middle and a bright ring around.',
     keyToSet = 'outOfFocus',
     valueToSet = 'yes'
     )
