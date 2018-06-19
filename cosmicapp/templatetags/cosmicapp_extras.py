@@ -164,13 +164,14 @@ def displayComment(context, comment, prefix=None, postfix=None):
     tempDict['comment'] = comment
     tempDict['prefix'] = prefix
     tempDict['postfix'] = postfix
-    tempDict['previousMods'] = models.CommentModeration.objects.filter(user=context['user'], comment=comment)
-    tempDict['previousFlags'] = models.CommentFlag.objects.filter(user=context['user'], comment=comment)
-    tempDict['previousFlagsCounts'] = models.CommentFlag.objects.filter(comment=comment)\
-        .values('flagValue').annotate(count=Count('id'))
-    tempDict['previousResponses'] = models.CommentNeedsResponse.objects.filter(user=context['user'], comment=comment)
-    tempDict['previousResponsesCounts'] = models.CommentNeedsResponse.objects.filter(comment=comment)\
-        .values('responseValue').annotate(count=Count('id'))
+    if context['user'].is_authenticated:
+        tempDict['previousMods'] = models.CommentModeration.objects.filter(user=context['user'], comment=comment)
+        tempDict['previousFlags'] = models.CommentFlag.objects.filter(user=context['user'], comment=comment)
+        tempDict['previousFlagsCounts'] = models.CommentFlag.objects.filter(comment=comment)\
+            .values('flagValue').annotate(count=Count('id'))
+        tempDict['previousResponses'] = models.CommentNeedsResponse.objects.filter(user=context['user'], comment=comment)
+        tempDict['previousResponsesCounts'] = models.CommentNeedsResponse.objects.filter(comment=comment)\
+            .values('responseValue').annotate(count=Count('id'))
     return tempDict
 
 @register.inclusion_tag('cosmicapp/displayCommentsFor.html', takes_context=True)
