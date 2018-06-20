@@ -1797,6 +1797,7 @@ def getMap(request, body):
     return render(request, "cosmicapp/map/sky.html", context)
 
 def mapTile(request, body, zoom, tileX, tileY):
+    #TODO: Add seperate tile url layers that offer a white on black view (the current layer), black on white, nightvision, etc.
     def num2deg(xtile, ytile, zoom):
         n = 2.0 ** zoom
         lon_deg = 360.0 * ( xtile - n//2 ) / n
