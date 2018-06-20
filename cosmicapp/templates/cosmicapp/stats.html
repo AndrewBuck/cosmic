@@ -44,7 +44,7 @@ Total number of images on the site: {{numImages|intcomma}}
 <br>&emsp;&emsp;{{numImages|subtract:numImagesWithAnswers|intcomma}}&emsp;({% percentage numImages|subtract:numImagesWithAnswers numImages %}%) of the images do not have any questions answered about them.
 <br>
 <br>&emsp;These images total {{totalImageSize|filesizeformat}}.
-<br>&emsp;Estimated storage cost per month to store these files ${{totalImageSize|divide:1000000000|multiply:storageCostPerMonth|floatformat:2}}.
+<br>&emsp;Estimated storage cost per month to store these files ${{totalImageSize|default:0|divide:1000000000|multiply:storageCostPerMonth|floatformat:2}}.
 <br>&emsp;&emsp;Min Size: {{minImageSize|filesizeformat}}.
 <br>&emsp;&emsp;Average Size (std dev): {{avgImageSize|filesizeformat}} ({{stdDevImageSize|filesizeformat}}).
 <br>&emsp;&emsp;Max Size: {{maxImageSize|filesizeformat}}.
@@ -76,7 +76,7 @@ Total number of audio notes on the site: {{numAudioNotes|intcomma}}
 
 <br>
 <br>&emsp;These audio notes total {{totalAudioNoteSize|filesizeformat}}.
-<br>&emsp;Estimated storage cost per month to store these files ${{totalAudioNoteSize|divide:1000000000|multiply:storageCostPerMonth|floatformat:2}}.
+<br>&emsp;Estimated storage cost per month to store these files ${{totalAudioNoteSize|default:0|divide:1000000000|multiply:storageCostPerMonth|floatformat:2}}.
 <br>&emsp;&emsp;Min Size: {{minAudioNoteSize|filesizeformat}}.
 <br>&emsp;&emsp;Average Size (std dev): {{avgAudioNoteSize|filesizeformat}} ({{stdDevAudioNoteSize|filesizeformat}}).
 <br>&emsp;&emsp;Max Size: {{maxAudioNoteSize|filesizeformat}}.
