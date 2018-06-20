@@ -52,6 +52,7 @@ Score {{comment.score}}
 #eee;
 {% endif %}
 ">{{comment|safe}}</div>
+{% if user.is_authenticated %}
 <br>
 <span id="comment_{{comment.id}}_interactSpanSmall"
 onclick="$('#comment_{{comment.id}}_interactSpan').show(200); $(this).hide();">
@@ -120,6 +121,7 @@ onclick="$('#comment_{{comment.id}}_interactSpan').show(200); $(this).hide();">
     Moderated {{previousMod.modValue}} on {{previousMod.dateTime}} ({{previousMod.dateTime|timesince}} ago)
     {% endfor %}
     </span>
+{% endif %}
 {% endif %}
 
 <br>
