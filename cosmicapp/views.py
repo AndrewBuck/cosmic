@@ -2370,9 +2370,11 @@ def saveUserComputedWCS(request):
 
     return HttpResponse(json.dumps({'text': 'Response Saved Successfully'}), status=200)
 
-@login_required
 @require_http_methods(['POST'])
 def saveUserSubmittedSourceResults(request):
+    if not request.user.is_authenticated:
+        return HttpResponse('Login required to save user submitted objects.', status=401,  reason='Login required.')
+
     id = int(request.POST.get('imageId', '-1'))
     if id != -1:
         image = Image.objects.get(pk=id)

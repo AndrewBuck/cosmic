@@ -161,6 +161,7 @@ colors are defined in javascript, we need to do this in the window.onload functi
     </td>
 </tr>
 
+{% if user.is_authenticated %}
 <tr>
 <td colspan=2>How did<br>we do:</td>
 <td align=center class='sextractorResults'>
@@ -220,6 +221,7 @@ colors are defined in javascript, we need to do this in the window.onload functi
 </td>
 
 </tr>
+{% endif %}
 </table>
 
 <div id=uploadResultsDiv>
@@ -384,6 +386,11 @@ var maxDistanceFromStarSquared = maxDistanceFromStar*maxDistanceFromStar;
 var lastDrawSourcesTime = 0;
 var feedbackSubmittedDict = {'sextractor': false, 'image2xy': false, 'daofind': false, 'starfind': false}
 
+{% if user.is_authenticated %}
+var is_authenticated = true;
+{% else %}
+var is_authenticated = false;
+{% endif %}
 var plot;
 
 var keyCodeDict = {
@@ -936,8 +943,11 @@ function submitUserResults()
             userCreatedHotPixels = [];
             userSubmittedHotPixels = [];
             getUserSubmittedHotPixels();
+        },
+        error : function(response)
+        {
+            alert(response.responseText);
         }
-        //TODO: Implement error handler.
     });
 };
 
@@ -1911,6 +1921,9 @@ function handleMouseButtonUp(event)
             userCreatedResults[userCreatedResults.length] = {pixelX: xPos, pixelY: yPos, confidence: 1.0};
         else if(lmbDown && mode == 'hotpixels')
             userCreatedHotPixels[userCreatedHotPixels.length] = {pixelX: xPos, pixelY: yPos, confidence: 1.0};
+
+        if(lmbDown && !is_authenticated)
+            alert('Warning: you are not logged in, so you will not be able to save your marked objects to the database.');
 
         lmbDown = false;
         drawSources();
