@@ -3043,14 +3043,20 @@ def combineImageIds(request):
     if masterBiasId != -1:
         filteredIdList.append('masterBiasId=int:' + str(masterBiasId))
         masterBiasImage = Image.objects.filter(pk=masterBiasId).first()
+    else:
+        masterBiasImage = None
 
     if masterDarkId != -1:
         filteredIdList.append('masterDarkId=int:' + str(masterDarkId))
         masterDarkImage = Image.objects.filter(pk=masterDarkId).first()
+    else:
+        masterDarkImage = None
 
     if masterFlatId != -1:
         filteredIdList.append('masterFlatId=int:' + str(masterFlatId))
         masterFlatImage = Image.objects.filter(pk=masterFlatId).first()
+    else:
+        masterFlatImage = None
 
     for image in images:
         totalSize += image.fileRecord.uploadSize
@@ -3073,9 +3079,9 @@ def combineImageIds(request):
         for image in images:
             piCombine.images.add(image)
 
-        piCombine.images.add(masterBiasImage)
-        piCombine.images.add(masterDarkImage)
-        piCombine.images.add(masterFlatImage)
+        for calImage in [masterBiasImage, masterDarkImage, masterFlatImage]:
+            if calImage is not None:
+                piCombine.images.add(calImage)
 
     responseDict['message'] = 'Image combine task for {} images added to process queue.  Your combined image will be available shortly.'.format(len(images))
     return HttpResponse(json.dumps(responseDict), status=200)
