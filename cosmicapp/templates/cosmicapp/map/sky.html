@@ -47,7 +47,7 @@ $( document ).ready(function()
 
     if(mlat != '' && mlon != '')
     {
-        var marker = L.marker([{{markerLat}}, {{markerLon}}]).addTo(mymap);
+        var marker = L.marker([mlat, mlon]).addTo(mymap);
         layerControl.addOverlay(marker, 'Marker');
     }
 
