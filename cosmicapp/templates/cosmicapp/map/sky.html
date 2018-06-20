@@ -110,7 +110,7 @@ $( document ).ready(function()
                 plateSolutions = response;
                 for(i = 0; i < plateSolutions.length; i++)
                 {
-                    var polygon = L.polygon(plateSolutions[i].footprint, {color: 'red'}).addTo(mymap);
+                    var polygon = L.polygon(plateSolutions[i].footprint, {color: 'red', fill: false}).addTo(mymap);
 
                     var popupHtml = 'Image <a href="/image/' + plateSolutions[i].image_id +
                         '/">' + plateSolutions[i].image_id + '</a> plate solution ' + plateSolutions[i].id
