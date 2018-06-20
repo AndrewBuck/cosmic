@@ -15,12 +15,15 @@
 <a href="/catalog/{{method}}/{{obj.id|add:1}}">{{method}} {{obj.id|add:1}} &gt;</a>
 
 <br>
+{% if user.is_authenticated %}
 <br>
 {% bookmark obj.getBookmarkTypeString obj.pk "Unsorted Bookmarks" "" "" %}
 Bookmark this object.
+{% endif %}
 
 <br>
 <br>
+{% comment %}TODO: Need to check if this SkyObject is fixed like a star or moves like an asteroid, and not set ra/dec for moving object types.{% endcomment %}
 <a href="/upload/?object={{obj.getDisplayName|urlencode}}&objectRA={{obj.getSkyCoords.0}}&objectDec={{obj.getSkyCoords.1}}&image={{obj.image.pk}}">
 Upload images of this object</a>
 
