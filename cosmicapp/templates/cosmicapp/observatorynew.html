@@ -1,6 +1,66 @@
 {% extends "cosmicapp/base.html" %}
 {% load cosmicapp_extras %}
 
+{% block extrahead %}
+{% include "./jquery.html" %}
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.1/dist/leaflet.css"
+    integrity="sha512-Rksm5RenBEKSKFjgI3a41vrjkw4EVPlJ3+OiI65vTjIdo9brlAacEuKOiQ5OFh7cOI1bkDwLqdLw3Zg0cRJAAQ=="
+    crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js"
+    integrity="sha512-/Nsx9X4HebavoBvEBuyp3I7od5tA0UzAxs+j83KgC8PU0kgB4XiK4Lfe4y4cgBtaRJQEIFCW+oC506aPT2L1zw=="
+    crossorigin=""></script>
+
+<script>
+function setLatLng(lat, lng)
+{
+    $('#latText').attr('value', lat);
+    $('#lngText').attr('value', lng);
+
+    $.ajax({
+        url : "https://api.open-elevation.com/api/v1/lookup\?locations\=" + lat + "," + lng,
+        type : "get",
+        async: true,
+        dataType: 'json',
+        success : function(response)
+        {
+            var ele = response.results[0].elevation;
+            $('#eleText').attr('value', ele);
+        },
+        error : function(response)
+        {
+            $('#eleText').attr('value', '');
+        }
+    });
+};
+
+$(document).ready(function()
+{
+    var map = L.map('map').setView([{{ipLat}}, {{ipLng}}], 5);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+    map.on('click', function(ev)
+    {
+        var lng = (ev.latlng.lng % 360);
+        var lat = ev.latlng.lat;
+
+        var popupContent = '';
+        popupContent += 'Lat: ' + lat.toFixed(3) + '&deg; Lon: ' + lng.toFixed(3) + '&deg;<br><br>';
+        popupContent += '<a class=functionLink onclick="setLatLng(' + lat + ',' + lng + ')">Set lat / lon / ele</a>';
+
+        var popup = L.popup()
+            .setLatLng(ev.latlng)
+            .setContent(popupContent)
+            .openOn(map);
+    });
+
+});
+</script>
+{% endblock extrahead %}
+
 {% block extratitle %} - Create new observatory {% endblock %}
 
 {% block mainbody %}
@@ -15,13 +75,16 @@ set for your observatories.
 <form action="/observatory/new/" method="POST">
 {% csrf_token %}
 Name: <input type="text" name="name" value="{{defaultName}}"> (optional) A name identify this location in case you observe from multiple locations.<br>
-Lat: <input type="text" name="lat" value="{{defaultLat}}"> (required) Latitude in decimal degrees (negative number for southern hemisphere)<br>
-Lon: <input type="text" name="lon" value="{{defaultLon}}"> (required) Longitude in decimal degrees (poitive for 'east' and negative for 'west')<br>
-Elevation: <input type="text" name="ele" value="{{defaultEle}}"> (recommeded) Elevation of the site in meters above sea level.<br>
+Lat: <input type="text" id=latText name="lat" value="{{defaultLat}}"> (required) Latitude in decimal degrees (negative number for southern hemisphere)<br>
+Lon: <input type="text" id=lngText name="lon" value="{{defaultLon}}"> (required) Longitude in decimal degrees (poitive for 'east' and negative for 'west')<br>
+Elevation: <input type="text" id=eleText name="ele" value="{{defaultEle}}"> (recommeded) Elevation of the site in meters above sea level.<br>
 Make Default: <input type="checkbox" name="makedefault" value="checked" {{defaultChecked}}> (optional) If checked, set this as your default observing location.<br><br>
 {% if error %}<p style="color: red">{{error}}<br><br></p>{% endif %}
 <input type="submit" value="Save Profile">
 </form>
+
+<div id=map style="width: 80%; height: 400px; margin: auto; margin-top: 2em;"><div>
+
 </p>
 
 {% endblock mainbody %}

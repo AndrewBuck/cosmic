@@ -654,6 +654,14 @@ def observatory(request, id):
             if not request.user.is_authenticated:
                 context['error'] = 'Error: You must be logged in to create an observatory.'
 
+            (lat, lon) = getLocationForIp(getClientIp(request))
+            if lat is not None and lon is not None:
+                context['ipLat'] = lat
+                context['ipLng'] = lon
+            else:
+                context['ipLat'] = 10
+                context['ipLng'] = 10
+
             return render(request, "cosmicapp/observatorynew.html", context)
 
     try:
