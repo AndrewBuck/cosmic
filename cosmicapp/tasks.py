@@ -2695,10 +2695,12 @@ def parseHeaders(imageId, processInputId):
             elif header.key in ['fits:sitelat', 'fits:lat-obs']:
                 key = 'observerLat'
                 value = header.value.split('/')[0].strip().strip("'").lower()
+                value = str(parseDMS(value))
 
             elif header.key in ['fits:sitelong', 'fits:long-obs']:
                 key = 'observerLon'
                 value = header.value.split('/')[0].strip().strip("'").lower()
+                value = str(parseDMS(value))
 
             elif header.key in ['fits:winddir']:
                 key = 'weatherWindDirection'
@@ -2746,14 +2748,15 @@ def parseHeaders(imageId, processInputId):
                 key = 'objectHA'
                 value = header.value.split('/')[0].strip().strip("'").lower()
 
-            #TODO: Check if ra dec is 0 and if so, ignore it.  Some headers have      fits:objctra    '00 00 00.000'
             elif header.key in ['fits:objctra', 'fits:ra']:
                 key = 'objectRA'
                 value = header.value.split('/')[0].strip().strip("'").lower()
+                value = str(parseHMS(value))
 
             elif header.key in ['fits:objctdec', 'fits:dec']:
                 key = 'objectDec'
                 value = header.value.split('/')[0].strip().strip("'").lower()
+                value = str(parseDMS(value))
 
             elif header.key in ['fits:equinox']:
                 key = 'equinox'
@@ -2762,10 +2765,12 @@ def parseHeaders(imageId, processInputId):
             elif header.key in ['fits:objctalt', 'fits:altitude']:
                 key = 'objectAlt'
                 value = header.value.split('/')[0].strip().strip("'").lower()
+                value = str(parseDMS(value))
 
             elif header.key in ['fits:objctaz', 'fits:azimuth']:
                 key = 'objectAz'
                 value = header.value.split('/')[0].strip().strip("'").lower()
+                value = str(parseDMS(value))
 
             elif header.key in ['fits:airmass']:
                 key = 'airmass'
@@ -2865,6 +2870,16 @@ def parseHeaders(imageId, processInputId):
                 image.frameType = newImageType
                 image.save()
 
+
+        # If both objectRA and objectDec are 0 then remove them since they are likely just null values from the
+        # software that wrote the fits file.
+        objectRA = image.getImageProperty('objectRA')
+        objectDec = image.getImageProperty('objectDec')
+        if objectRA is not None and objectDec is not None:
+            if abs(float(objectRA) - 0) < 1e-9 and abs(float(objectDec) - 0) < 1e-9:
+                image.removeImageProperty('objectRA')
+                image.removeImageProperty('objectDec')
+                image.addImageProperty('objectRADecRemoved', 'true', True)
 
         # If this image has one or more 'object' tags we should examine them to see what we can determine.
         for obj in image.getImageProperty('object', True):

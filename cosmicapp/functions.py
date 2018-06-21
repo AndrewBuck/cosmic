@@ -1,3 +1,4 @@
+import re
 import sqlparse
 import ephem
 import astropy
@@ -795,4 +796,47 @@ def parseFloat(stringToParse):
         return float(stringToParse)
     except:
         return None
+
+def parseHMS(stringToParse):
+    value = parseDMS(stringToParse)
+    if value is not None:
+        return 15*value
+    else:
+        return None
+
+def parseDMS(stringToParse):
+    try:
+        # If the string is already in decimal degrees just return that.
+        return float(stringToParse.strip())
+    except:
+        # The string is not simply decimal degrees, don't need to do anything here, just catch the error and then let
+        # the rest of the code in this function handle the other cases.
+        pass
+
+
+    factors = [1, 1/60, 1/3600]
+    total = None
+
+    reg = re.compile(r'([+-]?[\d.]+)[: ]([\d.]+)[: ]([\d.]+)')
+    matches = reg.match(stringToParse.strip())
+    if matches is not None:
+        for factor, numberString in zip(factors, matches.groups()):
+            try:
+                product = factor * float(numberString)
+            except:
+                return None
+
+            if total is None:
+                total = product
+                if total >= 0:
+                    positive = True
+                else:
+                    positive = False
+            else:
+                if positive:
+                    total += product
+                else:
+                    total -= product
+
+    return total
 
