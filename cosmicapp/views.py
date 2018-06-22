@@ -702,6 +702,7 @@ def processQueue(request):
     processIdList = []
     if imageIdList is not None:
         processesForImage = ProcessInput.objects.filter(images__in=imageIdList)
+        context['totalImageCPUTime'] = processesForImage.aggregate(Sum('processOutput__actualCostCPU'))['processOutput__actualCostCPU__sum']
         for process in processesForImage:
             processIdList.append(process.pk)
 

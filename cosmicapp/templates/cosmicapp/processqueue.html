@@ -10,6 +10,12 @@ processed by a series of programs which calculate statistics about the image, co
 locate stars in the image, and many other things.  Each of these individual operations constitutes a single process
 which gets put into this queue until the server has time to execute it.</p>
 
+{% if totalImageCPUTime %}
+<p>
+The total CPU time spent processing this image so far is: {{totalImageCPUTime|floatformat:3}} seconds
+</p>
+{% endif %}
+
     <table border="2px">
     <tr>
         <th> User<br><br> <a href="/about/processes/">Process</a> </th>
