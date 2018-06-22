@@ -841,9 +841,9 @@ class ImageTransform(models.Model):
             ])
 
 class AudioNote(models.Model):
-    fileRecord = models.ForeignKey(UploadedFileRecord, db_index=True, on_delete=models.PROTECT, null=True, related_name='audioNote')
-    observatory = models.ForeignKey(Observatory, on_delete=models.PROTECT, null=True)
-    instrument = models.ForeignKey(InstrumentConfiguration, on_delete=models.PROTECT, null=True)
+    fileRecord = models.ForeignKey(UploadedFileRecord, on_delete=models.PROTECT, null=True, related_name='audioNote')
+    observatory = models.ForeignKey(Observatory, db_index=True, on_delete=models.PROTECT, null=True)
+    instrument = models.ForeignKey(InstrumentConfiguration, db_index=True, on_delete=models.PROTECT, null=True)
     dateTime = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
     length = models.FloatField(null=True)
     transcriptions = models.ManyToManyField('TextBlob', symmetrical=False, related_name='audioNotes', through='AudioNoteTranscriptionLink')
@@ -2221,8 +2221,8 @@ class SiteCost(models.Model):
 
 class CostTotal(models.Model):
     user = models.ForeignKey(User, null=True, db_index=True, on_delete=models.CASCADE)
-    startDate = models.DateTimeField(db_index=True)
-    endDate = models.DateTimeField(db_index=True)
+    startDate = models.DateTimeField(null=False, db_index=True)
+    endDate = models.DateTimeField(null=False, db_index=True)
     text = models.TextField()
-    cost = models.FloatField(blank=True)
+    cost = models.FloatField(null=False, blank=True)
 
