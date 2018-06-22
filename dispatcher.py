@@ -3,6 +3,7 @@ import sys
 import time
 import django
 from django.utils import timezone
+import threading
 import celery
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "cosmic.settings")
@@ -13,10 +14,11 @@ from cosmicapp.models import *
 from cosmicapp.tasks import *
 
 quit = False
+dispatchSemaphore = threading.Semaphore(value=3)
 
 # The time to wait between successive checks to the DB for tasks in the queue.  The first value is the time to wait
 # between tasks when there is more than one in the queue, subsequent values are used for a "backoff timer".
-sleepTimes = [0.1, 0.5, 1.5, 3, 3, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+sleepTimes = [0.3, 0.5, 1.5, 3, 3, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
     10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 15]
 sleepTimeIndex = 0
 
@@ -32,43 +34,18 @@ def getFirstPrerequisite(pi):
             continue
 
     if None in unmet:
-        return none
-    elif len(unmet) > 0:
-        return unmet[0]
-    else:
+        return None
+
+    for prereq in unmet:
+        if prereq.startedDateTime is None:
+            return prereq
+
+    if len(unmet) == 0:
         return pi
+    else:
+        return None
 
-while not quit:
-    if sleepTimeIndex > len(sleepTimes) - 1:
-        sleepTimeIndex = len(sleepTimes) - 1
-
-    sleepTime = sleepTimes[sleepTimeIndex]
-    print("Sleeping for " + str(sleepTime) + " seconds.")
-    sys.stdout.flush()
-    time.sleep(sleepTime)
-    print("Checking queue.")
-    sys.stdout.flush()
-
-    try:
-        pi = ProcessInput.objects.filter(completed=None).order_by('-priority', 'submittedDateTime')[:1][0]
-    except IndexError:
-        sleepTimeIndex += 1
-        continue
-    except:
-        print("Unexpected error:", sys.exc_info()[0])
-        raise
-
-    print("checking prerequisistes for:  ", pi.process)
-    pi = getFirstPrerequisite(pi)
-    argList = ''
-    for arg in pi.arguments.all():
-        argList += ' "{}"'.format(arg.arg)
-    print("prerequisiste is:  {} {}".format(pi.process, argList))
-    if pi == None:
-        pi.completed = 'failed_prerequisite'
-        pi.save()
-        continue
-
+def dispatchProcessInput(pi):
     if pi.process == 'imagestats':
         arg = pi.arguments.all()[0].arg
         celeryResult = imagestats.delay(arg, pi.pk)
@@ -125,12 +102,7 @@ while not quit:
     else:
         print("Skipping unknown task type: " + pi.process)
         sys.stdout.flush()
-        continue
-
-    pi.startedDateTime = timezone.now()
-    pi.save()
-    print("Task dispatched.")
-    sys.stdout.flush()
+        return
 
     #TODO: This forces the task to complete before the next task is submitted to celery.  In the future when we have
     # multiple celery workers this should be expanded to pass out several jobs at a time and replace any completed
@@ -180,5 +152,60 @@ while not quit:
     print("Task completed with result:  " + pi.completed)
     sys.stdout.flush()
 
+    dispatchSemaphore.release()
+
+# Begin program exectution.
+while not quit:
+    if sleepTimeIndex > len(sleepTimes) - 1:
+        sleepTimeIndex = len(sleepTimes) - 1
+
+    sleepTime = sleepTimes[sleepTimeIndex]
+    print("Sleeping for " + str(sleepTime) + " seconds.")
+    sys.stdout.flush()
+    time.sleep(sleepTime)
+    print("Checking queue.")
+    sys.stdout.flush()
+
+    try:
+        index = random.Random().randint(0, 5)
+        inputQuery = ProcessInput.objects.filter(completed=None, startedDateTime__isnull=True).order_by('-priority', 'submittedDateTime')
+        pi = inputQuery[index:index+1][0]
+    except IndexError:
+        if len(inputQuery) == 0:
+            sleepTimeIndex += 1
+            continue
+        else:
+            pi = inputQuery[0]
+    except:
+        print("Unexpected error:", sys.exc_info()[0])
+        sys.stdout.flush()
+        raise
+
+    print("checking prerequisistes for:  ", pi.process)
+    sys.stdout.flush()
+    pi = getFirstPrerequisite(pi)
+
+    if pi == None:
+        #TODO: Need to actually handle failed prerequisites again, right now I think they will lead to an infinite loop in the dispatcher.
+        #pi.completed = 'failed_prerequisite'
+        #pi.save()
+        continue
+
+    argList = ''
+    for arg in pi.arguments.all():
+        argList += ' "{}"'.format(arg.arg)
+    print("prerequisiste is:  {} {}".format(pi.process, argList))
+    sys.stdout.flush()
+
+    dispatchSemaphore.acquire()
+
+    pi.startedDateTime = timezone.now()
+    pi.save()
+    print("Task dispatched.")
+    sys.stdout.flush()
+
+    t = threading.Thread(target=dispatchProcessInput, args=(pi,))
+    t.start()
+    time.sleep(0.1)
     sleepTimeIndex = 0
 

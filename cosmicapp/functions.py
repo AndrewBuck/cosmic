@@ -374,124 +374,6 @@ def createTasksForNewImage(fileRecord, user):
         piImagestats.addArguments([fileRecord.onDiskFileName])
         piImagestats.images.add(imageRecord)
 
-        piThumbnails = models.ProcessInput(
-            process = "generateThumbnails",
-            requestor = user,
-            priority = models.ProcessPriority.getPriorityForProcess("generateThumbnails", "batch"),
-            estCostCPU = fileRecord.uploadSize / 1e6,
-            estCostBandwidth = 0,
-            estCostStorage = fileRecord.uploadSize / 10,
-            estCostIO = 1.5 * fileRecord.uploadSize
-            )
-
-        piThumbnails.save()
-        piThumbnails.addArguments([fileRecord.onDiskFileName])
-        piThumbnails.images.add(imageRecord)
-
-        piSextractor = models.ProcessInput(
-            process = "sextractor",
-            requestor = user,
-            priority = models.ProcessPriority.getPriorityForProcess("sextractor", "batch"),
-            estCostCPU = 0.5 * fileRecord.uploadSize / 1e6,
-            estCostBandwidth = 0,
-            estCostStorage = 3000,
-            estCostIO = fileRecord.uploadSize
-            )
-
-        piSextractor.save()
-        piSextractor.addArguments([fileRecord.onDiskFileName])
-        piSextractor.images.add(imageRecord)
-
-        piImage2xy = models.ProcessInput(
-            process = "image2xy",
-            requestor = user,
-            priority = models.ProcessPriority.getPriorityForProcess("image2xy", "batch"),
-            estCostCPU = 0.5 * fileRecord.uploadSize / 1e6,
-            estCostBandwidth = 0,
-            estCostStorage = 3000,
-            estCostIO = fileRecord.uploadSize
-            )
-
-        piImage2xy.save()
-        piImage2xy.addArguments([fileRecord.onDiskFileName])
-        piImage2xy.images.add(imageRecord)
-
-        piDaofind = models.ProcessInput(
-            process = "daofind",
-            requestor = user,
-            priority = models.ProcessPriority.getPriorityForProcess("daofind", "batch"),
-            estCostCPU = 0.5 * fileRecord.uploadSize / 1e6,
-            estCostBandwidth = 0,
-            estCostStorage = 3000,
-            estCostIO = fileRecord.uploadSize
-            )
-
-        piDaofind.save()
-        piDaofind.addArguments([fileRecord.onDiskFileName])
-        piDaofind.images.add(imageRecord)
-
-        piStarfind = models.ProcessInput(
-            process = "starfind",
-            requestor = user,
-            priority = models.ProcessPriority.getPriorityForProcess("starfind", "batch"),
-            estCostCPU = 0.5 * fileRecord.uploadSize / 1e6,
-            estCostBandwidth = 0,
-            estCostStorage = 3000,
-            estCostIO = fileRecord.uploadSize
-            )
-
-        piStarfind.save()
-        piStarfind.addArguments([fileRecord.onDiskFileName])
-        piStarfind.images.add(imageRecord)
-
-        piFlagSources = models.ProcessInput(
-            process = "flagSources",
-            requestor = user,
-            priority = models.ProcessPriority.getPriorityForProcess("flagSources", "batch"),
-            estCostCPU = 10,
-            estCostBandwidth = 0,
-            estCostStorage = 3000,
-            estCostIO = 10000
-            )
-
-        piFlagSources.save()
-        piFlagSources.addArguments([imageRecord.pk])
-        piFlagSources.images.add(imageRecord)
-
-        piStarmatch = models.ProcessInput(
-            process = "starmatch",
-            requestor = user,
-            priority = models.ProcessPriority.getPriorityForProcess("starmatch", "batch"),
-            estCostCPU = 10,
-            estCostBandwidth = 0,
-            estCostStorage = 3000,
-            estCostIO = 10000
-            )
-
-        piStarmatch.save()
-        piStarmatch.addArguments([fileRecord.onDiskFileName])
-        piStarmatch.prerequisites.add(piSextractor)
-        piStarmatch.prerequisites.add(piDaofind)
-        piStarmatch.prerequisites.add(piStarfind)
-        piStarmatch.prerequisites.add(piFlagSources)
-        piStarmatch.images.add(imageRecord)
-
-        piAstrometryNet = models.ProcessInput(
-            process = "astrometryNet",
-            requestor = user,
-            priority = models.ProcessPriority.getPriorityForProcess("astrometryNet", "batch"),
-            estCostCPU = 100,
-            estCostBandwidth = 3000,
-            estCostStorage = 3000,
-            estCostIO = 10000000000
-            )
-
-        piAstrometryNet.save()
-        piAstrometryNet.addArguments([fileRecord.onDiskFileName])
-        piAstrometryNet.prerequisites.add(piImagestats)
-        piAstrometryNet.prerequisites.add(piStarmatch)
-        piAstrometryNet.images.add(imageRecord)
-
         piHeaders = models.ProcessInput(
             process = "parseHeaders",
             requestor = user,
@@ -506,6 +388,132 @@ def createTasksForNewImage(fileRecord, user):
         piHeaders.addArguments([imageRecord.pk])
         piHeaders.prerequisites.add(piImagestats)
         piHeaders.images.add(imageRecord)
+
+        piThumbnails = models.ProcessInput(
+            process = "generateThumbnails",
+            requestor = user,
+            priority = models.ProcessPriority.getPriorityForProcess("generateThumbnails", "batch"),
+            estCostCPU = fileRecord.uploadSize / 1e6,
+            estCostBandwidth = 0,
+            estCostStorage = fileRecord.uploadSize / 10,
+            estCostIO = 1.5 * fileRecord.uploadSize
+            )
+
+        piThumbnails.save()
+        piThumbnails.addArguments([fileRecord.onDiskFileName])
+        piThumbnails.images.add(imageRecord)
+        piThumbnails.prerequisites.add(piImagestats)
+
+        piSextractor = models.ProcessInput(
+            process = "sextractor",
+            requestor = user,
+            priority = models.ProcessPriority.getPriorityForProcess("sextractor", "batch"),
+            estCostCPU = 0.5 * fileRecord.uploadSize / 1e6,
+            estCostBandwidth = 0,
+            estCostStorage = 3000,
+            estCostIO = fileRecord.uploadSize
+            )
+
+        piSextractor.save()
+        piSextractor.addArguments([fileRecord.onDiskFileName])
+        piSextractor.images.add(imageRecord)
+        piSextractor.prerequisites.add(piImagestats)
+
+        piImage2xy = models.ProcessInput(
+            process = "image2xy",
+            requestor = user,
+            priority = models.ProcessPriority.getPriorityForProcess("image2xy", "batch"),
+            estCostCPU = 0.5 * fileRecord.uploadSize / 1e6,
+            estCostBandwidth = 0,
+            estCostStorage = 3000,
+            estCostIO = fileRecord.uploadSize
+            )
+
+        piImage2xy.save()
+        piImage2xy.addArguments([fileRecord.onDiskFileName])
+        piImage2xy.images.add(imageRecord)
+        piImage2xy.prerequisites.add(piImagestats)
+
+        piDaofind = models.ProcessInput(
+            process = "daofind",
+            requestor = user,
+            priority = models.ProcessPriority.getPriorityForProcess("daofind", "batch"),
+            estCostCPU = 0.5 * fileRecord.uploadSize / 1e6,
+            estCostBandwidth = 0,
+            estCostStorage = 3000,
+            estCostIO = fileRecord.uploadSize
+            )
+
+        piDaofind.save()
+        piDaofind.addArguments([fileRecord.onDiskFileName])
+        piDaofind.images.add(imageRecord)
+        piDaofind.prerequisites.add(piImagestats)
+
+        piStarfind = models.ProcessInput(
+            process = "starfind",
+            requestor = user,
+            priority = models.ProcessPriority.getPriorityForProcess("starfind", "batch"),
+            estCostCPU = 0.5 * fileRecord.uploadSize / 1e6,
+            estCostBandwidth = 0,
+            estCostStorage = 3000,
+            estCostIO = fileRecord.uploadSize
+            )
+
+        piStarfind.save()
+        piStarfind.addArguments([fileRecord.onDiskFileName])
+        piStarfind.images.add(imageRecord)
+        piStarfind.prerequisites.add(piImagestats)
+
+        piFlagSources = models.ProcessInput(
+            process = "flagSources",
+            requestor = user,
+            priority = models.ProcessPriority.getPriorityForProcess("flagSources", "batch"),
+            estCostCPU = 10,
+            estCostBandwidth = 0,
+            estCostStorage = 3000,
+            estCostIO = 10000
+            )
+
+        piFlagSources.save()
+        piFlagSources.addArguments([imageRecord.pk])
+        piFlagSources.images.add(imageRecord)
+        piFlagSources.prerequisites.add(piSextractor)
+        piFlagSources.prerequisites.add(piImage2xy)
+        piFlagSources.prerequisites.add(piDaofind)
+        piFlagSources.prerequisites.add(piStarfind)
+
+        piStarmatch = models.ProcessInput(
+            process = "starmatch",
+            requestor = user,
+            priority = models.ProcessPriority.getPriorityForProcess("starmatch", "batch"),
+            estCostCPU = 10,
+            estCostBandwidth = 0,
+            estCostStorage = 3000,
+            estCostIO = 10000
+            )
+
+        piStarmatch.save()
+        piStarmatch.addArguments([fileRecord.onDiskFileName])
+        piStarmatch.prerequisites.add(piFlagSources)
+        piStarmatch.images.add(imageRecord)
+
+        #TODO: Do we need to run flag sources here a second time to flag sources created by starmatch?
+
+        piAstrometryNet = models.ProcessInput(
+            process = "astrometryNet",
+            requestor = user,
+            priority = models.ProcessPriority.getPriorityForProcess("astrometryNet", "batch"),
+            estCostCPU = 100,
+            estCostBandwidth = 3000,
+            estCostStorage = 3000,
+            estCostIO = 10000000000
+            )
+
+        piAstrometryNet.save()
+        piAstrometryNet.addArguments([fileRecord.onDiskFileName])
+        piAstrometryNet.prerequisites.add(piStarmatch)
+        piAstrometryNet.prerequisites.add(piHeaders)
+        piAstrometryNet.images.add(imageRecord)
 
     return imageRecord
 

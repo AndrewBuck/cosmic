@@ -2619,7 +2619,7 @@ def saveUserSubmittedFeedback(request):
 
         piAstrometryNet.save()
         piAstrometryNet.addArguments([image.fileRecord.onDiskFileName])
-        piAstrometryNet.prerequisites.add(piStarmatch)
+        piAstrometryNet.prerequisites.add(piFlagSources)
         piAstrometryNet.images.add(image)
 
     return HttpResponse(json.dumps({'text': 'Response Saved Successfully'}), status=200)
