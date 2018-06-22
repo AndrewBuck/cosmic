@@ -1,0 +1,62 @@
+{% extends "cosmicapp/base.html" %}
+
+{% load static %}
+{% load cosmicapp_extras %}
+
+{% block extratitle %} - User Cost Summary: {{foruser}} {% endblock extratitle %}
+
+{% block extrahead %}
+{% comment %}
+{% include "./jquery.html" %}
+{% if user.is_authenticated %}<script src="/static/cosmicapp/bookmark.js"></script>{% endif %}
+<script src="/static/cosmicapp/imageTable.js"></script>
+<script src="/static/cosmicapp/raDec.js"></script>
+<script src="/static/cosmicapp/math.min.js" type="text/javascript"></script>
+<link rel="stylesheet" href="/static/cosmicapp/bokeh-0.12.9.min.css">
+<script src="/static/cosmicapp/bokeh-0.12.9.min.js"></script>
+<script src="/static/cosmicapp/bokeh-api-0.12.9.min.js"></script>
+{% endcomment %}
+{% endblock extrahead %}
+
+{% block mainbody %}
+<h2>User cost summary for user {{foruser}}</h2>
+
+<p>
+This page displays a summary of the estimated cost to run this website for the user <a href="/user/{{foruser}}/">{{foruser}}</a>.
+These costs include the cost to store the images uploaded by the user, as well as an estimate of the processing cost
+for jobs added to the <a href="/processqueue/">task queue</a> by them.  They do <i>not</i> include general costs like
+the bandwidth used to serve the website and other costs assosciated with running this service.
+</p>
+
+<p>
+Total estimated cost to run the site for user {{foruser}}: ${{foruser.profile.totalCost|floatformat:5}}
+<br>
+<br>
+This user has uploaded/created {{userImageSize|filesizeformat}} of images.
+<br>
+These images cost ${{userImageSize|default:0|divide:1e9|multiply:storageCostPerMonth|floatformat:5}} per month to store.
+<br>
+<br>
+This user has uploaded/created {{userAudioNoteSize|filesizeformat}} of audio notes.
+<br>
+These audio notes cost ${{userAudioNoteSize|default:0|divide:1e9|multiply:storageCostPerMonth|floatformat:5}} per month to store.
+</p>
+
+<table border=2px style="float: left; border-collapse: collapse; margin: 1em;">
+<tr>
+    <th>Start time</th>
+    <th>End time</th>
+    <th>Time between</th>
+    <th>Cost</th>
+</tr>
+{% for costTotal in costTotals %}
+    <tr>
+    <td>{{costTotal.startDate}}</td>
+    <td>{{costTotal.endDate}}</td>
+    <td>{{costTotal.endDate|subtract:costTotal.startDate}}</td>
+    <td>{{costTotal.cost}}</td>
+    </tr>
+{% endfor %}
+</table>
+
+{% endblock mainbody %}

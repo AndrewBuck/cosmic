@@ -3410,6 +3410,25 @@ def bookmarkPage(request, username):
 
     return render(request, "cosmicapp/bookmark.html", context)
 
+def userCost(request, username):
+    context = {"user" : request.user}
+
+    try:
+        foruser = User.objects.get(username=username)
+    except User.DoesNotExist:
+        context['foruser'] = username
+        return render(request, "cosmicapp/usernotfound.html", context)
+
+    context['foruser'] = foruser
+
+    context['costTotals'] = CostTotal.objects.filter(user=foruser).order_by('-startDate')[:90]
+
+    context['storageCostPerMonth'] = CosmicVariable.getVariable('storageCostPerMonth')
+    context['userImageSize'] = Image.objects.filter(fileRecord__user=foruser).aggregate(Sum('fileRecord__uploadSize'))['fileRecord__uploadSize__sum']
+    context['userAudioNoteSize'] = AudioNote.objects.filter(fileRecord__user=foruser).aggregate(Sum('fileRecord__uploadSize'))['fileRecord__uploadSize__sum']
+
+    return render(request, "cosmicapp/userCost.html", context)
+
 @login_required
 def calibration(request):
     context = {"user" : request.user}
