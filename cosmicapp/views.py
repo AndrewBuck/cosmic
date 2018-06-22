@@ -706,7 +706,7 @@ def processQueue(request):
         for process in processesForImage:
             processIdList.append(process.pk)
 
-    processInputsUncompleted = ProcessInput.objects.filter(completed=None)
+    processInputsUncompleted = ProcessInput.objects.filter(completed=None).prefetch_related('images')
 
     if imageIdList is not None:
         processInputsUncompleted = processInputsUncompleted\
@@ -716,7 +716,7 @@ def processQueue(request):
         .prefetch_related('processOutput', 'requestor')\
         .order_by('-priority', 'submittedDateTime')[:50]
 
-    processInputsCompleted = ProcessInput.objects.filter(~Q(completed=None))
+    processInputsCompleted = ProcessInput.objects.filter(~Q(completed=None)).prefetch_related('images')
 
     if imageIdList is not None:
         processInputsCompleted = processInputsCompleted\
