@@ -255,6 +255,16 @@ class Profile(models.Model):
     totalCost = models.FloatField(null=True)
     totalDonations = models.FloatField(null=True)
 
+    def priorityModifier(self):
+        balance = self.totalDonations - self.totalCost
+        sign = math.copysign(1, balance)
+        modifier = 1000 * sign * abs(balance)**0.5
+
+        sign = math.copysign(1, self.commentScore)
+        modifier += 10 * sign * self.commentScore**0.5
+
+        return modifier
+
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
@@ -911,13 +921,16 @@ class ProcessPriority(models.Model):
     setDateTime = models.DateTimeField(auto_now_add=True, null=True)
 
     @staticmethod
-    def getPriorityForProcess(processName, processClass='batch'):
+    def getPriorityForProcess(processName, processClass='batch', user=None):
         try:
             priority = ProcessPriority.objects.get(name=processName, priorityClass=processClass)
         except:
             return 1
 
-        return priority.priority
+        if user is not None:
+            return max(10, priority.priority + user.profile.priorityModifier())
+        else:
+            return priority.priority
 
 class ProcessInput(models.Model):
     """

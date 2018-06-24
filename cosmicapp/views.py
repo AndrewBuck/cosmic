@@ -860,7 +860,7 @@ def uploadSession(request, pk):
                     piAstrometryNet = ProcessInput(
                         process = "astrometryNet",
                         requestor = User.objects.get(pk=request.user.pk),
-                        priority = ProcessPriority.getPriorityForProcess("astrometryNet", "batch") + 20,
+                        priority = ProcessPriority.getPriorityForProcess("astrometryNet", "batch", request.user) + 20,
                         estCostCPU = 100,
                         estCostBandwidth = 3000,
                         estCostStorage = 3000,
@@ -2438,7 +2438,7 @@ def saveUserSubmittedSourceResults(request):
         piFlagSources = ProcessInput(
             process = "flagSources",
             requestor = User.objects.get(pk=request.user.pk),
-            priority = ProcessPriority.getPriorityForProcess("flagSources", "interactive") + 0.8,
+            priority = ProcessPriority.getPriorityForProcess("flagSources", "interactive", request.user) + 0.8,
             estCostCPU = 10,
             estCostBandwidth = 0,
             estCostStorage = 0,
@@ -2452,7 +2452,7 @@ def saveUserSubmittedSourceResults(request):
         piStarmatch = ProcessInput(
             process = "starmatch",
             requestor = User.objects.get(pk=request.user.pk),
-            priority = ProcessPriority.getPriorityForProcess("starmatch", "interactive") + 0.7,
+            priority = ProcessPriority.getPriorityForProcess("starmatch", "interactive", request.user) + 0.7,
             estCostCPU = 10,
             estCostBandwidth = 0,
             estCostStorage = 3000,
@@ -2467,7 +2467,7 @@ def saveUserSubmittedSourceResults(request):
         piAstrometryNet = ProcessInput(
             process = "astrometryNet",
             requestor = User.objects.get(pk=request.user.pk),
-            priority = ProcessPriority.getPriorityForProcess("astrometryNet", "interactive") + 0.5,
+            priority = ProcessPriority.getPriorityForProcess("astrometryNet", "interactive", request.user) + 0.5,
             estCostCPU = 100,
             estCostBandwidth = 3000,
             estCostStorage = 3000,
@@ -2529,7 +2529,7 @@ def saveUserSubmittedFeedback(request):
         piSextractor = ProcessInput(
             process = "sextractor",
             requestor = User.objects.get(pk=request.user.pk),
-            priority = ProcessPriority.getPriorityForProcess("sextractor", "interactive") + 0.9,
+            priority = ProcessPriority.getPriorityForProcess("sextractor", "interactive", request.user) + 0.9,
             estCostCPU = 0.5 * image.fileRecord.uploadSize / 1e6,
             estCostBandwidth = 0,
             estCostStorage = 3000,
@@ -2543,7 +2543,7 @@ def saveUserSubmittedFeedback(request):
         piImage2xy = ProcessInput(
             process = "image2xy",
             requestor = User.objects.get(pk=request.user.pk),
-            priority = ProcessPriority.getPriorityForProcess("image2xy", "interactive") + 0.8,
+            priority = ProcessPriority.getPriorityForProcess("image2xy", "interactive", request.user) + 0.8,
             estCostCPU = 0.5 * image.fileRecord.uploadSize / 1e6,
             estCostBandwidth = 0,
             estCostStorage = 3000,
@@ -2557,7 +2557,7 @@ def saveUserSubmittedFeedback(request):
         piDaofind = ProcessInput(
             process = "daofind",
             requestor = User.objects.get(pk=request.user.pk),
-            priority = ProcessPriority.getPriorityForProcess("daofind", "interactive") + 0.7,
+            priority = ProcessPriority.getPriorityForProcess("daofind", "interactive", request.user) + 0.7,
             estCostCPU = 0.5 * image.fileRecord.uploadSize / 1e6,
             estCostBandwidth = 0,
             estCostStorage = 3000,
@@ -2571,7 +2571,7 @@ def saveUserSubmittedFeedback(request):
         piStarfind = ProcessInput(
             process = "starfind",
             requestor = User.objects.get(pk=request.user.pk),
-            priority = ProcessPriority.getPriorityForProcess("starfind", "interactive") + 0.6,
+            priority = ProcessPriority.getPriorityForProcess("starfind", "interactive", request.user) + 0.6,
             estCostCPU = 0.5 * image.fileRecord.uploadSize / 1e6,
             estCostBandwidth = 0,
             estCostStorage = 3000,
@@ -2585,7 +2585,7 @@ def saveUserSubmittedFeedback(request):
         piFlagSources = ProcessInput(
             process = "flagSources",
             requestor = User.objects.get(pk=request.user.pk),
-            priority = ProcessPriority.getPriorityForProcess("flagSources", "interactive") + 0.2,
+            priority = ProcessPriority.getPriorityForProcess("flagSources", "interactive", request.user) + 0.2,
             estCostCPU = 0.5 * image.fileRecord.uploadSize / 1e6,
             estCostBandwidth = 0,
             estCostStorage = 3000,
@@ -2603,7 +2603,7 @@ def saveUserSubmittedFeedback(request):
         piStarmatch = ProcessInput(
             process = "starmatch",
             requestor = User.objects.get(pk=request.user.pk),
-            priority = ProcessPriority.getPriorityForProcess("starmatch", "interactive") + 0.1,
+            priority = ProcessPriority.getPriorityForProcess("starmatch", "interactive", request.user) + 0.1,
             estCostCPU = 0.5 * image.fileRecord.uploadSize / 1e6,
             estCostBandwidth = 0,
             estCostStorage = 3000,
@@ -2620,7 +2620,7 @@ def saveUserSubmittedFeedback(request):
         piFlagSources = ProcessInput(
             process = "flagSources",
             requestor = User.objects.get(pk=request.user.pk),
-            priority = ProcessPriority.getPriorityForProcess("flagSources", "interactive") + 0.09,
+            priority = ProcessPriority.getPriorityForProcess("flagSources", "interactive", request.user) + 0.09,
             estCostCPU = 0.5 * image.fileRecord.uploadSize / 1e6,
             estCostBandwidth = 0,
             estCostStorage = 3000,
@@ -2635,7 +2635,7 @@ def saveUserSubmittedFeedback(request):
         piAstrometryNet = ProcessInput(
             process = "astrometryNet",
             requestor = User.objects.get(pk=request.user.pk),
-            priority = ProcessPriority.getPriorityForProcess("astrometryNet", "interactive") + 0.01,
+            priority = ProcessPriority.getPriorityForProcess("astrometryNet", "interactive", request.user) + 0.01,
             estCostCPU = 100,
             estCostBandwidth = 3000,
             estCostStorage = 3000,
@@ -3092,7 +3092,7 @@ def combineImageIds(request):
         piCombine = ProcessInput(
             process = "imageCombine",
             requestor = User.objects.get(pk=request.user.pk),
-            priority = ProcessPriority.getPriorityForProcess("imageCombine", "interactive"),
+            priority = ProcessPriority.getPriorityForProcess("imageCombine", "interactive", request.user),
             estCostCPU = totalSize / 1e6,
             estCostBandwidth = 0,
             estCostStorage = totalSize / len(filteredIdList),

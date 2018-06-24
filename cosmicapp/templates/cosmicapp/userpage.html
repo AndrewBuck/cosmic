@@ -28,8 +28,10 @@
         <p>Birth Date: {{foruser.profile.birthDate}}</p>
         <p>
         Estimated Cost to Run Site: <a href="/user/{{foruser}}/cost/">${{foruser.profile.totalCost|default_if_none:0|floatformat:2}}</a>
-        <br>Total Donations Given: {{foruser.profile.totalDonations|default_if_none:0|floatformat:2}}
-        <br>Cost balance: {{foruser.profile.totalDonations|default_if_none:0|subtract:foruser.profile.totalCost|floatformat:2}}
+        <br>Total Donations Given: ${{foruser.profile.totalDonations|default_if_none:0|floatformat:2}}
+        <br>Cost balance: ${{foruser.profile.totalDonations|default_if_none:0|subtract:foruser.profile.totalCost|floatformat:2}}
+        <br>Total Comment Score: {{foruser.profile.commentScore|stringformat:"+d"}}
+        <br>Task priority: {{foruser.profile.priorityModifier|stringformat:"+0.2f"}}
         </p>
         <p>Limiting Magnitude: {{foruser.profile.limitingMag}}</p>
 
