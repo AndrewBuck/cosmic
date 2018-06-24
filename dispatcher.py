@@ -182,6 +182,7 @@ while not quit:
     prerequisite = getFirstPrerequisite(pi)
 
     if prerequisite == None:
+        pi.startedDateTime = timezone.now()
         pi.completed = 'failed_prerequisite'
         pi.save()
         continue
