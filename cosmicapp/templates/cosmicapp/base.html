@@ -74,7 +74,7 @@
     </div>
   </li>
 {% else %}
-	<li class="dropdown" style="float:right;"><a class="dropbtn" href="/login">Log in / Create account</a></li>
+	<li class="dropdown" style="float:right;"><a class="dropbtn" href="/login?next={{request.path}}">Log in / Create account</a></li>
 {% endif %}
 
 	<li class="dropdown" style="float:right"><a class="dropbtn" href="/upload">Upload</a>
