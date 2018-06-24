@@ -104,9 +104,6 @@ def dispatchProcessInput(pi):
         sys.stdout.flush()
         return
 
-    #TODO: This forces the task to complete before the next task is submitted to celery.  In the future when we have
-    # multiple celery workers this should be expanded to pass out several jobs at a time and replace any completed
-    # ones in order to keep the various celery nodes busy.
     waitTime = 0.25
     while not celeryResult.ready():
         print("   Task running, waiting " + str(waitTime) + " seconds.")
@@ -116,7 +113,6 @@ def dispatchProcessInput(pi):
         waitTime = min(waitTime, 5)
 
     # Write the result of the returned value back to the database, either success, failure, or error (early exit).
-    #TODO: Pass the return result through directly as a string and modify the individual tasks to return more detailed strings.
     if isinstance(celeryResult.info, dict):
         cost = celeryResult.info['executionTime'] * CosmicVariable.getVariable('cpuCostPerSecond')
         processOutput = ProcessOutput(
@@ -183,13 +179,14 @@ while not quit:
 
     print("checking prerequisistes for:  ", pi.process)
     sys.stdout.flush()
-    pi = getFirstPrerequisite(pi)
+    prerequisite = getFirstPrerequisite(pi)
 
-    if pi == None:
-        #TODO: Need to actually handle failed prerequisites again, right now I think they will lead to an infinite loop in the dispatcher.
-        #pi.completed = 'failed_prerequisite'
-        #pi.save()
+    if prerequisite == None:
+        pi.completed = 'failed_prerequisite'
+        pi.save()
         continue
+
+    pi = prerequisite
 
     argList = ''
     for arg in pi.arguments.all():
