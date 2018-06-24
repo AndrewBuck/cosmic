@@ -26,6 +26,8 @@ from django.db import transaction
 from django.views.decorators.http import require_http_methods
 from django.contrib.gis.geos import GEOSGeometry, Point
 from django.db.utils import IntegrityError
+from paypal.standard.forms import PayPalPaymentsForm
+from django.urls import reverse
 
 from lxml import etree
 import ephem
@@ -100,7 +102,30 @@ def createuser(request):
 def donate(request):
     context = {"user" : request.user}
 
+    paypal_dict = {
+        "business": settings.PAYPAL_RECEIVER_EMAIL,
+        "amount": "",
+        "item_name": "Cosmic.science Donation Credits",
+        "item_number": request.user.pk,
+        "notify_url": request.build_absolute_uri(reverse('paypal-ipn')),
+        "return": request.build_absolute_uri(reverse('paymentDone')),
+        "cancel_return": request.build_absolute_uri(reverse('paymentCanceled')),
+        "custom": "premium_plan",  # Custom command to correlate to some function later (optional)
+        }
+
+    context['paypalForm'] = PayPalPaymentsForm(initial=paypal_dict)
+
     return render(request, "cosmicapp/donate.html", context)
+
+def paymentDone(request):
+    context = {"user" : request.user}
+
+    return render(request, "cosmicapp/paymentDone.html", context)
+
+def paymentCanceled(request):
+    context = {"user" : request.user}
+
+    return render(request, "cosmicapp/paymentCanceled.html", context)
 
 @login_required
 def upload(request):

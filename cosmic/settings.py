@@ -49,6 +49,7 @@ INSTALLED_APPS = [
 
     'django_celery_results',
 
+    'paypal.standard.ipn',
 ]
 
 MIDDLEWARE = [
@@ -140,6 +141,12 @@ STATIC_URL = '/static/'
 
 
 
+
+PAYPAL_TEST = True
+if PAYPAL_TEST:
+    PAYPAL_RECEIVER_EMAIL = 'andrew.r.buck-facilitator@gmail.com'
+else:
+    PAYPAL_RECEIVER_EMAIL = 'andrew.r.buck@gmail.com'
 
 LOGIN_URL =  '/login/'
 LOGIN_REDIRECT_URL = '/'

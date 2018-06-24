@@ -64,5 +64,23 @@ this site better for everyone.  We will always be completely transparent as to h
 see where your money is going.
 </p>
 
+{% if user.is_authenticated %}
+<h3>Paypal</h3>
+<div style="float: right;">{{paypalForm.render}}</div>
+<p>
+You can support our work by buying site donation credits using the Paypal button on the right (you will be asked how
+much you would like to donate).  The amount you donate will be subtracted from your site operating costs and this
+difference is what determines the priority of your tasks in the processing queue (among other things).
+<br>
+<br>
+<i>Please note that Paypal charges us a fee of 2.9% plus $0.30 on each transfer.  In order to keep the site cost
+accounting fair, this cost is deducted from your donation (as a site cost).  We appreciate your understanding on this matter.</i>
+</p>
+{% else %}
+<p>
+To make a donation, please <a href='/login/?next=/donate/'>log in</a> to your account so the donation can be credited to you.
+</p>
+{% endif %}
+
 {% endblock %}
 

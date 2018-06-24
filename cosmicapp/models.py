@@ -252,12 +252,13 @@ class Profile(models.Model):
     limitingMag = models.FloatField(null=True, blank=True)
     modPoints = models.PositiveIntegerField()
     commentScore = models.IntegerField()
-    totalCost = models.FloatField(null=True, blank=True)
+    totalCost = models.FloatField(null=True)
+    totalDonations = models.FloatField(null=True)
 
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
-        Profile.objects.create(user=instance, limitingMag=12, modPoints=0, commentScore=0)
+        Profile.objects.create(user=instance, limitingMag=12, modPoints=0, commentScore=0, totalCost=0, totalDonations=0)
 
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
@@ -2218,6 +2219,12 @@ class SiteCost(models.Model):
     dateTime = models.DateTimeField()
     text = models.TextField()
     cost = models.FloatField(blank=True)
+
+class SiteDonation(models.Model):
+    user = models.ForeignKey(User, null=True, db_index=True, on_delete=models.CASCADE)
+    dateTime = models.DateTimeField(auto_now_add=True)
+    text = models.TextField()
+    amount = models.FloatField(blank=True)
 
 class CostTotal(models.Model):
     user = models.ForeignKey(User, null=True, db_index=True, on_delete=models.CASCADE)

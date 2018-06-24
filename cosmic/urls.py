@@ -27,6 +27,9 @@ urlpatterns = [
     url(r'^createuser/', views.createuser),
 
     url(r'^donate/', views.donate),
+    url(r'^paypal/', include('paypal.standard.ipn.urls')),
+    url(r'^paymentDone/$', views.paymentDone, name='paymentDone'),
+    url(r'^paymentCanceled/$', views.paymentCanceled, name='paymentCanceled'),
 
     url(r'^$', views.index),
 

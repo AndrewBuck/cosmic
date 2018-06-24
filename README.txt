@@ -3,7 +3,7 @@ Install Django:
 sudo apt-get install python3-dev
 
 sudo pip3 install Django django-extensions django-debug-toolbar bokeh sqlparse dateparser lxml pytz markdown
-imageio ccdproc cffi pysoundfile
+imageio ccdproc cffi pysoundfile django-paypal
 
 ============== IMPORTANT ==============
 
@@ -27,7 +27,19 @@ is unlikely you will be starting from a completely empty entropy pool.
 
 head -c 512 /dev/random | sha256sum -b
 
+============== IMPORTANT ==============
 
+Another important thing to set up on a production site is to verify that the
+Paypal settings are correct for the donation system.  In cosmic/settings.py
+check the following variables:
+
+    PAYPAL_TEST - True/False, if True use the paypal sandbox with test money to
+        verify the system is working, set to False on a production site.
+
+    PAYPAL_RECEIVER_EMAIL - Set to the email address used with your paypal
+        merchant account.  If using test mode you will need to create a sandbox
+        account to recieve with and use the "-facilitaor" version of the email that
+        paypal creates for you in the sandbox
 
 
 

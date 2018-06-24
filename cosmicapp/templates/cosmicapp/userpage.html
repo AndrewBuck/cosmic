@@ -26,7 +26,11 @@
         <p>User Joined: {{foruser.date_joined}}</p>
         <p>Last Login: {{foruser.last_login}}</p>
         <p>Birth Date: {{foruser.profile.birthDate}}</p>
-        <p>Estimated Cost to Run Site: <a href="/user/{{foruser}}/cost/">${{foruser.profile.totalCost|default_if_none:0|floatformat:2}}</a></p>
+        <p>
+        Estimated Cost to Run Site: <a href="/user/{{foruser}}/cost/">${{foruser.profile.totalCost|default_if_none:0|floatformat:2}}</a>
+        <br>Total Donations Given: {{foruser.profile.totalDonations|default_if_none:0|floatformat:2}}
+        <br>Cost balance: {{foruser.profile.totalDonations|default_if_none:0|subtract:foruser.profile.totalCost|floatformat:2}}
+        </p>
         <p>Limiting Magnitude: {{foruser.profile.limitingMag}}</p>
 
         {% if foruser.profile.defaultObservatory %}
