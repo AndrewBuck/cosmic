@@ -1,0 +1,22 @@
+{% extends "cosmicapp/base.html" %}
+
+{% load static %}
+{% load cosmicapp_extras %}
+
+{% block extratitle %} - Users {% endblock extratitle %}
+
+{% block extrahead %}
+{% endblock extrahead %}
+
+{% block mainbody %}
+<h2>All Users</h2>
+
+<p style="line-height: 1.6;">
+{% for user in users %}
+<a href="/user/{{user}}/">{{user}}</a> ({{user.numImages}} images)
+<br>
+{% endfor %}
+</p>
+
+{% endblock mainbody %}
+

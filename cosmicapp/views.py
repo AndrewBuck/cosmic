@@ -605,6 +605,15 @@ def audioNoteAudio(request, noteId):
     with open(settings.MEDIA_ROOT + audioNote.fileRecord.onDiskFileName, "rb") as audioFile:
         return HttpResponse(audioFile.read(), content_type="audio/ogg")
 
+def users(request):
+    context = {"user" : request.user}
+
+    context['users'] = User.objects.all()\
+        .annotate(numImages=Count('uploadedFileRecords__image__id'))\
+        .order_by('-numImages')
+
+    return render(request, "cosmicapp/users.html", context)
+
 def userpage(request, username):
     context = {"user" : request.user}
 
