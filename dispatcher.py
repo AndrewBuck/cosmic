@@ -151,6 +151,12 @@ def dispatchProcessInput(pi):
     dispatchSemaphore.release()
 
 # Begin program exectution.
+
+# Clear previously dispatched runs that crashed or were killed before they were finished.
+#NOTE: Having this line means it is only safe to run a single instance of the dispatcher, starting up a second
+# dispatcher will kill the startedDateTime entries currently running on the first and they will all get run again.
+ProcessInput.objects.filter(completed=None).update(startedDateTime=None)
+
 while not quit:
     if sleepTimeIndex > len(sleepTimes) - 1:
         sleepTimeIndex = len(sleepTimes) - 1
