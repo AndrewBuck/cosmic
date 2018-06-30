@@ -1861,11 +1861,9 @@ def mapTile(request, body, zoom, tileX, tileY):
     try:
         if os.path.islink(folder + imageFileFilename):
             if os.readlink(folder + imageFileFilename).endswith('black256x256.png'):
-                print('Redirecting from symlink to "black256x256.png".')
                 return HttpResponseRedirect('/static/cosmicapp/black256x256.png')
 
         imageFile = open(folder + imageFileFilename, 'rb')
-        print('Returning cached image.')
         return HttpResponse(imageFile, content_type="image/png", status=200)
     except FileNotFoundError:
         # If the file does not exist on disk, that is ok, we will generate it and then return the data to the user.
@@ -1902,7 +1900,6 @@ def mapTile(request, body, zoom, tileX, tileY):
     top = 256 * tileY
     limitingMag = max(6.5, zoom + 3.75)
     ucac4Results = UCAC4Record.objects.filter(geometry__dwithin=(queryGeometry, bufferDistance), magFit__lt=limitingMag)
-    print('num ucac4: ', ucac4Results.count())
     interiorStars = 0
     for result in ucac4Results :
         lon = result.ra * (math.pi/180)
@@ -1934,16 +1931,11 @@ def mapTile(request, body, zoom, tileX, tileY):
         yStdDevVals.append(max(0.707, 0.707 * math.log(1.0 + limitingMag - mag, 2.512)))
         thetaVals.append(0)
 
-    if ucac4Results.count() > 0 :
-        print('ucac4 in image: ', interiorStars)
-        print('fraction ucac4 in image: ', interiorStars / ucac4Results.count())
-
     arcsecPerPixel = 360 * 3600 / (256 * 2**zoom)
     twoMassXSCResults = TwoMassXSCRecord.objects.filter(
         geometry__dwithin=(queryGeometry, bufferDistance + 0.1),
         isophotalKSemiMajor__gt=1.414*arcsecPerPixel,
         isophotalKMag__lt=limitingMag)
-    print('num twomass: ', twoMassXSCResults.count())
     for result in twoMassXSCResults:
         lon = result.ra * (math.pi/180)
         lat = result.dec * (math.pi/180)
@@ -1960,7 +1952,6 @@ def mapTile(request, body, zoom, tileX, tileY):
 
         xVals.append(x)
         yVals.append(y)
-        print('magnitude of extended sky object: ', mag)
         amplitudeVals.append(max(0.5, 256 * math.pow((limitingMag - mag)/(2 * limitingMag), 0.95)))
         semiMajorArcsec = result.isophotalKSemiMajor
         semiMinorArcsec = result.isophotalKSemiMajor*result.isophotalKMinorMajor
@@ -2000,7 +1991,6 @@ def mapTile(request, body, zoom, tileX, tileY):
     imageFile.write(imageData)
     imageFile.close()
 
-    print('Returning generated image.')
     return HttpResponse(imageData, content_type="image/png", status=201)
 
 def questions(request):
@@ -2175,6 +2165,8 @@ def questionImage(request, id):
         # csrf token and questionID in the post results.
         #TODO: Need to check to see that this user has not already answered this question before.  If so, decide how to
         # handle it.  (this will be common if a user hits 'reload' on the page and resends the post data)
+        #TODO: If a user answers the 'what is in the image' question and doesn't mark stars, even if they go back and
+        # re-submit with stars marked it does not seem to ask the star related questions (num stars, motion blur, etc).
         with transaction.atomic():
             answer = Answer(
                 question = question,

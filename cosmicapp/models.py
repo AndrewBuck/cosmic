@@ -1008,6 +1008,7 @@ class ProcessArgument(models.Model):
     class Meta:
         ordering = ['argIndex']
 
+#TODO: This class can probably be deleted.  Currently processes which create files create UploadedFileRecord entries, which should just be renamed to FileRecord.
 class ProcessOutputFile(models.Model):
     processInput = models.ForeignKey(ProcessInput, db_index=True, on_delete=models.CASCADE)
     onDiskFileName = models.CharField(max_length=256)
