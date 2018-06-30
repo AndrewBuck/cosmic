@@ -2201,6 +2201,20 @@ class TextBlob(models.Model):
     def __str__(self):
         return markdown.markdown(self.markdownText, safe_mode='escape')
 
+    def contextUrl(self):
+        if self.linkedObject is None:
+            return None
+
+        # If this links to another text blob then is is a reply to a comment, so we recursively
+        # call this function to return where that comment was made.
+        if isinstance(self.linkedObject, TextBlob):
+            return self.linkedObject.contextUrl()
+
+        if isinstance(self.linkedObject, BookmarkableItem):
+            return self.linkedObject.getUrl()
+
+        return None
+
 class CommentModeration(models.Model):
     user = models.ForeignKey(User, null=True, db_index=True, on_delete=models.CASCADE)
     modValue = models.TextField(db_index=True)

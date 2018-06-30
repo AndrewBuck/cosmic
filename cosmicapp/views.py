@@ -605,6 +605,13 @@ def audioNoteAudio(request, noteId):
     with open(settings.MEDIA_ROOT + audioNote.fileRecord.onDiskFileName, "rb") as audioFile:
         return HttpResponse(audioFile.read(), content_type="audio/ogg")
 
+def comments(request):
+    context = {"user" : request.user}
+
+    context['comments'] = TextBlob.objects.filter(object_id__isnull=False).order_by('-dateTime')
+
+    return render(request, "cosmicapp/comments.html", context)
+
 def users(request):
     context = {"user" : request.user}
 

@@ -44,6 +44,8 @@ urlpatterns = [
 
     url(r'^stats/', views.stats),
 
+    url(r'^comments/$', views.comments),
+
     url(r'^users/$', views.users),
     url(r'^user/(?P<username>.+)/bookmarks/$', views.bookmarkPage),
     url(r'^user/(?P<username>.+)/cost/$', views.userCost),
