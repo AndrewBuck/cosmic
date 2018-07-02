@@ -1731,7 +1731,9 @@ def query(request):
 
     return HttpResponse(jsonResponse)
 
+@login_required
 def ccdSimulator(request):
+    taskStartTime = time.time()
     plateSolution = None
 
     dimX = 256
@@ -1787,6 +1789,18 @@ def ccdSimulator(request):
     queryGeometry = GEOSGeometry('POINT({} {})'.format(ra, dec))
 
     imageData = getSimulatedCCDImage(queryGeometry, bufferDistance, w, dimX, dimY)
+
+    timeTaken = time.time() - taskStartTime
+    simulationCost = timeTaken * CosmicVariable.getVariable('cpuCostPerSecond')
+
+    siteCost = models.SiteCost(
+        user = request.user,
+        dateTime = timezone.now(),
+        text = 'CCD Simulator',
+        cost = simulationCost
+        )
+
+    siteCost.save()
 
     return HttpResponse(imageData, content_type="image/png")
 
