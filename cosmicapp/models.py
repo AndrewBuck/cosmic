@@ -1008,6 +1008,7 @@ class ProcessArgument(models.Model):
     class Meta:
         ordering = ['argIndex']
 
+#TODO: This class can probably be deleted.  Currently processes which create files create UploadedFileRecord entries, which should just be renamed to FileRecord.
 class ProcessOutputFile(models.Model):
     processInput = models.ForeignKey(ProcessInput, db_index=True, on_delete=models.CASCADE)
     onDiskFileName = models.CharField(max_length=256)
@@ -2200,6 +2201,20 @@ class TextBlob(models.Model):
 
     def __str__(self):
         return markdown.markdown(self.markdownText, safe_mode='escape')
+
+    def contextUrl(self):
+        if self.linkedObject is None:
+            return None
+
+        # If this links to another text blob then is is a reply to a comment, so we recursively
+        # call this function to return where that comment was made.
+        if isinstance(self.linkedObject, TextBlob):
+            return self.linkedObject.contextUrl()
+
+        if isinstance(self.linkedObject, BookmarkableItem):
+            return self.linkedObject.getUrl()
+
+        return None
 
 class CommentModeration(models.Model):
     user = models.ForeignKey(User, null=True, db_index=True, on_delete=models.CASCADE)
