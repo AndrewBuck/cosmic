@@ -5,6 +5,7 @@ import django
 from django.utils import timezone
 import threading
 import celery
+from django.db.models import ExpressionWrapper, F
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "cosmic.settings")
 django.setup()
