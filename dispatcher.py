@@ -30,21 +30,21 @@ def getFirstPrerequisite(pi):
         if prerequisite.completed == None:
             unmet.append(getFirstPrerequisite(prerequisite))
         elif prerequisite.completed == 'failure':
-            return None
+            return None, 'failed_prerequisite'
         elif prerequisite.completed == 'success':
             continue
 
     if None in unmet:
-        return None
+        return None, 'failed_prerequisite'
 
-    for prereq in unmet:
+    for prereq, status in unmet:
         if prereq.startedDateTime is None:
-            return prereq
+            return prereq, 'prereq_found'
 
     if len(unmet) == 0:
-        return pi
+        return pi, 'no_umnet_ok_to_proceed'
     else:
-        return None
+        return None, 'prerequisite_running'
 
 def dispatchProcessInput(pi):
     if pi.process == 'imagestats':
@@ -159,6 +159,7 @@ def dispatchProcessInput(pi):
 ProcessInput.objects.filter(completed=None).update(startedDateTime=None)
 
 while not quit:
+    dispatchSemaphore.acquire()
     if sleepTimeIndex > len(sleepTimes) - 1:
         sleepTimeIndex = len(sleepTimes) - 1
 
@@ -176,22 +177,35 @@ while not quit:
     except IndexError:
         if len(inputQuery) == 0:
             sleepTimeIndex += 1
+            dispatchSemaphore.release()
             continue
         else:
             pi = inputQuery[0]
     except:
         print("Unexpected error:", sys.exc_info()[0])
         sys.stdout.flush()
+        dispatchSemaphore.release()
         raise
 
     print("checking prerequisistes for:  ", pi.process)
     sys.stdout.flush()
-    prerequisite = getFirstPrerequisite(pi)
+    prerequisite, status = getFirstPrerequisite(pi)
 
-    if prerequisite == None:
+    print(status)
+    sys.stdout.flush()
+
+    if status == 'failed_prerequisite':
         pi.startedDateTime = timezone.now()
         pi.completed = 'failed_prerequisite'
         pi.save()
+        dispatchSemaphore.release()
+        continue
+
+    elif status == 'prerequisite_running':
+        print("waiting on already running prerequisite.  Sleeping 2 seconds.")
+        sys.stdout.flush()
+        time.sleep(2)
+        dispatchSemaphore.release()
         continue
 
     pi = prerequisite
@@ -201,8 +215,6 @@ while not quit:
         argList += ' "{}"'.format(arg.arg)
     print("prerequisiste is:  {} {}".format(pi.process, argList))
     sys.stdout.flush()
-
-    dispatchSemaphore.acquire()
 
     pi.startedDateTime = timezone.now()
     pi.save()
