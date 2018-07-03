@@ -12,7 +12,7 @@
 <a href="/downloadSession/{{downloadSession.id|add:-1}}">&lt; Download Session {{downloadSession.id|add:-1}}</a>&emsp;&emsp;
 <a href="/downloadSession/{{downloadSession.id|add:1}}">Download Session {{downloadSession.id|add:1}} &gt;</a>
 
-<h2> Download session </h2>
+<h2> Download session {{downloadSession.id}} </h2>
 
 <div style="float: right; width: 400px; border: 1px solid black; padding: .5em; margin-bottom: 1em; margin-right: 1em;">
 <b>Post Data:</b>
@@ -36,7 +36,7 @@ Files still available: {{downloadSession.stillActive}}
 Files:
 <ul>
 {% for file in downloadSession.fileRecords.all %}
-    <li> <a href="{{file.url}}">{{file.fileName}}</a> </li>
+    <li> <a href="/static/{{file.url}}">{{file.fileName}}</a> </li>
 {% endfor %}
 </ul>
 </p>

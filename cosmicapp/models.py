@@ -623,7 +623,7 @@ class Image(models.Model, SkyObject, BookmarkableItem):
 
         # At this point 'record' contains the desired size thumbnail, so just return the full path to it.
         #TODO: Also return width, height, etc, in a proper XML response.  Will need to adapt the recivers of this call though.
-        return '/static/cosmicapp/images/' + record.filename
+        return '/static/images/' + record.filename
 
     #DEPRECATED: Should remove, need to fix callers first.
     def getThumbnail(self, sizeString):
@@ -805,13 +805,13 @@ class ImageChannelInfo(models.Model):
     maskedPixels = models.IntegerField(null=True)
 
     def getHistogramUrl(self):
-        return '/static/cosmicapp/images/histogramData_{}_{}.gnuplot.svg'.format(self.image.pk, self.index)
+        return '/static/images/histogramData_{}_{}.gnuplot.svg'.format(self.image.pk, self.index)
 
     def getRowMeanUrl(self):
-        return '/static/cosmicapp/images/rowMeanData_{}_{}.gnuplot.svg'.format(self.image.pk, self.index)
+        return '/static/images/rowMeanData_{}_{}.gnuplot.svg'.format(self.image.pk, self.index)
 
     def getColMeanUrl(self):
-        return '/static/cosmicapp/images/colMeanData_{}_{}.gnuplot.svg'.format(self.image.pk, self.index)
+        return '/static/images/colMeanData_{}_{}.gnuplot.svg'.format(self.image.pk, self.index)
 
 class ImageHistogramBin(models.Model):
     image = models.ForeignKey(Image, on_delete=models.CASCADE)

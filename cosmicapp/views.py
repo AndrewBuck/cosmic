@@ -40,8 +40,6 @@ from .forms import *
 from .functions import *
 from .tasks import *
 
-staticDirectory = os.path.dirname(os.path.realpath(__file__)) + "/static/cosmicapp/"
-
 #TODO: Replace all model.pk references with model.whatever_id as the second version does not fetch the joined model from the db.
 
 def index(request):
@@ -325,7 +323,7 @@ def download(request):
 
         downloadSession.save()
 
-        downloadDirectory = staticDirectory + 'downloads/' + str(downloadSession.pk) + '/'
+        downloadDirectory = settings.COSMIC_STATIC + 'downloads/' + str(downloadSession.pk) + '/'
         print(downloadDirectory)
         os.makedirs(downloadDirectory)
 
@@ -336,7 +334,7 @@ def download(request):
             downloadFileRecord = DownloadFileRecord(
                 downloadSession = downloadSession,
                 fileName = imageFilenames[objectID],
-                url = '/static/cosmicapp/' + outputFileName
+                url = outputFileName
                 )
 
             downloadFileRecord.save()
@@ -352,7 +350,7 @@ def download(request):
                     outputText += 'Just copying the original file to somewehere it can be accessed.'
                     #TODO: Consider making this a symlink, or a better way of copying the file, etc.
                     with open(inputFileName, "rb") as inputFile:
-                        with open(staticDirectory + outputFileName, "wb") as outputFile:
+                        with open(settings.COSMIC_STATIC + outputFileName, "wb") as outputFile:
                             outputFile.write(inputFile.read())
 
                 elif imageFormats[objectID] == 'custom':
@@ -429,7 +427,7 @@ def download(request):
                             outputText += "&emsp;&emsp;&emsp;HDU has {} headers.<br>".format(len(hdu.header))
 
                     #TODO: Do not allow overwrite on next line?
-                    hdulist.writeto(staticDirectory + outputFileName, overwrite=True)
+                    hdulist.writeto(settings.COSMIC_STATIC + outputFileName, overwrite=True)
                 else:
                     return HttpResponse('Unknown image format type: ' + str(imageFormats[objectID]), status=400)
 
@@ -1993,7 +1991,7 @@ def mapTile(request, body, zoom, tileX, tileY):
 
     if ucac4Results.count() == 0 and twoMassXSCResults.count() == 0:
         try:
-            os.symlink(staticDirectory + 'black256x256.png', folder + imageFileFilename)
+            os.symlink(settings.COSMIC_STATIC + 'black256x256.png', folder + imageFileFilename)
         except FileExistsError:
             pass
 

@@ -153,6 +153,10 @@ LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
 MEDIA_ROOT = '/cosmicmedia/'
+COSMIC_STATIC = '/cosmicstatic/'
+STATICFILES_DIRS = [
+    COSMIC_STATIC,
+]
 
 CELERY_RESULT_BACKEND = 'django-db'
 

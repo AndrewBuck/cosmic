@@ -41,8 +41,6 @@ from sortedcontainers import SortedList, SortedDict, SortedListWithKey
 from cosmicapp import models
 from .functions import *
 
-staticDirectory = os.path.dirname(os.path.realpath(__file__)) + "/static/cosmicapp/"
-
 def longestCommonPrefix(string1, string2):
     length = 0
     for a, b in zip(string1, string2):
@@ -344,7 +342,7 @@ def imagestats(filename, processInputId):
 
                         with open(settings.MEDIA_ROOT + plotFilename, "w") as outputFile:
                             outputFile.write("set terminal svg size {},{} dynamic mouse standalone\n".format(xsize, ysize) +
-                                             "set output '{}'\n".format(staticDirectory + "images/" + imageFilename) +
+                                             "set output '{}'\n".format(settings.COSMIC_STATIC + "images/" + imageFilename) +
                                              "set lmargin 0\n" +
                                              "set rmargin 0\n" +
                                              "set tmargin 0\n" +
@@ -566,7 +564,7 @@ def imagestats(filename, processInputId):
                     histImageFilename = "histogramData_{}_{}.gnuplot.svg".format(image.pk, channelIndex)
                     histDataLongFilename = settings.MEDIA_ROOT + histDataFilename
                     histPlotLongFilename = settings.MEDIA_ROOT + histPlotFilename
-                    histImageLongFilename = staticDirectory + "images/" + histImageFilename
+                    histImageLongFilename = settings.COSMIC_STATIC + "images/" + histImageFilename
                     with open(histDataLongFilename, "w") as outputFile :
                         for i in range(binNumber) :
                             outputFile.write("{} {} {} {}\n".format(
@@ -630,7 +628,7 @@ def imagestats(filename, processInputId):
                     pngImageFilename = os.path.splitext(filename)[0] + "_thumb_full.png"
                     ydim, xdim = binAssignment.shape
                     msec = int(1000 * time.time())
-                    imageio.imwrite(staticDirectory + "images/" + pngImageFilename, numpy.flip(binAssignment, axis=0), optimize=True, bits=8)
+                    imageio.imwrite(settings.COSMIC_STATIC + "images/" + pngImageFilename, numpy.flip(binAssignment, axis=0), optimize=True, bits=8)
                     msec = int(1000 * time.time()) - msec
                     outputText += "completed: {}ms\n\n".format(msec)
 
@@ -1216,7 +1214,7 @@ def depricatedHistogram(frame) :
     # Write the gnuplot script file.
     with open("/cosmicmedia/" + plotFilename, "w") as outputFile:
         outputFile.write("set terminal svg size 400,300 dynamic mouse standalone\n" +
-                         "set output '{}/{}.svg'\n".format(staticDirectory + "images", plotFilename) +
+                         "set output '{}/{}.svg'\n".format(settings.COSMIC_STATIC + "images", plotFilename) +
                          "set key off\n" +
                          "set logscale y\n" +
                          "set xrange ["+str(lowerBound)+":"+str(upperBound)+"]\n" +
@@ -1327,7 +1325,7 @@ def generateThumbnails(filename, processInputId):
         # Consider bad horiz/vert lines, also bad pixels, and finally noise.
         # For bad lines use low/negative values along the middle row/col in the kernel.
         proc = subprocess.Popen(['convert', '-verbose', '-strip', '-filter', 'Box', '-resize', sizeArg,
-            staticDirectory + "images/"+ filenameFull, '-depth', '8', staticDirectory + "images/" + tempFilename],
+            settings.COSMIC_STATIC + "images/"+ filenameFull, '-depth', '8', settings.COSMIC_STATIC + "images/" + tempFilename],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         #TODO: Only looking at the first channel here, need to loop and add all channels if it is an RGB image, etc.
 

@@ -1,6 +1,6 @@
 Install Django:
 
-sudo apt-get install python3-dev
+sudo apt-get install python3-dev python3-pip
 
 sudo pip3 install Django django-extensions django-debug-toolbar bokeh sqlparse dateparser lxml pytz markdown
 imageio ccdproc cffi pysoundfile django-paypal
@@ -78,7 +78,7 @@ sudo pip3 install julian
 
 Install and setup Postgre SQL:
 
-sudo apt-get install python-pip python-dev libpq-dev postgresql postgresql-contrib
+sudo apt-get install python-dev libpq-dev postgresql postgresql-contrib
 
 sudo su - postgres
 
@@ -194,8 +194,8 @@ for the rest of the site.
 
 Make a directory to store uploaded files:
 
-sudo mkdir /cosmicmedia
-sudo chown username: /cosmicmedia
+sudo mkdir -p /cosmicmedia /cosmicstatic/images /cosmicstatic/downloads
+sudo chown username: /cosmicmedia /cosmicstatic /cosmicstatic/images /cosmicstatic/downloads
 
 	(where username is the user running the webserver)
 
