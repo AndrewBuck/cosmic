@@ -5,7 +5,7 @@ import django
 from django.utils import timezone
 import threading
 import celery
-from django.db.models import ExpressionWrapper, F
+from django.db.models import ExpressionWrapper, F, Q
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "cosmic.settings")
 django.setup()
@@ -16,6 +16,7 @@ from cosmicapp.tasks import *
 
 quit = False
 dispatchSemaphore = threading.Semaphore(value=3)
+astrometryNetSemaphore = threading.Semaphore(value=1)
 
 # The time to wait between successive checks to the DB for tasks in the queue.  The first value is the time to wait
 # between tasks when there is more than one in the queue, subsequent values are used for a "backoff timer".
@@ -113,6 +114,9 @@ def dispatchProcessInput(pi):
         waitTime = waitTime*1.5 + 0.1
         waitTime = min(waitTime, 5)
 
+    if pi.process == 'astrometryNet':
+        astrometryNetSemaphore.release()
+
     # Write the result of the returned value back to the database, either success, failure, or error (early exit).
     if isinstance(celeryResult.info, dict):
         cost = celeryResult.info['executionTime'] * CosmicVariable.getVariable('cpuCostPerSecond')
@@ -160,6 +164,9 @@ ProcessInput.objects.filter(completed=None).update(startedDateTime=None)
 
 while not quit:
     dispatchSemaphore.acquire()
+
+    astrometryNetTasksAllowed = astrometryNetSemaphore.acquire(False)
+
     if sleepTimeIndex > len(sleepTimes) - 1:
         sleepTimeIndex = len(sleepTimes) - 1
 
@@ -173,11 +180,23 @@ while not quit:
     try:
         index = random.Random().randint(0, 5)
         inputQuery = ProcessInput.objects.filter(completed=None, startedDateTime__isnull=True).order_by('-priority', 'submittedDateTime')
+
+        if not astrometryNetTasksAllowed:
+            print('Not allowing astrometryNet tasks since one is already dispatched.')
+            sys.stdout.flush()
+            inputQuery = inputQuery.filter(~Q(process='astrometryNet'))
+        else:
+            print('Allowing astrometryNet tasks.')
+            sys.stdout.flush()
+
         pi = inputQuery[index:index+1][0]
+
     except IndexError:
         if len(inputQuery) == 0:
             sleepTimeIndex += 1
             dispatchSemaphore.release()
+            if astrometryNetTasksAllowed:
+                astrometryNetSemaphore.release()
             continue
         else:
             pi = inputQuery[0]
@@ -185,6 +204,8 @@ while not quit:
         print("Unexpected error:", sys.exc_info()[0])
         sys.stdout.flush()
         dispatchSemaphore.release()
+        if astrometryNetTasksAllowed:
+            astrometryNetSemaphore.release()
         raise
 
     print("checking prerequisistes for:  ", pi.process)
@@ -199,6 +220,8 @@ while not quit:
         pi.completed = 'failed_prerequisite'
         pi.save()
         dispatchSemaphore.release()
+        if astrometryNetTasksAllowed:
+            astrometryNetSemaphore.release()
         continue
 
     elif status == 'prerequisite_running':
@@ -206,9 +229,17 @@ while not quit:
         sys.stdout.flush()
         time.sleep(2)
         dispatchSemaphore.release()
+        if astrometryNetTasksAllowed:
+            astrometryNetSemaphore.release()
         continue
 
     pi = prerequisite
+
+    # If we successfully acquired the astrometryNetSemaphore but then didn't end up using it to dispatch a task we
+    # return it to the pool.  If we did acquire it, but the task is an astrometryNet task, then it will be released
+    # when the task is completed.
+    if astrometryNetTasksAllowed and pi.process != 'astrometryNet':
+        astrometryNetSemaphore.release()
 
     argList = ''
     for arg in pi.arguments.all():
