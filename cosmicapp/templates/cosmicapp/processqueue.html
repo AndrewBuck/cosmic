@@ -42,7 +42,7 @@ The total CPU time spent processing this image so far is: {{totalImageCPUTime|fl
         <td> {{processInput.submittedDateTime|formatTime|safe}} </td>
         <td> {{processInput.startedDateTime|formatTime|safe}} </td>
         <td> {{processInput.processOutput.all.0.finishedDateTime|formatTime|safe}} </td>
-        <td> {{processInput.priority}} </td>
+        <td> {{processInput.priority|floatformat:2}} </td>
         <td> {{processInput.estCostCPU|floatformat:2}} s </td>
         <td> {{processInput.estCostBandwidth|filesizeformat}} </td>
         <td> {{processInput.estCostStorage|filesizeformat}} </td>
@@ -66,7 +66,7 @@ The total CPU time spent processing this image so far is: {{totalImageCPUTime|fl
         <td> {{processInput.submittedDateTime|formatTime|safe}} </td>
         <td> {{processInput.startedDateTime|formatTime|safe}} </td>
         <td> {{processInput.processOutput.all.0.finishedDateTime|formatTime|safe}} </td>
-        <td> {{processInput.priority}} </td>
+        <td> {{processInput.priority|floatformat:2}} </td>
         <td> {{processInput.estCostCPU|floatformat:2}} s <br>
         ({{processInput.processOutput.all.0.actualCostCPU|floatformat:2}} s) </td>
         <td> {{processInput.estCostBandwidth|filesizeformat}} </td>
