@@ -51,7 +51,7 @@ sudo pip3 install celery
 sudo pip3 install django-celery-results
 sudo apt-get install rabbitmq-server
 
-Otional: In a development environment this module makes detecting code changes
+Optional: In a development environment this module makes detecting code changes
 more reliable when the 'manage.py runserver' development server is in use.  Not
 needed for a production site:
 
