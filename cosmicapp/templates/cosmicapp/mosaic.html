@@ -11,22 +11,11 @@
 
 {% block mainbody %}
 
-Thumbnail size:
-<select id="thumbnailSizeInput">
-    <option value=Large>Large</option>
-    <option value=Medium>Medium</option>
-    <option value=Small>Small</option>
-    <option value=Full>Full</option>
-</select>
-Image opacity: <input id="imageOpacitySlider" type=range min="0" max="100" value="50" onchange="drawCanvas()">
-
-<div class="mosaicDesktop" id="desktopDiv">
+<div class="mosaicDesktop" id="desktopDiv" style="float: left; margin-top: 2em; width: 47%;">
     <canvas class="mosaicCanvas" id="desktop">
         Your browser does not support the HTML 5 Canvas element.  Please update to a version that does.
     </canvas>
 </div>
-
-{% include "./jquery.html" %}
 
 <script>
 var undoStack = [], redoStack = [];
@@ -652,6 +641,8 @@ function rotationMatrix(originVec, startVec, endVec)
 
 function handleMouseMove(event)
 {
+    //TODO: If shift key is held down, translate/rotate slower to allow fine positioning.
+
     // Flag to prevent calling the draw function needlessly
     var staleDrawing = false;
 	staleDrawing = true;
@@ -996,6 +987,17 @@ $(document).ready(function()
 
 </script>
 
+<div class="rightSideDiv" id="desktopDiv" style="float: right; margin-top: 2em; width: 47%;">
+
+Thumbnail size:
+<select id="thumbnailSizeInput">
+    <option value=Large>Large</option>
+    <option value=Medium>Medium</option>
+    <option value=Small>Small</option>
+    <option value=Full>Full</option>
+</select>
+Image opacity: <input id="imageOpacitySlider" type=range min="0" max="100" value="50" onchange="drawCanvas()">
+
 <input type=button class=button value="Save Offsets" onclick="saveTransforms()">
 <input type=button class=button value="Load Offsets" onclick="loadTransforms(true, true)">
 <input type=button class=button value="Stack Images" onclick="stackImages()">
@@ -1017,4 +1019,5 @@ Master Flat Image ID (required for stacking): <input type=text name=masterFlatId
 {% include "./imageTable.html" with galleryName="mosaicGallery" includeLinks="false" thumbnailSize="Medium" %}
 {% endwith %}
 
+</div>
 {% endblock %}
