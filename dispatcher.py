@@ -35,10 +35,13 @@ def getFirstPrerequisite(pi):
         elif prerequisite.completed == 'success':
             continue
 
-    if None in unmet:
-        return None, 'failed_prerequisite'
-
     for prereq, status in unmet:
+        if prereq is None:
+            if status == 'failed_prerequisite':
+                return None, 'failed_prerequisite'
+            else:
+                continue
+
         if prereq.startedDateTime is None:
             return prereq, 'prereq_found'
 
