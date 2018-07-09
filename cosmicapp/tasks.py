@@ -1792,6 +1792,7 @@ def daofind(filename, processInputId):
         outputText += "Found {} sources.\n".format(records.count())
         for record in records:
             #TODO: Incorporate sharpness, sround, and ground into the calculation.
+            #TODO: Ensure stdDevMag is not zero and check that other sourcefind methods don't have the same issue.
             record.confidence = sigmoid((meanMag-record.mag)/stdDevMag)
             record.save()
 
@@ -3288,14 +3289,15 @@ def calculateUserCostTotals(startTimeString, endTimeString, processInputId):
 
     outputText += 'Calculating user resource cost totals for the following period.\n'
     outputText += 'Start Time: {}\nEnd Time: {}\n\n'.format(startTime, endTime)
-    deltaTime = endTime - startTime
 
     with transaction.atomic():
         storageCostPerMonth = models.CosmicVariable.getVariable('storageCostPerMonth')
-        storageCostPerByte = deltaTime.total_seconds() * ((storageCostPerMonth / 1e9) / (86400*30))
         users = models.User.objects.all()
         costTotals = []
         for user in users:
+            userStartTime = max(startTime, user.date_joined)
+            deltaTime = endTime - userStartTime
+            storageCostPerByte = deltaTime.total_seconds() * ((storageCostPerMonth / 1e9) / (86400*30))
             storageSize = models.Image.objects\
                 .filter(fileRecord__user=user, fileRecord__uploadDateTime__lte=endTime)\
                 .aggregate(Sum('fileRecord__uploadSize'))['fileRecord__uploadSize__sum']
@@ -3305,7 +3307,7 @@ def calculateUserCostTotals(startTimeString, endTimeString, processInputId):
                 siteCost = models.SiteCost(
                     user = user,
                     dateTime = endTime,
-                    text = 'Image storage cost for ' + str(startTime) + ' to ' + str(endTime),
+                    text = 'Image storage cost for ' + str(userStartTime) + ' to ' + str(endTime),
                     cost = storageCost
                     )
 
@@ -3320,7 +3322,7 @@ def calculateUserCostTotals(startTimeString, endTimeString, processInputId):
                 siteCost = models.SiteCost(
                     user = user,
                     dateTime = endTime,
-                    text = 'Audio note storage cost for ' + str(startTime) + ' to ' + str(endTime),
+                    text = 'Audio note storage cost for ' + str(userStartTime) + ' to ' + str(endTime),
                     cost = storageCost
                     )
 
