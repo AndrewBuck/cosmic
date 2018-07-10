@@ -17,7 +17,7 @@ href="/user/{{user}}">user
 page</a>.</p>
 
 <p>Please keep in mind that Cosmic is NOT a website for sharing arbitrary files, ONLY ASTRONOMICAL IMAGES,
-CALIBRATION IMAGES, AND OBSERVER NOTES WILL BE KEPT OTHER FILES WILL BE DELETED.</p>
+CALIBRATION IMAGES, AND OBSERVER NOTES WILL BE KEPT &ndash; ALL OTHER FILES WILL BE DELETED.</p>
 
 <p>The following image file types are supported:
 
@@ -91,6 +91,10 @@ Object Name: <input id=object type=text name=object value="{{object}}">&emsp;<a 
         </option>
     {% endfor %}
 </select>
+
+<br>Processing Priority:
+<input type=radio name=priority value=normal checked disabled> Normal&emsp;
+<input type=radio name=priority value=low disabled> Low&emsp;
 
 <br><input type=submit value="Update: Click before uploading if setting any of these manually.">
 </form>
