@@ -24,6 +24,7 @@ import scipy.stats
 import numpy
 import ephem
 from datetime import timedelta
+import julian
 import time
 import hashlib
 
@@ -2398,6 +2399,10 @@ def parseHeaders(imageId, processInputId):
                 key = 'pedestal'
                 value = header.value.split()[0]
 
+            elif header.key == 'fits:datamax':
+                key = 'saturationLevel'
+                value = header.value.split()[0]
+
             elif header.key == 'fits:ccdmean':
                 key = 'headerCCDMean'
                 value = header.value.split()[0]
@@ -2417,6 +2422,10 @@ def parseHeaders(imageId, processInputId):
             elif header.key == 'fits:bscale':
                 key = 'bscale'
                 value = header.value.split()[0]
+
+            elif header.key == 'fits:bunit':
+                key = 'bunit'
+                value = header.value.split()[0].strip("'")
 
             elif header.key == 'fits:cblack':
                 key = 'displayBlackLevel'
@@ -2449,6 +2458,11 @@ def parseHeaders(imageId, processInputId):
             elif header.key == 'fits:photsys':
                 key = 'photometryFilterSystem'
                 value = header.value.split('/')[0].strip().strip("'")
+
+            elif header.key in ['fits:mjd', 'fits:mjd-obs']:
+                key = 'julianDate'
+                mjdValue = float(header.value.split('/')[0].strip().strip("'"))
+                value = str(julian.to_jd(julian.from_jd(mjdValue, fmt='mjd'), fmt='jd'))
 
             elif header.key in ['fits:jd', 'fits:jd-obs']:
                 key = 'julianDate'
@@ -2493,7 +2507,7 @@ def parseHeaders(imageId, processInputId):
                 key = 'timeObs'
                 value = header.value.split('/')[0].strip().strip("'")
 
-            elif header.key in ['fits:st']:
+            elif header.key in ['fits:st', 'fits:lst']:
                 key = 'localApparentSiderialTime'
                 value = header.value.split('/')[0].strip().strip("'")
 
@@ -2517,7 +2531,7 @@ def parseHeaders(imageId, processInputId):
                 key = 'instrument'
                 value = header.value.split('/')[0].strip().strip("'")
 
-            elif header.key in ['fits:swcreate', 'fits:creator', 'fits:origin', 'fits:software', 'fits:program']:
+            elif header.key in ['fits:swcreate', 'fits:creator', 'fits:origin', 'fits:software', 'fits:program', 'fits:swacquir']:
                 key = 'createdBySoftware'
                 value = header.value.split('/')[0].strip().strip("'")
 
@@ -2569,6 +2583,27 @@ def parseHeaders(imageId, processInputId):
                 key = 'numChannels'
                 value = header.value.split()[0]
 
+            elif header.key in ['fits:trimsec']:
+                key = 'trimsec'
+                value = header.value.split('/')[0].strip().strip("'")
+
+            elif header.key in ['fits:datasec']:
+                key = 'datasec'
+                value = header.value.split('/')[0].strip().strip("'")
+
+            elif header.key in ['fits:ccdsec']:
+                key = 'ccdsec'
+                value = header.value.split('/')[0].strip().strip("'")
+
+            elif header.key in ['fits:biassec']:
+                key = 'biassec'
+                value = header.value.split('/')[0].strip().strip("'")
+
+            # Apparently the meaning of this fits key has to do with whether the image should be flipped or not.
+            elif header.key == 'fits:imgroll':
+                key = 'imgroll'
+                value = header.value.split('/')[0].strip().strip("'")
+
             elif header.key == 'fits:xbinning':
                 key = 'binningX'
                 value = header.value.split()[0]
@@ -2599,7 +2634,7 @@ def parseHeaders(imageId, processInputId):
                 key = 'readoutMode'
                 value = header.value.split()[0].strip().strip("'")
 
-            elif header.key == 'fits:egain':
+            elif header.key in ['fits:egain', 'fits:gain']:
                 key = 'ePerADU'
                 value = header.value.split()[0]
 
@@ -2644,7 +2679,7 @@ def parseHeaders(imageId, processInputId):
                 image.frameType = value
                 image.save()
 
-            elif header.key in ['fits:ncombine']:
+            elif header.key in ['fits:ncombine', 'fits:snapshot']:
                 key = 'numCombinedImages'
                 value = header.value.split('/')[0].strip().strip("'")
 
@@ -2656,6 +2691,8 @@ def parseHeaders(imageId, processInputId):
             elif header.key in ['fits:ccdproc']:
                 key = 'ccdProcessing'
                 value = header.value.split('/')[0].strip().strip("'")
+
+            #TODO: Need to handle fits:calstat which contains B, D, F, or any combination of the three to indicate if the images is bias, dark, or flat corrected.
 
             elif header.key in ['fits:zerocor', 'fits:biassub']:
                 key = 'biasCorrected'
@@ -2691,12 +2728,12 @@ def parseHeaders(imageId, processInputId):
                 key = 'observatoryName'
                 value = header.value.split('/')[0].strip().strip("'").lower()
 
-            elif header.key in ['fits:sitelat', 'fits:lat-obs']:
+            elif header.key in ['fits:sitelat', 'fits:lat-obs', 'fits:latitude']:
                 key = 'observerLat'
                 value = header.value.split('/')[0].strip().strip("'").lower()
                 value = str(parseDMS(value))
 
-            elif header.key in ['fits:sitelong', 'fits:long-obs']:
+            elif header.key in ['fits:sitelong', 'fits:long-obs', 'fits:longitud']:
                 key = 'observerLon'
                 value = header.value.split('/')[0].strip().strip("'").lower()
                 value = str(parseDMS(value))
@@ -2757,21 +2794,21 @@ def parseHeaders(imageId, processInputId):
                 value = header.value.split('/')[0].strip().strip("'").lower()
                 value = str(parseDMS(value))
 
-            elif header.key in ['fits:equinox']:
+            elif header.key in ['fits:equinox', 'fits:epoch']:
                 key = 'equinox'
                 value = header.value.split()[0]
 
-            elif header.key in ['fits:objctalt', 'fits:altitude']:
+            elif header.key in ['fits:objctalt', 'fits:altitude', 'fits:alt-obj']:
                 key = 'objectAlt'
                 value = header.value.split('/')[0].strip().strip("'").lower()
                 value = str(parseDMS(value))
 
-            elif header.key in ['fits:objctaz', 'fits:azimuth']:
+            elif header.key in ['fits:objctaz', 'fits:azimuth', 'fits:az-obj']:
                 key = 'objectAz'
                 value = header.value.split('/')[0].strip().strip("'").lower()
                 value = str(parseDMS(value))
 
-            elif header.key in ['fits:airmass']:
+            elif header.key in ['fits:airmass', 'fits:secz']:
                 key = 'airmass'
                 value = header.value.split()[0]
 
@@ -2847,28 +2884,29 @@ def parseHeaders(imageId, processInputId):
         # If this image was stacked from multiple images we need to set/modify some ImageProperties.
         numCombinedImages = models.ImageProperty.objects.filter(image=image, key='numCombinedImages').first()
         if numCombinedImages is not None:
-            image.addImageProperty('imageIsStacked', 'yes', False, None)
+            numCombinedImages = int(numCombinedImages.value)
+            if numCombinedImages > 1:
+                image.addImageProperty('imageIsStacked', 'yes', False, None)
 
-            stackedTypeDict = {
-                'light': 'stackedLight',
-                'dark': 'masterDark',
-                'bias': 'masterBias',
-                'flat': 'masterFlat',
-                }
+                stackedTypeDict = {
+                    'light': 'stackedLight',
+                    'dark': 'masterDark',
+                    'bias': 'masterBias',
+                    'flat': 'masterFlat',
+                    }
 
-            imageType = image.getImageProperty('imageType')
+                imageType = image.getImageProperty('imageType')
 
-            try:
-                newImageType = stackedTypeDict[imageType]
-            except KeyError:
-                errorText += 'Unknown stacked image type: ' + str(imageType)
-                newImageType = imageType
+                try:
+                    newImageType = stackedTypeDict[imageType]
+                except KeyError:
+                    errorText += 'Unknown stacked image type: ' + str(imageType)
+                    newImageType = imageType
 
-            if newImageType is not None:
-                image.addImageProperty('imageType', newImageType, True)
-                image.frameType = newImageType
-                image.save()
-
+                if newImageType is not None:
+                    image.addImageProperty('imageType', newImageType, True)
+                    image.frameType = newImageType
+                    image.save()
 
         # If both objectRA and objectDec are 0 then remove them since they are likely just null values from the
         # software that wrote the fits file.

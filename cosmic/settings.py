@@ -179,6 +179,8 @@ NON_PROPERTY_KEYS = [
     'fits:cdelt1', 'fits:cdelt2',
     'fits:ap_0_0', 'fits:ap_0_1', 'fits:ap_1_0', 'fits:ap_1_1', 'fits:ap_0_2', 'fits:ap_2_0',
     'fits:bp_0_0', 'fits:bp_0_1', 'fits:bp_1_0', 'fits:bp_1_1', 'fits:bp_0_2', 'fits:bp_2_0',
+    'fits:pc0_0', 'fits:pc0_1', 'fits:pc1_0', 'fits:pc1_1',
+    'fits:pc1_2', 'fits:pc2_1', 'fits:pc2_2',
     'fits:ap_order', 'fits:bp_order', 'fits:a_order', 'fits:b_order',
     'fits:wat0_001', 'fits:wat1_001', 'fits:wat2_001', 'fits:wat3_001',
     'fits:ltm1_1', 'fits:ltm2_2', 'fits:ltm3_3',
