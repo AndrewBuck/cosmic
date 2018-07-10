@@ -6,6 +6,7 @@ from django.utils import timezone
 import threading
 import celery
 from django.db.models import ExpressionWrapper, F, Q
+from django.contrib.gis.db.models import FloatField
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "cosmic.settings")
 django.setup()
@@ -13,6 +14,7 @@ django.setup()
 
 from cosmicapp.models import *
 from cosmicapp.tasks import *
+from cosmicapp.db import *
 
 quit = False
 dispatchSemaphore = threading.Semaphore(value=3)
@@ -181,8 +183,12 @@ while not quit:
     sys.stdout.flush()
 
     try:
+        currentEpoch = int(time.time())
         index = random.Random().randint(0, 5)
-        inputQuery = ProcessInput.objects.filter(completed=None, startedDateTime__isnull=True).order_by('-priority', 'submittedDateTime')
+        inputQuery = ProcessInput.objects\
+            .filter(completed=None, startedDateTime__isnull=True)\
+            .annotate(modifiedPriority=ExpressionWrapper(F('priority')+currentEpoch-Epoch(F('submittedDateTime')), output_field=FloatField()))\
+            .order_by('-modifiedPriority')
 
         if not astrometryNetTasksAllowed:
             print('Not allowing astrometryNet tasks since one is already dispatched.')

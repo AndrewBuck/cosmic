@@ -1,5 +1,6 @@
 {% extends "cosmicapp/base.html" %}
 {% load cosmicapp_extras %}
+{% load humanize %}
 
 {% block extratitle %} - Process queue {% endblock %}
 
@@ -22,7 +23,7 @@ The total CPU time spent processing this image so far is: {{totalImageCPUTime|fl
         <th> Submitted <br><br> (time) </th>
         <th> Started <br><br> (time) </th>
         <th> Finished <br><br> (time) </th>
-        <th> Priority <br><br> (value)</th>
+        <th> Priority /<br> Mod. Priority <br> (value)</th>
         <th> Est CPU <br>(actual)<br> (s) </th>
         <th> Est Bw <br><br>(size)</th>
         <th> Est Storage <br><br>(size)</th>
@@ -42,7 +43,7 @@ The total CPU time spent processing this image so far is: {{totalImageCPUTime|fl
         <td> {{processInput.submittedDateTime|formatTime|safe}} </td>
         <td> {{processInput.startedDateTime|formatTime|safe}} </td>
         <td> {{processInput.processOutput.all.0.finishedDateTime|formatTime|safe}} </td>
-        <td> {{processInput.priority|floatformat:2}} </td>
+        <td> {{processInput.priority|floatformat:2|intcomma}} <br> {{processInput.modifiedPriority|floatformat:2|intcomma}} </td>
         <td> {{processInput.estCostCPU|floatformat:2}} s </td>
         <td> {{processInput.estCostBandwidth|filesizeformat}} </td>
         <td> {{processInput.estCostStorage|filesizeformat}} </td>

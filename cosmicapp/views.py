@@ -21,7 +21,7 @@ from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponseRedirect
 from django.utils import timezone
 from django.conf import settings
-from django.db.models import Count, Q, Max, Min, Avg, StdDev, Sum
+from django.contrib.gis.db.models import Count, F, Q, Max, Min, Avg, StdDev, Sum, ExpressionWrapper, FloatField
 from django.db import transaction
 from django.views.decorators.http import require_http_methods
 from django.contrib.gis.geos import GEOSGeometry, Point
@@ -39,6 +39,7 @@ from .models import *
 from .forms import *
 from .functions import *
 from .tasks import *
+from .db import *
 
 #TODO: Replace all model.pk references with model.whatever_id as the second version does not fetch the joined model from the db.
 
@@ -745,7 +746,9 @@ def processQueue(request):
         for process in processesForImage:
             processIdList.append(process.pk)
 
-    processInputsUncompleted = ProcessInput.objects.filter(completed=None).prefetch_related('images')
+    currentEpoch = int(time.time())
+    processInputsUncompleted = ProcessInput.objects.filter(completed=None).prefetch_related('images')\
+        .annotate(modifiedPriority=ExpressionWrapper(F('priority')+currentEpoch-Epoch(F('submittedDateTime')), output_field=FloatField()))
 
     if imageIdList is not None:
         processInputsUncompleted = processInputsUncompleted\
@@ -753,7 +756,7 @@ def processQueue(request):
 
     processInputsUncompleted = processInputsUncompleted\
         .prefetch_related('processOutput', 'requestor')\
-        .order_by('-priority', 'submittedDateTime')[:50]
+        .order_by('-modifiedPriority')[:50]
 
     processInputsCompleted = ProcessInput.objects.filter(~Q(completed=None)).prefetch_related('images')
 
