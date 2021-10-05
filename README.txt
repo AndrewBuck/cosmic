@@ -3,7 +3,9 @@ Install Django:
 sudo apt-get install python3-dev python3-pip
 
 sudo pip3 install Django django-extensions django-debug-toolbar bokeh sqlparse dateparser lxml pytz markdown
-imageio ccdproc cffi pysoundfile django-paypal
+sudo pip3 install imageio ccdproc cffi pysoundfile django-paypal celery django_celery_results ephem
+
+numpy - version in apt is 1.13, needs 1.16
 
 ============== IMPORTANT ==============
 
