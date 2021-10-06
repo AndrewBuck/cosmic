@@ -1,6 +1,6 @@
 Install Django:
 
-sudo apt-get install python3-dev python3-pip
+sudo apt-get install python3-dev python3-pip gnuplot
 
 sudo pip3 install Django django-extensions django-debug-toolbar bokeh sqlparse dateparser lxml pytz markdown
 sudo pip3 install imageio ccdproc cffi pysoundfile django-paypal celery django_celery_results ephem
@@ -80,7 +80,9 @@ sudo pip3 install julian
 
 Install and setup Postgre SQL:
 
-sudo apt-get install python-dev libpq-dev postgresql postgresql-contrib
+sudo apt-get install libpq-dev postgresql postgresql-contrib
+
+#TODO:  Look into stripping down the privileges granted to cosmicweb in the DB.  The web server probably doesn't need to be able to create tables, etc.  Should have multiple postgre users for different tasks with differing levels of access.
 
 sudo su - postgres
 
@@ -102,12 +104,6 @@ exit
 
 sudo pip3 install psycopg2
 
-# Optional create a superuser on the cosmic website (a user who can access cosmic.science/admin).
-python manage.py createsuperuser
-
-# Optional install pgadmin, which is a gui to manage the postgre database, view tables, etc.
-sudo apt-get install pgadmin3
-
 
 
 At this point the base Postgre system is installed.  The next step is to install
@@ -122,7 +118,7 @@ Next we install the base PostGIS system extensions into Postgre SQL (specific
 version numbers may be different but version 9.3 or greater of Postgre is
 required):
 
-sudo apt-get install postgresql-9.3 postgresql-9.3-postgis-2.1 postgresql-server-dev-9.3 python-psycopg2
+sudo apt-get install postgresql-9.3 postgresql-9.3-postgis-2.1 postgresql-server-dev-9.3
 
 Finally we create the postgis extensions on the actual cosmic database:
 
@@ -201,9 +197,13 @@ sudo chown username: /cosmicmedia /cosmicstatic /cosmicstatic/images /cosmicstat
 
 	(where username is the user running the webserver)
 
-cp /usr/share/sextractor/default* /cosmicmedia/
+sudo apt-get install source-extractor astrometry.net
+
+cp /usr/share/source-extractor/* /cosmicmedia/
 
 	(this is temporary, will not be needed later on)
+    (after copying the default* files the default.param file will need to be edited to uncomment the fields used by the
+    source extractor task in tasks.py)
 
 
 
@@ -250,6 +250,7 @@ their local system.  To do this easily a Doxygen configuration file is included
 in the doc/ directory which is set up for this project.  To build the html
 documentation run the following:
 
+sudo apt install doxygen
 cd doc
 doxygen Doxyfile
 
@@ -266,6 +267,12 @@ ones.  If you want to install all of the catalogs you can run the helper script:
 ./import_all.sh
 
 
+# Optional create a superuser on the cosmic website (a user who can access cosmic.science/admin).
+python3 manage.py createsuperuser
+
+# Optional install pgadmin, which is a gui to manage the postgre database, view tables, etc.
+sudo apt-get install pgadmin3
+
 
 Now that the database is set up and loaded with the necessary data, the server
 can be launched with:
@@ -280,15 +287,15 @@ Commands that need to be installed on the system and in the path:
 (Note these are mainly needed on the worker nodes running celery workers, not
 necessarily on the webserver itself)
 
-sudo apt-get install sextractor astrometry.net
+sudo apt install imagemagick
 
 identify - part of imagemagick.  Calculates image statistics for an image.
 	(width, height, bit depth, etc)
 
 convert - the main tool from imagemagick.  Used to make thumbnails.
 
-sextractor - Source Extractor: Finds stars and galaxies in an image.  Also must
-	copy /usr/share/sextractor/default.* into the directory where it is being run
+source-extractor - Source Extractor: Finds stars and galaxies in an image.  Also must
+	copy /usr/share/source-extractor/* into the directory where it is being run
 	or it will complain about missing configuration files.  This is a very
 	powerful program, and we should look into using more of its functionality.
 
@@ -303,9 +310,11 @@ solve-field - The main executable for astrometry.net.
 	sudo apt-get install astrometry.net
 
 image2xy - A source extraction tool that comes with astrometry.net (this is the
-	default if you don't use sextractor).  Should be installed
+	default if you don't use source-extractor).  Should be installed
 	automatically with astrometry.net but good to double check.
 
+gnuplot - A graphing program used to produce graph images on the site for
+	histograms and other similar things.
 
 
 
