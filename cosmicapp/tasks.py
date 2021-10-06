@@ -457,7 +457,7 @@ def imagestats(filename, processInputId):
                         round(100*bathtubValueNumber/(bathtubValueNumber + currentPixelValueNumber),4))
                     outputText += "total bathtub pixels: {}, {}%\n".format(bathtubPixelNumber,
                         round(100*bathtubPixelNumber/(bathtubPixelNumber + currentPixelNumber),4))
-                    outputText += "bathtub (value,pixels): " + str(list(bathtubValues.iteritems())) + "\n"
+                    outputText += "bathtub (value,pixels): " + str(list(bathtubValues.items())) + "\n"
                     outputText += "highest low bathtub value: {}\n".format(bathtubLow)
                     outputText += "lowest high bathtub value: {}\n".format(bathtubHigh)
                     outputText += "remaining values: {}, {}%\n".format( currentPixelValueNumber,
@@ -696,9 +696,9 @@ def imagestats(filename, processInputId):
                     # Get statistics on masked frame
                     outputText += "Getting statistics on masked frame ... "
                     msec = int(1000 * time.time())
-                    maskedMean, maskedMedian, maskedStdDev = sigma_clipped_stats(maskedFrame, sigma=0, iters=0)
-                    # Converges well with 3 iterations.  Half as much time as iters=None
-                    bgMean, bgMedian, bgStdDev = sigma_clipped_stats(maskedFrame, sigma=3, iters=3)
+                    maskedMean, maskedMedian, maskedStdDev = sigma_clipped_stats(maskedFrame, sigma=0, maxiters=0)
+                    # Converges well with 3 iterations.  Half as much time as maxiters=None
+                    bgMean, bgMedian, bgStdDev = sigma_clipped_stats(maskedFrame, sigma=3, maxiters=3)
                     msec = int(1000 * time.time()) - msec
                     outputText += "completed: {}ms\n".format(msec)
                     outputText += "mean: {}\n".format(maskedMean)
@@ -966,7 +966,7 @@ def depricatedHistogram(frame) :
     outputText += "remaining pixels: {}, {}%\n".format(currentPixelNumber,
         round(100*currentPixelNumber/(bathtubPixelNumber +
         currentPixelNumber),4))
-    outputText += "bathtub (value,pixels): " + str(list(bathtubValues.iteritems())) + "\n"
+    outputText += "bathtub (value,pixels): " + str(list(bathtubValues.items())) + "\n"
     outputText += "\n"
 
 
@@ -1533,7 +1533,7 @@ def sextractor(filename, processInputId):
     # Each of these different settings options could be combined into a single output, or
     # they could be independently matched against other detection algorithms.
     catfileName = settings.MEDIA_ROOT + filename + ".cat"
-    proc = subprocess.Popen(['sextractor', '-CATALOG_NAME', catfileName, settings.MEDIA_ROOT + filename,
+    proc = subprocess.Popen(['source-extractor', '-CATALOG_NAME', catfileName, settings.MEDIA_ROOT + filename,
     '-THRESH_TYPE', 'ABSOLUTE', '-DETECT_THRESH', str(detectThreshold)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
