@@ -1392,7 +1392,7 @@ def initSourcefind(method, image):
 
         shouldReturn - a bool, if true the source find method does not need to be run at
         all for some reason.  For example, it is a calibration frame, or it already has
-        found the nunmber of sources the user said it should in a previous run.
+        found the number of sources the user said it should in a previous run.
 
         outputText and errorText - strings to be appended to the current output and error
         text streams for the task.  These strings contain information on how the other
