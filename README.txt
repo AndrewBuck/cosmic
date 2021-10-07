@@ -1,3 +1,23 @@
+Cosmic is a website and database for collecting, processing, displaying, and archiving images of the night sky.  The
+focus of the system is on maintaining the scientific integrity of the data so that it can be made use of in formal
+scientific research.  This codebase exists as a development effort for the main website and therefore this code is
+mainly of interest to developers for the actual site itself, however it can be run by users who want to process their
+imagery on their own hardware and not use the online resources of the cosmic website itself.  Be warned however that
+setting up the full website is not a trivial matter - it involves setting up the codebase and server infrastructure,
+downloading approximately 100 gb of catalog data, and about 36 hours of compute time to import this data into the local
+database in the proper format.  Although this catalog data is not needed for all uses of the site, unless you know what
+you are doing you probably don't want to be setting up your own local instance of the website, and instead just want to
+use the online instance which is already set up and running.  (So basically unless you are a programmer, or you have
+hundreds of gb of imagery you want processed, you probably don't want to run your own instance of the site.)  All that
+being said, if you do want to run your own instance, the instructions below are how you would go about that.
+
+The instructions assume you are running some variant of an Ubuntu Linux based operating system.  Other systems will
+likely work, but will involve modifications to the instructions to download the appropriate software libraries.  Main
+development of the system occurs on a Linux Mint (currently version 20) OS, so the instructions will be most suited to
+that environment.
+
+
+
 Install Django:
 
 sudo apt-get install python3-dev python3-pip gnuplot
@@ -294,6 +314,7 @@ identify - part of imagemagick.  Calculates image statistics for an image.
 
 convert - the main tool from imagemagick.  Used to make thumbnails.
 
+#TODO:  Look into switching over to sourcextractor++ which offers more functionality than the original program.
 source-extractor - Source Extractor: Finds stars and galaxies in an image.  Also must
 	copy /usr/share/source-extractor/* into the directory where it is being run
 	or it will complain about missing configuration files.  This is a very
