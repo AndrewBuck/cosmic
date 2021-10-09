@@ -2924,7 +2924,8 @@ def updateScoreForComment(commentID, user):
     comment.score = score
     comment.save()
 
-    # Total the score for all the moderations applied to comments made bu the target user.
+    # Total the score for all the moderations applied to comments made by the target user.
+    #TODO: This should probably be done in the DB by a SUM query.
     userComments = TextBlob.objects.filter(user=user)
     score = 0
     for comment in userComments:
