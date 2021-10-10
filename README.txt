@@ -301,6 +301,15 @@ python3 manage.py runserver 8080
 celery -A cosmic worker -l info
 python3 dispatcher.py
 
+Once the site is up and running for the first time you should also create at
+least one user account on the website and run the cost accounting script for the
+first time.  The user account can be created through the website interface in
+the normal way.  After the account is created run the script below to total up
+the users costs.  When run for the first time you will need to manually specify
+a date a short time in the past to initialize the cost accounting system.
+
+python3 calculate_user_costs.py <startDate>
+
 
 
 Commands that need to be installed on the system and in the path:
