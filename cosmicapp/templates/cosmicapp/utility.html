@@ -1,0 +1,25 @@
+{% extends "cosmicapp/base.html" %}
+
+{% load static %}
+{% load cosmicapp_extras %}
+
+{% block extratitle %} - Utility Pages {% endblock extratitle %}
+
+{% block extrahead %}
+{% endblock extrahead %}
+
+{% block mainbody %}
+<h2>Utility Pages</h2>
+
+<p>
+<a href="/comments">Comments</a> - Show all comments on the site, regardless of where they were posted.  Good for mods to review comments for spam, etc.
+</p>
+
+<p>
+<a href="/users">Users</a> - A listing of all user accounts on the site.
+</p>
+
+<p>
+<a href="/stats">Stats</a> - General statistics about site useage, number of uploaded images, etc.
+</p>
+{% endblock mainbody %}

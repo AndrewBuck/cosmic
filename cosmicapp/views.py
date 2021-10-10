@@ -80,6 +80,10 @@ def learn(request, page=None):
     else:
         return HttpResponse('Learning page "' + page + '" not found.', status=404)
 
+def utility(request):
+    context = {"user" : request.user}
+    return render(request, "cosmicapp/utility.html", context)
+
 def createuser(request):
     context = {"user" : request.user}
 

@@ -107,6 +107,8 @@ urlpatterns = [
     url(r'^learn/$', views.learn),
     url(r'^learn/(?P<page>.*)/$', views.learn),
 
+    url(r'^utility/$', views.utility),
+
     url(r'^export/bookmarks/$', views.exportBookmarks),
 
     url(r'^upload/$', views.upload),
