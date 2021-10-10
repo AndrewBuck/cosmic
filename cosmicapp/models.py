@@ -224,8 +224,8 @@ class Mount(InstrumentComponent):
     """
     mountType = models.CharField(max_length=64, null=True, blank=True)
     maxWeight = models.FloatField(null=True, blank=True)
-    autoguideCompatible = models.NullBooleanField()
-    gotoCompatible = models.NullBooleanField()
+    autoguideCompatible = models.BooleanField(null=True)
+    gotoCompatible = models.BooleanField(null=True)
 
     comments = GenericRelation('TextBlob')
 
@@ -1036,10 +1036,10 @@ class SourceFindResult(models.Model, SkyObject):
     dec = models.FloatField(null=True)
     #TODO: Add a geometry point field for (ra, dec)?
     confidence = models.FloatField(null=True)
-    flagHotPixel = models.NullBooleanField()
-    flagBadLine = models.NullBooleanField()
-    flagBadColumn = models.NullBooleanField()
-    flagEdge = models.NullBooleanField()
+    flagHotPixel = models.BooleanField(null=True)
+    flagBadLine = models.BooleanField(null=True)
+    flagBadColumn = models.BooleanField(null=True)
+    flagEdge = models.BooleanField(null=True)
 
     comments = GenericRelation('TextBlob')
 
