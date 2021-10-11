@@ -3,7 +3,7 @@ import time
 import urllib.request
 import threading
 
-usage = "\n\n\n\tUSAGE: " + sys.argv[0] + " zoomLevel <optionalNumThreads> <optionalDelayBetweenRequests>\n\n\n"
+usage = "\n\n\n\tUSAGE: " + sys.argv[0] + " zoomLevel <optionalNumThreads> <optionalDelayBetweenRequests> <optionalXStart> <optionalYStart>\n\n\n"
 if len(sys.argv) == 1:
     print(usage)
     sys.exit(1)
@@ -22,6 +22,16 @@ if len(sys.argv) > 3:
     delay = float(sys.argv[3])
 else:
     delay = 0
+
+if len(sys.argv) > 4:
+    startX = int(sys.argv[4])
+else:
+    startX = 0
+
+if len(sys.argv) > 5:
+    startY = int(sys.argv[5])
+else:
+    startY = 0
 
 dispatchSemaphore = threading.Semaphore(value=numThreads)
 timeTakenArray = []
@@ -49,8 +59,8 @@ def sendRequest(x, y):
 
         dispatchSemaphore.release()
 
-for x in range(2**zoom):
-    for y in range(2**zoom):
+for x in range(startX, 2**zoom):
+    for y in range(startY, 2**zoom):
         tileCounter += 1
         dispatchSemaphore.acquire()
         t = threading.Thread(target=sendRequest, args=(x, y))
