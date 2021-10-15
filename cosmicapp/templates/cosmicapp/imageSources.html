@@ -1276,16 +1276,16 @@ function drawSources(forceDraw=true)
     context.strokeStyle = userCreatedColor;
     context.fillStyle = userCreatedColor;
 
-    for(i = 0; i < userSubmittedResults.length && !lmbDown; i++)
+    for(i = 0; i < userSubmittedResults.length; i++)
         drawSource(context, userSubmittedResults[i].pixelX, userSubmittedResults[i].pixelY, 1.0, 10, 2);
 
-    for(i = 0; i < userSubmittedHotPixels.length && !lmbDown; i++)
+    for(i = 0; i < userSubmittedHotPixels.length; i++)
         drawSource(context, userSubmittedHotPixels[i].pixelX, userSubmittedHotPixels[i].pixelY, 1.0, 5, 2);
 
-    for(i = 0; i < userCreatedResults.length && !lmbDown; i++)
+    for(i = 0; i < userCreatedResults.length; i++)
         drawReticle(context, userCreatedResults[i].pixelX, userCreatedResults[i].pixelY, 10, userCreatedColor, 0.8);
 
-    for(i = 0; i < userCreatedHotPixels.length && !lmbDown; i++)
+    for(i = 0; i < userCreatedHotPixels.length; i++)
         drawReticle(context, userCreatedHotPixels[i].pixelX, userCreatedHotPixels[i].pixelY, 5, userCreatedColor, 0.8);
 
     labelSize = 16
