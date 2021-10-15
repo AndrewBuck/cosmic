@@ -161,6 +161,7 @@ colors are defined in javascript, we need to do this in the window.onload functi
     </td>
 </tr>
 
+<!-- TODO: Disable the feedback buttons if there are source find jobs already running for this image. -->
 {% if user.is_authenticated %}
 <tr>
 <td colspan=2>How did<br>we do:</td>
@@ -1691,6 +1692,7 @@ function handleMouseButtonDown(event)
     }
 
     // Left click with shift key held.
+    //TODO: Spawning multiple tabs does not seem to work.  The loop runs correctly, probably some browser limitation to prevent spam.
     if(event.which == 1 && keyStatusDict['shift'])
     {
         for(i = 0; i < mouseObjectsList.length; i++)

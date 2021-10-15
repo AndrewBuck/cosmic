@@ -2462,6 +2462,8 @@ def saveUserSubmittedSourceResults(request):
 
         userSubmittedHotPixel.save()
 
+    #TODO: Check to see if these processes are already in the queue from a previous upload.  It is possible the user
+    # submits multiple sets of sources before the queue processes the first ones.  These tasks only ultimately need to be run once.
     with transaction.atomic():
         #TODO: We only need to add a flagSources task if the use submitted new hot pixels in the request.
         piFlagSources = ProcessInput(
@@ -2554,6 +2556,8 @@ def saveUserSubmittedFeedback(request):
     numResults = methodDict[method].objects.filter(image=image).count()
     image.addImageProperty('userNumExpectedResults', str(numResults) + ' ' + feedback, False)
 
+    #TODO: Check to see if these processes are already in the queue from a previous upload.  It is possible the user
+    # submits multiple sets of feedback before the queue processes the first ones.  These tasks only ultimately need to be run once.
     with transaction.atomic():
         piSextractor = ProcessInput(
             process = "sextractor",
