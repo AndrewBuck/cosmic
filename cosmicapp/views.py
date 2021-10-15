@@ -1120,13 +1120,11 @@ def allImageProperties(request):
     for keyContains in keyContainsList:
         if keyContains == '':
             continue
-        print('key {}'.format(keyContains))
-        keyQ = keyQ | Q(key__contains=keyContains)
+        keyQ = keyQ | Q(key__icontains=keyContains)
 
     valueQ = Q()
     for valueContains in valueContainsList:
-        print('value {}'.format(valueContains))
-        valueQ = valueQ | Q(value__contains=valueContains)
+        valueQ = valueQ | Q(value__icontains=valueContains)
 
     queryQ = keyQ & valueQ
 
