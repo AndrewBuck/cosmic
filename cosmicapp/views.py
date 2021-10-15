@@ -2395,6 +2395,8 @@ def saveTransform(request):
 
     return HttpResponse('')
 
+#NOTE: This method was called by the image source viewer (imageSources.html) but that is no longer used.  The function
+# is kept for now in case that functionality is reimplemented on another page but as of now this is unused.
 @login_required
 @require_http_methods(['POST'])
 def saveUserComputedWCS(request):
