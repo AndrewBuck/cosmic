@@ -2787,7 +2787,10 @@ def parseHeaders(imageId, processInputId):
             elif header.key in ['fits:objctra', 'fits:ra']:
                 key = 'objectRA'
                 value = header.value.split('/')[0].strip().strip("'").lower()
-                value = str(parseHMS(value))
+                if 'degree' in header.value.lower():
+                    value = str(parseDMS(value))
+                else:
+                    value = str(parseHMS(value))
 
             elif header.key in ['fits:objctdec', 'fits:dec']:
                 key = 'objectDec'
