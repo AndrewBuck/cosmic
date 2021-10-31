@@ -728,13 +728,15 @@ class ImageHeaderField(models.Model):
     preserve as much information as possible about the setup of the user who created them (software versions, camera
     oddities, etc).
 
-    For most uses on the site (queries, sorting, etc) you should not use thes records directly, but should instead use
+    For most uses on the site (queries, sorting, etc) you should not use these records directly, but should instead use
     ImageProperty records, which are sanitized versions of these headers.  Each image property record links back to the
     ImageHeaderField it was derived from in case you need the exact data after you query.
 
     The 'index' field of the record stores a running number counting up from 0 in the order the header fields were read in.
     The idea here is that we may be able to identify particular software packages by the order in which the header fields
-    are stored in the file.
+    are stored in the file.  This is also used to sort header fields when they are displayed since some header keys
+    (like 'comment' for example) are often long enough to require splitting over multiple lines and thus the order
+    should be preserved when displayed.
 
     #TODO:  Some checking needs to be done on the index field.  I am storing them in the order that image magic spits them
     out, however the order it gives (at least for fits files) differs from other tools to list headers.  So this index
