@@ -188,15 +188,11 @@ def upload(request):
 
         records = []
         for myfile in request.FILES.getlist('myfiles'):
-            fs = FileSystemStorage()
-            filename = fs.save(myfile.name, myfile)
-
-            #TODO: Instead of replacing spaces we should rename the file to a hash name or something with no chance of
+            #TODO: Instead of just replacing spaces we should rename the file to a hash name or something with no chance of
             # special characters that would break other processes.
-            #TODO: This should be done before calling fs.save
-            filenameNoSpaces = filename.replace(' ', '_')
-            os.rename(settings.MEDIA_ROOT + filename, settings.MEDIA_ROOT + filenameNoSpaces)
-            filename = filenameNoSpaces
+            fs = FileSystemStorage()
+            filenameNoSpaces = myfile.name.replace(' ', '_')
+            filename = fs.save(filenameNoSpaces, myfile)
 
             hashObject = hashlib.sha256()
             for chunk in myfile.chunks():
