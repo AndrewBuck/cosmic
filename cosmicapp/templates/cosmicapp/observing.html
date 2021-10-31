@@ -91,6 +91,18 @@ function simulateCCD(clicked, ra, dec)
         <form method=get>
             <table cellpadding=5>
             <tr>
+            <td>Time:</td>
+            <td>
+            <input type=date name=observationDate value="{{observationDate}}">
+            <input type=time name=observationTime value="{{observationTime}}">
+            <!-- TODO: make nextSunrise and nextSunset clickable links.  -->
+            <p style="font-size:8pt">The next sunrise after the observation time is: {{nextSunrise}}</p>
+            <p style="font-size:8pt">The next sunset after the observation time is: {{nextSunset}}</p>
+            </td>
+            <td>UTC date/time used to compute the position of your local zenith as well as the position of asteroids, etc.</td>
+            </tr>
+
+            <tr>
             <td>Lat:</td>
             <td><input type=text name=lat value={{lat}}></td>
             <td>(Latitude in degrees with North as positive and South as negative)</td>
@@ -180,9 +192,7 @@ function simulateCCD(clicked, ra, dec)
         </form>
 </p>
 
-<h3>Now</h3>
-
-<p>Your current zenith is at:&emsp;{% formatRADec_rad zenithNowRA zenithNowDec %}</p>
+<p>The sky coordinates of the zenith are:&emsp;{% formatRADec_rad zenithNowRA zenithNowDec %}</p>
 
 <p>
 <a href="#brightStarDiv">Jump to Bright Star Results</a><br>
@@ -204,7 +214,7 @@ function simulateCCD(clicked, ra, dec)
         {% for brightStar in brightStars %}
             <tr>
             {% bookmark "ucac4" brightStar.pk "Observing Targets" "<td>" "</td>" %}
-            <td>{% scoreForObject brightStar currentTime user %}</td>
+            <td>{% scoreForObject brightStar observationDateTime user %}</td>
             <td><a href="{{brightStar.getUrl}}">{{brightStar.identifier}}</a></td>
             <td>{% formatRADec brightStar.ra brightStar.dec %}&emsp;
             <a class=functionLink onclick="simulateCCD(this, {{brightStar.ra}}, {{brightStar.dec}})">(Simulate)</a></td>
@@ -225,7 +235,7 @@ function simulateCCD(clicked, ra, dec)
         {% for asteroid in asteroids %}
             <tr>
             {% bookmark "asteroid" asteroid.record.pk "Observing Targets" "<td>" "</td>" %}
-            <td>{% scoreForObject asteroid.record currentTime user %}</td>
+            <td>{% scoreForObject asteroid.record observationDateTime user %}</td>
             <td><a href="{{asteroid.record.getUrl}}">{{asteroid.record.name}}</a></td>
             {% with "&asteroidId="|concat:asteroid.record.id as extraMapParams %}
             <td>{% formatRADec_rad asteroid.ephem.ra asteroid.ephem.dec %}&emsp;
@@ -255,7 +265,7 @@ function simulateCCD(clicked, ra, dec)
         {% for exoplanet in exoplanets %}
             <tr>
             {% bookmark "exoplanet" exoplanet.pk "Observing Targets" "<td>" "</td>" %}
-            <td>{% scoreForObject exoplanet currentTime user %}</td>
+            <td>{% scoreForObject exoplanet observationDateTime user %}</td>
             <td><a href="{{exoplanet.getUrl}}">{{exoplanet.identifier}}</a></td>
             <td>{% formatRADec exoplanet.ra exoplanet.dec %}&emsp;
             <a class=functionLink onclick="simulateCCD(this, {{exoplanet.ra}}, {{exoplanet.dec}})">(Simulate)</a></td>
@@ -277,12 +287,12 @@ function simulateCCD(clicked, ra, dec)
     <tr>
     {% if user.is_authenticated %}<th><font color=gold>★</font></th>{% endif %}
     <th>Score</th> <th>Name</th> <th>RA Dec</th> <th>Mag<br>max</th> <th>Mag<br>min</th>
-    <th>Period</th> <th>Type</th> <th>Type2</th> <th>Spectral<br>type</th> <th>Links</th>
+    <th>Period<br>(d)</th> <th>Type</th> <th>Type2</th> <th>Spectral<br>type</th> <th>Links</th>
     </tr>
         {% for variableStar in variableStars %}
             <tr>
             {% bookmark "variableStar" variableStar.pk "Observing Targets" "<td>" "</td>" %}
-            <td>{% scoreForObject variableStar currentTime user %}</td>
+            <td>{% scoreForObject variableStar observationDateTime user %}</td>
             <td><a href="{{variableStar.getUrl}}">{{variableStar.identifier}}</a></td>
             <td>{% formatRADec variableStar.ra variableStar.dec %}&emsp;
             <a class=functionLink onclick="simulateCCD(this, {{variableStar.ra}}, {{variableStar.dec}})">(Simulate)</a></td>
@@ -313,7 +323,7 @@ function simulateCCD(clicked, ra, dec)
         {% for messierObject in messierObjects %}
             <tr>
             {% bookmark "messierObject" messierObject.pk "Observing Targets" "<td>" "</td>" %}
-            <td>{% scoreForObject messierObject currentTime user %}</td>
+            <td>{% scoreForObject messierObject observationDateTime user %}</td>
             <td><a href="{{messierObject.getUrl}}">{{messierObject.identifier}}</td>
             <td>{% formatRADec messierObject.ra messierObject.dec %}&emsp;
             <a class=functionLink onclick="simulateCCD(this, {{messierObject.ra}}, {{messierObject.dec}})">(Simulate)</a></td>
@@ -340,7 +350,7 @@ function simulateCCD(clicked, ra, dec)
         {% for extendedSource in extendedSources %}
             <tr>
             {% bookmark "2MassXSC" extendedSource.pk "Observing Targets" "<td>" "</td>" %}
-            <td>{% scoreForObject extendedSource currentTime user %}</td>
+            <td>{% scoreForObject extendedSource observationDateTime user %}</td>
             <td><a href="{{extendedSource.getUrl}}">{{extendedSource.identifier}}</a></td>
             <td>{% formatRADec extendedSource.ra extendedSource.dec %}&emsp;
             <a class=functionLink onclick="simulateCCD(this, {{extendedSource.ra}}, {{extendedSource.dec}})">(Simulate)</a></td>
@@ -349,6 +359,7 @@ function simulateCCD(clicked, ra, dec)
             <td>{{extendedSource.isophotalKMinorMajor|floatformat:2}}</td>
             <td>
             {% for link in extendedSource.getLinks %}
+                <!-- TODO:  Need to urlencode this link properly.  The + sign gets turned into a space and SIMBAD fails the search. -->
                 <a href="{{link.0}}">{{link.1}}</a>
             {% endfor %}
             </td>

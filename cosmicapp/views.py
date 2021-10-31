@@ -3543,8 +3543,6 @@ def observing(request):
     else:
         rotation = 0
 
-    #TODO: Provide a input field like the ones for lat/lon/etc to set the observation date and then use position to calculate evening/midnight/morning for that location.
-
     lat = None
     lon = None
     if 'lat' in request.GET and 'lon' in request.GET:
@@ -3570,6 +3568,19 @@ def observing(request):
         else:
             (lat, lon) = getLocationForIp(getClientIp(request))
 
+    currentTime = timezone.now()
+    if 'observationDate' in request.GET:
+        observationDate = request.GET['observationDate']
+    else:
+        observationDate = currentTime.date().isoformat()
+
+    if 'observationTime' in request.GET:
+        observationTime = request.GET['observationTime']
+    else:
+        observationTime = currentTime.time().isoformat().split('.')[0]
+
+    observationDateTime = dateparser.parse(observationDate + ' ' + observationTime + ' UTC')
+
     limit = 25
     if 'limit' in request.GET:
         limit = int(request.GET['limit'])
@@ -3580,6 +3591,8 @@ def observing(request):
     if windowSize > 90:
         windowSize = 90
 
+    context['observationDate'] = observationDate
+    context['observationTime'] = observationTime
     context['lat'] = lat
     context['lon'] = lon
     context['ele'] = ele
@@ -3595,18 +3608,19 @@ def observing(request):
     context['promptProfileEdit'] = promptProfileEdit
     context['profileMissingFields'] = profileMissingFields
 
-    currentTime = timezone.now()
-    context['currentTime'] = currentTime
+    context['observationDateTime'] = observationDateTime
 
-    observerNow = ephem.Observer()
-    observerNow.lat = lat*(math.pi/180)
-    observerNow.lon = lon*(math.pi/180)
-    observerNow.elevation = ele
-    observerNow.date = currentTime
+    observer = ephem.Observer()
+    observer.lat = lat*(math.pi/180)
+    observer.lon = lon*(math.pi/180)
+    observer.elevation = ele
+    observer.date = observationDateTime
 
-    zenithNowRA, zenithNowDec = observerNow.radec_of('0', '90')
+    zenithNowRA, zenithNowDec = observer.radec_of('0', '90')
+    context['nextSunset'] = str(observer.next_setting(ephem.Sun()))
+    context['nextSunrise'] = str(observer.next_rising(ephem.Sun()))
 
-    context['observerNow'] = observerNow
+    context['observer'] = observer
     context['zenithNowRA'] = zenithNowRA
     context['zenithNowDec'] = zenithNowDec
 
@@ -3677,7 +3691,7 @@ def observing(request):
     print('extendedSources took {} milliseconds to execute.'.format(deltaT ))
     millis = int(round(time.time() * 1000))
 
-    asteroids = getAsteroidsAroundGeometry(zenithGeometry, windowSize, currentTime, limitingMag, limit)
+    asteroids = getAsteroidsAroundGeometry(zenithGeometry, windowSize, observationDateTime, limitingMag, limit)
 
     #asteroids = sorted(asteroids, key = lambda x: x['record'].ceu, reverse=True)[:limit]
 
