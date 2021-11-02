@@ -256,16 +256,7 @@ function ImageGallery(galleryName, paramString, displayType, includeLinks, image
                 html += '<div class="responsive ' + this.name + '" id="gallery_' + this.name + '_image_' + imageId + '" style="height: 400px; padding: 4px;">'
                 html += '<div class="gallery">'
 
-                if(this.includeLinks)
-                {
-                    html += '<a href="/image/' + imageId + '/">'
-                    html += '<img src="' + res['thumbUrl'+this.thumbnailSize] + '">';
-                    html += '</a>';
-                }
-                else
-                {
-                    html += '<img onclick="' + this.imageOnclickFunction + '(' + imageId + ',\'' + this.name + '\')" src="' + res['thumbUrl'+this.thumbnailSize] + '">';
-                }
+                html += this.inlineImageHTML(imageId, res);
 
                 html += '<div class="desc ' + this.name + '">'
                 //TODO: Make these <a> links an image icon instead of the placeholder text link that is here now.
@@ -277,10 +268,13 @@ function ImageGallery(galleryName, paramString, displayType, includeLinks, image
             }
             else if(this.displayType == 'table')
             {
-                html += '<div class="responsive ' + this.name + '" id="gallery_' + this.name + '_image_' + imageId + '" style="height: 400px; padding: 4px;">'
+                html += '<div class="responsive ' + this.name + '" id="gallery_' + this.name + '_image_' + imageId + '" style="padding: 4px;">'
                 html += '<table class="responsive ' + this.name + '"cellpadding=3px border=1px style="border-collapse: collapse; height: 11em;">';
                 html += '<tr>';
-                html += '<td> <a href="/image/' + res.id + '"><img src="' + res.thumbUrlSmall + '"><br>Image ' + res.id + '</a> </td>';
+                html += '<td>';
+                html += this.inlineImageHTML(imageId, res);
+                //html += '<td> <a href="/image/' + res.id + '"><img src="' + res.thumbUrlSmall + '"><br>Image ' + res.id + '</a> </td>';
+                html += '</td>';
                 html += '<td><font size=-1> ' + res.dimX + 'x' + res.dimY + 'x' + res.dimZ + ' ' + res.bitDepth + 'bits/pix<br>';
                 html += 'Frame Type: ' + res.frameType + '<br>' + res.dateTime + '<br>';
                 html += res.numPlateSolutions + ' Plate Solutions </font></td>';
@@ -396,11 +390,28 @@ function ImageGallery(galleryName, paramString, displayType, includeLinks, image
     this.selectImage = function(id)
     {
         $('#gallery_' + this.name + '_image_' + id).css('background', '#4e4');
-    }
+    };
 
     this.unselectImage = function(id)
     {
         $('#gallery_' + this.name + '_image_' + id).css('background', 'none');
-    }
+    };
+
+    this.inlineImageHTML = function(imageId, res)
+    {
+        var html = '';
+        if(this.includeLinks)
+        {
+            html += '<a href="/image/' + imageId + '/">'
+            html += '<img src="' + res['thumbUrl'+this.thumbnailSize] + '">';
+            html += '</a>';
+        }
+        else
+        {
+            html += '<img onclick="' + this.imageOnclickFunction + '(' + imageId + ',\'' + this.name + '\')" src="' + res['thumbUrl'+this.thumbnailSize] + '">';
+        }
+
+        return html;
+    };
 };
 

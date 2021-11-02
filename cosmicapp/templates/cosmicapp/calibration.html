@@ -157,7 +157,7 @@ which can then be applied to a series of science frames to produced calibrated i
 
 <h3>Bias frames</h3>
 
-{% include "./imageTable.html" with queryParams="imageProperty=imageType=bias:user="|concat:user|safe imageOnclickFunction="handleImageClick" galleryName="biasGallery" includeLinks="false" thumbnailSize="Medium" %}
+{% include "./imageTable.html" with queryParams="imageProperty=imageType=bias:user="|concat:user|safe imageOnclickFunction="handleImageClick" galleryName="biasGallery" includeLinks="false" thumbnailSize="Small" displayType="table" %}
 
 <h4>Master Bias frames</h4>
 
@@ -168,7 +168,7 @@ which can then be applied to a series of science frames to produced calibrated i
 Master Bias Image ID (required): <input type=text name=darkMasterBiasId>
 <br>
 
-{% include "./imageTable.html" with queryParams="imageProperty=imageType=dark:user="|concat:user|safe imageOnclickFunction="handleImageClick" galleryName="darkGallery" includeLinks="false" thumbnailSize="Medium" %}
+{% include "./imageTable.html" with queryParams="imageProperty=imageType=dark:user="|concat:user|safe imageOnclickFunction="handleImageClick" galleryName="darkGallery" includeLinks="false" thumbnailSize="Small" displayType="table" %}
 
 <h4>Master Dark frames</h4>
 
@@ -181,7 +181,7 @@ Master Bias Image ID (required): <input type=text name=flatMasterBiasId>
 Master Dark Image ID (required): <input type=text name=flatMasterDarkId>
 <br>
 
-{% include "./imageTable.html" with queryParams="imageProperty=imageType=flat:user="|concat:user|safe imageOnclickFunction="handleImageClick" galleryName="flatGallery" includeLinks="false" thumbnailSize="Medium" %}
+{% include "./imageTable.html" with queryParams="imageProperty=imageType=flat:user="|concat:user|safe imageOnclickFunction="handleImageClick" galleryName="flatGallery" includeLinks="false" thumbnailSize="Small" displayType="table" %}
 
 <h4>Master Flat frames</h4>
 
