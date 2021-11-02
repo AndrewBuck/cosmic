@@ -3127,6 +3127,7 @@ def imageCombine(argList, processInputId):
 
     for image in images:
         #TODO: Look into using ccdproc.ccd_process() to do the bias, dark, flat, etc, corrections.
+        outputText += "\n\n"
         outputText += "Loading image {}: {}\n".format(image.pk, image.fileRecord.originalFileName)
         hdulist = fits.open(settings.MEDIA_ROOT + image.fileRecord.onDiskFileName)
 
@@ -3156,6 +3157,7 @@ def imageCombine(argList, processInputId):
         # differently from image to image.  It would be more computationally efficient to
         # subtract it once at the end of the loop.
         if masterBiasImage is not None:
+            outputText += "Bias correcting image.\n"
             masterBiasHdulist = fits.open(settings.MEDIA_ROOT + masterBiasImage.fileRecord.onDiskFileName)
 
             #TODO: Do a better job than just choosing the first frame like we do now.
@@ -3163,9 +3165,13 @@ def imageCombine(argList, processInputId):
             if len(masterBiasData.shape) == 3:
                 masterBiasData = masterBiasData[0]
 
-            data -= masterBiasData
+            outputText += "  Before subtract: data:{} masterBiasData:{}\n".format(data.dtype.name, masterBiasData.dtype.name)
+            #NOTE: Do not switch to -= operator since that precludes datatype upcasting.
+            data = data - masterBiasData
+            outputText += "  After subtract: data:{} masterBiasData:{}\n".format(data.dtype.name, masterBiasData.dtype.name)
 
         if masterDarkImage is not None:
+            outputText += "Dark correcting image.\n"
             masterDarkHdulist = fits.open(settings.MEDIA_ROOT + masterDarkImage.fileRecord.onDiskFileName)
 
             #TODO: Do a better job than just choosing the first frame like we do now.
@@ -3183,9 +3189,13 @@ def imageCombine(argList, processInputId):
                 darkScaleFactor = 1.0
 
             outputText += '   Dark scale factor: {}\n'.format(darkScaleFactor)
-            data -= masterDarkData * darkScaleFactor
+            outputText += "  Before subtract: data:{} masterDarkData:{}\n".format(data.dtype.name, masterDarkData.dtype.name)
+            #NOTE: Do not switch to -= operator since that precludes datatype upcasting.
+            data = data - masterDarkData * darkScaleFactor
+            outputText += "  After subtract: data:{} masterDarkData:{}\n".format(data.dtype.name, masterDarkData.dtype.name)
 
         if masterFlatImage is not None:
+            outputText += "Flat correcting image.\n"
             masterFlatHdulist = fits.open(settings.MEDIA_ROOT + masterFlatImage.fileRecord.onDiskFileName)
 
             #TODO: Do a better job than just choosing the first frame like we do now.
@@ -3193,7 +3203,10 @@ def imageCombine(argList, processInputId):
             if len(masterFlatData.shape) == 3:
                 masterFlatData = masterFlatData[0]
 
-            data /= masterFlatData
+            outputText += "  Before divide: data:{} masterFlatData:{}\n".format(data.dtype.name, masterFlatData.dtype.name)
+            #NOTE: Do not switch to /= operator since that precludes datatype upcasting.
+            data = data / masterFlatData
+            outputText += "  After divide: data:{} masterFlatData:{}\n".format(data.dtype.name, masterFlatData.dtype.name)
 
         if doReproject:
             outputText += '   Reprojecting image.\n'
