@@ -1677,6 +1677,7 @@ def image2xy(filename, processInputId):
     #TODO: Use the -P option to handle images with multiple planes.  Also has support for multi-extension fits built in if called with appropriate params.
     #TODO: Consider using the -d option to downsample by a given factor before running.
     #TODO: image2xy can only handle .fit files.  Should autoconvert the file to .fit if necessary before running.
+    #TODO: use the -g and -p options to set the detection threshold (probable -g is bgStdDev and -p is detThreshMult) also include -a option.
     outputFilename = settings.MEDIA_ROOT + filename + ".xy.fits"
     proc = subprocess.Popen(['image2xy', '-o', outputFilename, settings.MEDIA_ROOT + filename],
         stdout=subprocess.PIPE,
@@ -1761,7 +1762,7 @@ def daofind(filename, processInputId):
 
     #TODO: Set the fwhm from a variable if this is the first run, or from the previous run average if this is the second run of this task.
     #TODO: Make use of the 'headerMeanFWHM' image property if set.
-    daofind = DAOStarFinder(fwhm = 2.5, threshold = detectThresholdMultiplier*channelInfos[0].bgStdDev)
+    daofind = DAOStarFinder(fwhm = 2.5, threshold = detectThreshold)
     sources = daofind(data - channelInfos[0].bgMedian)
 
     with transaction.atomic():
@@ -1826,7 +1827,7 @@ def starfind(filename, processInputId):
 
     #TODO: Set the fwhm from a variable if this is the first run, or from the previous run average if this is the second run of this task.
     #TODO: Make use of the 'headerMeanFWHM' image property if set.
-    starfinder = IRAFStarFinder(fwhm = 2.5, threshold = detectThresholdMultiplier*channelInfos[0].bgStdDev)
+    starfinder = IRAFStarFinder(fwhm = 2.5, threshold = detectThreshold)
     sources = starfinder(data - channelInfos[0].bgMedian)
 
     with transaction.atomic():
