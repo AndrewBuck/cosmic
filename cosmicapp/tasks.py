@@ -1833,7 +1833,7 @@ def starfind(filename, processInputId):
     with transaction.atomic():
         models.StarfindResult.objects.filter(image=image).delete()
         starfindResults = []
-        for source in sources:
+        for source in (sources or []):
             result = models.StarfindResult(
                 image = image,
                 pixelX = source['xcentroid'],
