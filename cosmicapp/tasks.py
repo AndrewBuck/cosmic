@@ -310,8 +310,8 @@ def imagestats(filename, processInputId):
                     # Compute and store the row and column averages for the image frame.
                     outputText += "Computing row and column mean values ... "
                     msec = int(1000 * time.time())
-                    rowMeans = numpy.mean(frame, axis=1)
-                    colMeans = numpy.mean(frame, axis=0)
+                    rowMeans = numpy.nanmean(frame, axis=1)
+                    colMeans = numpy.nanmean(frame, axis=0)
 
                     imageSliceMeans = []
                     for direction, means in [('r', rowMeans), ('c', colMeans)]:
