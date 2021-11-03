@@ -418,6 +418,7 @@ def createTasksForNewImage(fileRecord, user):
         piSextractor.addArguments([fileRecord.onDiskFileName])
         piSextractor.images.add(imageRecord)
         piSextractor.prerequisites.add(piImagestats)
+        piSextractor.prerequisites.add(piHeaders)
 
         piImage2xy = models.ProcessInput(
             process = "image2xy",
@@ -433,6 +434,7 @@ def createTasksForNewImage(fileRecord, user):
         piImage2xy.addArguments([fileRecord.onDiskFileName])
         piImage2xy.images.add(imageRecord)
         piImage2xy.prerequisites.add(piImagestats)
+        piImage2xy.prerequisites.add(piHeaders)
 
         piDaofind = models.ProcessInput(
             process = "daofind",
@@ -448,6 +450,7 @@ def createTasksForNewImage(fileRecord, user):
         piDaofind.addArguments([fileRecord.onDiskFileName])
         piDaofind.images.add(imageRecord)
         piDaofind.prerequisites.add(piImagestats)
+        piDaofind.prerequisites.add(piHeaders)
 
         piStarfind = models.ProcessInput(
             process = "starfind",
@@ -463,6 +466,7 @@ def createTasksForNewImage(fileRecord, user):
         piStarfind.addArguments([fileRecord.onDiskFileName])
         piStarfind.images.add(imageRecord)
         piStarfind.prerequisites.add(piImagestats)
+        piStarfind.prerequisites.add(piHeaders)
 
         piFlagSources = models.ProcessInput(
             process = "flagSources",
