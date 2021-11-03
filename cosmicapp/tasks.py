@@ -2514,7 +2514,7 @@ def parseHeaders(imageId, processInputId):
 
             elif header.key in ['fits:exptime', 'fits:exposure']:
                 key = 'exposureTime'
-                value = header.value.split()[0]
+                value = header.value.strip("'").split()[0]
 
             elif header.key in ['fits:traktime']:
                 key = 'autoguiderExposureTime'
