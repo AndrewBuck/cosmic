@@ -253,7 +253,7 @@ function ImageGallery(galleryName, paramString, displayType, includeLinks, image
 
             if(this.displayType == 'gallery')
             {
-                html += '<div class="responsive ' + this.name + '" id="gallery_' + this.name + '_image_' + imageId + '" style="height: 400px; padding: 4px;">'
+                html += '<div class="responsive ' + this.name + '" id="gallery_' + this.name + '_image_' + imageId + '" style="padding: 4px; width: max-content">'
                 html += '<div class="gallery">'
 
                 html += this.inlineImageHTML(imageId, res);
@@ -268,7 +268,7 @@ function ImageGallery(galleryName, paramString, displayType, includeLinks, image
             }
             else if(this.displayType == 'table')
             {
-                html += '<div class="responsive ' + this.name + '" id="gallery_' + this.name + '_image_' + imageId + '" style="padding: 4px;">'
+                html += '<div class="responsive ' + this.name + '" id="gallery_' + this.name + '_image_' + imageId + '" style="padding: 4px; width: max-content;">'
                 html += '<table class="responsive ' + this.name + '"cellpadding=3px border=1px style="border-collapse: collapse; height: 11em;">';
                 html += '<tr>';
                 html += '<td>';
