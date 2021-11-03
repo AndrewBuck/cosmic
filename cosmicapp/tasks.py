@@ -1768,7 +1768,7 @@ def daofind(filename, processInputId):
     with transaction.atomic():
         models.DaofindResult.objects.filter(image=image).delete()
         daofindResults = []
-        for source in sources:
+        for source in (sources or []):
             result = models.DaofindResult(
                 image = image,
                 pixelX = source['xcentroid'],
