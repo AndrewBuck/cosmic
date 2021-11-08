@@ -14,8 +14,9 @@ from django.utils import timezone
 from cosmicapp.models import *
 from cosmicapp.tasks import *
 
-startTime = dateparser.parse('2015 UTC')
-endTime = dateparser.parse('2019 UTC')
+currentTime = timezone.now()
+startTime = dateparser.parse(str(currentTime.year) + "-01-01")
+endTime = dateparser.parse(str(currentTime.year+1) + "-01-01")
 timeTolerance = CosmicVariable.getVariable('asteroidEphemerideTimeTolerance')
 tolerance = CosmicVariable.getVariable('asteroidEphemerideTolerance')
 clearTable = True
@@ -26,13 +27,19 @@ if len(sys.argv) > 1:
 if len(sys.argv) > 2:
     endTime = dateparser.parse(sys.argv[2] + 'UTC')
 
+if len(sys.argv) > 3:
+    timeTolerance = float(sys.argv[3])
+
+if len(sys.argv) > 4:
+    tolerance = float(sys.argv[4])
+
 if len(sys.argv) > 5:
     if sys.argv[5].lower() == 'true':
         clearTable = True
     else:
         clearTable = False
 
-print('Calculating asteroid ephemerides from {} to {} with a max time step of {} days and a max position step of {} degrees.  Clear table: {}'.format(startTime, endTime, timeTolerance, tolerance, clearTable))
+print('\nCalculating asteroid ephemerides from {} to {}\nwith a max time step of {} days\nand a max position step of {} degrees.\n\nClear table: {}\n\n'.format(startTime, endTime, timeTolerance, tolerance, clearTable))
 sys.stdout.flush()
 
 #TODO: Take arguments for dates, etc, from command line.
