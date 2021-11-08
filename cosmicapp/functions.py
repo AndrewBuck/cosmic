@@ -352,7 +352,7 @@ def formulateObservingPlan(user, observatory, targets, includeOtherTargets, star
 
     return observingPlan
 
-def createTasksForNewImage(fileRecord, user):
+def createTasksForNewImage(fileRecord, user, priorityMod=0):
     with transaction.atomic():
         imageRecord = models.Image(
             fileRecord = fileRecord
@@ -363,7 +363,7 @@ def createTasksForNewImage(fileRecord, user):
         piImagestats = models.ProcessInput(
             process = "imagestats",
             requestor = user,
-            priority = models.ProcessPriority.getPriorityForProcess("imagestats", "batch", user),
+            priority = priorityMod + models.ProcessPriority.getPriorityForProcess("imagestats", "batch", user),
             estCostCPU = fileRecord.uploadSize / 1e6,
             estCostBandwidth = 0,
             estCostStorage = 1000,
@@ -377,7 +377,7 @@ def createTasksForNewImage(fileRecord, user):
         piHeaders = models.ProcessInput(
             process = "parseHeaders",
             requestor = user,
-            priority = models.ProcessPriority.getPriorityForProcess("parseHeaders", "batch", user),
+            priority = priorityMod + models.ProcessPriority.getPriorityForProcess("parseHeaders", "batch", user),
             estCostCPU = .1,
             estCostBandwidth = 0,
             estCostStorage = 1000,
@@ -392,7 +392,7 @@ def createTasksForNewImage(fileRecord, user):
         piThumbnails = models.ProcessInput(
             process = "generateThumbnails",
             requestor = user,
-            priority = models.ProcessPriority.getPriorityForProcess("generateThumbnails", "batch", user),
+            priority = priorityMod + models.ProcessPriority.getPriorityForProcess("generateThumbnails", "batch", user),
             estCostCPU = fileRecord.uploadSize / 1e6,
             estCostBandwidth = 0,
             estCostStorage = fileRecord.uploadSize / 10,
@@ -407,7 +407,7 @@ def createTasksForNewImage(fileRecord, user):
         piSextractor = models.ProcessInput(
             process = "sextractor",
             requestor = user,
-            priority = models.ProcessPriority.getPriorityForProcess("sextractor", "batch", user),
+            priority = priorityMod + models.ProcessPriority.getPriorityForProcess("sextractor", "batch", user),
             estCostCPU = 0.5 * fileRecord.uploadSize / 1e6,
             estCostBandwidth = 0,
             estCostStorage = 3000,
@@ -423,7 +423,7 @@ def createTasksForNewImage(fileRecord, user):
         piImage2xy = models.ProcessInput(
             process = "image2xy",
             requestor = user,
-            priority = models.ProcessPriority.getPriorityForProcess("image2xy", "batch", user),
+            priority = priorityMod + models.ProcessPriority.getPriorityForProcess("image2xy", "batch", user),
             estCostCPU = 0.5 * fileRecord.uploadSize / 1e6,
             estCostBandwidth = 0,
             estCostStorage = 3000,
@@ -439,7 +439,7 @@ def createTasksForNewImage(fileRecord, user):
         piDaofind = models.ProcessInput(
             process = "daofind",
             requestor = user,
-            priority = models.ProcessPriority.getPriorityForProcess("daofind", "batch", user),
+            priority = priorityMod + models.ProcessPriority.getPriorityForProcess("daofind", "batch", user),
             estCostCPU = 0.5 * fileRecord.uploadSize / 1e6,
             estCostBandwidth = 0,
             estCostStorage = 3000,
@@ -455,7 +455,7 @@ def createTasksForNewImage(fileRecord, user):
         piStarfind = models.ProcessInput(
             process = "starfind",
             requestor = user,
-            priority = models.ProcessPriority.getPriorityForProcess("starfind", "batch", user),
+            priority = priorityMod + models.ProcessPriority.getPriorityForProcess("starfind", "batch", user),
             estCostCPU = 0.5 * fileRecord.uploadSize / 1e6,
             estCostBandwidth = 0,
             estCostStorage = 3000,
@@ -471,7 +471,7 @@ def createTasksForNewImage(fileRecord, user):
         piFlagSources = models.ProcessInput(
             process = "flagSources",
             requestor = user,
-            priority = models.ProcessPriority.getPriorityForProcess("flagSources", "batch", user),
+            priority = priorityMod + models.ProcessPriority.getPriorityForProcess("flagSources", "batch", user),
             estCostCPU = 10,
             estCostBandwidth = 0,
             estCostStorage = 3000,
@@ -489,7 +489,7 @@ def createTasksForNewImage(fileRecord, user):
         piStarmatch = models.ProcessInput(
             process = "starmatch",
             requestor = user,
-            priority = models.ProcessPriority.getPriorityForProcess("starmatch", "batch", user),
+            priority = priorityMod + models.ProcessPriority.getPriorityForProcess("starmatch", "batch", user),
             estCostCPU = 10,
             estCostBandwidth = 0,
             estCostStorage = 3000,
@@ -506,7 +506,7 @@ def createTasksForNewImage(fileRecord, user):
         piAstrometryNet = models.ProcessInput(
             process = "astrometryNet",
             requestor = user,
-            priority = models.ProcessPriority.getPriorityForProcess("astrometryNet", "batch", user),
+            priority = priorityMod + models.ProcessPriority.getPriorityForProcess("astrometryNet", "batch", user),
             estCostCPU = 100,
             estCostBandwidth = 3000,
             estCostStorage = 3000,
