@@ -102,7 +102,7 @@ priority, created = ProcessPriority.objects.get_or_create(
 
 priority, created = ProcessPriority.objects.get_or_create(
     name = 'astrometryNet',
-    priority = 1000,
+    priority = 2975,
     priorityClass = 'batch'
     )
 
