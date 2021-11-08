@@ -126,7 +126,7 @@ td.numMatchResults
             From observatory:
             <font size=-1>
             {% if image.observatory %}
-                <br>&emsp;{{image.observatory.name}}
+                <br>&emsp;<a href="/observatory/{{image.observatory.pk}}">{{image.observatory.name}}</a>
             {% else %}
                 <br>&emsp;Unknown
             {% endif %}
