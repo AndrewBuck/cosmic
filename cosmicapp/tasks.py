@@ -2105,7 +2105,7 @@ def astrometryNet(filename, processInputId):
     superMatches = models.SourceFindMatch.objects.filter(image=image)
 
     # Loop over the super matches and add the x-y and confidence values to the appropriate
-    # arrays since construction the fits table requires a separate array for each column.
+    # arrays since constructing the fits table requires a separate array for each column.
     xValues = []
     yValues = []
     confidenceValues = []
@@ -3060,6 +3060,8 @@ def imageCombine(argList, processInputId):
     for key in argDict:
         outputText += "   " + key + " = " + str(argDict[key]) + "\n"
 
+    outputText += '\n\n'
+
     if 'masterBiasId' in argDict:
         masterBiasImage = models.Image.objects.filter(pk=argDict['masterBiasId']).first()
     else:
@@ -3247,8 +3249,26 @@ def imageCombine(argList, processInputId):
         scaling_func = lambda arr: 1/numpy.ma.average(arr)
         combiner.scaling = scaling_func
 
-    outputText += "Performing median combine.\n"
-    combinedData = combiner.median_combine()
+    outputText += "Performing sigma clipping.\n"
+    combiner.sigma_clipping()
+
+    if argDict['combineType'] == 'light':
+        if 'lightCombineMethod' in argDict:
+            outputText += "Light combine method: " + argDict['lightCombineMethod'] + "\n"
+            if argDict['lightCombineMethod'] == 'mean':
+                combinedData = combiner.average_combine()
+            elif argDict['lightCombineMethod'] == 'median':
+                combinedData = combiner.median_combine()
+            else:
+                outputText += "WARNING: light combine method not recognized - defaulting to 'median'\n"
+                errorText += "WARNING: light combine method not recognized - defaulting to 'median'\n"
+                combinedData = combiner.median_combine()
+        else:
+            outputText += "Light combine method not set - defaulting to 'median'\n"
+            combinedData = combiner.median_combine()
+    else:
+        outputText += "Combining via median combine"
+        combinedData = combiner.median_combine()
 
     primaryHDU = fits.PrimaryHDU(combinedData)
 

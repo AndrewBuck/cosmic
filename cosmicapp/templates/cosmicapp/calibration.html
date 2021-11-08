@@ -64,6 +64,7 @@ function handleImageClick(id, galleryName)
 function combineImageIds(combineType, idList)
 {
     var masterBiasId = '-1', masterDarkId = '-1', masterFlatId = '-1';
+    var lightCombineMethod = '';
 
     if(combineType.toLowerCase() == 'dark')
     {
@@ -118,6 +119,8 @@ function combineImageIds(combineType, idList)
             alert('ERROR: You must provide the id number of a master flat image to use for calibrating the light frames before stacking.');
             return;
         }
+
+        lightCombineMethod = document.querySelector('input[name="lightCombineMethod"]:checked').value;
     }
 
     $.ajax({
@@ -130,7 +133,8 @@ function combineImageIds(combineType, idList)
             idList: idList,
             masterBiasId: masterBiasId,
             masterDarkId: masterDarkId,
-            masterFlatId: masterFlatId
+            masterFlatId: masterFlatId,
+            lightCombineMethod: lightCombineMethod,
         },
         success : function(response)
         {
@@ -194,6 +198,12 @@ Master Bias Image ID (required): <input type=text name=lightMasterBiasId>
 Master Dark Image ID (required): <input type=text name=lightMasterDarkId>
 <br>
 Master Flat Image ID (required): <input type=text name=lightMasterFlatId>
+<br>
+<br>
+Combine method:
+Median <input type=radio value="median" name=lightCombineMethod checked>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Mean <input type=radio value="mean" name=lightCombineMethod>
 <br>
 
 {% include "./imageTable.html" with queryParams="imageProperty=imageType=light:imageProperty=astrometryNet=success:imageProperty=flatCorrected=unknown:user="|concat:user|safe imageOnclickFunction="handleImageClick" galleryName="lightGallery" includeLinks="false" thumbnailSize="Medium" %}
