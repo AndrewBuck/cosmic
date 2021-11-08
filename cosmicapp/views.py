@@ -1115,6 +1115,7 @@ def imageProperties(request, id):
     return render(request, "cosmicapp/imageProperties.html", context)
 
 def allImageProperties(request):
+    #TODO: This page load get very slow when more images are in the database.  THe SQL queries seem to run fast, but something in the page template itself is taking a lot of CPU time.
     context = {"user" : request.user}
 
     keyContainsList = request.GET.get('keyContains', '').split('|')
@@ -3716,6 +3717,10 @@ def observing(request):
 
 @login_required
 def exportBookmarks(request):
+    #TODO: Optionally include nearby bright stars for purposes of syncing telescope mount coordiantes (high precision mode for mounts with poor goto accuracy)
+
+    #TODO: Add an option to show the observing plan on the sky map.
+
     #TODO: We should store both the output of the observing plan routine as well as a
     # database record for each row of observing suggestion we send to the user.  Then later
     # when they upload data to us we can correlate it against what we told them to image and

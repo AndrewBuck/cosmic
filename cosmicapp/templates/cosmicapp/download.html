@@ -53,6 +53,7 @@ function validateDownloadForm()
 
     if(duplicateNames.length > 0)
     {
+        //TODO: Ignore duplicate name warning if only one of the duplicated names is actually checked for download.
         var text = 'Warning: The following file names are duplicated: \n';
         for(i = 0; i < duplicateNames.length; i++)
             text += "\n" + duplicateNames[i];
@@ -142,6 +143,8 @@ var rowBreak = '<br>';
                 <div style="display: inline-block;">
                 {% for ps in item.plateSolutions.all %}
                     <div style="display: inline-block; float: left; border: 1px dashed grey; padding: .5em; margin-left: 1em; margin-top: 1em;">
+                    <!-- TODO: Switch this to a radio button, rather than a checkbox.  Also, maybe default to the one
+                    chosen by getBestPlateSolution(). -->
                     <input type=checkbox class="plateSolutionCheckbox_{{item.pk}}" name="imageWCS_{{item.pk}}_plateSolution_{{ps.pk}}" {% if forloop.first %}checked{% endif %}>
                     {{ps.source}}
                     <br>&emsp;&emsp;{% formatRADec ps.centerRA ps.centerDec %}

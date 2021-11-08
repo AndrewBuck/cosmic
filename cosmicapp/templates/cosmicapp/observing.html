@@ -40,6 +40,9 @@ function simulateCCD(clicked, ra, dec)
 {% block mainbody %}
 
 {% comment %} TODO: Need to pass the observatory in the scoreForObject template so observatory corrections are taken into account. {% endcomment %}
+
+{% comment %} TODO: Add an option in javascript to hide all the rows in the results tables that aren't currently bookmarked. {% endcomment %}
+
 <h2>Observing suggestions for tonight</h2>
 
 {% if user.is_authenticated %}
