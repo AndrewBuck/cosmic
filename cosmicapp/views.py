@@ -135,19 +135,26 @@ def upload(request):
     context = {"user" : request.user}
     context['supportedImageTypes'] = settings.SUPPORTED_IMAGE_TYPES
 
-    objectIdentifier = request.GET.get('object', '')
-    objectRA = request.GET.get('objectRA', '')
-    objectDec = request.GET.get('objectDec', '')
-    overlapsImage = request.GET.get('image', '')
-    plateScale = request.GET.get('plateScale', '')
+    print(request.method)
+    if request.method == 'GET':
+        requestDict = request.GET
+
+    if request.method == 'POST':
+        requestDict = request.POST
+
+    objectIdentifier = requestDict.get('object', '')
+    objectRA = requestDict.get('objectRA', '')
+    objectDec = requestDict.get('objectDec', '')
+    overlapsImage = requestDict.get('image', '')
+    plateScale = requestDict.get('plateScale', '')
 
     try:
-        observatoryID = int(request.GET.get('observatoryID', -1))
+        observatoryID = int(requestDict.get('observatoryID', -1))
     except:
         observatoryID = -1
 
     try:
-        instrumentID = int(request.GET.get('instrumentID', -1))
+        instrumentID = int(requestDict.get('instrumentID', -1))
     except:
         instrumentID = -1
 

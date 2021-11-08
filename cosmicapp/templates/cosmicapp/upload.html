@@ -54,7 +54,8 @@ into a single upload.
 </div>
 
 <div style="margin: 1em; padding: .5em; width: 525px; border: 2px solid lightgrey;">
-<form method="get" action="/upload/">
+<form method="post" enctype="multipart/form-data">
+{% csrf_token %}
 Object Name: <input id=object type=text name=object value="{{object}}">&emsp;<a class=functionLink onclick="searchForObject()">(Search)</a>
 <br>Object RA: <input id=objectRA type=text name=objectRA value="{{objectRA}}">
 <br>Object Dec: <input id=objectDec type=text name=objectDec value="{{objectDec}}">
@@ -62,10 +63,10 @@ Object Name: <input id=object type=text name=object value="{{object}}">&emsp;<a 
 <br>Plate scale (arcsec/pixel): <input type=text name=plateScale value="{{plateScale}}">
 <br>Observing location:
 <select name=observatoryID>
-    <option value="">Select observatory</option>
+    <option value="">Observatory not set</option>
 
     {% if defaultObservatory %}
-        <option value="{{defaultObservatory.pk}}" {% if defaultObservatory.pk == observatoryID %}selected="selected"{% endif %}>{{defaultObservatory.name}}
+        <option value="{{defaultObservatory.pk}}" {% if defaultObservatory.pk == observatoryID or observatoryID == -1 %}selected="selected"{% endif %}>[default] {{defaultObservatory.name}}
         ({{defaultObservatory.lat|floatformat:3}}
         {{defaultObservatory.lon|floatformat:3}})</option>
     {% endif %}
@@ -79,7 +80,7 @@ Object Name: <input id=object type=text name=object value="{{object}}">&emsp;<a 
 
 <br>Instrument Used:
 <select name=instrumentID>
-    <option value="">Select instrument</option>
+    <option value="">Instrument not set</option>
 
     {% if defaultInstrument %}
         <option value="{{defaultInstrument.pk}}" {% if defaultInstrument.pk == instrumentID %}selected="selected"{% endif %}>{{defaultInstrument.name}}
@@ -95,14 +96,9 @@ Object Name: <input id=object type=text name=object value="{{object}}">&emsp;<a 
 <br>Processing Priority:
 <input type=radio name=priority value=normal checked disabled> Normal&emsp;
 <input type=radio name=priority value=low disabled> Low&emsp;
-
-<br><input type=submit value="Update: Click before uploading if setting any of these manually.">
-</form>
 </div>
 
 <!-- TODO: Add a progress indicator. -->
-<form method="post" enctype="multipart/form-data">
-{% csrf_token %}
 <input type="file" name="myfiles" multiple=""><br><br>
 <button type="submit" class=button>Upload</button>
 </form>
