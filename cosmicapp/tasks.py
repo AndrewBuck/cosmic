@@ -3116,12 +3116,13 @@ def imageCombine(argList, processInputId):
                 minY = min(minY, y)
                 maxY = max(maxY, y)
 
+        outputText += '\n\n'
         outputText += 'Output mosaic coordinates:\n'
-        outputText += '     x, y ; ra, dec\n'
+        outputText += '     ra, dec ; x, y\n'
         minRaXY, minDecXY = referenceWCS.all_pix2world(minX, minY, 1)
-        outputText += 'min: {}, {} ; {}, {}\n'.format(minX, minY, minRaXY, minDecXY)
+        outputText += 'min: {}, {} ; {}, {}\n'.format(minRaXY, minDecXY, minX, minY)
         maxRaXY, maxDecXY = referenceWCS.all_pix2world(maxX, maxY, 1)
-        outputText += 'max: {}, {} ; {}, {}\n'.format(maxX, maxY, maxRaXY, maxDecXY)
+        outputText += 'max: {}, {} ; {}, {}\n'.format(maxRaXY, maxDecXY, maxX, maxY)
         dimX = int(maxX - minX)
         dimY = int(maxY - minY)
         outputText += 'dim: {}, {}\n'.format(dimX, dimY)
@@ -3187,12 +3188,12 @@ def imageCombine(argList, processInputId):
                 try:
                     darkScaleFactor = float(imageExposure) / float(darkExposure)
                 except:
-                    outputText += '   Warning: using dark scale factor of 1.0 instead of \'{}\' / \'{}\'\n'.format(imageExposure, darkExposure)
+                    outputText += '    Warning: using dark scale factor of 1.0 instead of \'{}\' / \'{}\'\n'.format(imageExposure, darkExposure)
                     darkScaleFactor = 1.0
             else:
                 darkScaleFactor = 1.0
 
-            outputText += '   Dark scale factor: {}\n'.format(darkScaleFactor)
+            outputText += '    Dark scale factor: {}\n'.format(darkScaleFactor)
             outputText += "  Before subtract: data:{} masterDarkData:{}\n".format(data.dtype.name, masterDarkData.dtype.name)
             #NOTE: Do not switch to -= operator since that precludes datatype upcasting.
             data = data - masterDarkData * darkScaleFactor
@@ -3213,25 +3214,27 @@ def imageCombine(argList, processInputId):
             outputText += "  After divide: data:{} masterFlatData:{}\n".format(data.dtype.name, masterFlatData.dtype.name)
 
         if doReproject:
-            outputText += '   Reprojecting image.\n'
+            outputText += 'Reprojecting image.\n'
             hdulist[0].data = data
             dataToProject = CCDData(data, wcs=image.getBestPlateSolution().wcs(), unit=u.adu)
             data = wcs_project(dataToProject, referenceWCS, target_shape=outputShape)
             dataArray.append(data)
 
         elif doMatrixTransform:
-            outputText += '   Doing matrix transform. Reference: {}   Subject: {}\n'\
+            outputText += 'Doing matrix transform. Reference: {}   Subject: {}\n'\
                 .format(imageTransform.referenceImage.pk, imageTransform.subjectImage.pk)
             transformedData = scipy.ndimage.interpolation.affine_transform(data, imageTransform.matrix())
             dataArray.append(CCDData(transformedData, unit=u.adu))
 
         else:
-            outputText += '   Not Reprojecting image.\n'
+            outputText += 'Not Reprojecting image.\n'
             dataArray.append(CCDData(data, unit=u.adu))
 
         if imageExposure is not None and imageExposure != 'unknown':
             exposureSum += float(imageExposure.strip().strip("'"))
             exposureCount += 1
+
+    outputText += "\n---------------------------------------\n\n"
 
     exposureMean = exposureSum / exposureCount
     outputText += 'Exposure sum: {}\nExposure mean: {}\n'.format(exposureSum, exposureMean)
