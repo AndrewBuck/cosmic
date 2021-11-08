@@ -1648,7 +1648,11 @@ def sextractor(filename, processInputId):
 
             outputText += "Found {} sources.\n".format(records.count())
             for record in records:
-                record.confidence = sigmoid((record.fluxAuto-meanFluxAuto)/stdDevFluxAuto)
+                try:
+                    record.confidence = sigmoid((record.fluxAuto-meanFluxAuto)/stdDevFluxAuto)
+                except ZeroDivisionError:
+                    record.confidence = 0.5
+                    outputText += "stdDevFluxAuto was 0 so assigning a confidence of 0.5 to detected source."
                 record.save()
 
     try:
