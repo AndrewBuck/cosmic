@@ -3787,11 +3787,13 @@ def exportBookmarks(request):
                     ra, dec = obj.getSkyCoords(dateparser.parse(t['startTime']))
                 else:
                     mag = None
-                    ra = t['ra']
-                    dec = t['dec']
+                    ra = t.get('ra')
+                    dec = t.get('dec')
 
-                formatString = '========== {identifier} ==========\n'\
-                    'Object Type: {typeString}\n'
+                formatString = '========== {identifier} ==========\n'
+
+                if t.get('typeString') is not None:
+                    formatString += 'Object Type: {typeString}\n'
 
                 if ra is not None and dec is not None:
                     formatString += 'RA: {ra}    Dec: {dec}\n'
@@ -3799,33 +3801,34 @@ def exportBookmarks(request):
                 if mag is not None:
                     formatString += 'Mag: {mag}\n'
 
-                if t['score'] is not None:
+                if t.get('score') is not None:
                     formatString += 'Score: {score}\n'
 
                 formatString += '\nObservation Start Time: {startTime}\n'
 
-                if t['nextRising'] is not None or t['nextTransit'] is not None or t['nextSetting'] is not None:
+                if t.get('nextRising') is not None or t.get('nextTransit') is not None or t.get('nextSetting') is not None:
                     formatString += 'Rise: {nextRising}    Transit: {nextTransit}    Set: {nextSetting}\n'
                     '\n'
 
-                if t['numExposures'] is not None or t['exposureTime']:
+                if not (t.get('numExposures') in [None, '']  or t.get('exposureTime') in [None, '']):
                     formatString += 'Scheduled for {numExposures} exposures of {exposureTime} seconds each.\n'
 
                 #TODO: Add Fields for seeing, weather, etc.
                 formatString += '\nObserving Notes: \n\n\n\n\n\n'
 
-                fileContent += formatString.format(identifier=t['identifier'],
-                             typeString=t['type'],
+                fileContent += formatString.format(
+                             identifier=t.get('identifier'),
+                             typeString=t.get('type'),
                              ra=ra,
                              dec=dec,
                              mag=mag,
-                             score=t['score'],
-                             startTime=t['startTime'],
-                             nextRising=t['nextRising'],
-                             nextTransit=t['nextTransit'],
-                             nextSetting=t['nextSetting'],
-                             numExposures=t['numExposures'],
-                             exposureTime=t['exposureTime']
+                             score=t.get('score'),
+                             startTime=t.get('startTime'),
+                             nextRising=t.get('nextRising'),
+                             nextTransit=t.get('nextTransit'),
+                             nextSetting=t.get('nextSetting'),
+                             numExposures=t.get('numExposures'),
+                             exposureTime=t.get('exposureTime')
                              )
 
         else:
