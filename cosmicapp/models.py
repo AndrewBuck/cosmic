@@ -694,12 +694,12 @@ class Image(models.Model, SkyObject, BookmarkableItem):
 
         imageProperty.save()
 
-    def getImageProperty(self, key, asList=False):
+    def getImageProperty(self, key, default=None, asList=False):
         imageProperty = ImageProperty.objects.filter(image=self, key=key).order_by('-createDateTime')
         if not asList:
             imageProperty = imageProperty.first()
             if imageProperty == None:
-                return None
+                return default
 
             return imageProperty.value
         else:

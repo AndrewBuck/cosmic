@@ -1434,7 +1434,7 @@ def initSourcefind(method, image):
         # Check to see if there is a recommendation from a method that got the sourcefind "about right".
         previousRunNumFound = methodDict[method].objects.filter(image=image).count()
         outputText += 'Previous run of this method found {} results.\n'.format(previousRunNumFound)
-        numExpectedFeedback = image.getImageProperty('userNumExpectedResults', True)
+        numExpectedFeedback = image.getImageProperty('userNumExpectedResults', asList=True)
         minValid = 0
         maxValid = 1e9
         aboutRightRange = 0.2
@@ -2874,7 +2874,7 @@ def parseHeaders(imageId, processInputId):
                 image.addImageProperty(key, value, False, header)
 
         #TODO: Also need to read all the image properties like flatCorrected, etc, and set imageIsCalibrated accordingly.
-        for result in image.getImageProperty('history', True):
+        for result in image.getImageProperty('history', asList=True):
             if result.value.lower() == 'calibrated':
                 image.addImageProperty('imageIsCalibrated', 'true', True, result.header)
 
@@ -2927,7 +2927,7 @@ def parseHeaders(imageId, processInputId):
                 image.addImageProperty('objectRADecRemoved', 'true', True)
 
         # If this image has one or more 'object' tags we should examine them to see what we can determine.
-        for obj in image.getImageProperty('object', True):
+        for obj in image.getImageProperty('object', asList=True):
             imageTypeObjectDict = {
                 'master bias frame': 'masterBias',
                 'master dark frame': 'masterDark',
