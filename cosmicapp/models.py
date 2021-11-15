@@ -1064,6 +1064,8 @@ class SextractorResult(SourceFindResult, BookmarkableItem):
     #TODO: Add in a bunch more fields here.
     fluxAuto = models.FloatField(null=True)
     fluxAutoErr = models.FloatField(null=True)
+    fwhm = models.FloatField(null=True)
+    ellipticity = models.FloatField(null=True)
     flags = models.IntegerField(null=True)
     boxXMin = models.FloatField(null=True)
     boxYMin = models.FloatField(null=True)

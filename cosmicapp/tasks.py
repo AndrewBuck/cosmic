@@ -1555,6 +1555,8 @@ def sextractor(filename, processInputId):
         fieldDict = {}
         with transaction.atomic():
             models.SextractorResult.objects.filter(image=image).delete()
+            fwhmValues = []
+            ellipticityValues = []
             sextractorResults = []
             for line in catfile:
                 # Split the line into fields (space separated) and throw out empty fields caused by multiple spaces in a
@@ -1575,6 +1577,8 @@ def sextractor(filename, processInputId):
                         pixelZ = zPos,
                         fluxAuto = fields[fieldDict['FLUX_AUTO']],
                         fluxAutoErr = fields[fieldDict['FLUXERR_AUTO']],
+                        fwhm = fields[fieldDict['FWHM_IMAGE']],
+                        ellipticity = fields[fieldDict['ELLIPTICITY']],
                         flags = fields[fieldDict['FLAGS']],
                         boxXMin = fields[fieldDict['XMIN_IMAGE']],
                         boxYMin = fields[fieldDict['YMIN_IMAGE']],
@@ -1583,6 +1587,9 @@ def sextractor(filename, processInputId):
                         )
 
                     sextractorResults.append(sextractorResult)
+
+                    fwhmValues.append(parseFloat(fields[fieldDict['FWHM_IMAGE']]))
+                    ellipticityValues.append(parseFloat(fields[fieldDict['ELLIPTICITY']]))
 
                     """
                     fields[fieldDict['NUMBER']]
@@ -1612,8 +1619,6 @@ def sextractor(filename, processInputId):
                     fields[fieldDict['ISO7']]
                     fields[fieldDict['IMAFLAGS_ISO']]
                     fields[fieldDict['NIMAFLAGS_ISO']]
-                    fields[fieldDict['FWHM_IMAGE']]
-                    fields[fieldDict['ELLIPTICITY']]
                     fields[fieldDict['FLUX_GROWTH']]
                     fields[fieldDict['FLUX_GROWTHSTEP']]
                     fields[fieldDict['MAG_GROWTH']]
@@ -1640,6 +1645,22 @@ def sextractor(filename, processInputId):
                     """
 
             models.SextractorResult.objects.bulk_create(sextractorResults)
+
+            fwhmMean = numpy.nanmean(fwhmValues)
+            fwhmMedian = numpy.nanmedian(fwhmValues)
+            fwhmStdDev = numpy.nanstd(fwhmValues)
+
+            ellipticityMean = numpy.nanmean(ellipticityValues)
+            ellipticityMedian = numpy.nanmedian(ellipticityValues)
+            ellipticityStdDev = numpy.nanstd(ellipticityValues)
+
+            image.addImageProperty('fwhmMean', fwhmMean, overwriteValue=True)
+            image.addImageProperty('fwhmMedian', fwhmMedian, overwriteValue=True)
+            image.addImageProperty('fwhmStdDev', fwhmStdDev, overwriteValue=True)
+
+            image.addImageProperty('ellipticityMean', ellipticityMean, overwriteValue=True)
+            image.addImageProperty('ellipticityMedian', ellipticityMedian, overwriteValue=True)
+            image.addImageProperty('ellipticityStdDev', ellipticityStdDev, overwriteValue=True)
 
             #TODO: Recode this section to calculate its own local average and standard deviation and then modify the confidence on sextractorResults array before doing the bulk_create.
             records = models.SextractorResult.objects.filter(image=image)
