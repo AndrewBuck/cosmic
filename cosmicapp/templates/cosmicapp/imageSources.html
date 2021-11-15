@@ -125,6 +125,8 @@ colors are defined in javascript, we need to do this in the window.onload functi
     <input type=checkbox id=sextractorLabelFlux onchange="drawSources()"> Flux<br>
     <input type=checkbox id=sextractorLabelFluxErr onchange="drawSources()"> Flux Err<br>
     <input type=checkbox id=sextractorLabelFlags onchange="drawSources()"> Flags<br>
+    <input type=checkbox id=sextractorLabelFWHM onchange="drawSources()"> FWHM<br>
+    <input type=checkbox id=sextractorLabelEllipticity onchange="drawSources()"> Ellipticity<br>
     <input type=checkbox id=sextractorLabelConfidence onchange="drawSources()" checked> Confidence
     </td>
 
@@ -1156,6 +1158,8 @@ function drawSources(forceDraw=true)
                 ['#sextractorLabelFlux', sextractorResults[i].fluxAuto, 2],
                 ['#sextractorLabelFluxErr', sextractorResults[i].fluxAutoErr, 2],
                 ['#sextractorLabelFlags', sextractorResults[i].flags, 0],
+                ['#sextractorLabelFWHM', sextractorResults[i].fwhm, 2],
+                ['#sextractorLabelEllipticity', sextractorResults[i].ellipticity, 2],
                 ['#sextractorLabelConfidence', sextractorResults[i].confidence, 2],
                 ]);
 
