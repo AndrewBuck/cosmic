@@ -451,6 +451,7 @@ def createTasksForNewImage(fileRecord, user, priorityMod=0):
         piDaofind.images.add(imageRecord)
         piDaofind.prerequisites.add(piImagestats)
         piDaofind.prerequisites.add(piHeaders)
+        piDaofind.prerequisites.add(piSextractor)
 
         piStarfind = models.ProcessInput(
             process = "starfind",
@@ -467,6 +468,7 @@ def createTasksForNewImage(fileRecord, user, priorityMod=0):
         piStarfind.images.add(imageRecord)
         piStarfind.prerequisites.add(piImagestats)
         piStarfind.prerequisites.add(piHeaders)
+        piStarfind.prerequisites.add(piSextractor)
 
         piFlagSources = models.ProcessInput(
             process = "flagSources",

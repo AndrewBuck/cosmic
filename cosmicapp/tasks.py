@@ -1785,9 +1785,10 @@ def daofind(filename, processInputId):
     if len(data.shape) == 3:
         data = data[0]
 
-    #TODO: Set the fwhm from a variable if this is the first run, or from the previous run average if this is the second run of this task.
     #TODO: Make use of the 'headerMeanFWHM' image property if set.
-    daofind = DAOStarFinder(fwhm = 2.5, threshold = detectThreshold)
+    fwhm = parseFloat(image.getImageProperty('fwhmMedian', 2.5))
+    outputText += "\nUsing FWHM of {}\n".format(fwhm)
+    daofind = DAOStarFinder(fwhm = fwhm, threshold = detectThreshold)
     sources = daofind(data - channelInfos[0].bgMedian)
 
     with transaction.atomic():
@@ -1850,9 +1851,10 @@ def starfind(filename, processInputId):
     if len(data.shape) == 3:
         data = data[0]
 
-    #TODO: Set the fwhm from a variable if this is the first run, or from the previous run average if this is the second run of this task.
     #TODO: Make use of the 'headerMeanFWHM' image property if set.
-    starfinder = IRAFStarFinder(fwhm = 2.5, threshold = detectThreshold)
+    fwhm = parseFloat(image.getImageProperty('fwhmMedian', 2.5))
+    outputText += "\nUsing FWHM of {}\n".format(fwhm)
+    starfinder = IRAFStarFinder(fwhm = fwhm, threshold = detectThreshold)
     sources = starfinder(data - channelInfos[0].bgMedian)
 
     with transaction.atomic():
