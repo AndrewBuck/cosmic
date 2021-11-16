@@ -6,6 +6,10 @@
 {% block processName %}calculateUserCostTotals{% endblock %}
 
 {% block synopsis %}
+A site task exectued by a chron job on the webserver itself which periodically goes through the database and calculates
+the cost (for each individual user) to pay for the services (processing time and data storage) provided to that
+specific user.  These costs are used as part of the priority score for tasks in the <a href="/processqueue">processing
+queue</a> which are still waiting to be executed.
 {% endblock %}
 
 {% block description %}
