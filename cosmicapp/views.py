@@ -838,6 +838,9 @@ def objectInfo(request, method, pk):
         #TODO: Provide a time to getSkyCoords(), maybe from an http get parameter?
         if isinstance(obj, SkyObject):
             ra, dec = obj.getSkyCoords()
+            context['ra'] = ra
+            context['dec'] = dec
+            context['mag'] = obj.getMag()
             if ra is not None and dec is not None:
                 queryGeometry = GEOSGeometry('POINT({} {})'.format(ra, dec))
                 imageIds = PlateSolution.objects.filter(geometry__dwithin=(queryGeometry, 0.0001))\
