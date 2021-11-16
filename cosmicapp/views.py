@@ -147,6 +147,7 @@ def upload(request):
     objectDec = requestDict.get('objectDec', '')
     overlapsImage = requestDict.get('image', '')
     plateScale = requestDict.get('plateScale', '')
+    uploadComment = requestDict.get('uploadComment', '')
 
     try:
         observatoryID = int(requestDict.get('observatoryID', -1))
@@ -165,6 +166,7 @@ def upload(request):
     context['plateScale'] = plateScale
     context['observatoryID'] = observatoryID
     context['instrumentID'] = instrumentID
+    context['uploadComment'] = uploadComment
 
     defaultObservatory = request.user.profile.defaultObservatory
     otherObservatories = Observatory.objects.filter(user=request.user)
@@ -193,6 +195,19 @@ def upload(request):
         uploadSession.save()
 
         context['uploadSession'] = uploadSession
+
+        # If the upload request included comment text, call the saveComment view to store the text as a comment by the
+        # user who is uploading these files.
+        if len(uploadComment) > 0:
+            commentRequest = request
+            commentRequest.POST._mutable = True
+            commentRequest.POST['targetType'] = 'uploadsession'
+            commentRequest.POST['targetID'] = uploadSession.pk
+            commentRequest.POST['commentText'] = uploadComment
+            commentRequest.POST._mutable = False
+
+            #TODO: Check the http response code on this request to make sure the comment was saved correctly.
+            retval = saveComment(commentRequest)
 
         records = []
         for myfile in request.FILES.getlist('myfiles'):
