@@ -460,7 +460,7 @@ class SkyObject:
     def getSkyCoords(self, dateTime=datetime.now()):
         return (None, None)
 
-    def getMag(self, dateTime):
+    def getMag(self, dateTime=datetime.now()):
         """
         --> Should be reimplemented by child classes. <--
         """
@@ -1417,7 +1417,7 @@ class UCAC4Record(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     def getSkyCoords(self, dateTime=datetime.now()):
         return (self.ra, self.dec)
 
-    def getMag(self, dateTime):
+    def getMag(self, dateTime=datetime.now()):
         #TODO: Properly implement this function.
         return self.magFit
 
@@ -1484,7 +1484,7 @@ class GCVSRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     def getSkyCoords(self, dateTime=datetime.now()):
         return (self.ra, self.dec)
 
-    def getMag(self, dateTime):
+    def getMag(self, dateTime=datetime.now()):
         #TODO: Properly implement this function.
         return self.magMax
 
@@ -1545,7 +1545,7 @@ class TwoMassXSCRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject
     def getSkyCoords(self, dateTime=datetime.now()):
         return (self.ra, self.dec)
 
-    def getMag(self, dateTime):
+    def getMag(self, dateTime=datetime.now()):
         return self.isophotalKMag
 
     def getBookmarkTypeString(self):
@@ -1605,7 +1605,7 @@ class MessierRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
     def getSkyCoords(self, dateTime=datetime.now()):
         return (self.ra, self.dec)
 
-    def getMag(self, dateTime):
+    def getMag(self, dateTime=datetime.now()):
         return self.magV
 
     def getBookmarkTypeString(self):
@@ -1734,7 +1734,7 @@ class AstorbRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject):
         ephemeris = computeSingleEphemeris(self, dateTime)
         return (ephemeris.ra*180/math.pi, ephemeris.dec*180/math.pi)
 
-    def getMag(self, dateTime):
+    def getMag(self, dateTime=datetime.now()):
         body = computeSingleEphemeris(self, dateTime)
         return body.mag
 
@@ -1960,7 +1960,7 @@ class ExoplanetRecord(models.Model, BookmarkableItem, SkyObject, ScorableObject)
     def getSkyCoords(self, dateTime=datetime.now()):
         return (self.ra, self.dec)
 
-    def getMag(self, dateTime):
+    def getMag(self, dateTime=datetime.now()):
         return self.magV
 
     def getBookmarkTypeString(self):
