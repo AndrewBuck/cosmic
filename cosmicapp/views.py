@@ -130,6 +130,18 @@ def paymentCanceled(request):
 
     return render(request, "cosmicapp/paymentCanceled.html", context)
 
+def search(request):
+    context = {"user" : request.user}
+
+    searchString = request.GET.get('searchString', "")
+
+    context['defaultSearchString'] = searchString
+
+    if len(searchString) > 0:
+        pass
+
+    return render(request, "cosmicapp/search.html", context)
+
 @login_required
 def upload(request):
     context = {"user" : request.user}

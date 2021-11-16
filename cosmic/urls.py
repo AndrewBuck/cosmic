@@ -111,6 +111,7 @@ urlpatterns = [
 
     url(r'^export/bookmarks/$', views.exportBookmarks),
 
+    url(r'^search/$', views.search),
     url(r'^upload/$', views.upload),
     url(r'^download/$', views.download),
     url(r'^audioNote/$', views.audioNote),

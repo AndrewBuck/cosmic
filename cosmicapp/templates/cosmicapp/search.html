@@ -1,0 +1,90 @@
+{% extends "cosmicapp/base.html" %}
+{% load cosmicapp_extras %}
+
+{% block extratitle %} - Search {% endblock %}
+
+{% block extrahead %}
+{% include "./jquery.html" %}
+
+<script>
+function searchForObject()
+{
+    var objectName = document.getElementsByName('searchString')[0].value;
+
+    $('#searchResultsDiv').html('Searching...');
+    $('#searchResultsDiv').show();
+
+    $.ajax({
+        url : "/query/?queryfor=objectsNamed&limit=100&name=" + objectName,
+        type : "get",
+        async: true,
+        dataType: 'json',
+        success : function(response)
+        {
+            if(response.length > 0)
+            {
+                var html = '';
+                for(i = 0; i < response.length; i++)
+                {
+                    html += response[i].type + ': <a href="' + response[i].url + '">' + response[i].identifier + '</a>'
+                    html += '<br>';
+                }
+                $('#searchResultsDiv').html(html);
+                $('#searchResultsDiv').show();
+            }
+            else
+            {
+                alert('No Results Found.');
+                $('#searchResultsDiv').html('');
+                $('#searchResultsDiv').hide();
+            }
+        },
+        error : function(response)
+        {
+            var response = response.responseJSON;
+            alert(response.errorMessage);
+        }
+    });
+};
+
+{% if defaultSearchString %}
+window.onload = function()
+{
+    searchForObject();
+};
+{% endif %}
+
+</script>
+{% endblock extrahead %}
+
+{% block mainbody %}
+<h2>Search</h2>
+
+<p>
+This page allows you to search the catalogs stored on this website for objects.  Currently the search is rather
+limited, and you can only search for the object in the name format given in the catalog that was imported (i.e. name
+synonyms do not work).  For example neither 'andromeda' nor 'messier 31' will return any results since the imported
+catlog has this object named 'm 31'.
+</p>
+
+<p>
+Example searches:
+<br><a onclick="$('#searchString').val('m 31'); searchForObject()" class=functionLink>m 31</a>
+<br><a onclick="$('#searchString').val('toutatis'); searchForObject()" class=functionLink>toutatis</a>
+<br><a onclick="$('#searchString').val('rv cen'); searchForObject()" class=functionLink>rv cen</a>
+</p>
+
+<p>
+<form action="javascript:void(0);">
+<input id=searchString type=text name=searchString value="{{defaultSearchString}}">
+<button type="submit" class=button onclick="searchForObject()">Search</button>
+</form>
+
+<div id=searchResultsDiv style="margin: 1em; padding: .5em; border: 2px solid lightgrey;" hidden>
+</div>
+
+</p>
+
+{% endblock %}
+
+
