@@ -3032,8 +3032,6 @@ def flagSources(imageIdString, processInputId):
     numHotPixels = hotPixels.count()
     if numHotPixels > 0:
         outputText += "Image has {} user submitted hot pixels in it:\n".format(numHotPixels)
-        hotPixelIdList = list(map(lambda x: x.pk, hotPixels))
-        outputText += "    " + str(hotPixelIdList) + "\n\n"
 
         tablesToSearch = [models.SextractorResult, models.Image2xyResult, models.DaofindResult,
                           models.StarfindResult, models.UserSubmittedResult, models.SourceFindMatch]
@@ -3063,7 +3061,7 @@ def flagSources(imageIdString, processInputId):
 
                 source.save()
     else:
-        outputText += "Image has no user submitted hot pixels in it\n"
+        outputText += "Image has no user submitted hot pixels in it.\n"
 
     return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 
