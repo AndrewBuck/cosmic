@@ -1172,7 +1172,7 @@ class UserSubmittedResult(SourceFindResult, BookmarkableItem):
 
 class UserSubmittedHotPixel(SourceFindResult, BookmarkableItem):
     image = models.ForeignKey(Image, db_index=True, on_delete=models.CASCADE, related_name="userSubmittedHotPixels")
-    user = models.ForeignKey(User, db_index=True, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, null=True, db_index=True, on_delete=models.CASCADE)
 
     bookmarks = GenericRelation('Bookmark')
 

@@ -1669,12 +1669,37 @@ def sextractor(filename, processInputId):
 
             outputText += "Found {} sources.\n".format(records.count())
             for record in records:
+                # Assign the detected source a confidence based on the detected brightness with bright objects being high confidence.
                 try:
                     record.confidence = sigmoid((record.fluxAuto-meanFluxAuto)/stdDevFluxAuto)
                 except ZeroDivisionError:
                     record.confidence = 0.5
                     outputText += "stdDevFluxAuto was 0 so assigning a confidence of 0.5 to detected source."
+
+                # Check the source to see if it looks like a hot pixel, and if so, add a hot pixel flag for the image.
+
+                # Check to see if the source has near perfect roundness and very high brightness dropoff (HP often have
+                # ellipticity of 0 so score1 ends up at or very near 0)
+                score1 = record.fwhm * record.ellipticity
+
+                #TODO Add score2, score3, ... etc to account for other HP that don't quite fit this form.  Maybe
+                # something along the lines of N standard devs off of the fwhm and ellipticity values.
+
+                if score1 < 0.1:
+                    hotPixel = models.UserSubmittedHotPixel(
+                        image = image,
+                        user = None,
+                        pixelX = record.pixelX,
+                        pixelY = record.pixelY,
+                        pixelZ = record.pixelZ,
+                        )
+
+                    hotPixel.save()
+
                 record.save()
+
+                #TODO: Consider removing entries that were flagged as hot pixels from the fwhm and ellipticity averages
+                # for the image.  Would mean re-computing a second round and re-saving the values.
 
     try:
         os.remove(catfileName)
