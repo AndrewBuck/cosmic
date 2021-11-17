@@ -3035,11 +3035,12 @@ def flagSources(imageIdString, processInputId):
 
         tablesToSearch = [models.SextractorResult, models.Image2xyResult, models.DaofindResult,
                           models.StarfindResult, models.UserSubmittedResult, models.SourceFindMatch]
+        fwhmMedian = parseFloat(image.getImageProperty('fwhmMedian', 3.0))
         for table in tablesToSearch:
             sources = table.objects.filter(image_id=imageId)
             for source in sources:
-                #TODO: Should come up with a good definition of edge distance.
-                edgeDist = 10
+                # Flagging as near edge if it is within 3 fwhm of the edge.
+                edgeDist = 3.0 * fwhmMedian
                 if source.pixelX <= edgeDist or source.pixelY <= edgeDist or \
                     source.pixelX >= image.dimX - edgeDist or source.pixelY >= image.dimY - edgeDist:
 
@@ -3051,11 +3052,14 @@ def flagSources(imageIdString, processInputId):
                     deltaX = source.pixelX - hotPixel.pixelX
                     deltaY = source.pixelY - hotPixel.pixelY
                     distSquared = deltaX*deltaX + deltaY*deltaY
-                    if distSquared < 9:
+                    # Flagging as hot pixel if the source is within 3 fwhm of a hot pixel.
+                    if math.sqrt(distSquared) < 3.0 * fwhmMedian:
                         outputText += "source {} is within 3 pixels of hot pixel {}.\n".format(source.pk, hotPixel.pk)
                         source.flagHotPixel = True
                         source.confidence = 0.1
 
+                # If the source is not flagged as being near a hot pixel, change its value from Null to False in the
+                # database to differentiate between 'has not been checked yet' and 'has been checked but is not flagged'.
                 if source.flagHotPixel is None:
                     source.flagHotPixel = False
 
