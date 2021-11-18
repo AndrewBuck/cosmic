@@ -1654,13 +1654,9 @@ def sextractor(filename, processInputId):
             ellipticityMedian = numpy.nanmedian(ellipticityValues)
             ellipticityStdDev = numpy.nanstd(ellipticityValues)
 
-            image.addImageProperty('fwhmMean', fwhmMean, overwriteValue=True)
-            image.addImageProperty('fwhmMedian', fwhmMedian, overwriteValue=True)
-            image.addImageProperty('fwhmStdDev', fwhmStdDev, overwriteValue=True)
-
-            image.addImageProperty('ellipticityMean', ellipticityMean, overwriteValue=True)
-            image.addImageProperty('ellipticityMedian', ellipticityMedian, overwriteValue=True)
-            image.addImageProperty('ellipticityStdDev', ellipticityStdDev, overwriteValue=True)
+            outputText += "\n\nBefore removing hot pixels:\n"
+            outputText += "FWHM Mean {:.3f}    Median {:.3f}    StdDev {:.3f}\n".format(fwhmMean, fwhmMedian, fwhmStdDev)
+            outputText += "Ellipticity Mean {:.3f}    Median {:.3f}    StdDev {:.3f}\n".format(ellipticityMean, ellipticityMedian, ellipticityStdDev)
 
             #TODO: Recode this section to calculate its own local average and standard deviation and then modify the confidence on sextractorResults array before doing the bulk_create.
             records = models.SextractorResult.objects.filter(image=image)
@@ -1695,12 +1691,38 @@ def sextractor(filename, processInputId):
                         )
 
                     hotPixel.save()
+                    record.flagHotPixel = True
 
                 record.save()
 
-                #TODO: Consider removing entries that were flagged as hot pixels from the fwhm and ellipticity averages
-                # for the image.  Would mean re-computing a second round and re-saving the values.
+            # Remove entries that were flagged as hot pixels from the fwhm and ellipticity averages for the image.
+            records = models.SextractorResult.objects.filter(image=image)
+            fwhmValues = []
+            ellipticityValues = []
+            for record in records:
+                if not record.flagHotPixel:
+                    fwhmValues.append(record.fwhm)
+                    ellipticityValues.append(record.ellipticity)
 
+            fwhmMean = numpy.nanmean(fwhmValues)
+            fwhmMedian = numpy.nanmedian(fwhmValues)
+            fwhmStdDev = numpy.nanstd(fwhmValues)
+
+            ellipticityMean = numpy.nanmean(ellipticityValues)
+            ellipticityMedian = numpy.nanmedian(ellipticityValues)
+            ellipticityStdDev = numpy.nanstd(ellipticityValues)
+
+            outputText += "\n\nAfter removing hot pixels:\n"
+            outputText += "FWHM Mean {:.3f}    Median {:.3f}    StdDev {:.3f}\n".format(fwhmMean, fwhmMedian, fwhmStdDev)
+            outputText += "Ellipticity Mean {:.3f}    Median {:.3f}    StdDev {:.3f}\n".format(ellipticityMean, ellipticityMedian, ellipticityStdDev)
+
+            image.addImageProperty('fwhmMean', fwhmMean, overwriteValue=True)
+            image.addImageProperty('fwhmMedian', fwhmMedian, overwriteValue=True)
+            image.addImageProperty('fwhmStdDev', fwhmStdDev, overwriteValue=True)
+
+            image.addImageProperty('ellipticityMean', ellipticityMean, overwriteValue=True)
+            image.addImageProperty('ellipticityMedian', ellipticityMedian, overwriteValue=True)
+            image.addImageProperty('ellipticityStdDev', ellipticityStdDev, overwriteValue=True)
     try:
         os.remove(catfileName)
     except OSError:
