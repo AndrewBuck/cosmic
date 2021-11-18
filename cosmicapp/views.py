@@ -588,6 +588,9 @@ def audioNote(request):
     context['defaultInstrument'] = defaultInstrument
     context['otherInstruments'] = otherInstruments
 
+    if context['observatoryID'] == -1 and defaultObservatory != None:
+        context['observatoryID'] = defaultObservatory.pk
+
     return render(request, "cosmicapp/audioNote.html", context)
 
 def audioNoteDetails(request, noteId):
