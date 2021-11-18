@@ -28,6 +28,7 @@ from django.contrib.gis.geos import GEOSGeometry, Point
 from django.db.utils import IntegrityError
 from paypal.standard.forms import PayPalPaymentsForm
 from django.urls import reverse
+from http import HTTPStatus
 
 from lxml import etree
 import ephem
@@ -218,8 +219,9 @@ def upload(request):
             commentRequest.POST['commentText'] = uploadComment
             commentRequest.POST._mutable = False
 
-            #TODO: Check the http response code on this request to make sure the comment was saved correctly.
             retval = saveComment(commentRequest)
+            if retval.status_code != HTTPStatus.OK:
+                return HttpResponse('ERROR: Could not save upload session comment.', status=500)
 
         records = []
         for myfile in request.FILES.getlist('myfiles'):
