@@ -145,7 +145,7 @@ var rowBreak = '<br>';
                     <div style="display: inline-block; float: left; border: 1px dashed grey; padding: .5em; margin-left: 1em; margin-top: 1em;">
                     <!-- TODO: Switch this to a radio button, rather than a checkbox.  Also, maybe default to the one
                     chosen by getBestPlateSolution(). -->
-                    <input type=checkbox class="plateSolutionCheckbox_{{item.pk}}" name="imageWCS_{{item.pk}}_plateSolution_{{ps.pk}}" {% if forloop.first %}checked{% endif %}>
+                    <input type=radio class="plateSolutionCheckbox_{{item.pk}}" name="imageWCS_{{item.pk}}" value="imageWCS_{{item.pk}}_plateSolution_{{ps.pk}}" {% if forloop.first %}checked{% endif %}>
                     {{ps.source}}
                     <br>&emsp;&emsp;{% formatRADec ps.centerRA ps.centerDec %}
                     <br>&emsp;&emsp;{{ps.resolutionX|floatformat:2}}x{{ps.resolutionY|floatformat:2}} arcsec/pixel

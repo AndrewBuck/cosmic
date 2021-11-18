@@ -322,15 +322,13 @@ def download(request):
                 imagePixelDatas[objectID] = value
 
             elif key.startswith('imageWCS_'):
-                if value != 'on':
-                    continue
-
                 keySplit = key.split('_')
                 objectID = int(keySplit[1])
+                valueSplit = value.split('_')
                 if objectID in imagePlateSolutions:
-                    imagePlateSolutions[objectID].append(int(keySplit[3]))
+                    imagePlateSolutions[objectID].append(int(valueSplit[3]))
                 else:
-                    imagePlateSolutions[objectID] = [int(keySplit[3])]
+                    imagePlateSolutions[objectID] = [int(valueSplit[3])]
 
             elif key.startswith('imageHeaders_'):
                 keySplit = key.split('_')
@@ -462,6 +460,15 @@ def download(request):
                             outputText += "&emsp;&emsp;&emsp;Adding custom headers...<br>"
                             hdu.header.append( ('foo', 'bar', 'baz') )
                             outputText += "&emsp;&emsp;&emsp;HDU has {} headers.<br>".format(len(hdu.header))
+
+                    outputText += "<br>&emsp;&emsp;Selected {} plate solutions.".format(len(imagePlateSolutions[image.pk]))
+                    for plateID in imagePlateSolutions[image.pk]:
+                        outputText += '<br>&emsp;&emsp;&emsp;&emsp;Writing plate solution {}<br>'.format(plateID)
+                        plateSolution = PlateSolution.objects.get(pk=plateID)
+                        wcsHeader = plateSolution.wcs().to_header()
+                        for hdu in hdulist:
+                            for card in wcsHeader:
+                                hdu.header.append( (card, wcsHeader[card]) )
 
                     #TODO: Do not allow overwrite on next line?
                     hdulist.writeto(settings.COSMIC_STATIC + outputFileName, overwrite=True)
