@@ -53,13 +53,13 @@ timestamp and will be available to be transcribed into text.
 
 <div>
 <label>Monitor Gain (0 to 1):</label>
-<input id="monitorGain" type="number" value="0.0" step="0.05" />
+<input id="monitorGain" type="range" value="0" min="0" max="100" />
 Echoes back the recorded audio as you record, make sure to use headphones if you enable this.
 </div>
 
 <div>
 <label>Recording Gain (0 to 1):</label>
-<input id="recordingGain" type="number" value="1" step="0.05" />
+<input id="recordingGain" type="range" value="100" min="0" max="100" />
 The volume level of the recording.
 </div>
 
@@ -179,8 +179,8 @@ else
         recordingGain.disabled = true;
 
         var recorder = new Recorder({
-            monitorGain: parseFloat(monitorGain.value, 10),
-            recordingGain: parseFloat(recordingGain.value, 10),
+            monitorGain: parseFloat(monitorGain.value, 10)/100.0,
+            recordingGain: parseFloat(recordingGain.value, 10)/100.0,
             numberOfChannels: 1,
             encoderBitRate: 32000,
             encoderSampleRate: 24000,
