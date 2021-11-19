@@ -61,10 +61,15 @@ $(document).ready(function()
 <h2>Audio note {{audioNote.id}}</h2>
 <p>
 Uploaded By User: <a href="/user/{{audioNote.fileRecord.user}}/">{{audioNote.fileRecord.user}}</a>
-<br>On: {{audioNote.fileRecord.uploadDateTime}} ({{audioNote.fileRecord.uploadDateTime|timesince}} ago)
+<br>On: {{audioNote.fileRecord.uploadDateTime}}&emsp;&emsp;({{audioNote.fileRecord.uploadDateTime|timesince}} ago)
 <br>Length: {{audioNote.length}}
 <br>Instrument Used: {{audioNote.instrument.name}}
-<br>Observing Location: {{audioNote.observatory.name}}
+<br>Observing Location:
+    {% if audioNote.observatory %}
+        &emsp;<a href="/observatory/{{audioNote.observatory.pk}}">{{audioNote.observatory.name}}</a>
+    {% else %}
+        &emsp;Unknown
+    {% endif %}
 <br>Observed Object: {{audioNote.objectName}}
 <br>Observed RA, Dec: {{audioNote.objectRA}}, {{audioNote.objectDec}}
 
