@@ -525,6 +525,7 @@ def audioNote(request):
         filename = fs.save(originalFilename, djangoFile)
 
         #TODO: The pysoundfile library does not support opus yet, uncomment these when it does.
+        #NOTE: As of November 2021 the opus support is being worked on, but is not in the build yet.  Likely coming soon though.
         #soundFileData, soundFileSampleRate = soundfile.read(fs.path(filename))
         #soundLength = len(soundFileData)/soundFileSampleRate
         soundLength = None
