@@ -149,7 +149,7 @@ function upload(blob, progressBar, clickedElement)
 
     xhr.upload.onload = function(e)
     {
-        $(clickedElement).parent().hide(1000, function(){$(this).remove()});
+        $(clickedElement).parent().parent().hide(1000, function(){$(this).remove()});
     };
 
     xhr.upload.onerror = function(e)
@@ -244,7 +244,7 @@ else
             deleteButton.value = 'Delete This';
             $(deleteButton).click(function()
             {
-                $(deleteButton).parent().hide(1000, function(){$(this).remove()});
+                $(deleteButton).parent().parent().hide(1000, function(){$(this).remove()});
             });
 
             var audio = document.createElement('audio');
