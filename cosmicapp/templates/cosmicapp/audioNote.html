@@ -123,6 +123,8 @@ Object Name: <input id=foo type=text name=object value="{{object}}">
 <pre id="log"></pre>
 
 <script>
+var hideTime = 250;
+
 function upload(blob, progressBar, clickedElement)
 {
     var csrftoken = getCookie('csrftoken');
@@ -149,7 +151,7 @@ function upload(blob, progressBar, clickedElement)
 
     xhr.upload.onload = function(e)
     {
-        $(clickedElement).parent().parent().hide(1000, function(){$(this).remove()});
+        $(clickedElement).parent().parent().hide(hideTime, function(){$(this).remove()});
     };
 
     xhr.upload.onerror = function(e)
@@ -253,7 +255,7 @@ else
             deleteButton.value = 'Delete This';
             $(deleteButton).click(function()
             {
-                $(deleteButton).parent().parent().hide(1000, function(){$(this).remove()});
+                $(deleteButton).parent().parent().hide(hideTime, function(){$(this).remove()});
             });
 
             var audio = document.createElement('audio');
