@@ -111,10 +111,10 @@ Object Name: <input id=foo type=text name=object value="{{object}}">
 
 
 <h3>Recorder Commands</h3>
-<button id="start" disabled>start</button>
-<button id="pause" disabled>pause</button>
-<button id="resume" disabled>resume</button>
-<button id="stopButton" disabled>stop</button>
+<button id="start" disabled hidden>Start</button>
+<button id="stopButton" disabled hidden>Stop</button>
+<button id="pause" disabled hidden>Pause</button>
+<button id="resume" disabled hidden>Resume</button>
 
 <h3>Recordings</h3>
 <ul id="recordingslist"></ul>
@@ -175,6 +175,7 @@ else
     {
         init.disabled = true;
         start.disabled = false;
+        start.hidden = false;
         monitorGain.disabled = true;
         recordingGain.disabled = true;
 
@@ -204,6 +205,8 @@ else
             screenLogger('Recorder is started');
             start.disabled = resume.disabled = true;
             pause.disabled = stopButton.disabled = false;
+            start.hidden = resume.hidden = true;
+            pause.hidden = stopButton.hidden = false;
         };
 
         recorder.onstop = function(e)
@@ -211,6 +214,8 @@ else
             screenLogger('Recorder is stopped');
             start.disabled = false;
             pause.disabled = resume.disabled = stopButton.disabled = true;
+            start.hidden = false;
+            pause.hidden = resume.hidden = stopButton.hidden = true;
         };
 
         recorder.onpause = function(e)
@@ -218,6 +223,8 @@ else
             screenLogger('Recorder is paused');
             pause.disabled = start.disabled = true;
             resume.disabled = stopButton.disabled = false;
+            pause.hidden = start.hidden = true;
+            resume.hidden = stopButton.hidden = false;
         };
 
         recorder.onresume = function(e)
@@ -225,6 +232,8 @@ else
             screenLogger('Recorder is resuming');
             start.disabled = resume.disabled = true;
             pause.disabled = stopButton.disabled = false;
+            start.hidden = resume.hidden = true;
+            pause.hidden = stopButton.hidden = false;
         };
 
         recorder.ondataavailable = function( typedArray )
