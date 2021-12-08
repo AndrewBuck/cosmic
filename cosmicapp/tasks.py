@@ -2535,6 +2535,13 @@ def parseHeaders(imageId, processInputId):
                 key = 'resolutionUnit'
                 value = header.value.split()[0].strip().strip("'")
 
+            elif header.key == 'fits:scale':
+                key = 'resolution'
+                value = header.value.split()[0].strip().strip("'")
+                #TODO: Handle units in the comment.  See example below.  Probably always this unit, but not sure, should check and possibly convert if files are found of a different type.
+                #example:          SCALE = 1.419344E+00 / arcsecs per pixel
+                #comment = header.value.split('/')
+
             elif header.key == 'fits:timesys':
                 key = 'headerTimeSystem'
                 value = header.value.split('/')[0].strip().strip("'")
@@ -2709,12 +2716,12 @@ def parseHeaders(imageId, processInputId):
                 value = header.value.split()[0]
 
             #TODO: Pixel size is supposed to be after binning however this does not appear to be correct in binned frames.
-            elif header.key == 'fits:xpixsz':
+            elif header.key in ['fits:xpixsz', 'fits:pixsize1']:
                 key = 'pixelSizeX'
                 value = header.value.split()[0]
 
             #TODO: Pixel size is supposed to be after binning however this does not appear to be correct in binned frames.
-            elif header.key == 'fits:ypixsz':
+            elif header.key in ['fits:ypixsz', 'fits:pixsize2']:
                 key = 'pixelSizeY'
                 value = header.value.split()[0]
 
@@ -2750,7 +2757,7 @@ def parseHeaders(imageId, processInputId):
                 key = 'focuserTemp'
                 value = header.value.split()[0]
 
-            elif header.key in ['fits:imagtyp', 'fits:imagetyp']:
+            elif header.key in ['fits:imagtyp', 'fits:imagetyp', 'fits:frame']:
                 key = 'imageType'
                 value = header.value.split('/')[0].strip().strip("'").lower()
 
