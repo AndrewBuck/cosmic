@@ -446,6 +446,12 @@ GCVS - General Catalogue of Variable Stars
 
 
 
+NOTE: The 2MASS point source catalog is available and could be imported, but
+at this time we are not using it.  It contains approximately 500 million stars
+and would occupy about 43 gb of DB space.
+
+
+
 2MASS Extended Sources - Two Micron All Sky Survey (Only Extended Sources)
 
 	The 2MASS survey covered the whole sky and created a huge catalog of

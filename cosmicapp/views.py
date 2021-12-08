@@ -1159,6 +1159,7 @@ def imageProperties(request, id):
 
 def allImageProperties(request):
     #TODO: This page load get very slow when more images are in the database.  THe SQL queries seem to run fast, but something in the page template itself is taking a lot of CPU time.
+    #NOTE: The Django debug toolbar is slowing this down a lot.  The page loads quickly without it, or with the 'SQL' debugging unchecked.  No action seems necessary at this time.
     context = {"user" : request.user}
 
     keyContainsList = request.GET.get('keyContains', '').split('|')
@@ -1668,6 +1669,7 @@ def query(request):
             imageResultsDict['2MassXSC'] = dumpJsonAndAddXY(twoMassXSCResults, w)
             imageResultsDict['Messier'] = dumpJsonAndAddXY(messierResults, w)
             imageResultsDict['GCVS'] = dumpJsonAndAddXY(gcvsResults, w)
+            #TODO: Determine why this was commented out, and re-enable it.
             #imageResultsDict['Asteroid'] = dumpJsonAndAddXY(asteroidResults, w)
             imageResultsDict['Exoplanet'] = dumpJsonAndAddXY(exoplanetResults, w)
             imageResultsDict['UCAC4'] = dumpJsonAndAddXY(ucac4Results, w)
