@@ -1417,10 +1417,6 @@ def initSourcefind(method, image):
     if shouldReturn:
         return (1, shouldReturn, outputText, errorText)
 
-    # For image2xy there is no detectThresholdMultiplier to compute so we just return early.
-    if method == 'image2xy':
-        return (1, False, outputText, errorText)
-
     # Check to see if we have run this task before and adjust the sensitivity higher or lower
     # Start by seeing if we have a previously saved value, if not then load the default.
     detectThresholdMultiplier = image.getImageProperty(method + 'Multiplier')
@@ -1739,6 +1735,9 @@ def image2xy(filename, processInputId):
     # Get the image record
     image = models.Image.objects.get(fileRecord__onDiskFileName=filename)
 
+    #TODO: Handle multi-extension fits files.
+    channelInfos = models.ImageChannelInfo.objects.filter(image=image).order_by('index')
+
     # Image2xy does not use the detectThresholdMultiplier, but we still call this just so
     # any additional init routines are still run for this task.
     detectThresholdMultiplier, shouldReturn, outputText, errorText = initSourcefind('image2xy', image)
@@ -1746,12 +1745,27 @@ def image2xy(filename, processInputId):
     if shouldReturn:
         return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
 
+    detectThreshold = detectThresholdMultiplier*channelInfos[0].bgStdDev
+    outputText += 'Final multiplier of {} standard deviations.\n'.format(detectThresholdMultiplier)
+    outputText += 'Final detect threshold of {} above background.\n'.format(detectThreshold)
+    detectSaddleMultiplier = 0.625 * detectThresholdMultiplier
+    outputText += 'Final saddle threshold of {} standard deviations (saddle between two connected sources).\n'.format(detectSaddleMultiplier)
+
+    fwhm = parseFloat(image.getImageProperty('fwhmMedian', 2.5))
+    outputText += "\nUsing FWHM of {}\n".format(fwhm)
+
     #TODO: Use the -P option to handle images with multiple planes.  Also has support for multi-extension fits built in if called with appropriate params.
     #TODO: Consider using the -d option to downsample by a given factor before running.
     #TODO: image2xy can only handle .fit files.  Should autoconvert the file to .fit if necessary before running.
     #TODO: use the -g and -p options to set the detection threshold (probable -g is bgStdDev and -p is detThreshMult) also include -a option.
     outputFilename = settings.MEDIA_ROOT + filename + ".xy.fits"
-    proc = subprocess.Popen(['image2xy', '-o', outputFilename, settings.MEDIA_ROOT + filename],
+    proc = subprocess.Popen(['image2xy', '-o', outputFilename, settings.MEDIA_ROOT + filename,
+            '-g', str(channelInfos[0].bgStdDev),
+            '-p', str(detectThresholdMultiplier),
+            '-a', str(detectSaddleMultiplier),
+            '-G', str(channelInfos[0].bgMedian),
+            '-w', str(fwhm),
+            ],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         cwd=settings.MEDIA_ROOT
@@ -1832,7 +1846,6 @@ def daofind(filename, processInputId):
     if len(data.shape) == 3:
         data = data[0]
 
-    #TODO: Make use of the 'headerMeanFWHM' image property if set.
     fwhm = parseFloat(image.getImageProperty('fwhmMedian', 2.5))
     outputText += "\nUsing FWHM of {}\n".format(fwhm)
     daofind = DAOStarFinder(fwhm = fwhm, threshold = detectThreshold)
@@ -1898,7 +1911,6 @@ def starfind(filename, processInputId):
     if len(data.shape) == 3:
         data = data[0]
 
-    #TODO: Make use of the 'headerMeanFWHM' image property if set.
     fwhm = parseFloat(image.getImageProperty('fwhmMedian', 2.5))
     outputText += "\nUsing FWHM of {}\n".format(fwhm)
     starfinder = IRAFStarFinder(fwhm = fwhm, threshold = detectThreshold)

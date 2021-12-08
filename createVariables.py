@@ -16,6 +16,7 @@ CosmicVariable.setVariable('astrometryNetRadius', 'float', '10')
 CosmicVariable.setVariable('astrometryNetZenithRadius', 'float', '80')
 
 CosmicVariable.setVariable('sextractorThreshold', 'float', '2.0')
+CosmicVariable.setVariable('image2xyThreshold', 'float', '6.0')
 CosmicVariable.setVariable('daofindThreshold', 'float', '4.0')
 CosmicVariable.setVariable('starfindThreshold', 'float', '3.5')
 
