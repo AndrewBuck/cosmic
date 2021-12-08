@@ -2195,6 +2195,7 @@ def astrometryNet(filename, processInputId):
         #TODO: Add a check here to skip the source if the confidence is too low, or it is flagged as a false positive, etc.
         xValues.append(star.pixelX)
         yValues.append(star.pixelY)
+        #TODO: Consider downgrading the confidence of the match for every star within some distance of it, so dense clusters get downgraded since these don't seem to appear in the indexes.
         confidenceValues.append(star.confidence)
 
     if len(superMatches) < 4:
