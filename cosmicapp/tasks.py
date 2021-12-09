@@ -3097,7 +3097,7 @@ def flagSources(imageIdString, processInputId):
                     hpThreshold = 3.0 * fwhmMedian
                     # Flagging as hot pixel if the source is within 3 fwhm of a hot pixel.
                     if math.sqrt(distSquared) < hpThreshold:
-                        outputText += "source {} is within {} pixels of hot pixel {}.\n".format(source.pk, hpThreshold, hotPixel.pk)
+                        outputText += "source {} is within {} pixels of hot pixel {}.\n".format(source.pk, round(hpThreshold, 1), hotPixel.pk)
                         source.flagHotPixel = True
                         source.confidence = 0.1
 
