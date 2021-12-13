@@ -44,11 +44,16 @@ Created by user: <a href="/user/{{observatory.user}}/">{{observatory.user}}</a>
 </p>
 
 {% if observatory.user == user %}
-<form action="/observatory/{{observatory.pk}}/" method="POST">
-{% csrf_token %}
-<input type=hidden name=makedefault value=true>
-<input type=submit class=button value="Make this my default observatory">
-</form>
+
+    {% if observatory == user.profile.defaultObservatory %}
+        <p>This is your default observatory.</p>
+    {% else %}
+        <form action="/observatory/{{observatory.pk}}/" method="POST">
+        {% csrf_token %}
+        <input type=hidden name=makedefault value=true>
+        <input type=submit class=button value="Make this my default observatory">
+        </form>
+    {% endif %}
 
 {% endif %}
 
