@@ -11,49 +11,13 @@
 {% block mainbody %}
 <h2>Upload</h2>
 
-<p>This page is for uploading images and observing notes to be shared on Cosmic.  <i>Please only upload images of the sky
-and calibration images.</i>  For uploading pictures of yourself or your equipment you can do that on your <a
-href="/user/{{user}}">user
-page</a>.</p>
+<div>
 
-<p>Please keep in mind that Cosmic is NOT a website for sharing arbitrary files, ONLY ASTRONOMICAL IMAGES,
-CALIBRATION IMAGES, AND OBSERVER NOTES WILL BE KEPT &ndash; ALL OTHER FILES WILL BE DELETED.</p>
+<div style="float: left; margin: 1em; padding: .5em; width: 525px; border: 2px solid lightgrey;">
 
-<p>The following image file types are supported:
-
-<b>
-{% for filetype in supportedImageTypes %}
-    &nbsp;&nbsp;&nbsp;{{filetype}}
-{% endfor %}
-</b></p>
-
-<p>Once your images have been successfully uploaded they will be added to the processing queue where they will be plate
-solved, source extracted, and so forth.</p>
-
-<p>
-You can upload multiple files at once, and if you do a record is kept of all the files
-that were uploaded at the same time.  We recommend using this to upload files grouped by
-the location you took them from, or if you sometimes use different equipment you should
-upload them grouped by that, etc.  This will make it easy to add this information later on
-by adding the appropriate tags to all the files at once.  Do not bother manually grouping
-them by time, since the file headers almost always include this anyway.
-</p>
-
-<p>
-Below is a form allowing you to tell us what you were observing, where you observed it
-from, and what instrument you used to observe it from.  It is recommended that you set as
-much of this information as you can right when the file is uploaded.  Not only does this
-prevent you from forgetting to enter it later, it also makes it more likely we will find
-a plate solution for the uploaded images since we only have to search certain portions of
-the sky.  The easiest way to do this is to upload the images right when you are observing,
-or just after, grouping all the images for a given target (or within a few degrees of it)
-into a single upload.
-</p>
-
-<div id=searchResultsDiv style="float:right; margin: 1em; padding: .5em; width: 500px; border: 2px solid lightgrey;" hidden>
+<div id=searchResultsDiv style="margin: 1em; padding: .5em; width: 475px; border: 2px solid lightgrey;" hidden>
 </div>
 
-<div style="margin: 1em; padding: .5em; width: 525px; border: 2px solid lightgrey;">
 <form method="post" enctype="multipart/form-data">
 {% csrf_token %}
 Object Name: <input id=object type=text name=object value="{{object}}">&emsp;<a class=functionLink onclick="searchForObject()">(Search)</a>
@@ -102,12 +66,55 @@ Object Name: <input id=object type=text name=object value="{{object}}">&emsp;<a 
 <br>(Text entered below will be added as a comment to the upload session.  Can be used for notes about the files, etc.
 You can format your comment text using markdown.)
 <textarea rows=7 cols=40 name=uploadComment>{{uploadComment}}</textarea>
-</div>
 
 <!-- TODO: Add a progress indicator. -->
 <input type="file" name="myfiles" multiple=""><br><br>
 <button type="submit" class=button>Upload</button>
 </form>
+</div>
+
+<div>
+<p>This page is for uploading images and observing notes to be shared on Cosmic.  <i>Please only upload images of the sky
+and calibration images.</i>  For uploading pictures of yourself or your equipment you can do that on your <a
+href="/user/{{user}}">user
+page</a>.</p>
+
+<p>Please keep in mind that Cosmic is NOT a website for sharing arbitrary files, ONLY ASTRONOMICAL IMAGES,
+CALIBRATION IMAGES, AND OBSERVER NOTES WILL BE KEPT &ndash; ALL OTHER FILES WILL BE DELETED.</p>
+
+<p>The following image file types are supported:
+
+<b>
+{% for filetype in supportedImageTypes %}
+    &nbsp;&nbsp;&nbsp;{{filetype}}
+{% endfor %}
+</b></p>
+
+<p>Once your images have been successfully uploaded they will be added to the processing queue where they will be plate
+solved, source extracted, and so forth.</p>
+
+<p>
+You can upload multiple files at once, and if you do a record is kept of all the files
+that were uploaded at the same time.  We recommend using this to upload files grouped by
+the location you took them from, or if you sometimes use different equipment you should
+upload them grouped by that, etc.  This will make it easy to add this information later on
+by adding the appropriate tags to all the files at once.  Do not bother manually grouping
+them by time, since the file headers almost always include this anyway.
+</p>
+
+<p>
+Below is a form allowing you to tell us what you were observing, where you observed it
+from, and what instrument you used to observe it from.  It is recommended that you set as
+much of this information as you can right when the file is uploaded.  Not only does this
+prevent you from forgetting to enter it later, it also makes it more likely we will find
+a plate solution for the uploaded images since we only have to search certain portions of
+the sky.  The easiest way to do this is to upload the images right when you are observing,
+or just after, grouping all the images for a given target (or within a few degrees of it)
+into a single upload.
+</p>
+</div>
+
+</div>
 
 {% if upload_successful %}
 <p>File upload successful. A new upload session record has been created to group these
