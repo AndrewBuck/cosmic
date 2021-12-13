@@ -1998,7 +1998,7 @@ def starmatch(filename, processInputId):
         results1 = i1['query']
         results2 = i2['query']
 
-        outputText += 'Matching {} {} results with {} {} results'.format(len(results1), i1['name'], len(results2), i2['name']) + "\n"
+        outputText += '\nMatching {} {} results with {} {} results'.format(len(results1), i1['name'], len(results2), i2['name']) + "\n"
 
         # Loop over all the pairs of results in the two current methods and for each item
         # in the first result set, find the closest item in the second result set that is
@@ -2037,7 +2037,7 @@ def starmatch(filename, processInputId):
 
     newMillis = int(round(time.time() * 1000))
     deltaT = newMillis - millis
-    outputText += 'pairwise took {} ms.'.format(deltaT )
+    outputText += 'pairwise matching took {} ms.\n'.format(deltaT )
     millis = int(round(time.time() * 1000))
 
     def sortKeyForSuperMatch(superMatch):
@@ -2049,7 +2049,7 @@ def starmatch(filename, processInputId):
 
     # Now that we have all the matches between every two individual methods, combine them into 'superMatches' where 2
     # or more different match types all agree on the same star.
-    outputText += 'Calculating super matches:' + "\n"
+    outputText += '\nCalculating super matches:' + "\n"
     superMatches = SortedListWithKey(key=lambda x: sortKeyForSuperMatch(x))
     for i1, i2, matches in matchedResults:
         for match in matches:
@@ -2083,11 +2083,11 @@ def starmatch(filename, processInputId):
 
     newMillis = int(round(time.time() * 1000))
     deltaT = newMillis - millis
-    outputText += 'superMatches took {} ms.'.format(deltaT )
+    outputText += 'superMatches took {} ms.\n'.format(deltaT )
     millis = int(round(time.time() * 1000))
 
     # Loop over all the superMatch entries and create a database entry for each one.
-    outputText += 'Found {} super matches.  Writing them to the DB...'.format(len(superMatches)) + "\n"
+    outputText += '\nFound {} super matches.  Writing them to the DB.'.format(len(superMatches)) + "\n"
     with transaction.atomic():
         models.SourceFindMatch.objects.filter(image=image).delete()
         sourceFindMatches = []
@@ -2138,16 +2138,14 @@ def starmatch(filename, processInputId):
 
         models.SourceFindMatch.objects.bulk_create(sourceFindMatches)
 
-    outputText += 'Done.' + "\n"
-
     newMillis = int(round(time.time() * 1000))
     deltaT = newMillis - millis
-    outputText += 'write to db took {} ms.'.format(deltaT )
+    outputText += 'write to db took {} ms.\n'.format(deltaT )
     millis = int(round(time.time() * 1000))
 
     # Force a save of the images best plate solution to calculate the RA and Dec of all
     # the assosciated source find methods.
-    outputText += "Checking for plate solution: "
+    outputText += "\nChecking for plate solution:\n"
     ps = image.getBestPlateSolution()
     if ps is not None:
         outputText += "Image has a plate solution, forcing a save to trigger update of RA, Dec for all source find results.\n"
@@ -2157,7 +2155,7 @@ def starmatch(filename, processInputId):
 
     newMillis = int(round(time.time() * 1000))
     deltaT = newMillis - millis
-    outputText += 'RA, Dec recalc took {} ms.'.format(deltaT )
+    outputText += 'RA, Dec recalc took {} ms.\n'.format(deltaT )
     millis = int(round(time.time() * 1000))
 
     return constructProcessOutput(outputText, errorText, time.time() - taskStartTime)
