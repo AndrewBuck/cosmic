@@ -11,6 +11,23 @@
 {% block mainbody %}
 <h2>Upload</h2>
 
+{% if upload_successful %}
+<p>
+<b>File upload successful.</b> A new upload session record has been created to group these
+files together for later use.  If you would like to set common properties of the uploaded
+files in this group, click <a href="/uploadSession/{{uploadSession.id}}">here</a>.
+
+
+    <table border="2px">
+    <tr> <th>File name</th> <th>Size (bytes)</th> <th>sha256sum</th> </tr>
+    {% for record in records %}
+        <tr> <td>{{record.originalFileName}}</td> <td>{{record.uploadSize|filesizeformat}}</td> <td>{{record.fileSha256}}</td> </tr>
+    {% endfor %}
+    </table>
+
+</p>
+{% else %}
+
 <div>
 
 <div style="float: left; margin: 1em; padding: .5em; width: 525px; border: 2px solid lightgrey;">
@@ -115,19 +132,6 @@ into a single upload.
 </div>
 
 </div>
-
-{% if upload_successful %}
-<p>File upload successful. A new upload session record has been created to group these
-files together for later use.  If you would like to set common properties of the uploaded
-files in this group, click <a href="/uploadSession/{{uploadSession.id}}">here</a>.</p>
-
-
-    <table border="2px">
-    <tr> <th>File name</th> <th>Size (bytes)</th> <th>sha256sum</th> </tr>
-    {% for record in records %}
-        <tr> <td>{{record.originalFileName}}</td> <td>{{record.uploadSize|filesizeformat}}</td> <td>{{record.fileSha256}}</td> </tr>
-    {% endfor %}
-    </table>
 
 {% endif %}
 
