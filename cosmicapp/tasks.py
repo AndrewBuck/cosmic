@@ -2336,6 +2336,10 @@ def astrometryNet(filename, processInputId):
         else:
             outputText += 'Image does not have a plate solution.  Not restricting image scale range.\n'
 
+    outputText += '\n\nargArray\n'
+    for arg in argArray:
+        outputText += arg + " "
+    outputText += '\n\nRunnning...\n'
     proc = subprocess.Popen(argArray,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
