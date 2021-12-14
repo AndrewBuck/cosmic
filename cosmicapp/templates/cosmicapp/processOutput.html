@@ -16,10 +16,18 @@
 <span style="float: right; border: 2px solid black; padding: 5px;">
 Run for user: <a href="/user/{{processOutput.processInput.requestor}}">{{processOutput.processInput.requestor}}</a>
 <br> Process name: {{processOutput.processInput.process}} (priority: {{processOutput.processInput.priority|floatformat:2}})
+<br>
 <br> Process Arguments:
 
 {% for arg in processOutput.processInput.arguments.all %}
     <br>&emsp;{{arg.arg}}
+{% endfor %}
+
+<br>
+<br> Process Images:
+
+{% for image in processOutput.processInput.images.all %}
+    <br>&emsp;<a href="/image/{{image.pk}}">Image {{image.pk}}</a>
 {% endfor %}
 
 <br>
