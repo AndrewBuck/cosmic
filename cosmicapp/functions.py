@@ -435,6 +435,7 @@ def createTasksForNewImage(fileRecord, user, priorityMod=0):
         piImage2xy.images.add(imageRecord)
         piImage2xy.prerequisites.add(piImagestats)
         piImage2xy.prerequisites.add(piHeaders)
+        piImage2xy.prerequisites.add(piSextractor)
 
         piDaofind = models.ProcessInput(
             process = "daofind",
