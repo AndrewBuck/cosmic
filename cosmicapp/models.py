@@ -708,6 +708,9 @@ class Image(models.Model, SkyObject, BookmarkableItem):
     def removeImageProperty(self, key):
         imageProperty = ImageProperty.objects.filter(image=self, key=key).delete()
 
+    def getExposureTime(self):
+        return self.getImageProperty('exposureTime')
+
 class ImageThumbnail(models.Model):
     """
     A record containing details about an individual thumbnail for an image on the site.  Each uploaded image gets multiple
