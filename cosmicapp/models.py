@@ -19,6 +19,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 
 from .tasks import computeSingleEphemeris
+from .functions import parseFloat
 
 #TODO:  Need to review the on_delete behaviour of all foreign keys to guarantee references remain intact as needed.
 
@@ -709,7 +710,7 @@ class Image(models.Model, SkyObject, BookmarkableItem):
         imageProperty = ImageProperty.objects.filter(image=self, key=key).delete()
 
     def getExposureTime(self):
-        return self.getImageProperty('exposureTime')
+        return parseFloat(self.getImageProperty('exposureTime'))
 
 class ImageThumbnail(models.Model):
     """
