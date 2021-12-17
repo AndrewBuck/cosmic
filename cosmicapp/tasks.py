@@ -3164,7 +3164,7 @@ def imageCombine(argList, processInputId):
 
     if 'masterDarkId' in argDict:
         masterDarkImage = models.Image.objects.filter(pk=argDict['masterDarkId']).first()
-        darkExposure = masterDarkImage.getImageProperty('exposureTime')
+        darkExposure = masterDarkImage.getExposureTime()
     else:
         masterDarkImage = None
 
@@ -3233,7 +3233,7 @@ def imageCombine(argList, processInputId):
         outputText += "Loading image {}: {}\n".format(image.pk, image.fileRecord.originalFileName)
         hdulist = fits.open(settings.MEDIA_ROOT + image.fileRecord.onDiskFileName)
 
-        imageExposure = image.getImageProperty('exposureTime')
+        imageExposure = image.getExposureTime()
         outputText += "   Image exposure time is: {}\n".format(imageExposure)
 
         imageTransforms = models.ImageTransform.objects.filter(subjectImage=image)
@@ -3378,7 +3378,7 @@ def imageCombine(argList, processInputId):
     for image, i in zip(images, range(1, 1+len(images))):
         imageString = 'Image ' + str(image.pk) + ':  ' + image.fileRecord.originalFileName
         primaryHDU.header.append( ('imcmb{:03d}'.format(i), imageString) )
-        primaryHDU.header.append( ('exptim{:02d}'.format(i), image.getImageProperty('exposureTime')) )
+        primaryHDU.header.append( ('exptim{:02d}'.format(i), image.getExposureTime()) )
 
     if masterBiasImage is not None:
         imageString = 'Image ' + str(masterBiasImage.pk) + ':  ' + masterBiasImage.fileRecord.originalFileName
