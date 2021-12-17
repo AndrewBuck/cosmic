@@ -680,7 +680,7 @@ def imagestats(filename, processInputId):
                     msec = int(1000 * time.time())
                     ( nonmaskedNumber, (nonmaskedMin, nonmaskedMax),
                       nonmaskedMean, nonmaskedVariance,
-                      nonmaskedSkewness, nonmaskedKurtosis ) = scipy.stats.describe(frame.ravel())
+                      nonmaskedSkewness, nonmaskedKurtosis ) = scipy.stats.describe(frame.ravel(), nan_policy='omit')
                     msec = int(1000 * time.time()) - msec
                     outputText += "completed: {}ms\n".format(msec)
                     outputText += "pixels: {}\n".format(nonmaskedNumber)
@@ -696,7 +696,9 @@ def imagestats(filename, processInputId):
                     # Get statistics on masked frame
                     outputText += "Getting statistics on masked frame ... "
                     msec = int(1000 * time.time())
-                    maskedMean, maskedMedian, maskedStdDev = sigma_clipped_stats(maskedFrame, sigma=0, maxiters=0)
+                    maskedMean = numpy.nanmean(maskedFrame)
+                    maskedMedian = numpy.nanmedian(maskedFrame)
+                    maskedStdDev = numpy.nanstd(maskedFrame)
                     # Converges well with 3 iterations.  Half as much time as maxiters=None
                     bgMean, bgMedian, bgStdDev = sigma_clipped_stats(maskedFrame, sigma=3, maxiters=3)
                     msec = int(1000 * time.time()) - msec
