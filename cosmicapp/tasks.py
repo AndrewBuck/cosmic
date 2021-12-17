@@ -3379,6 +3379,12 @@ def imageCombine(argList, processInputId):
     primaryHDU.header.append( ('origin', 'Cosmic.science') )
     primaryHDU.header.append( ('imagetyp', 'master ' + argDict['combineType']) )
     primaryHDU.header.append( ('ncombine', str(len(dataArray))) )
+
+    earliestImage = min(images, key = lambda x: x.dateTime)
+    latestImage = max(images, key = lambda x: x.dateTime)
+    primaryHDU.header.append( ('date-obs', str(earliestImage.dateTime)) )
+    primaryHDU.header.append( ('date-end', str(latestImage.dateTime)) )
+
     for image, i in zip(images, range(1, 1+len(images))):
         imageString = 'Image ' + str(image.pk) + ':  ' + image.fileRecord.originalFileName
         primaryHDU.header.append( ('imcmb{:03d}'.format(i), imageString) )
