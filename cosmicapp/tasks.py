@@ -2600,6 +2600,10 @@ def parseHeaders(imageId, processInputId):
                 except ValueError:
                     outputError += "ERROR: Could not parse dateObs: " + value + "\n"
 
+            elif header.key in ['fits:date_end', 'fits:date-end']:
+                key = 'dateEnd'
+                value = header.value.split('/')[0].strip().strip("'")
+
             elif header.key in ['fits:time_obs', 'fits:time-obs', 'fits:ut']:
                 key = 'timeObs'
                 value = header.value.split('/')[0].strip().strip("'")
