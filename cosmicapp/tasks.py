@@ -2370,6 +2370,29 @@ def astrometryNet(filename, processInputId):
         # with this location as a hint.  Also need to check for images which have an
         # overlapsImage pointing to this image that we just solved.  Check all of these to
         # see if they have plate solutions and if not, try solving with this location as a hint.
+
+        # Open the .match fits table that gives the details of the stars and index used to solve
+        # the image, so we can use it as a hint for similar images.
+        hdulist = fits.open(settings.MEDIA_ROOT + filename + '.sources.match')
+        tableData = hdulist[1].data
+
+        outputText += '\n\nReading table for .match file:\n'
+        for name in tableData.names:
+            outputText += str(name) + ': ' + str(tableData[name]) + '\n'
+
+        outputText += '\n'
+
+        image.addImageProperty('astrometryIndexSeries', str(tableData['INDEXID'][0])[0:2])
+        image.addImageProperty('astrometryIndexZoom', str(tableData['INDEXID'][0])[2:4])
+        image.addImageProperty('astrometryIndexHealpix', tableData['HEALPIX'][0])
+        image.addImageProperty('astrometryIndexNumMatches', tableData['NMATCH'][0])
+        image.addImageProperty('astrometryIndexNumDistractors', tableData['NDISTRACT'][0])
+        image.addImageProperty('astrometryIndexNumConflicts', tableData['NCONFLICT'][0])
+        image.addImageProperty('astrometryIndexNumSources', tableData['NFIELD'][0])
+        image.addImageProperty('astrometryIndexNumIndex', tableData['NINDEX'][0])
+        image.addImageProperty('astrometryIndexParity', tableData['PARITY'][0])
+        image.addImageProperty('astrometryIndexLogOdds', tableData['LOGODDS'][0])
+
     else:
         outputText += '\n\nNo plate solution found.' + "\n"
         image.addImageProperty('astrometryNet', 'failure')
